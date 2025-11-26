@@ -1,0 +1,62 @@
+# Claude Code local configuration
+.claude/
+CLAUDE.md
+
+# Session protocol files (user-specific)
+session-protocol.json
+
+# Temporary files
+Claude_Temp_Files/
+*.tmp
+*.temp
+
+# Downloaded documentation (temporary)
+plugin-docs/
+download_docs.log
+
+# Build artifacts
+*.tar.gz
+dist/
+build/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Credentials and secrets
+*credentials*
+*secrets*
+*token*
+*api-key*
+
+# Node modules (if any plugin uses Node.js)
+node_modules/
+
+# Python (if any plugin uses Python)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# Test coverage
+coverage/
+.coverage
