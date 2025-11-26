@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Claude Code Documentation
+    url: https://claude.ai/code
+    about: Official Claude Code documentation and guides
+  - name: Questions & Discussions
+    url: https://github.com/thoeltig/claude-code-toolkit/discussions
+    about: Ask questions and discuss ideas with the community
