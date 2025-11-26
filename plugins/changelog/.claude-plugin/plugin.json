@@ -1,0 +1,9 @@
+{
+  "name": "changelog",
+  "description": "Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards",
+  "version": "1.0.0",
+  "author": {
+    "name": "Thore Höltig",
+    "url": "https://github.com/thoeltig/claude-code-toolkit"
+  }
+}
