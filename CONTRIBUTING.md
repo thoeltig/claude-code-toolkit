@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Claude Code Toolkit! This documen
 
 - [Code of Conduct](#code-of-conduct)
 - [How Can I Contribute?](#how-can-i-contribute)
-- [Submitting a Plugin](#submitting-a-plugin)
+- [Contribution Scope](#contribution-scope)
 - [Reporting Bugs](#reporting-bugs)
 - [Suggesting Enhancements](#suggesting-enhancements)
 - [Development Guidelines](#development-guidelines)
@@ -18,33 +18,23 @@ This project adheres to a [Code of Conduct](./CODE_OF_CONDUCT.md). By participat
 
 ## How Can I Contribute?
 
-### Submitting a Plugin
+### Contribution Scope
 
-We welcome high-quality Claude Code plugins! Before submitting:
+This marketplace hosts plugins developed and maintained by Thore Höltig. **External plugin submissions are not accepted.**
 
-1. **Ensure your plugin follows Claude Code specifications:**
-   - Valid `.claude-plugin/plugin.json` manifest
-   - Proper directory structure (skills/, commands/, hooks/, etc.)
-   - Well-documented SKILL.md files with YAML frontmatter
-   - CHANGELOG.md following Keep a Changelog format
+**Accepted contributions:**
+- **Bug reports**: Issues with existing plugins
+- **Enhancements**: Improvements to existing functionality
+- **Feedback**: Suggestions for plugin improvements
+- **Configuration**: Updates to plugin settings or structure
+- **Documentation**: Fixes and improvements to README, guides, examples
+- **Bug fixes**: Pull requests fixing identified issues
+- **Enhancement PRs**: Pull requests improving existing plugins (code quality, performance, features)
 
-2. **Quality standards:**
-   - Skills under 500 lines (use progressive disclosure for complex skills)
-   - Clear, specific descriptions with trigger keywords
-   - No hardcoded personal information or absolute paths
-   - Comprehensive examples and usage documentation
-
-3. **Documentation requirements:**
-   - Plugin-level README.md with installation instructions
-   - Component listings (skills, commands, hooks)
-   - Usage examples and workflows
-   - CHANGELOG.md with version history
-
-4. **Submission process:**
-   - Fork this repository
-   - Add your plugin to `plugins/your-plugin-name/`
-   - Update `marketplace.json` with your plugin entry
-   - Create a pull request with description of your plugin
+**Not accepted:**
+- New plugin submissions from external contributors
+- Requests for custom plugins
+- Feature requests for entirely new plugins
 
 ### Reporting Bugs
 
@@ -164,27 +154,30 @@ Follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/):
 
 ## Pull Request Process
 
+Pull requests are welcome for bug fixes and enhancements to existing plugins only.
+
 1. **Before submitting:**
-   - Test your plugin thoroughly
-   - Update documentation
-   - Validate plugin structure using `/pack` command
-   - Remove personal information
-   - Add CHANGELOG entry
+   - Test your changes thoroughly
+   - Update documentation if affected
+   - Remove any personal information
+   - Add CHANGELOG entry for the affected plugin
+   - Ensure code follows existing style and best practices
 
 2. **PR description should include:**
    - Summary of changes
-   - Type of change (new plugin, bug fix, enhancement)
+   - Type of change (bug fix, enhancement, documentation)
+   - Issue reference (if applicable)
    - Testing performed
    - Screenshots (if applicable)
 
 3. **Review process:**
-   - Maintainers will review your PR
+   - Maintainer will review your PR
    - Address any requested changes
    - Once approved, your PR will be merged
 
 4. **After merge:**
-   - Your plugin will be included in the next marketplace release
-   - You'll be added to contributors
+   - Your changes will be included in the next plugin/marketplace release
+   - You'll be credited in release notes
 
 ## Questions?
 

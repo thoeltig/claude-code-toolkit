@@ -45,5 +45,5 @@ _First release._
 - Expand Quick Reference to include all 6 workflows in table format
 - Replaced HISTORY.md approach with CHANGELOG.md standard
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/changelog-v1.0.0...HEAD
-[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/changelog-v1.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Changelog-v1.0.0.0...HEAD
+[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.0.0.0
