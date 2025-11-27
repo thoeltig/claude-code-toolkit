@@ -26,9 +26,11 @@ _First marketplace release with changelog plugin._
 ### Added
 
 - Marketplace infrastructure (marketplace.json, README, CONTRIBUTING, CODE_OF_CONDUCT)
-- changelog plugin v1.0.0 with managing-changelog skill
 - GitHub issue templates (bug report, feature request, question)
 - .gitignore for Claude Code toolkit development
+- Added ([Changelog-v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.0.0.0)) plugin with managing-changelog skill for creating and maintaining CHANGELOG.md files
+  - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
+
 
 [unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0.0...HEAD
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.1.0.0
