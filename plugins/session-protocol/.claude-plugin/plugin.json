@@ -1,0 +1,9 @@
+{
+  "name": "session-protocol",
+  "description": "Session continuity management for Claude conversations with task consolidation and token-optimized state persistence",
+  "version": "1.0.0",
+  "author": {
+    "name": "Thore Höltig"
+  },
+  "hooks": "./hooks/hooks.json"
+}
