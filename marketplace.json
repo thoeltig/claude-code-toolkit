@@ -10,6 +10,11 @@
       "name": "changelog",
       "source": "./plugins/changelog",
       "description": "Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards"
+    },
+    {
+      "name": "session-protocol",
+      "source": "./plugins/session-protocol",
+      "description": "Session continuity management with task consolidation, token-optimized state persistence, and automated hooks for seamless context restoration"
     }
   ]
 }

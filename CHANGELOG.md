@@ -7,6 +7,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- session-protocol plugin v1.0.0 for session continuity management
+
 ## [1.0.0.0] - 2025-11-26
 
 _First marketplace release with changelog plugin._
