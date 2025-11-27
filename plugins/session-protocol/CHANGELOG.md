@@ -7,9 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-## [1.0.0] - TBD
+## [1.0.0] - 2025-11-27
 
-_First release._
+_First release of session continuity plugin._
 
 ### Added
 
@@ -70,5 +70,5 @@ _First release._
 - Decision matrix format for consolidation criteria
 - Workflow structure with numbered steps vs prose paragraphs
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol-v1.0.0...HEAD
-[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol-v1.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol-v1.0.0.0...HEAD
+[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol-v1.0.0.0
