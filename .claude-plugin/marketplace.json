@@ -20,6 +20,16 @@
       "strict": false
     },
     {
+      "name": "claude-code-capabilities",
+      "source": "./plugins/claude-code-capabilities",
+      "description": "Comprehensive management of Claude Code features including skills, commands, hooks, MCPs, prompts, and subagents",
+      "version": "1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
       "name": "session-protocol",
       "source": "./plugins/session-protocol",
       "description": "Session continuity management across Claude conversations",

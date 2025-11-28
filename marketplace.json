@@ -15,6 +15,11 @@
       "name": "session-protocol",
       "source": "./plugins/session-protocol",
       "description": "Session continuity management with task consolidation, token-optimized state persistence, and automated hooks for seamless context restoration"
+    },    
+    {
+      "name": "claude-code-capabilities",
+      "source": "./plugins/claude-code-capabilities",
+      "description": "Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs"
     }
   ]
 }
