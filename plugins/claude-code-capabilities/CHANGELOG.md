@@ -38,5 +38,5 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/yourusername/ClaudeCodeToolkit/compare/claude-code-capabilities-v1.0.0...HEAD
-[1.0.0]: https://github.com/yourusername/ClaudeCodeToolkit/releases/tag/claude-code-capabilities-v1.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...HEAD
+[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0
