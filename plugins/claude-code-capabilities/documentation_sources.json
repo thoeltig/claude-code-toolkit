@@ -1,0 +1,325 @@
+{
+    "full-documentation": {
+        "skills": [
+            {
+                "name": "managing-agent-skills",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://code.claude.com/docs/en/skills",
+                        "https://code.claude.com/docs/en/slash-commands#skills-vs-slash-commands",
+                        "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
+                        "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/quickstart",
+                        "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices",
+                        "https://platform.claude.com/docs/en/build-with-claude/skills-guide"
+                    ]
+                },
+                "notebooks": {
+                    "format": "raw",
+                    "urls": [
+                        "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/notebooks/01_skills_introduction.ipynb",
+                        "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/notebooks/02_skills_financial_applications.ipynb",
+                        "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/notebooks/03_skills_custom_development.ipynb"
+                    ]
+                },
+                "examples": [
+                    {
+                        "name": "analyzing-financial-statements",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/analyzing-financial-statements/SKILL.md",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/analyzing-financial-statements/calculate_ratios.py",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/analyzing-financial-statements/interpret_ratios.py"
+                        ]
+                    },
+                    {
+                        "name": "applying-brand-guidelines",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/applying-brand-guidelines/SKILL.md",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/applying-brand-guidelines/REFERENCE.md",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/applying-brand-guidelines/apply_brand.py",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/applying-brand-guidelines/validate_brand.py"
+                        ]
+                    },
+                    {
+                        "name": "creating-financial-models",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/creating-financial-models/SKILL.md",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/creating-financial-models/dcf_model.py",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/skills/custom_skills/creating-financial-models/sensitivity_analysis.py"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "managing-hooks",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://code.claude.com/docs/en/hooks-guide",
+                        "https://code.claude.com/docs/en/hooks"
+                    ]
+                },
+                "examples": [
+                    {
+                        "name": "chief_of_staff_agent",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/settings.local.json",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/hooks/script-usage-logger.py",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/hooks/report-tracker.py"
+                        ]
+                    },
+                    {
+                        "name": "life-cycle",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/skills/.claude/settings.json",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/skills/.claude/hooks/session-start.sh",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/skills/.claude/hooks/pre-write.sh",
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/skills/.claude/hooks/pre-bash.sh"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "managing-mcps",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://code.claude.com/docs/en/mcp",
+                        "https://docs.claude.com/en/docs/agents-and-tools/mcp-connector",
+                        "https://docs.claude.com/en/docs/agents-and-tools/remote-mcp-servers"
+                    ]
+                },
+                "protocol": {
+                    "protocol-documentation": {
+                        "optional": "True",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://modelcontextprotocol.io/docs/getting-started/intro",
+                            "https://modelcontextprotocol.io/docs/learn/architecture",
+                            "https://modelcontextprotocol.io/docs/learn/server-concepts",
+                            "https://modelcontextprotocol.io/docs/learn/client-concepts",
+                            "https://modelcontextprotocol.io/specification/versioning",
+                            "https://modelcontextprotocol.io/docs/develop/connect-local-servers",
+                            "https://modelcontextprotocol.io/docs/develop/connect-remote-servers",
+                            "https://modelcontextprotocol.io/docs/develop/build-server",
+                            "https://modelcontextprotocol.io/docs/develop/build-client",
+                            "https://modelcontextprotocol.io/docs/sdk",
+                            "https://modelcontextprotocol.io/docs/tutorials/security/authorization",
+                            "https://modelcontextprotocol.io/docs/tools/inspector"
+                        ]
+                    },
+                    "protocol-specification": {
+                        "optional": "True",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://modelcontextprotocol.io/about",
+                            "https://modelcontextprotocol.io/specification/2025-06-18",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/changelog",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/architecture",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/transports",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/cancellation",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/ping",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/progress",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/client/roots",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/client/sampling",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server/prompts",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server/resources",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/completion",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/logging",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/pagination",
+                            "https://modelcontextprotocol.io/specification/2025-06-18/schema"
+                        ]
+                    }
+                },
+                "examples": [
+                    {
+                        "name": "amazon_bedrock_agentcore_mcp_server",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/awslabs/mcp/refs/heads/main/src/amazon-bedrock-agentcore-mcp-server/awslabs/amazon_bedrock_agentcore_mcp_server/server.py",
+                            "https://raw.githubusercontent.com/awslabs/mcp/52e2022491555b6bf8f543a1e1a51ab74eaba0af/src/amazon-bedrock-agentcore-mcp-server/awslabs/amazon_bedrock_agentcore_mcp_server/tools/docs.py",
+                            "https://raw.githubusercontent.com/awslabs/mcp/c20bf031655b0bd8ade680cfbe041b0dee122c7c/src/amazon-bedrock-agentcore-mcp-server/awslabs/amazon_bedrock_agentcore_mcp_server/tools/docs.py",
+                            "https://raw.githubusercontent.com/awslabs/mcp/c20bf031655b0bd8ade680cfbe041b0dee122c7c/src/amazon-bedrock-agentcore-mcp-server/awslabs/amazon_bedrock_agentcore_mcp_server/tools/runtime.py",
+                            "https://raw.githubusercontent.com/awslabs/mcp/c20bf031655b0bd8ade680cfbe041b0dee122c7c/src/amazon-bedrock-agentcore-mcp-server/awslabs/amazon_bedrock_agentcore_mcp_server/tools/memory.py",
+                            "https://raw.githubusercontent.com/awslabs/mcp/c20bf031655b0bd8ade680cfbe041b0dee122c7c/src/amazon-bedrock-agentcore-mcp-server/awslabs/amazon_bedrock_agentcore_mcp_server/tools/gateway.py"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "managing-plugins",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://code.claude.com/docs/en/plugins",
+                        "https://code.claude.com/docs/en/plugins-reference",
+                        "https://code.claude.com/docs/en/plugin-marketplaces"
+                    ]
+                }
+            },
+            {
+                "name": "managing-prompts",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/prompt-templates-and-variables",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/prompt-improver",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/be-clear-and-direct",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/multishot-prompting",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/chain-of-thought",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/system-prompts",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/prefill-claudes-response",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/chain-prompts",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/long-context-tips",
+                        "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/extended-thinking-tips",
+                        "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/reduce-hallucinations",
+                        "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency",
+                        "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/mitigate-jailbreaks",
+                        "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/reduce-prompt-leak",
+                        "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/keep-claude-in-character",
+                        "https://docs.claude.com/en/docs/build-with-claude/context-windows",
+                        "https://docs.claude.com/en/docs/build-with-claude/prompt-caching"
+                    ]
+                },
+                "examples": [
+                    {
+                        "name": "citations_agent",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/patterns/agents/prompts/citations_agent.md"
+                        ]
+                    },
+                    {
+                        "name": "research_lead_agent",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/patterns/agents/prompts/research_lead_agent.md"
+                        ]
+                    },
+                    {
+                        "name": "research_subagent",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/refs/heads/main/patterns/agents/prompts/research_subagent.md"
+                        ]
+                    },
+                    {
+                        "name": "pun-dit",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://docs.claude.com/en/resources/prompt-library/pun-dit"
+                        ]
+                    },
+                    {
+                        "name": "git-gud",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://docs.claude.com/en/resources/prompt-library/git-gud"
+                        ]
+                    },
+                    {
+                        "name": "email-extractor",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://docs.claude.com/en/resources/prompt-library/email-extractor"
+                        ]
+                    },
+                    {
+                        "name": "spreadsheet-sorcerer",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://docs.claude.com/en/resources/prompt-library/spreadsheet-sorcerer"
+                        ]
+                    },
+                    {
+                        "name": "airport-code-analyst",
+                        "format": "json_optimized",
+                        "urls": [
+                            "https://docs.claude.com/en/resources/prompt-library/airport-code-analyst"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "managing-slash-commands",
+                "uses": "managing-prompts",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://code.claude.com/docs/en/slash-commands",
+                        "https://code.claude.com/docs/en/slash-commands#skills-vs-slash-commands"
+                    ]
+                },
+                "examples": [
+                    {
+                        "name": "link-review",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/cbcc709f1db0cdfdda1435bf9c0b4d2d1c86ee56/.claude/commands/link-review.md"
+                        ]
+                    },
+                    {
+                        "name": "model-check",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/cbcc709f1db0cdfdda1435bf9c0b4d2d1c86ee56/.claude/commands/model-check.md"
+                        ]
+                    },
+                    {
+                        "name": "budget-impact",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/commands/budget-impact.md"
+                        ]
+                    },
+                    {
+                        "name": "slash-command-test",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/commands/slash-command-test.md"
+                        ]
+                    },
+                    {
+                        "name": "strategic-brief",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/commands/strategic-brief.md"
+                        ]
+                    },
+                    {
+                        "name": "talent-scan",
+                        "format": "raw",
+                        "urls": [
+                            "https://raw.githubusercontent.com/anthropics/claude-cookbooks/5811f20ee5de11b41411c645e04e2d9b07409168/claude_agent_sdk/chief_of_staff_agent/.claude/commands/talent-scan.md"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "managing-subagents",
+                "uses": "managing-prompts",
+                "documentation": {
+                    "format": "json_optimized",
+                    "urls": [
+                        "https://code.claude.com/docs/en/sub-agents"
+                    ]
+                }
+            }
+        ]
+    }
+}

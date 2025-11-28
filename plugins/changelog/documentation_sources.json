@@ -1,0 +1,10 @@
+{
+    "documentation": {
+        "format": "json_optimized",
+        "urls": [
+            "https://common-changelog.org", 
+            "https://keepachangelog.com/en/1.1.0/", 
+            "https://semver.org/spec/v2.0.0.html"
+        ]
+    }
+}
