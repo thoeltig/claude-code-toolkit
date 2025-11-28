@@ -23,6 +23,7 @@ Then install any plugin:
 |--------|-------------|---------|
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.0.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0 |
+| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -35,6 +36,11 @@ Professional changelog management with automatic formatting, version tracking, a
 Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
 
 **Install:** `/plugin install session-protocol@claude-code-toolkit`
+
+### Claude Code Capabilities
+The most comprehensive toolkit for working with Claude Code's extensibility features. Includes 7 specialized skills and 2 powerful commands for managing every aspect of your Claude Code setup.
+
+**Install:** `/plugin install claude-code-capabilities@claude-code-toolkit`
 
 ## 📚 Documentation
 

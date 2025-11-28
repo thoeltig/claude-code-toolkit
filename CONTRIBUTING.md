@@ -72,7 +72,6 @@ your-plugin-name/
 ├── skills/
 │   └── skill-name/
 │       ├── SKILL.md         # Main skill file with YAML frontmatter
-│       ├── CHANGELOG.md     # Skill version history
 │       └── supporting-file.md
 ├── commands/
 │   └── command-name.md      # Slash command with YAML frontmatter

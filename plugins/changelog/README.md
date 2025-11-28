@@ -162,22 +162,22 @@ The skill uses the following Claude Code tools:
 ## Best Practices
 
 ### Do
-✅ Write changes in imperative mood (Add, Fix, Update)
-✅ Include references (commits, PRs, issues)
-✅ Categorize changes properly
-✅ Use ISO 8601 dates (YYYY-MM-DD)
-✅ Highlight breaking changes with **Breaking:** prefix
-✅ Keep entries brief (one line per change)
-✅ Sort by importance within categories
+- ✅ Write changes in imperative mood (Add, Fix, Update)
+- ✅ Include references (commits, PRs, issues)
+- ✅ Categorize changes properly
+- ✅ Use ISO 8601 dates (YYYY-MM-DD)
+- ✅ Highlight breaking changes with **Breaking:** prefix
+- ✅ Keep entries brief (one line per change)
+- ✅ Sort by importance within categories
 
 ### Don't
-❌ Dump raw git log
-❌ Use vague descriptions
-❌ Mix up categories
-❌ Forget dates or use wrong format
-❌ Include email addresses or sensitive data
-❌ Copy commit messages verbatim
-❌ Use past tense (Added, Fixed)
+- ❌ Dump raw git log
+- ❌ Use vague descriptions
+- ❌ Mix up categories
+- ❌ Forget dates or use wrong format
+- ❌ Include email addresses or sensitive data
+- ❌ Copy commit messages verbatim
+- ❌ Use past tense (Added, Fixed)
 
 ## Support
 
