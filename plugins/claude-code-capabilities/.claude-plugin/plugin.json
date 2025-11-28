@@ -8,7 +8,7 @@
   "skills": [
     "skills/managing-agent-skills"
   ],
-  "repository": "https://github.com/yourusername/ClaudeCodeToolkit",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
   "license": "MIT",
   "tags": [
     "skills",
