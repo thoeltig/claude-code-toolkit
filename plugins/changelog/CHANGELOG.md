@@ -57,4 +57,4 @@ _First release._
 
 [unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Changelog-v1.1.0.0...HEAD
 [1.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.1.0.0
-[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.0.0.0
+[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog_v1.0.0.0

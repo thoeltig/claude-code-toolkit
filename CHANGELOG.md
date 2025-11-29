@@ -78,7 +78,7 @@ _Marketplace release with session continuity management._
 
 ### Added
 
-- **session-protocol plugin** ([v1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol-v1.0.0.0)): Added **managing-session-continuity skill** for seamless context preservation across Claude Code sessions
+- **session-protocol plugin** ([v1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.0.0.0)): Added **managing-session-continuity skill** for seamless context preservation across Claude Code sessions
   - Session state management with structured JSON format
   - Save/load slash commands for preserving tasks, git state, and context blocks
   - SessionStart, PreCompact hooks for automated session handling
@@ -93,7 +93,7 @@ _First marketplace release with changelog plugin._
 - Marketplace infrastructure (marketplace.json, README, CONTRIBUTING, CODE_OF_CONDUCT)
 - GitHub issue templates (bug report, feature request, question)
 - .gitignore for Claude Code toolkit development
-- Added **changelog plugin** ([v1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.0.0.0)) with **managing-changelog skill** for creating and maintaining CHANGELOG.md files
+- Added **changelog plugin** ([v1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog_v1.0.0.0)) with **managing-changelog skill** for creating and maintaining CHANGELOG.md files
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 

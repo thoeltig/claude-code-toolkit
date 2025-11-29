@@ -70,5 +70,5 @@ _First release of session continuity plugin._
 - Decision matrix format for consolidation criteria
 - Workflow structure with numbered steps vs prose paragraphs
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol-v1.0.0.0...HEAD
-[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol-v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.0.0.0...HEAD
+[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.0.0.0
