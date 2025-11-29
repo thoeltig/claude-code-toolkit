@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.3.0] - 2025-11-29
+
+_Prompt engineering mastery: Complete managing-prompts skill with advanced techniques._
+
+### Added
+
+- **managing-prompts skill**: Comprehensive prompt engineering skill covering Anthropic documentation
+  - **What it is:** Complete skill for analyzing, creating, optimizing, and improving prompts using Claude 4.5 best practices, guardrails, context management, and prompt engineering patterns
+  - **What it can do:**
+    - Analyze existing prompts against industry best practices with detailed evaluation framework
+    - Create new prompts from scratch using structured patterns and technique selection guides
+    - Optimize prompts for token efficiency, cost, performance, and quality
+    - Migrate prompts from Claude 3 to Claude 4.5 models with specific pattern updates
+    - Provide technique recommendations indexed by use case
+    - Decision support for consistency (Structured Outputs vs prefilling), guardrails, architecture patterns, and logic extraction
+    - Extended thinking implementation with budget management and multi-round strategies
+    - Prompt chaining architecture for sequential and parallel workflows
+  - **15 supporting files (14 + SKILL.md):**
+    - `analysis-patterns.md` - Common issues and quality assessment framework
+    - `architecture-patterns.md` - 5 pattern types (simple task, complex reasoning, agent, multi-window, multi-context)
+    - `claude-4-5-optimization.md` - Claude 4.5-specific optimizations including context awareness, vision improvements, crop tool usage
+    - `consistency-techniques.md` - Structured Outputs API with full implementation, JSON schema requirements, comparison tables, decision flows, error handling
+    - `context-optimization.md` - 1-hour cache TTL documentation, TTL mixing rules, pricing comparisons, decision flows, cache minimum thresholds
+    - `extended-thinking-implementation.md` - Thinking blocks + caching interaction, automatic caching behavior, token counting, cache invalidation patterns, cost optimization
+    - `extraction-decision-guide.md` - Decision trees for prompt vs script extraction
+    - `guardrails-implementation.md` - Hallucination, consistency, security, jailbreak prevention patterns
+    - `migration-guide.md` - Claude 3→4.5 migration patterns with examples
+    - `optimization-strategies.md` - 11 before/after optimization examples
+    - `output-formats.md` - Report templates for analysis, optimization, extraction, creation
+    - `prompt-chaining-architecture.md` - Sequential/parallel workflows, handoff patterns, self-correction loops
+    - `quick-reference.md` - Fast validation checklists, common issues diagnosis, decision trees
+    - `technique-reference.md` - Indexed lookup by use case with quick technique table
+
+---
+
+## [1.2.0] - 2025-11-29
+
+_Plugin expansion: Comprehensive Claude Code plugin management._
+
+### Added
+
+- **managing-plugins skill**: Complete plugin management for creating, bundling, validating, and distributing Claude Code plugins
+  - **5 Core Operations**: Create plugin structure, bundle components by prefix, create marketplace config, validate plugins, pack for distribution
+  - **Plugin Structure Documentation**: Directory layout, component organization (commands/, skills/, hooks/, agents/, .mcp.json), naming conventions
+  - **plugin.json Schema**: Complete field specifications with optional metadata (author, homepage, repository, license, keywords)
+  - **Marketplace Schema**:
+    - Core fields: name, source, description
+    - Optional fields: strict (boolean for manifest requirement), category (for organization), tags (for discovery)
+    - Source formats: Local paths, GitHub object format, Git URL object format, direct URLs, tarballs
+  - **Team Configuration Workflow**:
+    - `.claude/settings.json` with extraKnownMarketplaces and autoInstall configuration
+    - Automatic plugin installation for team members on project open
+    - Support for multiple marketplaces with GitHub and Git repository sources
+  - **Team Testing Workflow**: 5-step validation process (individual plugins, marketplace config, settings.json, auto-install workflow, team experience)
+  - **MCP Server Configuration**: Complete field documentation (command, args, env, cwd) with ${CLAUDE_PLUGIN_ROOT} environment variable guidance
+  - **Hook Events**: All 10 events documented including PermissionRequest (previously missing)
+  - **CLI Commands Reference**:
+    - Plugin validation: `claude plugin validate`
+    - Plugin management: install, enable, disable, update, uninstall
+    - Marketplace management: list, add, update, remove
+    - Component testing: commands, skills, hooks
+  - **Subagent Terminology**: Standardized naming and integration with managing-agents skill
+  - **Supporting Files**: 5 comprehensive guides (plugin-spec.md, marketplace-spec.md, distribution-guide.md, validation-rules.md)
+  - **Progressive Disclosure**: Operation-based workflow documentation with detailed specifications separated into supporting files
+  - **Changelog Consolidation**: Transitioned from individual skill HISTORY.md to centralized plugin CHANGELOG.md for better maintainability
+
+**Plugin Contents**:
+- 1 skill (managing-plugins)
+- 5 supporting files with complete specifications
+
 ## [1.1.0] - 2025-11-29
 
 _Plugin expansion: Comprehensive Claude Code hook management with prompt-based and plugin hook support._
@@ -85,6 +157,7 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...v1.1.0
 [1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0
