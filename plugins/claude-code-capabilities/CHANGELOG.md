@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.3.0] - 2025-11-29
+
+_Prompt engineering mastery: Complete managing-prompts skill with advanced techniques._
+
+### Added
+
+- **managing-prompts skill**: Comprehensive prompt engineering skill covering Anthropic documentation
+  - **What it is:** Complete skill for analyzing, creating, optimizing, and improving prompts using Claude 4.5 best practices, guardrails, context management, and prompt engineering patterns
+  - **What it can do:**
+    - Analyze existing prompts against industry best practices with detailed evaluation framework
+    - Create new prompts from scratch using structured patterns and technique selection guides
+    - Optimize prompts for token efficiency, cost, performance, and quality
+    - Migrate prompts from Claude 3 to Claude 4.5 models with specific pattern updates
+    - Provide technique recommendations indexed by use case
+    - Decision support for consistency (Structured Outputs vs prefilling), guardrails, architecture patterns, and logic extraction
+    - Extended thinking implementation with budget management and multi-round strategies
+    - Prompt chaining architecture for sequential and parallel workflows
+  - **15 supporting files (14 + SKILL.md):**
+    - `analysis-patterns.md` - Common issues and quality assessment framework
+    - `architecture-patterns.md` - 5 pattern types (simple task, complex reasoning, agent, multi-window, multi-context)
+    - `claude-4-5-optimization.md` - Claude 4.5-specific optimizations including context awareness, vision improvements, crop tool usage
+    - `consistency-techniques.md` - Structured Outputs API with full implementation, JSON schema requirements, comparison tables, decision flows, error handling
+    - `context-optimization.md` - 1-hour cache TTL documentation, TTL mixing rules, pricing comparisons, decision flows, cache minimum thresholds
+    - `extended-thinking-implementation.md` - Thinking blocks + caching interaction, automatic caching behavior, token counting, cache invalidation patterns, cost optimization
+    - `extraction-decision-guide.md` - Decision trees for prompt vs script extraction
+    - `guardrails-implementation.md` - Hallucination, consistency, security, jailbreak prevention patterns
+    - `migration-guide.md` - Claude 3→4.5 migration patterns with examples
+    - `optimization-strategies.md` - 11 before/after optimization examples
+    - `output-formats.md` - Report templates for analysis, optimization, extraction, creation
+    - `prompt-chaining-architecture.md` - Sequential/parallel workflows, handoff patterns, self-correction loops
+    - `quick-reference.md` - Fast validation checklists, common issues diagnosis, decision trees
+    - `technique-reference.md` - Indexed lookup by use case with quick technique table
+
+---
+
 ## [1.2.0] - 2025-11-29
 
 _Plugin expansion: Comprehensive Claude Code plugin management._
@@ -41,7 +78,6 @@ _Plugin expansion: Comprehensive Claude Code plugin management._
 **Plugin Contents**:
 - 1 skill (managing-plugins)
 - 5 supporting files with complete specifications
-- Ready for production use with team distribution patterns
 
 ## [1.1.0] - 2025-11-29
 

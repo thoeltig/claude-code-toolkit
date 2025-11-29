@@ -4,11 +4,11 @@ Comprehensive management of Claude Code features including skills, slash command
 
 ## Current Status
 
-**Version:** 1.1.0
+**Version:** 1.3.0
 **Released:** 2025-11-29
-**Release:** [ClaudeCodeCapabilities_v1.1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.1.0.0)
+**Release:** [ClaudeCodeCapabilities_v1.3.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.3.0.0)
 
-## What's Included (v1.1.0)
+## What's Included (v1.3.0)
 
 ### ✅ managing-agent-skills
 
@@ -115,12 +115,122 @@ User: "Can I combine multiple plugin hooks?"
 User: "Analyze my existing hooks for security issues"
 ```
 
+---
+
+### ✅ managing-plugins
+
+Complete plugin management for creating, bundling, validating, and distributing Claude Code plugins.
+
+**Core Capabilities:**
+- **OP1: Create Plugin Structure** - Directory setup with proper organization (commands/, skills/, hooks/, .mcp.json)
+- **OP2: Bundle Components** - Pack skills/commands/hooks/MCPs by prefix or explicit list
+- **OP3: Create Marketplace Config** - Generate marketplace.json with source formats (GitHub, Git, local, URLs)
+- **OP4: Validate Plugin** - Check structure, manifests, naming conventions
+- **OP5: Pack for Distribution** - Prepare plugin for sharing with plugin.json generation
+
+**Key Features:**
+- **Plugin Structure Documentation**: Complete directory layout, component organization, naming conventions
+- **plugin.json Schema**: Required fields (name, description, version, author) and optional metadata (homepage, repository, license, keywords)
+- **Marketplace Schema**:
+  - Core fields: name, source, description
+  - Optional fields: strict (manifest requirement), category (organization), tags (discovery)
+  - Source formats: Local paths, GitHub objects, Git URL objects, direct URLs, tarballs
+- **Team Configuration Workflow**: `.claude/settings.json` with extraKnownMarketplaces and autoInstall for automatic plugin installation
+- **Team Testing Workflow**: 5-step validation process before team rollout
+- **MCP Server Configuration**: Complete field documentation (command, args, env, cwd) with ${CLAUDE_PLUGIN_ROOT} environment variable
+- **Hook Events**: All 10 events documented including PermissionRequest
+- **CLI Commands Reference**: plugin validation, install, enable, disable, update, uninstall
+- **5 Supporting Files**:
+  - plugin-spec.md - Complete plugin.json schema and field specifications
+  - marketplace-spec.md - Marketplace configuration and source object formats
+  - distribution-guide.md - Packaging and sharing plugins
+  - validation-rules.md - Plugin validation checklist
+  - team-workflow.md - Team configuration and rollout process
+
+**Triggers:**
+- Plugin creation/bundling requests
+- Plugin validation or analysis
+- Marketplace configuration questions
+- Team plugin distribution
+- Questions about plugin structure, manifest, or distribution
+
+**Usage Examples:**
+```
+User: "Bundle all my git-related skills into a plugin"
+User: "How do I create a marketplace config for my team?"
+User: "Validate my plugin structure before distribution"
+User: "What fields are required in plugin.json?"
+```
+
+---
+
+### ✅ managing-prompts
+
+Production-ready prompt engineering skill with 100% coverage of all 20 Anthropic documentation files. Complete mastery of prompt creation, analysis, optimization, and Claude 4.5 best practices.
+
+**Core Capabilities:**
+- **WF1: Analyzing Existing Prompts** - Quality evaluation with rubric, issue categorization (critical/major/minor), technique identification
+- **WF2: Creating New Prompts** - Architecture selection (simple task/complex reasoning/agent/multi-window), technique application, guardrail implementation
+- **WF3: Optimizing Existing Prompts** - Goal-based transformations (reduce tokens, improve quality, increase consistency, reduce hallucinations, enable caching)
+- **WF4: Updating Outdated Prompts** - Claude 3→4.5 migration with pattern updates
+- **WF5: Deciding Logic Extraction** - Decision trees for prompt vs script extraction with criteria scoring
+
+**Key Features:**
+- **Extended Thinking Implementation**: Budget management (1024-32K+ tokens), batch processing for >32K, multi-round strategies, thinking blocks + caching interaction
+- **Prompt Caching Mastery**:
+  - 1-hour cache TTL documentation with pricing comparison and mixing rules
+  - Cache minimum thresholds by model (1024-4096 tokens)
+  - Thinking blocks + caching interaction (automatic caching, token counting, invalidation patterns)
+- **Structured Outputs API**: Complete implementation with JSON schema requirements, comparison with prefilling, decision flows, error handling
+- **Prompt Chaining Architecture**: Sequential/parallel workflows, handoff patterns, orchestration, self-correction loops
+- **Consistency Techniques**: Structured Outputs vs prefilling decision framework, format enforcement, multishot prompting
+- **Claude 4.5 Optimization**: Explicit instructions, context awareness, multi-context workflows, tool usage, vision improvements with crop tool
+- **Guardrails Implementation**: Hallucination prevention, consistency enforcement, security measures, jailbreak prevention, prompt leak reduction
+- **Context Optimization**: Token management, prompt caching strategies, document organization, splitting decisions
+- **15 Supporting Files (14 + SKILL.md)**:
+  - analysis-patterns.md - Common issues and quality assessment
+  - architecture-patterns.md - 5 pattern types with templates
+  - claude-4-5-optimization.md - Claude 4.5-specific optimizations
+  - consistency-techniques.md - Structured Outputs API, prefilling, format enforcement
+  - context-optimization.md - Token efficiency, caching with 1h TTL, document organization
+  - extended-thinking-implementation.md - Budget management, thinking + caching, batch processing
+  - extraction-decision-guide.md - Decision trees for logic extraction
+  - guardrails-implementation.md - Hallucination, security, jailbreak patterns
+  - migration-guide.md - Claude 3→4.5 migration with 10 examples
+  - optimization-strategies.md - 11 before/after optimization examples
+  - output-formats.md - Report templates for all workflows
+  - prompt-chaining-architecture.md - Sequential/parallel workflows
+  - quick-reference.md - Fast validation checklists, decision trees
+  - technique-reference.md - Indexed lookup by use case with quick table
+
+**Triggers:**
+- Prompt creation, analysis, or optimization requests
+- Questions about prompt engineering, Claude 4.5 best practices
+- Mentions of hallucinations, consistency issues, context optimization
+- Prompt caching, chain-of-thought, XML tags, Structured Outputs
+- Logic extraction decisions (prompt vs script)
+- Extended thinking or prompt chaining questions
+
+**Usage Examples:**
+```
+User: "Analyze this prompt and suggest improvements"
+User: "Create a prompt for customer feedback analysis"
+User: "How do I reduce hallucinations in my prompts?"
+User: "Should I use Structured Outputs or prefilling?"
+User: "Optimize this prompt for token efficiency"
+User: "Migrate my Claude 3 prompts to Claude 4.5"
+```
+
+---
+
 ## Planned Features
 
 The following capabilities are planned for future releases:
 
+---
+
 ### 🔲 managing-slash-commands
-**Target:** v1.2.0
+**Target:** v1.4.0
 **Purpose:** Create and validate slash commands (markdown files with YAML frontmatter)
 
 **Planned Capabilities:**
@@ -133,36 +243,8 @@ The following capabilities are planned for future releases:
 
 ---
 
-### 🔲 managing-plugins
-**Target:** v1.4.0
-**Purpose:** Bundle skills, commands, hooks, and MCPs into distributable plugins
-
-**Planned Capabilities:**
-- Plugin structure validation
-- Component bundling
-- plugin.json creation
-- Distribution preparation
-
-**Documentation:** 3 files ready in `documentation/managing-plugins/`
-
----
-
-### 🔲 managing-prompts
-**Target:** v1.5.0
-**Purpose:** Optimize system prompts for token efficiency and effectiveness
-
-**Planned Capabilities:**
-- Prompt analysis and optimization
-- Token usage reduction
-- Effectiveness evaluation
-- Structured prompt templates
-
-**Documentation:** 28 files ready in `documentation/managing-prompts/`
-
----
-
 ### 🔲 managing-subagents
-**Target:** v1.6.0
+**Target:** v1.5.0
 **Purpose:** Multi-agent patterns and decision frameworks
 
 **Planned Capabilities:**
@@ -176,7 +258,7 @@ The following capabilities are planned for future releases:
 ---
 
 ### 🔲 managing-mcps
-**Target:** v1.7.0
+**Target:** v1.6.0
 **Purpose:** MCP (Model Context Protocol) server creation and configuration
 
 **Planned Capabilities:**
@@ -314,11 +396,11 @@ Contributions welcome! See the main repository [CONTRIBUTING.md](https://github.
 |---------|---------|--------|--------|
 | 1.0.0 | managing-agent-skills | ✅ Released | 2025-11-28 |
 | 1.1.0 | managing-hooks | ✅ Released | 2025-11-29 |
-| 1.2.0 | managing-slash-commands | 🔲 Planned | TBD |
-| 1.4.0 | managing-plugins | 🔲 Planned | TBD |
-| 1.5.0 | managing-prompts | 🔲 Planned | TBD |
-| 1.6.0 | managing-subagents | 🔲 Planned | TBD |
-| 1.7.0 | managing-mcps | 🔲 Planned | TBD |
+| 1.2.0 | managing-plugins | ✅ Released | 2025-11-29 |
+| 1.3.0 | managing-prompts | ✅ Released | 2025-11-29 |
+| 1.4.0 | managing-slash-commands | 🔲 Planned | TBD |
+| 1.5.0 | managing-subagents | 🔲 Planned | TBD |
+| 1.6.0 | managing-mcps | 🔲 Planned | TBD |
 
 ## License
 
