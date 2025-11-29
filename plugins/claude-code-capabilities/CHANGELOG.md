@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-11-29
+
+_Plugin expansion: Comprehensive Claude Code hook management with prompt-based and plugin hook support._
+
+### Added
+
+- **managing-hooks skill**: Complete hook management for Claude Code including command-based and prompt-based hooks
+  - **5 Core Workflows**: Hook creation, analysis, updating, working with plugin hooks, and suggesting hook creation
+  - **Command Hooks** (type: "command"): Complete coverage of bash/python-based hook scripts with security validation
+  - **Prompt-based Hooks** (type: "prompt"): Comprehensive guide for LLM-powered hook decisions
+    - LLM response schemas with decision/reason/continue fields
+    - 4 core decision patterns: task completion analysis, semantic validation, context-aware permissions, subagent verification
+    - Performance tuning and cost considerations
+  - **Plugin Hooks**: Distributed hook composition covering ${CLAUDE_PLUGIN_ROOT} and ${CLAUDE_ENV_FILE} variables
+    - Plugin hook merging behavior and execution ordering
+    - Multi-plugin scenarios (complementary, competing, dependent)
+    - Plugin composition patterns with real-world examples
+  - **All 10 Hook Events**: Complete documentation
+    - Tool-based: PreToolUse, PermissionRequest, PostToolUse
+    - Lifecycle: SessionStart, SessionEnd
+    - Agent: Stop, SubagentStop
+    - Context: UserPromptSubmit, Notification, PreCompact
+  - **MCP Tool Integration**: Matching patterns for Model Context Protocol tools (mcp__server__tool naming), consolidated in configuration-guide.md
+  - **Input/Output Schemas**: Complete reference for all 10 hook events with tool examples
+  - **Real-world Examples**: 3 production-ready examples
+    - Intelligent Stop hook using prompt-based decisions
+    - Python formatter plugin with full structure and scripts
+    - MCP tool security and auditing patterns
+  - **Supporting Files**: 9 comprehensive guides
+    - prompt-hooks-guide.md: LLM-powered hooks with response schemas and patterns
+    - plugin-hooks-guide.md: Distributed hook composition and multi-plugin scenarios
+    - hook-schemas-reference.md: Complete input/output schemas for all 10 events
+    - hook-types-reference.md: Detailed specifications for all hook event types
+    - configuration-guide.md: JSON structure, matcher patterns, and MCP tool integration
+    - official-response-schema.md: Official Claude Code hook response schema
+    - script-examples.md: Bash and Python examples from Claude cookbooks
+    - security-checklist.md: Comprehensive security validation
+    - debugging-guide.md: Troubleshooting and activation issues
+  - **Progressive Disclosure**: 9 supporting files + 3 examples + 3 templates organized by complexity level
+  - **Token Optimization**: SKILL.md 702 lines (~4,914-7,020 tokens) with progressive disclosure architecture
+
+**Plugin Contents**:
+- 1 skill (managing-hooks)
+- 15 supporting files with progressive disclosure architecture
+
+---
+
 ## [1.0.0] - 2025-11-28
 
 _Initial release with managing-agent-skills skill._
@@ -38,5 +85,6 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...v1.1.0
 [1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0
