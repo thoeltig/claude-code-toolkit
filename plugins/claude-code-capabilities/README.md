@@ -4,15 +4,13 @@ Comprehensive management of Claude Code features including skills, slash command
 
 ## Current Status
 
-**Version:** 1.0.0
-**Released:** 2025-11-28
-**Release:** [ClaudeCodeCapabilities_v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0)
+**Version:** 1.1.0
+**Released:** 2025-11-29
+**Release:** [ClaudeCodeCapabilities_v1.1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.1.0.0)
 
-## What's Included (v1.0.0)
+## What's Included (v1.1.0)
 
 ### ✅ managing-agent-skills
-
-**Status:** Production-ready (Quality: 9.86/10)
 
 A comprehensive skill for creating, analyzing, updating, and improving Claude Code agent skills.
 
@@ -60,12 +58,69 @@ User: "Should I convert this repeated logic into a skill?"
 User: "Update this skill with the latest best practices"
 ```
 
+---
+
+### ✅ managing-hooks
+
+Comprehensive management of Claude Code event-driven automation hooks, covering both command-based and prompt-based hooks.
+
+**Core Capabilities:**
+- **WF1: Creating Hooks** - Complete workflow from hook type selection to production deployment
+  - Step 3.5: Prompt-based hooks for LLM-powered decisions
+- **WF2: Analyzing Hooks** - Quality evaluation and security assessment
+- **WF3: Updating Hooks** - Systematic update process for outdated hooks
+- **WF4: Working with Plugin Hooks** - Distributed hook composition and multi-plugin scenarios
+- **WF5: Suggesting Hook Creation** - Decision framework for automation vs inline logic
+
+**Key Features:**
+- **Complete Event Coverage** (10 events):
+  - Tool-based: PreToolUse, PermissionRequest, PostToolUse
+  - Lifecycle: SessionStart, SessionEnd
+  - Agent: Stop, SubagentStop
+  - Context: UserPromptSubmit, Notification, PreCompact
+- **Command Hooks** (type: "command"): Bash/Python scripts with security validation
+- **Prompt-based Hooks** (type: "prompt"): LLM-powered decisions with response schemas
+  - 4 decision patterns: task completion, semantic validation, context-aware permissions, subagent verification
+- **Plugin Hooks**: Distributed hook composition with ${CLAUDE_PLUGIN_ROOT} and ${CLAUDE_ENV_FILE}
+  - Multi-plugin scenarios and execution ordering
+- **MCP Tool Integration**: Matching patterns for Model Context Protocol tools (mcp__server__tool)
+- **Complete Input/Output Schemas**: All 10 hook events with tool examples
+- **8 Supporting Guides**:
+  - prompt-hooks-guide.md
+  - plugin-hooks-guide.md
+  - hook-schemas-reference.md (complete schemas)
+  - hook-types-reference.md
+  - configuration-guide.md
+  - script-examples.md
+  - security-checklist.md
+  - debugging-guide.md
+- **3 Real-world Examples**:
+  - Intelligent Stop hook using prompt-based decisions
+  - Python formatter plugin with full structure
+  - MCP tool security and auditing patterns
+- **Progressive Disclosure**: 9 guides + 3 examples, organized by complexity
+
+**Triggers:**
+- Hook creation requests
+- Hook analysis/improvement
+- Event-driven automation questions
+- Questions about hook types, configuration, security
+- Plugin hook composition patterns
+
+**Usage Examples:**
+```
+User: "Create a hook to format Python files after editing"
+User: "How do I use prompt-based hooks for intelligent decisions?"
+User: "Can I combine multiple plugin hooks?"
+User: "Analyze my existing hooks for security issues"
+```
+
 ## Planned Features
 
 The following capabilities are planned for future releases:
 
 ### 🔲 managing-slash-commands
-**Target:** v1.1.0
+**Target:** v1.2.0
 **Purpose:** Create and validate slash commands (markdown files with YAML frontmatter)
 
 **Planned Capabilities:**
@@ -78,22 +133,8 @@ The following capabilities are planned for future releases:
 
 ---
 
-### 🔲 managing-hooks
-**Target:** v1.2.0
-**Purpose:** Configure and manage event-driven automation hooks
-
-**Planned Capabilities:**
-- Hook configuration (SessionStart, PreCompact, etc.)
-- Event-driven workflow setup
-- Hook testing and validation
-- Integration patterns
-
-**Documentation:** 9 files ready in `documentation/managing-hooks/`
-
----
-
 ### 🔲 managing-plugins
-**Target:** v1.3.0
+**Target:** v1.4.0
 **Purpose:** Bundle skills, commands, hooks, and MCPs into distributable plugins
 
 **Planned Capabilities:**
@@ -107,7 +148,7 @@ The following capabilities are planned for future releases:
 ---
 
 ### 🔲 managing-prompts
-**Target:** v1.4.0
+**Target:** v1.5.0
 **Purpose:** Optimize system prompts for token efficiency and effectiveness
 
 **Planned Capabilities:**
@@ -121,7 +162,7 @@ The following capabilities are planned for future releases:
 ---
 
 ### 🔲 managing-subagents
-**Target:** v1.5.0
+**Target:** v1.6.0
 **Purpose:** Multi-agent patterns and decision frameworks
 
 **Planned Capabilities:**
@@ -135,7 +176,7 @@ The following capabilities are planned for future releases:
 ---
 
 ### 🔲 managing-mcps
-**Target:** v1.6.0
+**Target:** v1.7.0
 **Purpose:** MCP (Model Context Protocol) server creation and configuration
 
 **Planned Capabilities:**
@@ -176,6 +217,8 @@ xcopy /E /I plugins\claude-code-capabilities %USERPROFILE%\.claude\plugins\claud
 
 ## Usage
 
+### Managing Agent Skills
+
 The managing-agent-skills skill activates automatically when:
 - You mention "skill", "agent capability", or "reusable workflow" in creation/improvement context
 - You ask questions about skill concepts, structure, or authoring
@@ -192,6 +235,31 @@ Claude: [Activates managing-agent-skills skill, performs WF2: Analysis with rubr
 
 You: "Should this logic be a skill?"
 Claude: [Activates managing-agent-skills skill, uses WF3: Conversion decision matrix]
+```
+
+### Managing Hooks
+
+The managing-hooks skill activates automatically when:
+- You request hook creation or configuration
+- You ask about hook types, event lifecycle, or event-driven automation
+- You mention specific hook events (PreToolUse, SessionStart, Stop, etc.)
+- You want to validate, analyze, or debug existing hooks
+- You ask about prompt-based or plugin hooks
+- You need MCP tool integration patterns
+
+**Example Conversations:**
+```
+You: "Create a hook to format Python files after I edit them"
+Claude: [Activates managing-hooks skill, walks through WF1: Creating]
+
+You: "How do prompt-based hooks work for intelligent decisions?"
+Claude: [Activates managing-hooks skill, covers prompt-based patterns with examples]
+
+You: "Can multiple plugins' hooks work together?"
+Claude: [Activates managing-hooks skill, explains WF2.5: Plugin composition patterns]
+
+You: "I need to validate all MCP write operations"
+Claude: [Activates managing-hooks skill, covers WF3: MCP tool targeting]
 ```
 
 ## Documentation Sources
@@ -213,22 +281,25 @@ claude-code-capabilities/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin metadata
 ├── skills/
-│   └── managing-agent-skills/   # v1.0.0 - Production ready
+│   ├── managing-agent-skills/
+│   │   ├── SKILL.md            # Main skill file with workflows
+│   │   ├── analysis-framework.md
+│   │   ├── best-practices.md
+│   │   ├── creation-checklist.md
+│   │   ├── examples/           # Example skills
+│   │   └── template/           # Skill templates
+│   └── managing-hooks/
 │       ├── SKILL.md            # Main skill file with workflows
-│       ├── CHANGELOG.md        # Version history
-│       ├── analysis-framework.md
-│       ├── best-practices.md
-│       ├── creation-checklist.md
-│       ├── quick-reference.md
-│       ├── examples/           # Example skills
-│       └── template/           # Skill templates
-├── documentation/              # Source docs for future skills
-│   ├── managing-slash-commands/  (8 files)
-│   ├── managing-hooks/           (9 files)
-│   ├── managing-plugins/         (3 files)
-│   ├── managing-prompts/         (28 files)
-│   ├── managing-subagents/       (1 file)
-│   └── managing-mcps/            (9 files)
+│       ├── prompt-hooks-guide.md       # LLM-powered hook decisions
+│       ├── plugin-hooks-guide.md       # Distributed hook composition
+│       ├── hook-schemas-reference.md   # Complete input/output schemas
+│       ├── hook-types-reference.md
+│       ├── configuration-guide.md
+│       ├── script-examples.md
+│       ├── security-checklist.md
+│       ├── debugging-guide.md
+│       ├── real-world-examples/
+│       └── templates/
 ├── CHANGELOG.md
 └── README.md
 ```
@@ -237,23 +308,17 @@ claude-code-capabilities/
 
 Contributions welcome! See the main repository [CONTRIBUTING.md](https://github.com/thoeltig/claude-code-toolkit/blob/develop/CONTRIBUTING.md) for guidelines.
 
-**Priority areas for v1.1.0+:**
-- Implementing planned skills (managing-slash-commands next)
-- Testing and validation
-- Documentation improvements
-- Community examples and templates
-
 ## Roadmap
 
 | Version | Feature | Status | Target |
 |---------|---------|--------|--------|
 | 1.0.0 | managing-agent-skills | ✅ Released | 2025-11-28 |
-| 1.1.0 | managing-slash-commands | 🔲 Planned | TBD |
-| 1.2.0 | managing-hooks | 🔲 Planned | TBD |
-| 1.3.0 | managing-plugins | 🔲 Planned | TBD |
-| 1.4.0 | managing-prompts | 🔲 Planned | TBD |
-| 1.5.0 | managing-subagents | 🔲 Planned | TBD |
-| 1.6.0 | managing-mcps | 🔲 Planned | TBD |
+| 1.1.0 | managing-hooks | ✅ Released | 2025-11-29 |
+| 1.2.0 | managing-slash-commands | 🔲 Planned | TBD |
+| 1.4.0 | managing-plugins | 🔲 Planned | TBD |
+| 1.5.0 | managing-prompts | 🔲 Planned | TBD |
+| 1.6.0 | managing-subagents | 🔲 Planned | TBD |
+| 1.7.0 | managing-mcps | 🔲 Planned | TBD |
 
 ## License
 
