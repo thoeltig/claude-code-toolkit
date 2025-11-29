@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-29
+
+_Plugin expansion: Comprehensive Claude Code plugin management._
+
+### Added
+
+- **managing-plugins skill**: Complete plugin management for creating, bundling, validating, and distributing Claude Code plugins
+  - **5 Core Operations**: Create plugin structure, bundle components by prefix, create marketplace config, validate plugins, pack for distribution
+  - **Plugin Structure Documentation**: Directory layout, component organization (commands/, skills/, hooks/, agents/, .mcp.json), naming conventions
+  - **plugin.json Schema**: Complete field specifications with optional metadata (author, homepage, repository, license, keywords)
+  - **Marketplace Schema**:
+    - Core fields: name, source, description
+    - Optional fields: strict (boolean for manifest requirement), category (for organization), tags (for discovery)
+    - Source formats: Local paths, GitHub object format, Git URL object format, direct URLs, tarballs
+  - **Team Configuration Workflow**:
+    - `.claude/settings.json` with extraKnownMarketplaces and autoInstall configuration
+    - Automatic plugin installation for team members on project open
+    - Support for multiple marketplaces with GitHub and Git repository sources
+  - **Team Testing Workflow**: 5-step validation process (individual plugins, marketplace config, settings.json, auto-install workflow, team experience)
+  - **MCP Server Configuration**: Complete field documentation (command, args, env, cwd) with ${CLAUDE_PLUGIN_ROOT} environment variable guidance
+  - **Hook Events**: All 10 events documented including PermissionRequest (previously missing)
+  - **CLI Commands Reference**:
+    - Plugin validation: `claude plugin validate`
+    - Plugin management: install, enable, disable, update, uninstall
+    - Marketplace management: list, add, update, remove
+    - Component testing: commands, skills, hooks
+  - **Subagent Terminology**: Standardized naming and integration with managing-agents skill
+  - **Supporting Files**: 5 comprehensive guides (plugin-spec.md, marketplace-spec.md, distribution-guide.md, validation-rules.md)
+  - **Progressive Disclosure**: Operation-based workflow documentation with detailed specifications separated into supporting files
+  - **Changelog Consolidation**: Transitioned from individual skill HISTORY.md to centralized plugin CHANGELOG.md for better maintainability
+
+**Plugin Contents**:
+- 1 skill (managing-plugins)
+- 5 supporting files with complete specifications
+- Ready for production use with team distribution patterns
+
 ## [1.1.0] - 2025-11-29
 
 _Plugin expansion: Comprehensive Claude Code hook management with prompt-based and plugin hook support._
@@ -85,6 +121,7 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...v1.1.0
 [1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0
