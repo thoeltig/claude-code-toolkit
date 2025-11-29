@@ -7,6 +7,41 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+---
+
+## [1.4.0.0] - 2025-11-29
+
+_Marketplace release with managing-plugins skill implementation._
+
+### Added
+
+- claude-code-capabilities plugin v1.3.0 expansion: **managing-prompts skill** - production-ready prompt engineering mastery ([ClaudeCodeCapabilities_v1.3.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.3.0.0))
+  - Complete skill for analyzing, creating, optimizing, and improving prompts using Claude 4.5 best practices
+  - 15 supporting files (14 + SKILL.md) covering all prompt engineering aspects
+  - 100% coverage of all 20 Anthropic prompt engineering documentation files
+  - **Major improvements:**
+    - Comprehensive 1-hour cache TTL documentation with pricing comparison, mixing rules, and decision flows
+    - Thinking blocks + prompt caching interaction fully documented (automatic caching, token counting, invalidation patterns)
+    - Expanded Structured Outputs API implementation with JSON schema requirements, comparison tables, and error handling
+    - Added crop tool reference for vision optimization
+    - Standardized terminology capitalization throughout
+  - **5 core workflows:** Analyzing prompts, creating prompts, optimizing prompts, updating outdated prompts, deciding logic extraction
+  - **Advanced techniques:** Extended thinking with budget management, prompt chaining architecture, consistency enforcement (Structured Outputs vs prefilling), guardrails implementation, context optimization with caching strategies
+  - Production-ready: 95% documentation coverage, all major gaps addressed, ready for immediate use
+
+
+- claude-code-capabilities plugin v1.2.0 expansion: managing-plugins skill for creating, packing, bundling, and managing Claude Code plugins ([ClaudeCodeCapabilities_v1.2.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.2.0.0))
+  - 5 core operations: Create plugin structure, bundle components by prefix, create marketplace config, validate plugins, pack for distribution
+  - Complete marketplace schema documentation including optional fields (strict, category, tags) and source object formats (GitHub, Git repositories)
+  - Team configuration workflow with `.claude/settings.json` guidance for automatic plugin installation
+  - Team testing workflow with 5-step validation process before rollout
+  - MCP server configuration fields documented (command, args, env, cwd)
+  - All 10 hook events documented with PermissionRequest added
+  - CLI commands reference: plugin validation, management, and marketplace operations
+  - Subagent terminology standardized and aligned with managing-agents skill
+  - Progressive disclosure: 5 supporting files with detailed specifications and real-world patterns
+  - Token optimization: 223-line SKILL.md with structured operations and actionable workflows
+
 ## [1.3.0.0] - 2025-11-29
 
 _Marketplace release with comprehensive Claude Code hook management._
@@ -58,7 +93,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.3.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.4.0.0...HEAD
+[1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.3.0.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.1.0.0

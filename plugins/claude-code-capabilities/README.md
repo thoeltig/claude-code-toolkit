@@ -344,6 +344,58 @@ You: "I need to validate all MCP write operations"
 Claude: [Activates managing-hooks skill, covers WF3: MCP tool targeting]
 ```
 
+### Managing Plugins
+
+The managing-plugins skill activates automatically when:
+- You request plugin creation, bundling, or packaging
+- You ask about plugin structure, plugin.json, or marketplace configuration
+- You mention plugin validation or distribution
+- You ask about team plugin workflows or autoInstall configuration
+- You need to bundle skills, commands, hooks, or MCPs
+
+**Example Conversations:**
+```
+You: "Bundle all my git-related skills into a plugin"
+Claude: [Activates managing-plugins skill, walks through OP2: Bundle Components]
+
+You: "Create a marketplace config for my team plugins"
+Claude: [Activates managing-plugins skill, covers OP3: Create Marketplace Config]
+
+You: "Validate my plugin structure before sharing"
+Claude: [Activates managing-plugins skill, performs OP4: Validate Plugin]
+
+You: "How do I set up autoInstall for team members?"
+Claude: [Activates managing-plugins skill, explains team configuration workflow]
+```
+
+### Managing Prompts
+
+The managing-prompts skill activates automatically when:
+- You request prompt creation, analysis, or optimization
+- You ask about prompt engineering techniques or best practices
+- You mention Claude 4.5 optimization, hallucinations, or consistency issues
+- You ask about Structured Outputs, prompt caching, or extended thinking
+- You need to migrate prompts from Claude 3 to Claude 4.5
+- You want to decide if logic should be in a prompt vs script
+
+**Example Conversations:**
+```
+You: "Analyze this prompt and suggest improvements"
+Claude: [Activates managing-prompts skill, performs WF1: Analyzing with rubric]
+
+You: "Create a prompt for analyzing customer feedback"
+Claude: [Activates managing-prompts skill, walks through WF2: Creating with architecture selection]
+
+You: "How do I reduce hallucinations in my prompt?"
+Claude: [Activates managing-prompts skill, covers guardrails implementation patterns]
+
+You: "Should I use Structured Outputs or prefilling?"
+Claude: [Activates managing-prompts skill, provides decision flow and comparison]
+
+You: "Optimize this prompt for token efficiency"
+Claude: [Activates managing-prompts skill, performs WF3: Optimizing with caching strategies]
+```
+
 ## Documentation Sources
 
 This plugin is built from official Claude Code documentation:
@@ -361,27 +413,50 @@ Over 74 documentation files were analyzed and synthesized into the current imple
 ```
 claude-code-capabilities/
 ├── .claude-plugin/
-│   └── plugin.json              # Plugin metadata
+│   └── plugin.json                     # Plugin metadata (v1.3.0)
 ├── skills/
-│   ├── managing-agent-skills/
-│   │   ├── SKILL.md            # Main skill file with workflows
+│   ├── managing-agent-skills/          # v1.0.0
+│   │   ├── SKILL.md                    # Main skill file with workflows
 │   │   ├── analysis-framework.md
 │   │   ├── best-practices.md
 │   │   ├── creation-checklist.md
-│   │   ├── examples/           # Example skills
-│   │   └── template/           # Skill templates
-│   └── managing-hooks/
-│       ├── SKILL.md            # Main skill file with workflows
-│       ├── prompt-hooks-guide.md       # LLM-powered hook decisions
-│       ├── plugin-hooks-guide.md       # Distributed hook composition
-│       ├── hook-schemas-reference.md   # Complete input/output schemas
-│       ├── hook-types-reference.md
-│       ├── configuration-guide.md
-│       ├── script-examples.md
-│       ├── security-checklist.md
-│       ├── debugging-guide.md
-│       ├── real-world-examples/
-│       └── templates/
+│   │   ├── examples/                   # Example skills
+│   │   └── templates/                  # Skill templates
+│   ├── managing-hooks/                 # v1.1.0
+│   │   ├── SKILL.md                    # Main skill file with workflows
+│   │   ├── prompt-hooks-guide.md       # LLM-powered hook decisions
+│   │   ├── plugin-hooks-guide.md       # Distributed hook composition
+│   │   ├── hook-schemas-reference.md   # Complete input/output schemas
+│   │   ├── hook-types-reference.md
+│   │   ├── configuration-guide.md
+│   │   ├── script-examples.md
+│   │   ├── security-checklist.md
+│   │   ├── debugging-guide.md
+│   │   ├── real-world-examples/
+│   │   └── templates/
+│   ├── managing-plugins/               # v1.2.0
+│   │   ├── SKILL.md                    # Main skill file with operations
+│   │   ├── plugin-spec.md              # plugin.json schema
+│   │   ├── marketplace-spec.md         # Marketplace configuration
+│   │   ├── distribution-guide.md       # Packaging and sharing
+│   │   ├── validation-rules.md         # Plugin validation
+│   │   └── team-workflow.md            # Team configuration
+│   └── managing-prompts/               # v1.3.0
+│       ├── SKILL.md                    # Main skill file with workflows
+│       ├── analysis-patterns.md        # Common issues, quality assessment
+│       ├── architecture-patterns.md    # 5 pattern types
+│       ├── claude-4-5-optimization.md  # Claude 4.5-specific patterns
+│       ├── consistency-techniques.md   # Structured Outputs, prefilling
+│       ├── context-optimization.md     # Caching, token efficiency
+│       ├── extended-thinking-implementation.md  # Budget, caching
+│       ├── extraction-decision-guide.md         # Prompt vs script
+│       ├── guardrails-implementation.md         # Hallucination, security
+│       ├── migration-guide.md          # Claude 3→4.5 migration
+│       ├── optimization-strategies.md  # 11 before/after examples
+│       ├── output-formats.md           # Report templates
+│       ├── prompt-chaining-architecture.md      # Sequential/parallel
+│       ├── quick-reference.md          # Fast validation checklists
+│       └── technique-reference.md      # Indexed lookup by use case
 ├── CHANGELOG.md
 └── README.md
 ```
