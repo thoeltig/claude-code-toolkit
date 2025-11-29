@@ -7,6 +7,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.3.0.0] - 2025-11-29
+
+_Marketplace release with comprehensive Claude Code hook management._
+
+### Added
+
+- claude-code-capabilities plugin v1.1.0 expansion: managing-hooks skill with 5 core workflows for hook creation, analysis, updating, plugin composition, and evaluation ([ClaudeCodeCapabilities_v1.1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.1.0.0))
+  - Comprehensive documentation of all 10 hook event types including prompt-based and plugin hooks
+  - 3 real-world examples: intelligent Stop hook, Python formatter plugin, MCP tool security patterns
+  - Complete coverage: All 10 hook events (PreToolUse, PermissionRequest, PostToolUse, SessionStart, SessionEnd, Stop, SubagentStop, UserPromptSubmit, Notification, PreCompact), command and prompt-based hooks, plugin merging behavior, environment variables (${CLAUDE_PLUGIN_ROOT}, ${CLAUDE_ENV_FILE}), MCP tool integration consolidated in configuration guide
+  - Progressive disclosure: 9 supporting files, 3 working examples, 3 production-ready templates
+  - Token optimization: 702-line SKILL.md (~4,914-7,020 tokens) with MCP patterns consolidated into configuration-guide.md
+
 ## [1.2.0.0] - 2025-11-28
 
 _Marketplace release with comprehensive Claude Code capabilities management._
@@ -45,7 +58,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.3.0.0...HEAD
+[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.3.0.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.1.0.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.0.0.0
