@@ -21,14 +21,14 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.0.0 |
+| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.3.0 |
 
 ## 🎯 Plugin Highlights
 
 ### Changelog
-Professional changelog management with automatic formatting, version tracking, and migration from legacy HISTORY.md files.
+Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
 
 **Install:** `/plugin install changelog@claude-code-toolkit`
 

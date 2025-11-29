@@ -28,9 +28,8 @@ The changelog plugin provides a comprehensive skill for creating, updating, and 
 | WF1 | Create CHANGELOG.md | Initialize new changelog with format selection |
 | WF2 | Add Release Entry | Add new version with categorized changes |
 | WF3 | Update Unreleased | Track pre-release changes |
-| WF4 | Migrate HISTORY.md | Convert legacy format to CHANGELOG.md |
-| WF5 | Validate Format | Check compliance with standards |
-| WF6 | Promote Prerelease | Convert alpha/beta/rc to stable release |
+| WF4 | Validate Format | Check compliance with standards |
+| WF5 | Promote Prerelease | Convert alpha/beta/rc to stable release |
 
 ## Usage Examples
 
@@ -60,25 +59,18 @@ User: "Add this feature to the Unreleased section"
 Claude: [Uses WF3] Appends to Unreleased section for pre-release tracking
 ```
 
-### Migrate Legacy Format
-
-```
-User: "Convert our HISTORY.md to CHANGELOG.md"
-Claude: [Uses WF4] Migrates legacy format preserving all content
-```
-
 ### Validate Before Release
 
 ```
 User: "Check if our changelog follows the standards"
-Claude: [Uses WF5] Validates format, categories, dates, and content
+Claude: [Uses WF4] Validates format, categories, dates, and content
 ```
 
 ### Promote Prerelease to Stable
 
 ```
 User: "Promote 3.0.0-rc.2 to stable 3.0.0"
-Claude: [Uses WF6] Handles prerelease promotion with 3 approaches
+Claude: [Uses WF5] Handles prerelease promotion with 3 approaches
 ```
 
 ## Key Features
@@ -88,6 +80,7 @@ Claude: [Uses WF6] Handles prerelease promotion with 3 approaches
 - **Keep a Changelog**: Simpler format with 6 categories
 - Automatic validation against standards
 - Semantic Versioning compliance
+- Format validation and best practices enforcement
 
 ### Writing Quality
 - Remove noise (dotfiles, dev deps, style tweaks)
@@ -155,9 +148,9 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 ## Tool Requirements
 
 The skill uses the following Claude Code tools:
-- **Read**: Load existing CHANGELOG.md or HISTORY.md files
-- **Write**: Create new CHANGELOG.md files
-- **Edit**: Update existing changelogs
+- **Read**: Load existing CHANGELOG.md file
+- **Write**: Create new CHANGELOG.md file
+- **Edit**: Update existing changelog
 
 ## Best Practices
 

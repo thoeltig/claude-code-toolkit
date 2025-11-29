@@ -7,6 +7,16 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-11-29
+
+### Changed
+
+- Removed WF4 (Migrate HISTORY.md) workflow - no longer needed for changelog management
+- Simplified skill focus to core changelog operations: create, add release, update unreleased, validate, promote prerelease
+- Updated skill description to remove HISTORY.md migration references
+- Renumbered workflows: WF5 → WF4 (Validate Format), WF6 → WF5 (Promote Prerelease)
+- Updated all documentation, examples, and quick reference tables to reflect workflow changes
+
 ## [1.0.0] - 2025-11-26
 
 _First release._
@@ -45,5 +55,6 @@ _First release._
 - Expand Quick Reference to include all 6 workflows in table format
 - Replaced HISTORY.md approach with CHANGELOG.md standard
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Changelog-v1.0.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Changelog-v1.1.0.0...HEAD
+[1.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.1.0.0
 [1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog-v1.0.0.0

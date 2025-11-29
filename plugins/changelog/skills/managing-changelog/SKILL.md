@@ -1,6 +1,6 @@
 ---
 name: managing-changelog
-description: Creates, updates, and maintains CHANGELOG.md files following Common Changelog and Keep a Changelog standards. Use when creating changelogs, adding release entries, updating unreleased sections, migrating from HISTORY.md, validating changelog format, or user mentions 'changelog', 'release notes', 'version history', 'add to changelog', 'update changelog', 'create changelog', 'change log format', or needs to document version changes.
+description: Creates, updates, and maintains CHANGELOG.md files following Common Changelog and Keep a Changelog standards. Use when creating changelogs, adding release entries, updating unreleased sections, validating changelog format, or user mentions 'changelog', 'release notes', 'version history', 'add to changelog', 'update changelog', 'create changelog', 'change log format', or needs to document version changes.
 allowed-tools: Read, Write, Edit
 ---
 
@@ -14,7 +14,6 @@ Activate when:
 - Creating new CHANGELOG.md
 - Adding release entry
 - Updating Unreleased section
-- Migrating HISTORY.md → CHANGELOG.md
 - Validating changelog format
 - User: "changelog", "release notes", "version history", "add to changelog", "update changelog"
 
@@ -25,9 +24,8 @@ Activate when:
 | WF1 | Create CHANGELOG.md | Initial setup |
 | WF2 | Add Release Entry | New version |
 | WF3 | Update Unreleased | Pre-release changes |
-| WF4 | Migrate HISTORY.md | Legacy conversion |
-| WF5 | Validate Format | Quality check |
-| WF6 | Promote Prerelease | Stabilize alpha/beta/rc |
+| WF4 | Validate Format | Quality check |
+| WF5 | Promote Prerelease | Stabilize alpha/beta/rc |
 
 ### WF1: Create CHANGELOG.md
 
@@ -137,40 +135,7 @@ Activate when:
 
 3. **Use Edit tool** to append changes
 
-### WF4: Migrate HISTORY.md → CHANGELOG.md
-
-**Purpose**: Convert HISTORY.md format to CHANGELOG.md standard
-
-**When**: User requests migration, modernizing docs
-
-**Execution**:
-
-1. **Read HISTORY.md**
-
-2. **Parse structure**
-   - Extract VERSION entries
-   - Extract change descriptions
-   - Extract dates, authors, references
-
-3. **Convert format**
-   - HISTORY.md: `## VERSION: X.Y.Z` → CHANGELOG.md: `## [X.Y.Z] - YYYY-MM-DD`
-   - Metadata: Extract relevant info, discard validation entries
-   - SOURCES: Convert to references in changes
-   - CHANGES: Map to categories (Changed/Added/Removed/Fixed)
-
-4. **Write CHANGELOG.md**
-   - Use WF1 to create structure
-   - Add converted entries using WF2 format
-
-5. **Preserve HISTORY.md** (backup)
-   - Rename to HISTORY.md.backup or move to legacy/
-   - Don't delete original
-
-6. **Report**
-   - Versions migrated: count
-   - Manual review needed: breaking changes, complex entries
-
-### WF5: Validate Format
+### WF4: Validate Format
 
 **Purpose**: Check changelog follows standards
 
@@ -207,7 +172,7 @@ Common Issues:
 
 Report issues + suggestions
 
-### WF6: Promote Prerelease
+### WF5: Promote Prerelease
 
 **Purpose**: Convert prerelease to stable release
 
@@ -468,6 +433,5 @@ Output (CHANGELOG.md):
 | Create | WF1 | Initial CHANGELOG.md |
 | Add release | WF2 | ## [X.Y.Z] - DATE |
 | Update ongoing | WF3 | Append to Unreleased |
-| Migrate | WF4 | HISTORY.md → CHANGELOG.md |
-| Validate | WF5 | Format compliance check |
-| Promote prerelease | WF6 | Alpha/beta/rc → stable |
+| Validate | WF4 | Format compliance check |
+| Promote prerelease | WF5 | Alpha/beta/rc → stable |

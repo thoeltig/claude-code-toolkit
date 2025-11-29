@@ -7,6 +7,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Changed
+
+- **changelog plugin** ([v1.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog_v1.1.0.0)):
+  - Removed HISTORY.md migration workflow (WF4) - simplified skill to focus on core changelog operations (create, add release, update unreleased, validate, promote prerelease)
+
 ---
 
 ## [1.4.0.0] - 2025-11-29
