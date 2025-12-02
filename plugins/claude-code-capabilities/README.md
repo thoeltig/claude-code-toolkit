@@ -299,7 +299,7 @@ xcopy /E /I plugins\claude-code-capabilities %USERPROFILE%\.claude\plugins\claud
 
 ## Usage
 
-## Model Selection Guide
+### Model Selection Guide
 
 **Haiku/Sonnet/Opus** are Claude model tiers with cost/capability trade-offs:
 - **Haiku**: ~$0.25/M output tokens - efficient for synthesis (organizing/formatting known information)
@@ -347,6 +347,8 @@ Claude: [Activates managing-agent-skills skill, uses WF3: Conversion decision ma
 
 **Pattern**: Haiku write → Sonnet validate. If WF2 reports minimal changes, Haiku quality was sufficient.
 
+---
+
 ### Managing Hooks
 
 The managing-hooks skill activates automatically when:
@@ -382,6 +384,8 @@ Claude: [Activates managing-hooks skill, covers WF3: MCP tool targeting]
   - Permission scope and data access
 - **Sandbox testing**: Test command-based hooks in isolated environment before production to verify runtime behavior
 
+---
+
 ### Managing Plugins
 
 The managing-plugins skill activates automatically when:
@@ -412,6 +416,8 @@ Claude: [Activates managing-plugins skill, explains team configuration workflow]
 - **Model tier**: Haiku for creation (OP1-3), Sonnet for validation (OP4)
 - **Rationale**: Validation checks schema compliance, file organization, naming conventions (deterministic, not reasoning-heavy)
 - **Cost efficiency**: Haiku synthesis → Sonnet structural validation typically requires minimal corrections
+
+---
 
 ### Managing Prompts
 
