@@ -299,6 +299,17 @@ xcopy /E /I plugins\claude-code-capabilities %USERPROFILE%\.claude\plugins\claud
 
 ## Usage
 
+## Model Selection Guide
+
+**Haiku/Sonnet/Opus** are Claude model tiers with cost/capability trade-offs:
+- **Haiku**: ~$0.25/M output tokens - efficient for synthesis (organizing/formatting known information)
+- **Sonnet**: ~$3/M output tokens - balanced for evaluation (quality assessment, reasoning, security analysis)
+- **Opus**: ~$15/M output tokens - reserve for complex novel reasoning
+
+**Token**: Unit of text processing (~4 characters). More tokens = higher API costs. Efficient data formats (JSON/YAML) and model selection reduce token usage.
+
+---
+
 ### Managing Agent Skills
 
 The managing-agent-skills skill activates automatically when:
@@ -318,6 +329,23 @@ Claude: [Activates managing-agent-skills skill, performs WF2: Analysis with rubr
 You: "Should this logic be a skill?"
 Claude: [Activates managing-agent-skills skill, uses WF3: Conversion decision matrix]
 ```
+
+#### Technical Implementation Notes
+
+**Information Gathering**
+- **WebFetch**: Returns 30-80% summarized content. Complex topics need 2-3+ fetches (overview → details → verification)
+- **Data format efficiency**: JSON/YAML (30% less context) > Markdown (20% less) > Plain text (highest parsing overhead)
+- **Local files preferred**: No summarization loss, complete access
+- **Validation required**: WF1 (create) and WF2 (analyze) are separate passes. Skipping WF2 risks incomplete/incorrect skills
+
+**Model Selection**
+| Stage | Model | Rationale | Cost |
+|-------|-------|-----------|------|
+| WF1: Write | Haiku | Synthesis: organize info into structured SKILL.md | Base |
+| WF2: Validate | Sonnet | Evaluation: 14-point rubric, gap analysis | ~3x Haiku |
+| Edge cases | Opus | Complex structural issues only | ~15x Haiku |
+
+**Pattern**: Haiku write → Sonnet validate. If WF2 reports minimal changes, Haiku quality was sufficient.
 
 ### Managing Hooks
 
@@ -344,6 +372,16 @@ You: "I need to validate all MCP write operations"
 Claude: [Activates managing-hooks skill, covers WF3: MCP tool targeting]
 ```
 
+#### Technical Implementation Notes
+
+**Security Validation**
+- **Model tier**: Sonnet minimum for WF2 (analysis). Haiku cannot assess security implications adequately
+- **User review required**: Sonnet validates structure/syntax, not intent or side effects. Review:
+  - Command correctness and system impact
+  - Event trigger timing and lifecycle edge cases
+  - Permission scope and data access
+- **Sandbox testing**: Test command-based hooks in isolated environment before production to verify runtime behavior
+
 ### Managing Plugins
 
 The managing-plugins skill activates automatically when:
@@ -367,6 +405,13 @@ Claude: [Activates managing-plugins skill, performs OP4: Validate Plugin]
 You: "How do I set up autoInstall for team members?"
 Claude: [Activates managing-plugins skill, explains team configuration workflow]
 ```
+
+#### Technical Implementation Notes
+
+**Structural Validation**
+- **Model tier**: Haiku for creation (OP1-3), Sonnet for validation (OP4)
+- **Rationale**: Validation checks schema compliance, file organization, naming conventions (deterministic, not reasoning-heavy)
+- **Cost efficiency**: Haiku synthesis → Sonnet structural validation typically requires minimal corrections
 
 ### Managing Prompts
 
@@ -395,6 +440,18 @@ Claude: [Activates managing-prompts skill, provides decision flow and comparison
 You: "Optimize this prompt for token efficiency"
 Claude: [Activates managing-prompts skill, performs WF3: Optimizing with caching strategies]
 ```
+
+#### Technical Implementation Notes
+
+**Reasoning-Heavy Workflows**
+- **Model tier**: Sonnet minimum for all workflows (WF1-5). No Haiku synthesis pass.
+- **Rationale**: Prompt engineering requires reasoning, not just formatting:
+  - Quality assessment: Evaluate guardrails, hallucination risks, technique trade-offs
+  - Architecture decisions: Structured Outputs vs prefilling, sequential vs parallel chaining
+  - Claude 4.5 optimization: When to apply extended thinking, caching, or chain-of-thought
+  - Technique selection: Context-dependent reasoning about what patterns apply
+- **Cannot separate write/validate**: Analysis and creation are intertwined (unlike skill synthesis)
+- **Opus**: Reserve for novel patterns or security-critical prompt applications
 
 ## Documentation Sources
 
