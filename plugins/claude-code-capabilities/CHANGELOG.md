@@ -9,6 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2025-12-03
+
+_Slash command mastery: Comprehensive management of custom slash commands with ecosystem integration._
+
+### Added
+
+- **managing-slash-commands skill**: Complete skill for creating, analyzing, and improving slash commands
+  - **What it is:** Comprehensive skill for managing custom slash commands including creation workflows, quality analysis, and best practices aligned with official Claude Code documentation
+  - **What it can do:**
+    - Create new slash commands from requirements through production with proper frontmatter configuration
+    - Analyze existing commands for quality, security, and adherence to best practices
+    - Suggest command vs skill conversion with decision frameworks
+    - Update outdated slash command information and patterns
+    - Provide guidance on extended thinking, programmatic invocation, and ecosystem integration
+  - **8 supporting files:**
+    - `best-practices.md` - Extended thinking for complex reasoning, command naming, prompt engineering
+    - `creation-guide.md` - Step-by-step creation process with decision matrix and phase-based workflow
+    - `validation-checklist.md` - Comprehensive validation rules organized by 11 categories
+    - `examples.md` - 8 annotated command examples including thinking mode patterns
+    - `argument-patterns.md` - 8 argument patterns with advanced patterns and edge cases
+    - `slashcommand-tool-reference.md` - Advanced reference for SlashCommand tool, plugin commands, and MCP commands
+    - `templates/command-template.md` - Template for new command files
+  - **Key Features:**
+    - Full alignment with official Claude Code slash command documentation
+    - Extended thinking support for complex reasoning tasks
+    - SlashCommand tool programmatic invocation with permissions and character budget
+    - Plugin command structure and namespacing patterns
+    - MCP command discovery and integration guidance
+    - Cross-skill references (managing-plugins, managing-mcps, managing-prompts)
+  - **4 Core Workflows:**
+    - WF1: Creating new slash commands with design, validation, and testing steps
+    - WF2: Analyzing existing commands for improvements
+    - WF3: Suggesting command vs skill conversion with decision criteria
+    - WF4: Updating outdated commands with modernization guidance
+
+**Plugin Contents**:
+- 1 skill (managing-slash-commands)
+- 8 supporting files with progressive disclosure architecture
+
+---
+
 ## [1.3.0] - 2025-11-29
 
 _Prompt engineering mastery: Complete managing-prompts skill with advanced techniques._

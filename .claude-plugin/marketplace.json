@@ -13,7 +13,7 @@
       "name": "changelog",
       "source": "./plugins/changelog",
       "description": "CHANGELOG.md management following Keep a Changelog format",
-      "version": "1.0.0.0",
+      "version": "1.1.0.0",
       "author": {
         "name": "Thore Höltig"
       },
@@ -33,7 +33,7 @@
       "name": "claude-code-capabilities",
       "source": "./plugins/claude-code-capabilities",
       "description": "Comprehensive management of Claude Code features including skills, commands, hooks, MCPs, prompts, and subagents",
-      "version": "1.3.0.0",
+      "version": "1.4.0.0",
       "author": {
         "name": "Thore Höltig"
       },
