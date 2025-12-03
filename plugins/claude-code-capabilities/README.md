@@ -4,11 +4,11 @@ Comprehensive management of Claude Code features including skills, slash command
 
 ## Current Status
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Released:** 2025-12-03
-**Release:** [ClaudeCodeCapabilities_v1.4.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.4.0.0)
+**Release:** [ClaudeCodeCapabilities_v1.5.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.5.0.0)
 
-## What's Included (v1.4.0)
+## What's Included (v1.5.0)
 
 ### ✅ managing-agent-skills
 
@@ -273,23 +273,70 @@ User: "What's the SlashCommand tool and how do I use it?"
 
 ---
 
-## Planned Features
+### ✅ managing-subagents
 
-The following capabilities are planned for future releases:
+Systematic approach for analyzing, evaluating, creating, and improving subagent configurations to maximize effectiveness.
+
+**Core Capabilities:**
+- **WF1: Analyzing Context for Subagent Delegation** - Score tasks (0-10 points) to decide: subagent vs direct tools
+- **WF2: Explaining Subagent Concepts to Users** - Comprehensive guidance on subagent benefits, use cases, and built-in agent types
+- **WF3: Evaluating Existing Subagent Configurations** - Systematic evaluation for effectiveness, identifying improvements and issues
+- **WF4: Identifying Outdated Agent Configurations** - Verify current state against documentation, detect deprecated patterns
+- **WF5: Recommending Subagent Improvements** - Optimization patterns for descriptions, prompts, tools, and model selection
+- **WF6: Deciding When to Create New Subagents** - Decision framework with 7 criteria for custom agent creation
+- **WF7: Managing Subagents via /agents Command** - Interactive interface for creating, editing, deleting, and inspecting agents
+- **WF8: Understanding Configuration Fields** - Complete reference for all YAML configuration options with inline context
+- **WF9: Using Resumable Subagents** - Continue previous subagent work across multiple invocations with full context preservation
+
+**Key Features:**
+- **Complete Official Alignment**: 95%+ coverage of all Claude Code subagent documentation
+- **Decision Scoring Matrix**: 0-10 point scoring across 5 dimensions (context, complexity, parallelization, focus, iteration)
+- **3 Reference Implementations**: Production-ready example agents (code-reviewer, debugger, data-scientist) for adaptation patterns
+- **Configuration Fields**: All 6 fields documented (name, description, tools, model, permissionMode, skills)
+- **Resumable Agents**: agentId tracking, resume parameter, transcript management, iterative refinement workflows
+- **Permission Modes**: 5 modes explained (default, acceptEdits, bypassPermissions, plan, ignore) with decision criteria
+- **Management Patterns**: /agents command interface, CLI configuration (--agents flag), plugin agent integration
+- **Cross-Skill References**: managing-prompts (prompt optimization), managing-plugins (plugin agents), managing-agent-skills (skill authoring)
+- **10 Supporting Files**:
+  - agents-command-guide.md - /agents interface workflow and tool management
+  - analysis-framework.md - Systematic evaluation criteria for existing agents
+  - cli-configuration.md - Dynamic agent definition via CLI for session-specific or test agents
+  - configuration-reference.md - Complete field documentation with examples and migration guide
+  - decision-matrix.md - Delegation scoring rubric with practical examples
+  - example-subagents.md - Reference implementations with adaptation patterns
+  - improvement-patterns.md - 17 optimization patterns for descriptions, prompts, tools, models
+  - multi-agent-patterns.md - Parallel and sequential orchestration strategies
+  - permission-modes.md - 5 permission modes with decision criteria and use cases
+  - plugin-agents.md - Plugin agent discovery, conflicts, and integration
+
+**Triggers:**
+- Deciding if a task should delegate to a subagent
+- Analyzing existing agent effectiveness
+- Recommending agent improvements and optimizations
+- Creating specialized agents for recurring patterns
+- Managing agents via /agents or CLI
+- Questions about resumable agents or continuing previous work
+
+**Usage Examples:**
+```
+User: "Should I use a subagent for this code search task?"
+Claude: [Activates managing-subagents, scores task using decision matrix]
+
+User: "Analyze this existing agent and suggest improvements"
+Claude: [Activates managing-subagents, evaluates with analysis framework]
+
+User: "I need a new agent for Python security auditing"
+Claude: [Activates managing-subagents, creates specialized agent using reference patterns]
+
+User: "Resume agent abc123 and continue the analysis"
+Claude: [Activates managing-subagents, explains resumable agent workflow]
+```
 
 ---
 
-### 🔲 managing-subagents
-**Target:** v1.5.0
-**Purpose:** Multi-agent patterns and decision frameworks
+## Planned Features
 
-**Planned Capabilities:**
-- Subagent pattern library
-- Decision frameworks for agent composition
-- Parallel vs sequential execution
-- Agent communication patterns
-
-**Documentation:** 1 file ready in `documentation/managing-subagents/`
+The following capabilities are planned for future releases:
 
 ---
 
@@ -497,6 +544,40 @@ Claude: [Activates managing-prompts skill, performs WF3: Optimizing with caching
 
 ---
 
+### Managing Subagents
+
+The managing-subagents skill activates automatically when:
+- You need to decide if a task should delegate to a subagent
+- You want to analyze or evaluate an existing subagent
+- You request improvements to a subagent's configuration
+- You need to create a new specialized subagent
+- You ask about subagent concepts, decision patterns, or management
+
+**Example Conversations:**
+```
+You: "Should I use a subagent to search this large codebase?"
+Claude: [Activates managing-subagents skill, scores task 0-10, recommends Explore agent]
+
+You: "Analyze this existing agent and suggest improvements"
+Claude: [Activates managing-subagents skill, evaluates against analysis framework]
+
+You: "I need a security auditing agent for Python code"
+Claude: [Activates managing-subagents skill, creates specialized agent using patterns]
+
+You: "How do permission modes affect agent behavior?"
+Claude: [Activates managing-subagents skill, explains 5 modes with use cases]
+```
+
+#### Technical Implementation Notes
+
+**Decision & Optimization Focus**
+- **Model tier**: Haiku for scoring/decision, Sonnet for analysis and creation
+- **Rationale**: Task scoring is deterministic (0-10 points), but agent analysis and creation require reasoning
+- **Pattern**: Quick decision (Haiku) → detailed evaluation (Sonnet) if improvement needed
+- **Cost efficiency**: Many decisions can be made with Haiku, escalate to Sonnet only for optimization
+
+---
+
 ### Managing Slash Commands
 
 The managing-slash-commands skill activates automatically when:
@@ -579,7 +660,7 @@ claude-code-capabilities/
 │   │   ├── distribution-guide.md       # Packaging and sharing
 │   │   ├── validation-rules.md         # Plugin validation
 │   │   └── team-workflow.md            # Team configuration
-│   └── managing-prompts/               # v1.3.0
+│   ├── managing-prompts/               # v1.3.0
 │       ├── SKILL.md                    # Main skill file with workflows
 │       ├── analysis-patterns.md        # Common issues, quality assessment
 │       ├── architecture-patterns.md    # 5 pattern types
@@ -612,7 +693,7 @@ Contributions welcome! See the main repository [CONTRIBUTING.md](https://github.
 | 1.2.0 | managing-plugins | ✅ Released | 2025-11-29 |
 | 1.3.0 | managing-prompts | ✅ Released | 2025-11-29 |
 | 1.4.0 | managing-slash-commands | ✅ Released | 2025-12-03 |
-| 1.5.0 | managing-subagents | 🔲 Planned | TBD |
+| 1.5.0 | managing-subagents | ✅ Released | 2025-12-03 |
 | 1.6.0 | managing-mcps | 🔲 Planned | TBD |
 
 ## License
