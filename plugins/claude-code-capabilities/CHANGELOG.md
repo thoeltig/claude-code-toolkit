@@ -9,6 +9,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2025-12-03
+
+_Subagent mastery: Comprehensive management of subagent delegation, creation, analysis, and optimization._
+
+### Added
+
+- **managing-subagents skill**: Complete skill for analyzing, evaluating, creating, and improving subagents
+  - **What it is:** Systematic approach for managing subagent usage patterns to determine when to delegate tasks, evaluate existing agents, create specialized agents, and optimize configurations
+  - **What it can do:**
+    - Decide if a task should use a subagent (0-10 point delegation scoring)
+    - Analyze existing subagent configurations for effectiveness and improvements
+    - Recommend optimization patterns for descriptions, prompts, tools, and model selection
+    - Create new specialized subagents for recurring task patterns
+    - Manage agents via /agents command interface or CLI
+    - Resume previous subagent work with full context preservation
+    - Identify and flag outdated subagent information
+  - **10 supporting files:**
+    - `agents-command-guide.md` - /agents interface workflow and tool management
+    - `analysis-framework.md` - Systematic evaluation criteria for existing agents
+    - `cli-configuration.md` - Dynamic agent definition via --agents CLI flag
+    - `configuration-reference.md` - All 6 configuration fields (name, description, tools, model, permissionMode, skills)
+    - `decision-matrix.md` - Delegation scoring matrix with 0-10 point rubric
+    - `example-subagents.md` - 3 reference implementations (code-reviewer, debugger, data-scientist) with adaptation patterns
+    - `improvement-patterns.md` - 17 optimization patterns for agent configuration
+    - `multi-agent-patterns.md` - Parallel and sequential orchestration strategies
+    - `permission-modes.md` - All 5 permission modes (default, acceptEdits, bypassPermissions, plan, ignore) with decision criteria
+    - `plugin-agents.md` - Plugin agent discovery, conflict resolution, and integration
+  - **Key Features:**
+    - Complete alignment with official Claude Code subagent documentation (95%+ coverage)
+    - **Resumable Agents**: agentId tracking, resume parameter, transcript management (agent-{agentId}.jsonl), iterative refinement workflows
+    - Decision framework: 5 dimensions × 2 points each = 0-10 point scoring
+    - Configuration fields: All 6 fields fully documented with examples and inline context
+    - Permission modes: All 5 modes explained with use cases and decision criteria
+    - Reference implementations: 3 production-ready agents demonstrating best practices
+    - Management patterns: /agents interface, CLI configuration, plugin integration
+    - **Cross-skill references**: managing-prompts (prompt optimization), managing-plugins (plugin agents), managing-agent-skills (skill authoring)
+  - **9 Core Workflows:**
+    - WF1: Analyzing context for subagent delegation (0-10 scoring)
+    - WF2: Explaining subagent concepts to users
+    - WF3: Evaluating existing subagent configurations
+    - WF4: Identifying outdated agent configurations (ask user for documentation when unclear)
+    - WF5: Recommending subagent improvements
+    - WF6: Deciding when to create new subagents (7-criteria framework)
+    - WF7: Managing subagents via /agents command
+    - WF8: Understanding configuration fields (enhanced with inline context for all fields)
+    - **WF9: Using Resumable Subagents** (NEW) - Continue previous agent work with agentId, full context preservation, iterative refinement patterns
+
+**Plugin Contents**:
+- 1 skill (managing-subagents)
+- 10 supporting files with progressive disclosure architecture
+- 662 lines (~5,296 tokens) with operational focus
+
+---
+
+## [1.4.0] - 2025-12-03
+
+_Slash command mastery: Comprehensive management of custom slash commands with ecosystem integration._
+
+### Added
+
+- **managing-slash-commands skill**: Complete skill for creating, analyzing, and improving slash commands
+  - **What it is:** Comprehensive skill for managing custom slash commands including creation workflows, quality analysis, and best practices aligned with official Claude Code documentation
+  - **What it can do:**
+    - Create new slash commands from requirements through production with proper frontmatter configuration
+    - Analyze existing commands for quality, security, and adherence to best practices
+    - Suggest command vs skill conversion with decision frameworks
+    - Update outdated slash command information and patterns
+    - Provide guidance on extended thinking, programmatic invocation, and ecosystem integration
+  - **8 supporting files:**
+    - `best-practices.md` - Extended thinking for complex reasoning, command naming, prompt engineering
+    - `creation-guide.md` - Step-by-step creation process with decision matrix and phase-based workflow
+    - `validation-checklist.md` - Comprehensive validation rules organized by 11 categories
+    - `examples.md` - 8 annotated command examples including thinking mode patterns
+    - `argument-patterns.md` - 8 argument patterns with advanced patterns and edge cases
+    - `slashcommand-tool-reference.md` - Advanced reference for SlashCommand tool, plugin commands, and MCP commands
+    - `templates/command-template.md` - Template for new command files
+  - **Key Features:**
+    - Full alignment with official Claude Code slash command documentation
+    - Extended thinking support for complex reasoning tasks
+    - SlashCommand tool programmatic invocation with permissions and character budget
+    - Plugin command structure and namespacing patterns
+    - MCP command discovery and integration guidance
+    - Cross-skill references (managing-plugins, managing-mcps, managing-prompts)
+  - **4 Core Workflows:**
+    - WF1: Creating new slash commands with design, validation, and testing steps
+    - WF2: Analyzing existing commands for improvements
+    - WF3: Suggesting command vs skill conversion with decision criteria
+    - WF4: Updating outdated commands with modernization guidance
+
+**Plugin Contents**:
+- 1 skill (managing-slash-commands)
+- 8 supporting files with progressive disclosure architecture
+
+---
+
 ## [1.3.0] - 2025-11-29
 
 _Prompt engineering mastery: Complete managing-prompts skill with advanced techniques._
@@ -157,7 +252,10 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...v1.1.0
 [1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0

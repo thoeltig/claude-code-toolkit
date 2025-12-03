@@ -4,11 +4,11 @@ Comprehensive management of Claude Code features including skills, slash command
 
 ## Current Status
 
-**Version:** 1.3.0
-**Released:** 2025-11-29
-**Release:** [ClaudeCodeCapabilities_v1.3.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.3.0.0)
+**Version:** 1.5.0
+**Released:** 2025-12-03
+**Release:** [ClaudeCodeCapabilities_v1.5.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.5.0.0)
 
-## What's Included (v1.3.0)
+## What's Included (v1.5.0)
 
 ### ✅ managing-agent-skills
 
@@ -223,37 +223,120 @@ User: "Migrate my Claude 3 prompts to Claude 4.5"
 
 ---
 
+### ✅ managing-slash-commands
+
+Complete management of custom slash commands with advanced features for programmatic invocation and ecosystem integration.
+
+**Core Capabilities:**
+- **WF1: Creating Slash Commands** - Complete workflow from requirements through production-ready command
+  - Design with proper frontmatter (description, allowed-tools, argument-hint, model)
+  - Support for extended thinking in complex reasoning tasks
+  - Validation and testing steps
+- **WF2: Analyzing Existing Commands** - Quality evaluation and best practices assessment
+- **WF3: Suggesting Command vs Skill Conversion** - Decision framework for workflow architecture
+- **WF4: Updating Outdated Commands** - Systematic modernization of existing commands
+
+**Key Features:**
+- **Complete Official Alignment**: Full coverage of Claude Code slash command documentation including all frontmatter fields
+- **Extended Thinking Support**: Guidance for complex reasoning tasks with thinking keywords
+- **SlashCommand Tool Documentation**: Programmatic invocation, permissions, character budget limits, disable-model-invocation field
+- **Plugin Command Integration**: Plugin-scoped namespacing (`plugin-name:command-name` pattern), conflict resolution
+- **MCP Command Discovery**: Dynamic command discovery from connected MCP servers, argument handling
+- **4 Argument Patterns**: No arguments, $ARGUMENTS, positional ($1-$9), and advanced patterns with edge cases
+- **Helper Scripts Guide**: When to use scripts vs interpreted logic with practical examples and best practices
+- **8 Supporting Files**:
+  - best-practices.md - Command naming, prompt content, YAML frontmatter, bash execution, advanced features
+  - creation-guide.md - Step-by-step process with decision matrix and five phases
+  - validation-checklist.md - 11-category validation with quick validation and comprehensive checks
+  - examples.md - 8 annotated examples including extended thinking patterns
+  - argument-patterns.md - 8 patterns with advanced patterns and testing strategies
+  - slashcommand-tool-reference.md - Advanced reference for SlashCommand tool, plugin commands, MCP commands
+  - templates/command-template.md - Template for new command files
+- **Progressive Disclosure**: 8 supporting files organized by complexity level
+- **Cross-Skill References**: Inline references to managing-plugins (plugin commands), managing-mcps (MCP commands), managing-prompts (advanced prompt engineering)
+
+**Triggers:**
+- Slash command creation requests
+- Command analysis/improvement
+- Command vs skill conversion questions
+- Slash command validation and best practices
+- Questions about SlashCommand tool, plugin commands, or MCP commands
+
+**Usage Examples:**
+```
+User: "Create a slash command to review pull requests"
+User: "Analyze this command and suggest improvements"
+User: "Should I convert this logic to a slash command or skill?"
+User: "How do I use extended thinking in a slash command?"
+User: "What's the SlashCommand tool and how do I use it?"
+```
+
+---
+
+### ✅ managing-subagents
+
+Systematic approach for analyzing, evaluating, creating, and improving subagent configurations to maximize effectiveness.
+
+**Core Capabilities:**
+- **WF1: Analyzing Context for Subagent Delegation** - Score tasks (0-10 points) to decide: subagent vs direct tools
+- **WF2: Explaining Subagent Concepts to Users** - Comprehensive guidance on subagent benefits, use cases, and built-in agent types
+- **WF3: Evaluating Existing Subagent Configurations** - Systematic evaluation for effectiveness, identifying improvements and issues
+- **WF4: Identifying Outdated Agent Configurations** - Verify current state against documentation, detect deprecated patterns
+- **WF5: Recommending Subagent Improvements** - Optimization patterns for descriptions, prompts, tools, and model selection
+- **WF6: Deciding When to Create New Subagents** - Decision framework with 7 criteria for custom agent creation
+- **WF7: Managing Subagents via /agents Command** - Interactive interface for creating, editing, deleting, and inspecting agents
+- **WF8: Understanding Configuration Fields** - Complete reference for all YAML configuration options with inline context
+- **WF9: Using Resumable Subagents** - Continue previous subagent work across multiple invocations with full context preservation
+
+**Key Features:**
+- **Complete Official Alignment**: 95%+ coverage of all Claude Code subagent documentation
+- **Decision Scoring Matrix**: 0-10 point scoring across 5 dimensions (context, complexity, parallelization, focus, iteration)
+- **3 Reference Implementations**: Production-ready example agents (code-reviewer, debugger, data-scientist) for adaptation patterns
+- **Configuration Fields**: All 6 fields documented (name, description, tools, model, permissionMode, skills)
+- **Resumable Agents**: agentId tracking, resume parameter, transcript management, iterative refinement workflows
+- **Permission Modes**: 5 modes explained (default, acceptEdits, bypassPermissions, plan, ignore) with decision criteria
+- **Management Patterns**: /agents command interface, CLI configuration (--agents flag), plugin agent integration
+- **Cross-Skill References**: managing-prompts (prompt optimization), managing-plugins (plugin agents), managing-agent-skills (skill authoring)
+- **10 Supporting Files**:
+  - agents-command-guide.md - /agents interface workflow and tool management
+  - analysis-framework.md - Systematic evaluation criteria for existing agents
+  - cli-configuration.md - Dynamic agent definition via CLI for session-specific or test agents
+  - configuration-reference.md - Complete field documentation with examples and migration guide
+  - decision-matrix.md - Delegation scoring rubric with practical examples
+  - example-subagents.md - Reference implementations with adaptation patterns
+  - improvement-patterns.md - 17 optimization patterns for descriptions, prompts, tools, models
+  - multi-agent-patterns.md - Parallel and sequential orchestration strategies
+  - permission-modes.md - 5 permission modes with decision criteria and use cases
+  - plugin-agents.md - Plugin agent discovery, conflicts, and integration
+
+**Triggers:**
+- Deciding if a task should delegate to a subagent
+- Analyzing existing agent effectiveness
+- Recommending agent improvements and optimizations
+- Creating specialized agents for recurring patterns
+- Managing agents via /agents or CLI
+- Questions about resumable agents or continuing previous work
+
+**Usage Examples:**
+```
+User: "Should I use a subagent for this code search task?"
+Claude: [Activates managing-subagents, scores task using decision matrix]
+
+User: "Analyze this existing agent and suggest improvements"
+Claude: [Activates managing-subagents, evaluates with analysis framework]
+
+User: "I need a new agent for Python security auditing"
+Claude: [Activates managing-subagents, creates specialized agent using reference patterns]
+
+User: "Resume agent abc123 and continue the analysis"
+Claude: [Activates managing-subagents, explains resumable agent workflow]
+```
+
+---
+
 ## Planned Features
 
 The following capabilities are planned for future releases:
-
----
-
-### 🔲 managing-slash-commands
-**Target:** v1.4.0
-**Purpose:** Create and validate slash commands (markdown files with YAML frontmatter)
-
-**Planned Capabilities:**
-- Slash command creation workflow
-- Validation against specification
-- Conversion of skills to commands
-- Best practices and examples
-
-**Documentation:** 8 files ready in `documentation/managing-slash-commands/`
-
----
-
-### 🔲 managing-subagents
-**Target:** v1.5.0
-**Purpose:** Multi-agent patterns and decision frameworks
-
-**Planned Capabilities:**
-- Subagent pattern library
-- Decision frameworks for agent composition
-- Parallel vs sequential execution
-- Agent communication patterns
-
-**Documentation:** 1 file ready in `documentation/managing-subagents/`
 
 ---
 
@@ -299,6 +382,17 @@ xcopy /E /I plugins\claude-code-capabilities %USERPROFILE%\.claude\plugins\claud
 
 ## Usage
 
+### Model Selection Guide
+
+**Haiku/Sonnet/Opus** are Claude model tiers with cost/capability trade-offs:
+- **Haiku**: ~$0.25/M output tokens - efficient for synthesis (organizing/formatting known information)
+- **Sonnet**: ~$3/M output tokens - balanced for evaluation (quality assessment, reasoning, security analysis)
+- **Opus**: ~$15/M output tokens - reserve for complex novel reasoning
+
+**Token**: Unit of text processing (~4 characters). More tokens = higher API costs. Efficient data formats (JSON/YAML) and model selection reduce token usage.
+
+---
+
 ### Managing Agent Skills
 
 The managing-agent-skills skill activates automatically when:
@@ -318,6 +412,25 @@ Claude: [Activates managing-agent-skills skill, performs WF2: Analysis with rubr
 You: "Should this logic be a skill?"
 Claude: [Activates managing-agent-skills skill, uses WF3: Conversion decision matrix]
 ```
+
+#### Technical Implementation Notes
+
+**Information Gathering**
+- **WebFetch**: Returns 30-80% summarized content. Complex topics need 2-3+ fetches (overview → details → verification)
+- **Data format efficiency**: JSON/YAML (30% less context) > Markdown (20% less) > Plain text (highest parsing overhead)
+- **Local files preferred**: No summarization loss, complete access
+- **Validation required**: WF1 (create) and WF2 (analyze) are separate passes. Skipping WF2 risks incomplete/incorrect skills
+
+**Model Selection**
+| Stage | Model | Rationale | Cost |
+|-------|-------|-----------|------|
+| WF1: Write | Haiku | Synthesis: organize info into structured SKILL.md | Base |
+| WF2: Validate | Sonnet | Evaluation: 14-point rubric, gap analysis | ~3x Haiku |
+| Edge cases | Opus | Complex structural issues only | ~15x Haiku |
+
+**Pattern**: Haiku write → Sonnet validate. If WF2 reports minimal changes, Haiku quality was sufficient.
+
+---
 
 ### Managing Hooks
 
@@ -344,6 +457,18 @@ You: "I need to validate all MCP write operations"
 Claude: [Activates managing-hooks skill, covers WF3: MCP tool targeting]
 ```
 
+#### Technical Implementation Notes
+
+**Security Validation**
+- **Model tier**: Sonnet minimum for WF2 (analysis). Haiku cannot assess security implications adequately
+- **User review required**: Sonnet validates structure/syntax, not intent or side effects. Review:
+  - Command correctness and system impact
+  - Event trigger timing and lifecycle edge cases
+  - Permission scope and data access
+- **Sandbox testing**: Test command-based hooks in isolated environment before production to verify runtime behavior
+
+---
+
 ### Managing Plugins
 
 The managing-plugins skill activates automatically when:
@@ -367,6 +492,15 @@ Claude: [Activates managing-plugins skill, performs OP4: Validate Plugin]
 You: "How do I set up autoInstall for team members?"
 Claude: [Activates managing-plugins skill, explains team configuration workflow]
 ```
+
+#### Technical Implementation Notes
+
+**Structural Validation**
+- **Model tier**: Haiku for creation (OP1-3), Sonnet for validation (OP4)
+- **Rationale**: Validation checks schema compliance, file organization, naming conventions (deterministic, not reasoning-heavy)
+- **Cost efficiency**: Haiku synthesis → Sonnet structural validation typically requires minimal corrections
+
+---
 
 ### Managing Prompts
 
@@ -395,6 +529,91 @@ Claude: [Activates managing-prompts skill, provides decision flow and comparison
 You: "Optimize this prompt for token efficiency"
 Claude: [Activates managing-prompts skill, performs WF3: Optimizing with caching strategies]
 ```
+
+#### Technical Implementation Notes
+
+**Reasoning-Heavy Workflows**
+- **Model tier**: Sonnet minimum for all workflows (WF1-5). No Haiku synthesis pass.
+- **Rationale**: Prompt engineering requires reasoning, not just formatting:
+  - Quality assessment: Evaluate guardrails, hallucination risks, technique trade-offs
+  - Architecture decisions: Structured Outputs vs prefilling, sequential vs parallel chaining
+  - Claude 4.5 optimization: When to apply extended thinking, caching, or chain-of-thought
+  - Technique selection: Context-dependent reasoning about what patterns apply
+- **Cannot separate write/validate**: Analysis and creation are intertwined (unlike skill synthesis)
+- **Opus**: Reserve for novel patterns or security-critical prompt applications
+
+---
+
+### Managing Subagents
+
+The managing-subagents skill activates automatically when:
+- You need to decide if a task should delegate to a subagent
+- You want to analyze or evaluate an existing subagent
+- You request improvements to a subagent's configuration
+- You need to create a new specialized subagent
+- You ask about subagent concepts, decision patterns, or management
+
+**Example Conversations:**
+```
+You: "Should I use a subagent to search this large codebase?"
+Claude: [Activates managing-subagents skill, scores task 0-10, recommends Explore agent]
+
+You: "Analyze this existing agent and suggest improvements"
+Claude: [Activates managing-subagents skill, evaluates against analysis framework]
+
+You: "I need a security auditing agent for Python code"
+Claude: [Activates managing-subagents skill, creates specialized agent using patterns]
+
+You: "How do permission modes affect agent behavior?"
+Claude: [Activates managing-subagents skill, explains 5 modes with use cases]
+```
+
+#### Technical Implementation Notes
+
+**Decision & Optimization Focus**
+- **Model tier**: Haiku for scoring/decision, Sonnet for analysis and creation
+- **Rationale**: Task scoring is deterministic (0-10 points), but agent analysis and creation require reasoning
+- **Pattern**: Quick decision (Haiku) → detailed evaluation (Sonnet) if improvement needed
+- **Cost efficiency**: Many decisions can be made with Haiku, escalate to Sonnet only for optimization
+
+---
+
+### Managing Slash Commands
+
+The managing-slash-commands skill activates automatically when:
+- You request slash command creation or configuration
+- You ask about command syntax, structure, or best practices
+- You mention "slash command", "command file", or "/command" in creation/improvement context
+- You want to analyze or improve existing commands
+- You ask about SlashCommand tool, plugin commands, or MCP commands
+- You need to decide between creating a command vs a skill
+
+**Example Conversations:**
+```
+You: "Create a slash command to review pull requests"
+Claude: [Activates managing-slash-commands skill, walks through WF1: Creating]
+
+You: "Analyze this command and suggest improvements"
+Claude: [Activates managing-slash-commands skill, performs WF2: Analyzing with evaluation]
+
+You: "Should I convert this logic to a slash command or skill?"
+Claude: [Activates managing-slash-commands skill, uses WF3: Decision framework]
+
+You: "How do I use extended thinking in a slash command?"
+Claude: [Activates managing-slash-commands skill, covers thinking mode patterns]
+
+You: "What's the SlashCommand tool and how does it work?"
+Claude: [Activates managing-slash-commands skill, explains programmatic invocation]
+```
+
+#### Technical Implementation Notes
+
+**Command Creation and Validation**
+- **Model tier**: Haiku for simple commands (WF1), Sonnet for analysis (WF2) and optimization
+- **Rationale**: Command creation is synthesis (formatting prompts), but analysis requires evaluation
+- **Script-based commands**: When using helper scripts, validate scripts independently first
+- **Prompt content**: For complex prompt engineering within commands, consider using managing-prompts skill for advanced patterns
+- **Cost efficiency**: Haiku for straightforward commands → Sonnet for quality assessment and improvements
 
 ## Documentation Sources
 
@@ -441,7 +660,7 @@ claude-code-capabilities/
 │   │   ├── distribution-guide.md       # Packaging and sharing
 │   │   ├── validation-rules.md         # Plugin validation
 │   │   └── team-workflow.md            # Team configuration
-│   └── managing-prompts/               # v1.3.0
+│   ├── managing-prompts/               # v1.3.0
 │       ├── SKILL.md                    # Main skill file with workflows
 │       ├── analysis-patterns.md        # Common issues, quality assessment
 │       ├── architecture-patterns.md    # 5 pattern types
@@ -473,8 +692,8 @@ Contributions welcome! See the main repository [CONTRIBUTING.md](https://github.
 | 1.1.0 | managing-hooks | ✅ Released | 2025-11-29 |
 | 1.2.0 | managing-plugins | ✅ Released | 2025-11-29 |
 | 1.3.0 | managing-prompts | ✅ Released | 2025-11-29 |
-| 1.4.0 | managing-slash-commands | 🔲 Planned | TBD |
-| 1.5.0 | managing-subagents | 🔲 Planned | TBD |
+| 1.4.0 | managing-slash-commands | ✅ Released | 2025-12-03 |
+| 1.5.0 | managing-subagents | ✅ Released | 2025-12-03 |
 | 1.6.0 | managing-mcps | 🔲 Planned | TBD |
 
 ## License

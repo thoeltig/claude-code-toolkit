@@ -21,14 +21,14 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.0.0 |
+| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0 |
-| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.3.0 |
+| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.5.0 |
 
 ## 🎯 Plugin Highlights
 
 ### Changelog
-Professional changelog management with automatic formatting, version tracking, and migration from legacy HISTORY.md files.
+Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
 
 **Install:** `/plugin install changelog@claude-code-toolkit`
 
@@ -38,18 +38,18 @@ Never lose context again. Save your work state, git status, and active tasks bet
 **Install:** `/plugin install session-protocol@claude-code-toolkit`
 
 ### Claude Code Capabilities
-The most comprehensive toolkit for working with Claude Code's extensibility features. Includes 7 specialized skills and 2 powerful commands for managing every aspect of your Claude Code setup.
+The most comprehensive toolkit for working with Claude Code's extensibility features. Includes 6 specialized skills and 2 powerful commands for managing every aspect of your Claude Code setup.
 
 **Implemented:**
 - **managing-agent-skills skill** (v1.0.0): Create, analyze, and improve agent skills with validation frameworks
 - **managing-hooks skill** (v1.1.0): Configure event-driven automation with all 10 hook types
 - **managing-plugins skill** (v1.2.0): Bundle components into distributable plugins with marketplace support
 - **managing-prompts skill** (v1.3.0): Master prompt engineering with Claude 4.5 best practices, caching strategies, and advanced techniques
+- **managing-slash-commands skill** (v1.4.0): Create and manage custom slash commands with extended thinking support and ecosystem integration
+- **managing-subagents skill** (v1.5.0): Analyze, evaluate, create, and improve subagents with resumable workflows and decision scoring
 
 **Planned:**
 - **managing-mcps**: Create and configure Model Context Protocol servers
-- **managing-slash-commands**: Create and validate custom slash commands
-- **managing-subagents**: Analyze and optimize subagent orchestration patterns
 
 **Install:** `/plugin install claude-code-capabilities@claude-code-toolkit`
 
