@@ -7,10 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+---
+
+## [1.5.0.0] - 2025-12-03
+
+_Marketplace release with slash commands and subagent management._
+
+### Added
+
+- **claude-code-capabilities plugin** ([v1.5.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.5.0.0)): Added **managing-subagents skill** for comprehensive subagent management
+  - 9 core workflows including resumable subagents (WF9)
+  - 10 supporting files with progressive disclosure
+  - Key features: 0-10 point delegation scoring, resumable agents with agentId tracking, 3 reference implementations, all 6 configuration fields with inline context, 5 permission modes, cross-skill references (managing-prompts, managing-plugins, managing-agent-skills)
+  - Management patterns: /agents interface, CLI configuration via --agents flag, plugin agent integration
+  - Complete alignment with official Claude Code subagent documentation (95%+ coverage)
+  - Operational focus: asks user for documentation when information unclear, no self-updating references
+
+- **claude-code-capabilities plugin** ([v1.4.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.4.0.0)): Added **managing-slash-commands skill** for custom slash command management
+  - 4 core workflows: creating, analyzing, suggesting conversion, updating commands
+  - 8 supporting files including SlashCommand tool reference, argument patterns, and examples
+  - Extended thinking support for complex reasoning tasks
+  - Plugin command and MCP command integration guidance
+  - Cross-skill references to managing-plugins, managing-mcps, and managing-prompts
+
 ### Changed
 
 - **changelog plugin** ([v1.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/Changelog_v1.1.0.0)):
-  - Removed HISTORY.md migration workflow (WF4) - simplified skill to focus on core changelog operations (create, add release, update unreleased, validate, promote prerelease)
+  - Removed HISTORY.md migration workflow (WF4) - simplified skill to focus on core changelog operations
 
 ---
 
@@ -97,7 +120,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.4.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.5.0.0...HEAD
+[1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.5.0.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.3.0.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.2.0.0
