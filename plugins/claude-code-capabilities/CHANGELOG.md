@@ -9,6 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0] - 2025-12-05
+
+_MCP mastery: Comprehensive Model Context Protocol management with advanced API, enterprise, and plugin integration._
+
+### Added
+
+- **managing-mcps skill**: Complete skill for creating, analyzing, updating, and managing MCP servers with Messages API integration
+  - **What it is:** Comprehensive MCP management covering creation, analysis, improvement, and deployment with support for Messages API integration, enterprise configuration, plugin-bundled servers, and OAuth authentication
+  - **What it can do:**
+    - Decide if logic should become an MCP (6-criteria checklist)
+    - Create new MCP servers (requirements → architecture → implementation → configuration → testing → documentation)
+    - Analyze existing MCPs for improvements and quality
+    - Update outdated MCPs (protocol compliance, security, functionality)
+    - Configure MCP connections to Claude Code (CLI, file manipulation, OAuth)
+    - Integrate MCPs via Anthropic Messages API (mcp_servers, MCPToolset, configuration patterns, beta headers)
+    - Use MCPs in conversations (resources @mentions, prompts /commands)
+  - **13 supporting files:**
+    - Core: `architecture-overview.md`, `creation-guide.md`, `analysis-framework.md`, `configuration-guide.md`, `security-best-practices.md`
+    - Advanced: `mcp-connector-api-integration.md` (complete Messages API workflow), `enterprise-mcp-configuration.md` (org policies), `environment-variable-expansion.md` (team configs), `plugin-mcp-servers.md` (plugin bundling), `mcp-resources-and-prompts.md` (conversation usage), `oauth-authentication-flow.md` (OAuth setup), `deprecation-notes.md` (SSE → HTTP migration)
+    - Reference: `examples.md` (AWS Bedrock patterns, FastMCP templates)
+  - **Key Features:**
+    - Progressive disclosure: Core workflows in SKILL.md (557 lines), advanced topics loaded on-demand
+    - HTTP transport priority: Explicit guidance - HTTP recommended for remote servers (better cloud support, more reliable)
+    - Messages API integration: Complete programmatic workflow with Python examples (allowlist/denylist/mixed patterns)
+    - FastMCP quick start: Minimal decorator-based template for rapid Python MCP development
+    - Cross-skill references: managing-plugins (plugin bundling), managing-prompts (prompt templates)
+    - Token-efficient loading: Common workflows (create/analyze) load minimal files, API integration loads detailed reference
+    - Complete CLI coverage: All commands documented (add, add-json, add-from-claude-desktop, serve, reset-project-choices)
+  - **7 Core Workflows:**
+    - WF1: Evaluating if logic should be MCP (6-criteria decision checklist)
+    - WF2: Creating new MCP server (7 steps with HTTP priority, transport selection guidance)
+    - WF3: Analyzing existing MCP (5 steps: discovery → inventory → evaluation → recommendations)
+    - WF4: Updating outdated MCP (5 steps: identify → plan → implement → validate)
+    - WF5: Configuring MCP connection (CLI methods, .mcp.json structure, OAuth flow, plugin MCPs, verification)
+    - WF6: Using MCPs via Messages API (server configuration, MCPToolset patterns, beta headers, response handling)
+    - WF7: Using MCPs in conversations (resources @server:path, prompts /mcp__server__prompt, output limits)
+
+**Plugin Contents**:
+- 1 skill (managing-mcps v1.6.0)
+- 13 supporting files with progressive disclosure architecture
+- 557 lines (~3,900 tokens) optimized SKILL.md
+
+---
+
 ## [1.5.0] - 2025-12-03
 
 _Subagent mastery: Comprehensive management of subagent delegation, creation, analysis, and optimization._
@@ -38,13 +82,13 @@ _Subagent mastery: Comprehensive management of subagent delegation, creation, an
     - `plugin-agents.md` - Plugin agent discovery, conflict resolution, and integration
   - **Key Features:**
     - Complete alignment with official Claude Code subagent documentation (95%+ coverage)
-    - **Resumable Agents**: agentId tracking, resume parameter, transcript management (agent-{agentId}.jsonl), iterative refinement workflows
+    - Resumable Agents: agentId tracking, resume parameter, transcript management (agent-{agentId}.jsonl), iterative refinement workflows
     - Decision framework: 5 dimensions × 2 points each = 0-10 point scoring
     - Configuration fields: All 6 fields fully documented with examples and inline context
     - Permission modes: All 5 modes explained with use cases and decision criteria
     - Reference implementations: 3 production-ready agents demonstrating best practices
     - Management patterns: /agents interface, CLI configuration, plugin integration
-    - **Cross-skill references**: managing-prompts (prompt optimization), managing-plugins (plugin agents), managing-agent-skills (skill authoring)
+    - Cross-skill references: managing-prompts (prompt optimization), managing-plugins (plugin agents), managing-agent-skills (skill authoring)
   - **9 Core Workflows:**
     - WF1: Analyzing context for subagent delegation (0-10 scoring)
     - WF2: Explaining subagent concepts to users
@@ -54,7 +98,7 @@ _Subagent mastery: Comprehensive management of subagent delegation, creation, an
     - WF6: Deciding when to create new subagents (7-criteria framework)
     - WF7: Managing subagents via /agents command
     - WF8: Understanding configuration fields (enhanced with inline context for all fields)
-    - **WF9: Using Resumable Subagents** (NEW) - Continue previous agent work with agentId, full context preservation, iterative refinement patterns
+    - WF9: Using Resumable Subagents - Continue previous agent work with agentId, full context preservation, iterative refinement patterns
 
 **Plugin Contents**:
 - 1 skill (managing-subagents)
