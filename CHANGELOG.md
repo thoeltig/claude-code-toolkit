@@ -9,6 +9,29 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.6.0.0] - 2025-12-05
+
+_Marketplace release with comprehensive MCP management and Messages API integration._
+
+### Added
+
+- **claude-code-capabilities plugin** ([v1.6.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.6.0.0)): Added **managing-mcps skill** for comprehensive Model Context Protocol management
+  - 7 core workflows: Evaluating if logic should be MCP, creating servers with HTTP priority, analyzing MCPs, updating outdated MCPs, configuring connections, integrating via Messages API, using MCPs in conversations
+  - 13 supporting files with progressive disclosure:
+    - Core: `architecture-overview.md`, `creation-guide.md`, `analysis-framework.md`, `configuration-guide.md`, `security-best-practices.md`
+    - Advanced: `mcp-connector-api-integration.md` (complete Messages API workflow), `enterprise-mcp-configuration.md`, `environment-variable-expansion.md`, `plugin-mcp-servers.md`, `mcp-resources-and-prompts.md`, `oauth-authentication-flow.md`, `deprecation-notes.md`
+    - Reference: `examples.md` (AWS Bedrock patterns, FastMCP templates)
+  - **Key features:**
+    - **HTTP transport priority**: Explicit guidance - HTTP recommended for remote servers (better cloud support, more reliable)
+    - **Messages API integration**: Complete programmatic workflow with Python examples, MCPToolset configuration patterns (allowlist, denylist, mixed)
+    - **AWS Bedrock patterns**: Production-ready modular architecture using FastMCP framework with decorator-based tool registration
+    - **FastMCP quick start**: Minimal template for rapid Python MCP development
+    - **Progressive disclosure**: Core workflows in SKILL.md (557 lines), advanced topics loaded on-demand for token efficiency
+    - **Cross-skill references**: managing-plugins (plugin bundling), managing-prompts (prompt templates)
+    - **Complete CLI coverage**: All commands documented (add, add-json, add-from-claude-desktop, serve, reset-project-choices)
+
+---
+
 ## [1.5.0.0] - 2025-12-03
 
 _Marketplace release with slash commands and subagent management._
