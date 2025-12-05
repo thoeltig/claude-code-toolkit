@@ -2,15 +2,9 @@
 
 Comprehensive management of Claude Code features including skills, slash commands, hooks, MCPs (Model Context Protocol servers), subagents, and prompts. This plugin provides tools for creating, analyzing, and improving Claude Code capabilities with guidance from official documentation.
 
-## Current Status
+## What's Included
 
-**Version:** 1.5.0
-**Released:** 2025-12-03
-**Release:** [ClaudeCodeCapabilities_v1.5.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.5.0.0)
-
-## What's Included (v1.5.0)
-
-### ✅ managing-agent-skills
+### managing-agent-skills
 
 A comprehensive skill for creating, analyzing, updating, and improving Claude Code agent skills.
 
@@ -50,17 +44,9 @@ A comprehensive skill for creating, analyzing, updating, and improving Claude Co
 - Updating outdated skills
 - Questions about skill concepts, structure, authoring
 
-**Usage Examples:**
-```
-User: "Create a skill for managing git workflows"
-User: "Analyze this skill and suggest improvements"
-User: "Should I convert this repeated logic into a skill?"
-User: "Update this skill with the latest best practices"
-```
-
 ---
 
-### ✅ managing-hooks
+### managing-hooks
 
 Comprehensive management of Claude Code event-driven automation hooks, covering both command-based and prompt-based hooks.
 
@@ -107,17 +93,9 @@ Comprehensive management of Claude Code event-driven automation hooks, covering 
 - Questions about hook types, configuration, security
 - Plugin hook composition patterns
 
-**Usage Examples:**
-```
-User: "Create a hook to format Python files after editing"
-User: "How do I use prompt-based hooks for intelligent decisions?"
-User: "Can I combine multiple plugin hooks?"
-User: "Analyze my existing hooks for security issues"
-```
-
 ---
 
-### ✅ managing-plugins
+### managing-plugins
 
 Complete plugin management for creating, bundling, validating, and distributing Claude Code plugins.
 
@@ -154,17 +132,9 @@ Complete plugin management for creating, bundling, validating, and distributing 
 - Team plugin distribution
 - Questions about plugin structure, manifest, or distribution
 
-**Usage Examples:**
-```
-User: "Bundle all my git-related skills into a plugin"
-User: "How do I create a marketplace config for my team?"
-User: "Validate my plugin structure before distribution"
-User: "What fields are required in plugin.json?"
-```
-
 ---
 
-### ✅ managing-prompts
+### managing-prompts
 
 Production-ready prompt engineering skill with 100% coverage of all 20 Anthropic documentation files. Complete mastery of prompt creation, analysis, optimization, and Claude 4.5 best practices.
 
@@ -211,19 +181,9 @@ Production-ready prompt engineering skill with 100% coverage of all 20 Anthropic
 - Logic extraction decisions (prompt vs script)
 - Extended thinking or prompt chaining questions
 
-**Usage Examples:**
-```
-User: "Analyze this prompt and suggest improvements"
-User: "Create a prompt for customer feedback analysis"
-User: "How do I reduce hallucinations in my prompts?"
-User: "Should I use Structured Outputs or prefilling?"
-User: "Optimize this prompt for token efficiency"
-User: "Migrate my Claude 3 prompts to Claude 4.5"
-```
-
 ---
 
-### ✅ managing-slash-commands
+### managing-slash-commands
 
 Complete management of custom slash commands with advanced features for programmatic invocation and ecosystem integration.
 
@@ -262,18 +222,9 @@ Complete management of custom slash commands with advanced features for programm
 - Slash command validation and best practices
 - Questions about SlashCommand tool, plugin commands, or MCP commands
 
-**Usage Examples:**
-```
-User: "Create a slash command to review pull requests"
-User: "Analyze this command and suggest improvements"
-User: "Should I convert this logic to a slash command or skill?"
-User: "How do I use extended thinking in a slash command?"
-User: "What's the SlashCommand tool and how do I use it?"
-```
-
 ---
 
-### ✅ managing-subagents
+### managing-subagents
 
 Systematic approach for analyzing, evaluating, creating, and improving subagent configurations to maximize effectiveness.
 
@@ -317,40 +268,50 @@ Systematic approach for analyzing, evaluating, creating, and improving subagent 
 - Managing agents via /agents or CLI
 - Questions about resumable agents or continuing previous work
 
-**Usage Examples:**
-```
-User: "Should I use a subagent for this code search task?"
-Claude: [Activates managing-subagents, scores task using decision matrix]
+---
 
-User: "Analyze this existing agent and suggest improvements"
-Claude: [Activates managing-subagents, evaluates with analysis framework]
+### managing-mcps
 
-User: "I need a new agent for Python security auditing"
-Claude: [Activates managing-subagents, creates specialized agent using reference patterns]
+Comprehensive management of Model Context Protocol servers with Messages API integration, enterprise configuration, and plugin bundling.
 
-User: "Resume agent abc123 and continue the analysis"
-Claude: [Activates managing-subagents, explains resumable agent workflow]
-```
+**Core Capabilities:**
+- **WF1: Evaluating if Logic Should Be MCP** - 6-criteria decision checklist
+- **WF2: Creating New MCP Server** - Complete workflow with HTTP priority guidance (7 steps)
+- **WF3: Analyzing Existing MCP** - Quality evaluation and improvement discovery (5 steps)
+- **WF4: Updating Outdated MCP** - Systematic modernization for new specifications (5 steps)
+- **WF5: Configuring MCP Connection** - CLI methods, .mcp.json structure, OAuth, plugin MCPs
+- **WF6: Using MCPs via Messages API** - Server configuration, MCPToolset patterns, beta headers, response handling
+- **WF7: Using MCPs in Conversations** - Resources (@server:path), prompts (/mcp__server__prompt), output limits
+
+**Key Features:**
+- **95%+ Official Documentation Coverage**: Complete alignment with code.claude.com/docs/en/mcp and docs.claude.com/en/docs/agents-and-tools
+- **Progressive Disclosure**: Core workflows in SKILL.md (557 lines), advanced topics loaded on-demand for token efficiency
+- **HTTP Transport Priority**: Explicit guidance - HTTP recommended for remote servers (better cloud support, more reliable)
+- **Messages API Integration**: Complete programmatic workflow with Python examples, allowlist/denylist/mixed MCPToolset patterns
+- **AWS Bedrock Patterns**: Production-ready modular architecture using FastMCP framework with decorator-based tool registration
+- **FastMCP Quick Start**: Minimal template for rapid Python MCP development with type hints and docstrings
+- **Cross-Skill References**: managing-plugins (plugin bundling), managing-prompts (prompt templates)
+- **Token-Efficient Loading**: Common workflows (create/analyze) load minimal files, API integration loads detailed reference
+- **Complete CLI Coverage**: All commands documented (add, add-json, add-from-claude-desktop, serve, reset-project-choices)
+- **13 Supporting Files:**
+  - Core: `architecture-overview.md`, `creation-guide.md`, `analysis-framework.md`, `configuration-guide.md`, `security-best-practices.md`
+  - Advanced: `mcp-connector-api-integration.md` (Messages API workflow), `enterprise-mcp-configuration.md` (org policies), `environment-variable-expansion.md` (team configs), `plugin-mcp-servers.md` (plugin bundling), `mcp-resources-and-prompts.md` (conversation usage), `oauth-authentication-flow.md` (OAuth setup), `deprecation-notes.md` (SSE → HTTP migration)
+  - Reference: `examples.md` (AWS Bedrock, FastMCP templates)
+
+**Triggers:**
+- Deciding if logic should become an MCP
+- Creating MCP servers (stdio, HTTP, remote)
+- Analyzing/improving existing MCPs
+- Connecting MCPs to Claude Code
+- Integrating MCPs via Messages API
+- Questions about MCP concepts, configuration, security, OAuth
+- Enterprise configuration, team-shared configs, plugin MCPs
 
 ---
 
 ## Planned Features
 
-The following capabilities are planned for future releases:
-
----
-
-### 🔲 managing-mcps
-**Target:** v1.6.0
-**Purpose:** MCP (Model Context Protocol) server creation and configuration
-
-**Planned Capabilities:**
-- MCP server setup
-- Tool and resource definition
-- Server configuration
-- Integration with Claude Code
-
-**Documentation:** 9 files ready in `documentation/managing-mcps/`
+All core capability management skills have been released in v1.6.0. Future releases will focus on maintenance, updates, and community-requested enhancements.
 
 ## Installation
 
@@ -615,6 +576,50 @@ Claude: [Activates managing-slash-commands skill, explains programmatic invocati
 - **Prompt content**: For complex prompt engineering within commands, consider using managing-prompts skill for advanced patterns
 - **Cost efficiency**: Haiku for straightforward commands → Sonnet for quality assessment and improvements
 
+---
+
+### Managing MCPs
+
+The managing-mcps skill activates automatically when:
+- You need to decide if logic should become an MCP server
+- You request MCP server creation (stdio, HTTP, remote)
+- You want to analyze or improve existing MCPs
+- You ask about MCP configuration, connection, or security
+- You mention Messages API integration or MCPToolset patterns
+- You ask about OAuth authentication, enterprise policies, or team configs
+- You need to bundle MCPs in plugins
+
+**Example Conversations:**
+```
+You: "Should I create an MCP for this database access layer?"
+Claude: [Activates managing-mcps skill, evaluates using WF1: Decision checklist with 6 criteria]
+
+You: "Create an HTTP MCP server using FastMCP for GitHub integration"
+Claude: [Activates managing-mcps skill, walks through WF2: Creating with HTTP priority guidance]
+
+You: "How do I use my MCP via the Messages API with allowlist?"
+Claude: [Activates managing-mcps skill, covers WF6: Messages API with MCPToolset patterns]
+
+You: "Analyze this existing MCP and suggest improvements"
+Claude: [Activates managing-mcps skill, performs WF3: Analysis with quality evaluation]
+
+You: "Configure OAuth authentication for my MCP server"
+Claude: [Activates managing-mcps skill, references oauth-authentication-flow.md guide]
+```
+
+#### Technical Implementation Notes
+
+**Progressive Disclosure and Token Efficiency**
+- **Model tier**: Haiku for decision (WF1), Sonnet for creation (WF2) and analysis (WF3)
+- **Rationale**: Token-optimized loading strategy based on usage patterns
+  - Common workflows (create/analyze MCPs - 80% of usage): Load SKILL.md + creation-guide.md + examples.md (minimal)
+  - Rare workflows (Messages API integration - 5% of usage): Load mcp-connector-api-integration.md (detailed, 300+ lines)
+  - Result: 100-150 line token savings for common cases while preserving detailed information on-demand
+- **HTTP Transport Priority**: HTTP recommended over stdio for remote servers (better cloud support, more reliable)
+- **Cross-skill references**: References managing-plugins for plugin bundling, managing-prompts for prompt templates
+- **Security validation**: Always validate OAuth flows and enterprise policies with Sonnet minimum
+- **Cost efficiency**: Quick decision (Haiku) → detailed creation/analysis (Sonnet) for reasoning-heavy workflows
+
 ## Documentation Sources
 
 This plugin is built from official Claude Code documentation:
@@ -625,76 +630,9 @@ This plugin is built from official Claude Code documentation:
 
 Over 74 documentation files were analyzed and synthesized into the current implementation.
 
-## Development
-
-### Plugin Structure
-
-```
-claude-code-capabilities/
-├── .claude-plugin/
-│   └── plugin.json                     # Plugin metadata (v1.3.0)
-├── skills/
-│   ├── managing-agent-skills/          # v1.0.0
-│   │   ├── SKILL.md                    # Main skill file with workflows
-│   │   ├── analysis-framework.md
-│   │   ├── best-practices.md
-│   │   ├── creation-checklist.md
-│   │   ├── examples/                   # Example skills
-│   │   └── templates/                  # Skill templates
-│   ├── managing-hooks/                 # v1.1.0
-│   │   ├── SKILL.md                    # Main skill file with workflows
-│   │   ├── prompt-hooks-guide.md       # LLM-powered hook decisions
-│   │   ├── plugin-hooks-guide.md       # Distributed hook composition
-│   │   ├── hook-schemas-reference.md   # Complete input/output schemas
-│   │   ├── hook-types-reference.md
-│   │   ├── configuration-guide.md
-│   │   ├── script-examples.md
-│   │   ├── security-checklist.md
-│   │   ├── debugging-guide.md
-│   │   ├── real-world-examples/
-│   │   └── templates/
-│   ├── managing-plugins/               # v1.2.0
-│   │   ├── SKILL.md                    # Main skill file with operations
-│   │   ├── plugin-spec.md              # plugin.json schema
-│   │   ├── marketplace-spec.md         # Marketplace configuration
-│   │   ├── distribution-guide.md       # Packaging and sharing
-│   │   ├── validation-rules.md         # Plugin validation
-│   │   └── team-workflow.md            # Team configuration
-│   ├── managing-prompts/               # v1.3.0
-│       ├── SKILL.md                    # Main skill file with workflows
-│       ├── analysis-patterns.md        # Common issues, quality assessment
-│       ├── architecture-patterns.md    # 5 pattern types
-│       ├── claude-4-5-optimization.md  # Claude 4.5-specific patterns
-│       ├── consistency-techniques.md   # Structured Outputs, prefilling
-│       ├── context-optimization.md     # Caching, token efficiency
-│       ├── extended-thinking-implementation.md  # Budget, caching
-│       ├── extraction-decision-guide.md         # Prompt vs script
-│       ├── guardrails-implementation.md         # Hallucination, security
-│       ├── migration-guide.md          # Claude 3→4.5 migration
-│       ├── optimization-strategies.md  # 11 before/after examples
-│       ├── output-formats.md           # Report templates
-│       ├── prompt-chaining-architecture.md      # Sequential/parallel
-│       ├── quick-reference.md          # Fast validation checklists
-│       └── technique-reference.md      # Indexed lookup by use case
-├── CHANGELOG.md
-└── README.md
-```
-
-### Contributing
+## Contributing
 
 Contributions welcome! See the main repository [CONTRIBUTING.md](https://github.com/thoeltig/claude-code-toolkit/blob/develop/CONTRIBUTING.md) for guidelines.
-
-## Roadmap
-
-| Version | Feature | Status | Target |
-|---------|---------|--------|--------|
-| 1.0.0 | managing-agent-skills | ✅ Released | 2025-11-28 |
-| 1.1.0 | managing-hooks | ✅ Released | 2025-11-29 |
-| 1.2.0 | managing-plugins | ✅ Released | 2025-11-29 |
-| 1.3.0 | managing-prompts | ✅ Released | 2025-11-29 |
-| 1.4.0 | managing-slash-commands | ✅ Released | 2025-12-03 |
-| 1.5.0 | managing-subagents | ✅ Released | 2025-12-03 |
-| 1.6.0 | managing-mcps | 🔲 Planned | TBD |
 
 ## License
 
