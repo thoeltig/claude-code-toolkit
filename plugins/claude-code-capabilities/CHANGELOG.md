@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.0] - 2025-12-06
+
+_Skill discovery: List all available skills with comprehensive output formats._
+
+### Added
+
+- **list-skills command**: Slash command for querying and displaying all available skills from personal, project, and plugin directories
+  - **Output formats**:
+    - `names` - Just skill names (most token-efficient)
+    - `paths` - Absolute file paths to SKILL.md files
+    - `list` - Names with full descriptions (default, human-readable)
+    - `table` - TSV format for parsing (name, path, description, scope)
+    - `json` - Structured JSON output
+  - **Skill discovery**: Scans ~/.claude/skills/, .claude/skills/, and plugin directories
+  - **Usage**: `/list-skills [--format names|paths|list|table|json]`
+  - Powered by Python script (scripts/list-skills.py) for comprehensive skill enumeration
+
+---
+
 ## [1.6.0] - 2025-12-05
 
 _MCP mastery: Comprehensive Model Context Protocol management with advanced API, enterprise, and plugin integration._
@@ -296,7 +315,9 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.5.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0...v1.3.0

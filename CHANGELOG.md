@@ -9,6 +9,24 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.7.0.0] - 2025-12-06
+
+_Marketplace release with skill discovery command and marketplace configuration fix._
+
+### Added
+
+- **claude-code-capabilities plugin** ([v1.7.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.7.0.0)): Added `/list-skills` command for comprehensive skill enumeration
+  - Query and display all available skills from personal (~/.claude/skills/), project (.claude/skills/), and plugin directories
+  - 5 output formats: `names` (token-efficient), `paths` (file locations), `list` (human-readable, default), `table` (TSV for parsing), `json` (structured)
+  - Powered by Python script (scripts/list-skills.py) for comprehensive skill discovery
+  - Usage: `/list-skills [--format names|paths|list|table|json]`
+
+### Fixed
+
+- Fixed duplicate marketplace.json files - consolidated to single root-level marketplace.json with correct field structure, enabling repository to function as GitHub marketplace source for Claude Code plugins
+
+---
+
 ## [1.6.0.0] - 2025-12-05
 
 _Marketplace release with comprehensive MCP management and Messages API integration._
@@ -143,7 +161,9 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.5.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.7.0.0...HEAD
+[1.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.7.0.0
+[1.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.6.0.0
 [1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.5.0.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.3.0.0

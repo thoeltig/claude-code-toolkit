@@ -1,6 +1,5 @@
 {
   "name": "claude-code-toolkit",
-  "description": "A curated marketplace of Claude Code plugins for enhanced development workflows",
   "owner": {
     "name": "Thore Höltig",
     "url": "https://github.com/thoeltig/claude-code-toolkit"

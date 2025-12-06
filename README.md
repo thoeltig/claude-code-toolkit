@@ -23,7 +23,7 @@ Then install any plugin:
 |--------|-------------|---------|
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0 |
-| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.6.0 |
+| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.7.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -40,7 +40,6 @@ Never lose context again. Save your work state, git status, and active tasks bet
 ### Claude Code Capabilities
 The most comprehensive toolkit for working with Claude Code's extensibility features. Includes 7 specialized skills for managing every aspect of your Claude Code setup.
 
-**Complete Feature Set:**
 - **managing-agent-skills skill** (v1.0.0): Create, analyze, and improve agent skills with validation frameworks and progressive disclosure
 - **managing-hooks skill** (v1.1.0): Configure event-driven automation with all 10 hook types, prompt-based hooks, and plugin composition
 - **managing-plugins skill** (v1.2.0): Bundle components into distributable plugins with marketplace support and team workflows
