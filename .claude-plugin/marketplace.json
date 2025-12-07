@@ -38,6 +38,16 @@
         "name": "Thore Höltig"
       },
       "strict": false
+    },
+    {
+      "name": "claude-code-tools",
+      "source": "./plugins/claude-code-tools",
+      "description": "Token-efficient file reading for Claude Code - minify files to reduce context pollution and operating costs. Provides /read-optimized command with 30-70% token savings.",
+      "version": "0.1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
     }
   ]
 }

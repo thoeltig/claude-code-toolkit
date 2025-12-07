@@ -18,6 +18,7 @@ download_docs.log
 *.tar.gz
 dist/
 build/
+node_modules/
 
 # OS-specific files
 .DS_Store
