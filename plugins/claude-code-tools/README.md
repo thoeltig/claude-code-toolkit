@@ -1,4 +1,4 @@
-# read-token-optimized
+# claude-code-tools
 
 Token-efficient file reading for Claude Code - minify files to reduce context pollution and operating costs.
 
@@ -11,12 +11,12 @@ Context is precious. Every character you read costs tokens. By minifying files -
 ## Quick Start
 
 ```bash
-/read-optimized path/to/file.json
+/read-efficient path/to/file.json
 ```
 
 ## When to Use
 
-**Use `/read-optimized` instead of native Read for:**
+**Use `/read-efficient` instead of native Read for:**
 - JSON files (typically 30-70% size reduction)
 - Large text or code files
 - Multiple file reads in a single workflow
@@ -41,25 +41,25 @@ The tool automatically:
 
 ### Single file
 ```bash
-/read-optimized data.json
+/read-efficient data.json
 # Returns minified JSON object
 ```
 
 ### Multiple files
 ```bash
-/read-optimized api.js utils.js types.ts
+/read-efficient api.js utils.js types.ts
 # Returns newline-delimited JSON (one result per file)
 ```
 
 ### With caching (reuse minified version)
 ```bash
-/read-optimized huge-dataset.json --cache
+/read-efficient huge-dataset.json --cache
 # Creates cached version for future reads
 ```
 
 ### Force plaintext mode
 ```bash
-/read-optimized script.py --format plaintext
+/read-efficient script.py --format plaintext
 # Skips JSON parsing, returns minified text
 ```
 
@@ -81,7 +81,7 @@ By minifying instead of reading raw files:
 ## Technical Details
 
 For package documentation, CLI usage, and programmatic API, see:
-`plugins/read-token-optimized/read-minified/README.md`
+`plugins/claude-code-tools/read-minified/README.md`
 
 The tool is a standalone TypeScript/Node.js package with:
 - Zero external dependencies
@@ -103,7 +103,7 @@ All formats benefit from automatic minification and fallback behavior.
 
 ## Installation
 
-The plugin is installed as part of Claude Code. Use the `/read-optimized` command directly.
+The plugin is installed as part of Claude Code. Use the `/read-efficient` command directly.
 
 ## License
 
