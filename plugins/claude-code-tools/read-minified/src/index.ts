@@ -5,6 +5,9 @@ import { writeCache } from './cache';
 import { detectFormat } from './utils/formatDetector';
 import { formatOutput } from './utils/outputFormatter';
 import { formatCsv } from './formats/csv';
+import { formatYaml } from './formats/yaml';
+import { formatIni } from './formats/ini';
+import { formatNdjson } from './formats/ndjson';
 
 export function parseArguments(args: string[]): {
     paths: string[];
@@ -44,6 +47,18 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 const csvJson = formatCsv(minifiedContent, { minify: true });
                 processedContent = JSON.parse(csvJson);
                 cacheContent = csvJson;
+            } else if (format === 'yaml' && options.toJson) {
+                const yamlJson = formatYaml(minifiedContent, { minify: true });
+                processedContent = JSON.parse(yamlJson);
+                cacheContent = yamlJson;
+            } else if (format === 'ini' && options.toJson) {
+                const iniJson = formatIni(minifiedContent, { minify: true });
+                processedContent = JSON.parse(iniJson);
+                cacheContent = iniJson;
+            } else if (format === 'ndjson' && options.toJson) {
+                const ndjsonJson = formatNdjson(minifiedContent, { minify: true });
+                processedContent = JSON.parse(ndjsonJson);
+                cacheContent = ndjsonJson;
             } else if (format === 'csv') {
                 processedContent = minifiedContent;
                 cacheContent = minifiedContent;
