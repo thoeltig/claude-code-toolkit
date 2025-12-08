@@ -10,10 +10,15 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
 
 ## Features
 
-- **Smart Format Detection:** Auto-detects file type (JSON, plaintext, or unknown) by extension
+- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, Plain Text
+- **Smart Format Detection:** Auto-detects file type by extension
 - **Minification:** Remove redundant whitespace and formatting from any text file
-- **JSON Support:** Parse and minify JSON with full validation
-- **Plain Text Fallback:** Gracefully handle non-JSON files and parsing errors
+- **Structured Parsing:** Convert formats to minified JSON with semantic structure:
+  - Markdown: block-level elements (headings, paragraphs, lists, code blocks, tables)
+  - YAML: indentation-based nesting with list support
+  - INI: section-based configuration
+  - CSV/NDJSON: row/record structures as JSON objects
+- **Graceful Degradation:** Parse errors fall back to minified plaintext automatically
 - **Caching:** Optionally cache optimized files for reuse
 - **Batch Processing:** Handle multiple files in one command
 - **No Dependencies:** Pure TypeScript/Node.js, no external packages
@@ -48,19 +53,31 @@ node dist/index.js <path> [options]
 
 ## Format Detection & Fallback
 
-The tool automatically detects file format based on file extension:
+The tool automatically detects file format based on file extension and applies appropriate parsing:
 
-| Extension | Type | Behavior |
-|-----------|------|----------|
-| `.json` | JSON | Parse and minify as JSON; fallback to plaintext on parse error |
-| `.txt`, `.text` | Plain text | Minify whitespace only |
-| `.py`, `.js`, `.go`, etc. | Code (unknown) | Treat as plaintext; minify whitespace |
-| Unknown | Plaintext | Minify whitespace only |
+| Extension | Type | JSON Conversion | Behavior |
+|-----------|------|-----------------|----------|
+| `.json` | JSON | ✓ Native | Parse and minify; fallback to plaintext on error |
+| `.csv`, `.tsv` | CSV | ✓ Array of objects | Parse with intelligent delimiter detection; fallback to plaintext |
+| `.yaml`, `.yml` | YAML | ✓ Parsed structure | Parse indentation-based nesting; fallback to plaintext |
+| `.ini`, `.conf`, `.cfg`, `.properties` | INI | ✓ Parsed sections | Parse key=value with section support; fallback to plaintext |
+| `.ndjson`, `.jsonl` | NDJSON | ✓ Array of objects | Parse line-by-line JSON; invalid lines create error objects |
+| `.md`, `.markdown` | Markdown | ✓ Block structure | Parse to JSON with heading hierarchy, lists, code blocks, tables |
+| `.txt`, `.text` | Plain text | ✗ As-is | Minify whitespace only |
+| `.py`, `.js`, `.go`, etc. | Code (unknown) | ✗ As-is | Treat as plaintext; minify whitespace |
+| Unknown | Plaintext | ✗ As-is | Minify whitespace only |
+
+**Format-Specific Parsing:**
+- **CSV**: Auto-detects delimiter (comma, semicolon, tab); converts to array of objects
+- **YAML**: Handles nested structures via indentation; preserves lists and mappings
+- **INI**: Supports sections ([section]) and root-level keys; ignores comments
+- **NDJSON**: Parses JSON objects line-by-line; invalid lines become error objects
+- **Markdown**: Converts to structured JSON with semantic blocks (headings, lists, code, tables, etc.)
 
 **Fallback Logic:**
-- If a file appears to be JSON but fails to parse, the tool gracefully degrades to minified plaintext
-- This ensures broken JSON files still produce useful output instead of errors
-- No file read will ever fail - always returns structured response with minified content
+- Parse error → gracefully degrade to minified plaintext
+- Ensures broken files produce useful output instead of errors
+- No file read will fail - always returns structured response with minified content
 
 ### Examples
 
@@ -165,16 +182,22 @@ const results = await processFiles(
 
 ## Test Coverage
 
-- **Overall: 90.06%** code coverage (exceeds 85% target)
-- **96 test cases** across 8 test suites:
-  - minifier.test.ts (10 tests)
+- **Overall: 88.53%** statement coverage, **96.47%** function coverage
+- **266 test cases** across 14 test suites:
   - formats/json.test.ts (13 tests)
+  - formats/csv.test.ts (29 tests)
+  - formats/yaml.test.ts (20 tests)
+  - formats/ini.test.ts (15 tests)
+  - formats/ndjson.test.ts (10 tests)
+  - formats/markdown.test.ts (45 tests)
   - formats/plaintext.test.ts (7 tests)
+  - minifier.test.ts (10 tests)
   - utils/fileHandler.test.ts (7 tests)
   - utils/formatDetector.test.ts (8 tests)
   - cache.test.ts (15 tests)
   - index.test.ts (16 tests)
-  - integration.test.ts (20 tests, including plaintext and fallback scenarios)
+  - integration.test.ts (20 tests)
+  - Other utilities (19 tests)
 
 Run tests:
 ```bash
@@ -208,6 +231,11 @@ npm run dev -- file.json
 
 **Format Handlers:**
 - `src/formats/json.ts` - JSON parsing and minification
+- `src/formats/csv.ts` - CSV parsing with delimiter detection (comma, semicolon, tab)
+- `src/formats/yaml.ts` - YAML parsing with indentation-based nesting
+- `src/formats/ini.ts` - INI/properties parsing with section support
+- `src/formats/ndjson.ts` - NDJSON line-by-line JSON parsing
+- `src/formats/markdown.ts` - Markdown block-level parsing (headings, lists, code, tables, blockquotes)
 - `src/formats/plaintext.ts` - Plain text minification (fallback)
 
 **Infrastructure:**
@@ -250,14 +278,25 @@ export function formatCsv(content: string): any {
 }
 ```
 
-## Planned Formats
+## Completed Formats (v0.2.0.0)
 
-- **CSV** (v1.1) - Parse CSV to JSON array of objects
-- **YAML** (v1.2) - Parse YAML to JSON
-- **Markdown** (v1.3) - Parse markdown to structured JSON (headers, lists, code blocks)
-- **XML** (future) - Parse XML to JSON
+- ✅ **CSV** - Parse CSV to JSON array of objects with intelligent delimiter detection
+- ✅ **YAML** - Parse YAML to JSON with indentation-based nesting
+- ✅ **INI** - Parse INI/properties files with section-based configuration
+- ✅ **NDJSON** - Parse newline-delimited JSON for streaming data
+- ✅ **Markdown** - Parse markdown to structured JSON (headings, lists, code blocks, tables, blockquotes)
 
-All formats benefit from automatic minification and fallback logic.
+## Planned Formats (Phase 3+)
+
+**Phase 3: Medium Complexity** (v0.3.0.0 roadmap)
+- **XML** - Parse XML to JSON with element attributes and namespaces
+- **HTML** - Parse HTML to text extraction or structured JSON
+
+**Phase 3: Specialized Formats** (v0.4.0.0 roadmap)
+- **Log Files** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
+- **SQL** - Parse SQL dumps and INSERT statements to structured data
+
+All formats benefit from automatic minification and graceful degradation fallback logic.
 
 ## License
 

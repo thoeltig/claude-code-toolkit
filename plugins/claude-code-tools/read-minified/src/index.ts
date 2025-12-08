@@ -8,6 +8,7 @@ import { formatCsv } from './formats/csv';
 import { formatYaml } from './formats/yaml';
 import { formatIni } from './formats/ini';
 import { formatNdjson } from './formats/ndjson';
+import { formatMarkdown } from './formats/markdown';
 
 export function parseArguments(args: string[]): {
     paths: string[];
@@ -59,9 +60,10 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 const ndjsonJson = formatNdjson(minifiedContent, { minify: true });
                 processedContent = JSON.parse(ndjsonJson);
                 cacheContent = ndjsonJson;
-            } else if (format === 'csv') {
-                processedContent = minifiedContent;
-                cacheContent = minifiedContent;
+            } else if (format === 'markdown' && options.toJson) {
+                const markdownJson = formatMarkdown(minifiedContent, { minify: true });
+                processedContent = JSON.parse(markdownJson);
+                cacheContent = markdownJson;
             } else {
                 processedContent = minifiedContent;
                 cacheContent = minifiedContent;

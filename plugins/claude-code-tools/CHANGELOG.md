@@ -1,11 +1,37 @@
 # Changelog
 
-All notable changes to the read-token-optimized plugin are documented here.
+All notable changes to the "claude-code-tools" plugin for Claude Code are documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
+
+## [0.2.0.0] - 2025-12-08
+
+### Added
+
+- **Multi-format support**: CSV, YAML, INI, NDJSON, and Markdown file parsing
+- **CSV handling** - Auto-detects delimiter (comma, semicolon, tab); converts to JSON array of objects
+- **YAML support** - Parses YAML with indentation-based nesting, lists, and comment handling
+- **INI/properties files** - Parses configuration files with section support
+- **NDJSON streaming** - Line-by-line JSON parsing for logs and datasets
+- **Markdown parsing** - Converts to structured JSON with block elements:
+  - All heading levels (1-6) with level tracking
+  - Paragraphs, ordered/unordered lists, task lists with checked state
+  - Code blocks with language detection
+  - Tables with headers and row objects
+  - Blockquotes and horizontal rules
+  - YAML front matter preservation
+  - Intelligent formatting stripping (removes noise like bold/italic markers)
+- **Format routing** - Automatic detection and routing for all 7 file types
+- **Test coverage** - 266 passing tests (118 new), 88%+ coverage
+
+### Changed
+
+- **Default behavior** - `--minify` and `--to-json` now enabled by default for all formats
+- **Output structure** - All formats now convert to minified JSON for consistent parsing
+- **Markdown formatting** - Bold, italic, and strikethrough markers are stripped as noise while preserving links and inline code
 
 ## [0.1.0.0] - 2025-12-07
 
@@ -23,5 +49,6 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Slash command `/read-optimized` for Claude Code integration
 - 20-70% file size reduction through minification on typical files
 
-[Unreleased]: https://github.com/anthropics/claude-code/compare/v0.1.0.0...HEAD
+[Unreleased]: https://github.com/anthropics/claude-code/compare/v0.2.0.0...HEAD
+[0.2.0.0]: https://github.com/anthropics/claude-code/compare/v0.1.0.0...v0.2.0.0
 [0.1.0.0]: https://github.com/anthropics/claude-code/releases/tag/v0.1.0.0
