@@ -7,11 +7,55 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-### Planned: Phase 4+ (Log Files, SQL)
+### Planned: Phase 6+ (CREATE TABLE, SELECT, etc.)
 
-- **Log Files** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
-- **SQL** - Parse SQL dumps and INSERT statements to structured data
+- **SQL CREATE TABLE** - Schema extraction and structure analysis
+- **SQL SELECT results** - Query output parsing and formatting
+- **UPDATE/DELETE statements** - Modification tracking
 - **Type Storage Review** - Test all parsers with real-world inputs to evaluate type handling improvements
+
+## [0.6.0.0] - 2025-12-09
+
+Log file and SQL INSERT statement parsing with structured JSON output.
+
+### Added
+
+- **Log file format handler** - Pattern-based parsing for common log formats:
+  - **Apache/Nginx Combined Format** - Space-delimited with quoted fields, user agents, referrers
+  - **RFC 3164 Syslog** - Traditional syslog format (priority, timestamp, hostname, tag, message)
+  - **RFC 5424 Syslog** - Modern cloud syslog with structured data and ISO timestamps
+  - Auto-detection from first line pattern (no config needed)
+  - Structured JSON output with semantic meaning preserved
+  - Graceful fallback to minified plaintext on parse error
+- Auto-detection for `.log` file extension
+
+- **SQL INSERT statement handler** - Parse SQL dumps and INSERT statements:
+  - Extract table name, columns, action type (INSERT), and row data
+  - Type-aware parsing: numbers, strings, booleans, NULL values
+  - Schema context preserved in output (columns array, row count)
+  - Handle multiple INSERT statements in single file
+  - Case-insensitive, multiline, and quoted field support
+  - Edge cases: escaped quotes, mixed quote types, special characters
+- Auto-detection for `.sql` file extension
+
+### Test Coverage
+
+- **Log format handler**: 25 comprehensive tests covering all log types and edge cases
+- **SQL handler**: 31 comprehensive tests covering INSERT variations and data types
+- **Total tests**: 434 passing (was 378, added 56 tests)
+- **Statement coverage**: 89%+
+- **Function coverage**: 96.84%+
+
+### Architecture
+
+- Modular format handler pattern consistent with existing handlers
+- Graceful degradation for malformed input
+- String-first philosophy for logs (all values as strings)
+- Type-aware parsing for SQL (numbers, booleans, NULL distinct)
+- Auto-detection integrated into formatDetector.ts
+
+[unreleased]: https://github.com/anthropics/claude-code/compare/v0.6.0.0...HEAD
+[0.6.0.0]: https://github.com/anthropics/claude-code/compare/v0.5.0.0...v0.6.0.0
 
 ## [0.5.0.0] - 2025-12-08
 

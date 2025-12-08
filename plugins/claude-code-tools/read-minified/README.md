@@ -10,7 +10,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
 
 ## Features
 
-- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, Plain Text
+- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, Log Files, SQL, Plain Text
 - **Smart Format Detection:** Auto-detects file type by extension
 - **Minification:** Remove redundant whitespace and formatting from any text file
 - **Structured Parsing:** Convert formats to minified JSON with semantic structure:
@@ -20,6 +20,8 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
   - CSV/NDJSON: row/record structures as JSON objects
   - XML: full semantic preservation with element tags, flattened attributes (`attribute_` prefix), namespaces, CDATA
   - HTML: visual tag stripping with semantic structure preservation (headings, lists, tables)
+  - Log files: Auto-detection of Apache, Nginx, RFC 3164, RFC 5424 formats with semantic field parsing
+  - SQL: INSERT statement parsing with table context, column definitions, and type-aware row data
 - **Graceful Degradation:** Parse errors fall back to minified plaintext automatically
 - **Caching:** Optionally cache optimized files for reuse
 - **Batch Processing:** Handle multiple files in one command
@@ -77,6 +79,8 @@ The tool automatically detects file format based on file extension and applies a
 | `.md`, `.markdown` | Markdown | ✓ Block structure | Parse to JSON with heading hierarchy, lists, code blocks, tables |
 | `.xml` | XML | ✓ Element structure | Parse with attributes, namespaces, CDATA, full semantic preservation |
 | `.html`, `.htm` | HTML | ✓ Semantic structure | Strip visual tags, preserve semantic elements; optimized list/table formats |
+| `.log` | Log files | ✓ Structured array | Apache/Nginx/RFC3164/RFC5424 formats auto-detected; fallback to plaintext |
+| `.sql` | SQL dumps | ✓ Structured objects | Parse INSERT statements with table, columns, rows, type awareness |
 | `.txt`, `.text` | Plain text | ✗ As-is | Minify whitespace only |
 | `.py`, `.js`, `.go`, etc. | Code (unknown) | ✗ As-is | Treat as plaintext; minify whitespace |
 | Unknown | Plaintext | ✗ As-is | Minify whitespace only |
@@ -89,6 +93,8 @@ The tool automatically detects file format based on file extension and applies a
 - **Markdown**: Converts to structured JSON with semantic blocks (headings, lists, code, tables, etc.) with anchor_line extraction for precise navigation of original document
 - **XML**: Preserves element tags as field names, attributes with `attribute_` prefix, text content as is values, supports namespaces and CDATA
 - **HTML**: Strips visual tags (`<b>`, `<i>`, `<font>`, etc.), auto-closes unclosed tags, generates optimized structures for lists (`{ordered, list}`) and tables (`{headers, rows}`)
+- **Log files**: Auto-detects format from first line (Apache Combined, Nginx, RFC 3164 Syslog, RFC 5424 Syslog); parses to structured JSON array with semantic fields; fallback to minified plaintext
+- **SQL**: Parses INSERT statements with table name, column list, and row data; type-aware parsing (numbers, strings, booleans, NULL); supports multiple statements and edge cases
 
 **Fallback Logic:**
 - Parse error → gracefully degrade to minified plaintext
@@ -327,11 +333,22 @@ export function formatCsv(content: string): any {
 - ✅ **`--max-output` flag** - Dynamic configuration for output size thresholds
 - ✅ 378 total tests with 88.98%+ statement coverage
 
-## Planned Formats (Phase 4+)
+**v0.6.0.0:**
+- ✅ **Log file parsing** - Pattern-based for Apache, Nginx, RFC 3164 Syslog, RFC 5424 Syslog
+  - Auto-detection from first line, structured JSON output with semantic fields
+  - 25 comprehensive tests, all passing
+- ✅ **SQL INSERT parsing** - Parse SQL dumps with table, columns, rows, type awareness
+  - Support for multiple statements, quoted fields, NULL values, edge cases
+  - 31 comprehensive tests, all passing
+- ✅ 434 total tests with 89%+ statement coverage, 96.84%+ function coverage
 
-**Phase 4.1 (v0.5.0.0 roadmap):**
-- **Log Files** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
-- **SQL** - Parse SQL dumps and INSERT statements to structured data
+## Planned Formats (Phase 6+)
+
+**Phase 6 (v0.7.0.0 roadmap):**
+- **SQL CREATE TABLE** - Schema extraction from CREATE TABLE statements
+- **SQL SELECT results** - Parse query output and result sets
+- **UPDATE/DELETE statements** - Data modification tracking
+- **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
 
 **Future Research:**
 - **Type Storage Review** - Test all parsers with real-world inputs to evaluate type handling improvements and potential benefits of rich type systems

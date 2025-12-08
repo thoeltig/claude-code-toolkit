@@ -7,6 +7,28 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Planned: Phase 6+ (SQL Schema, SELECT Results)
+
+- **SQL CREATE TABLE** - Schema extraction from CREATE TABLE statements
+- **SQL SELECT results** - Parse query output and result sets
+- **UPDATE/DELETE** - Statement parsing for data modification tracking
+- **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
+
+## [0.6.0.0] - 2025-12-09
+
+### Added
+
+- **Log file parsing** - Pattern-based parsing for common log formats:
+  - Apache/Nginx Combined Format with all headers and metadata
+  - RFC 3164 Syslog (traditional format)
+  - RFC 5424 Syslog (modern cloud format with structured data)
+  - Auto-detection from file content (no config needed)
+  - 25 comprehensive tests, all passing
+- **SQL INSERT statement parsing** - Parse SQL dumps and INSERT statements:
+  - Extract table name, columns, row data with type awareness
+  - Support for multiple statements, quoted fields, NULL values
+  - 31 comprehensive tests, all passing
+
 ## [0.5.0.0] - 2025-12-08
 
 ### Added

@@ -179,14 +179,30 @@ The tool is a standalone TypeScript/Node.js package with:
 - ✅ 61 comprehensive HTML test cases
 - ✅ 378 total tests with 88.98% statement coverage, 96.84% function coverage
 
-## Planned for Phase 4+ (v0.5.0.0+)
+## Completed in v0.6.0.0
 
-- **Log file parsing** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
-- **SQL parsing** - Parse SQL dumps and INSERT statements to structured data
+- ✅ **Log file parsing** - Pattern-based parsing for common log formats:
+  - Apache/Nginx Combined Format (space-delimited with quoted fields)
+  - RFC 3164 Syslog (traditional format)
+  - RFC 5424 Syslog (modern cloud format)
+  - Auto-detection from first line pattern
+  - 25 comprehensive tests, all passing
+- ✅ **SQL INSERT statement parsing** - Parse SQL dumps and INSERT statements:
+  - Extract table name, columns, row data with type awareness
+  - Handle multiple statements, quoted fields, NULL values, escaped quotes
+  - 31 comprehensive tests, all passing
+- ✅ 434 total tests with 89%+ statement coverage, 96.84%+ function coverage
 
-See `read-minified/roadmap/` for detailed Phase 4+ planning.
+## Planned for Phase 6+ (v0.7.0.0+)
+
+- **SQL CREATE TABLE** - Schema extraction from CREATE TABLE statements
+- **SQL SELECT results** - Parse query output and result sets
+- **UPDATE/DELETE** - Statement parsing for data modification tracking
+- **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
 
 All formats benefit from automatic minification and graceful fallback behavior.
+
+See `read-minified/CHANGELOG.md` for detailed version history and `plugins/claude-code-tools/read-minified/README.md` for technical documentation.
 
 ## Installation
 
