@@ -21,11 +21,16 @@ Long-term planning for format support and architectural improvements.
 - ✅ Phase 3.2a: HTML basic handler with visual tag stripping (v0.4.0.0)
 - ✅ Phase 3.2b: HTML semantic structures - optimized lists and tables (v0.4.0.0)
 
+### Phase 4: Markdown Enhancements & Output Limits (v0.5.0.0)
+- ✅ Markdown anchor line extraction for precise navigation
+- ✅ Output limits handling with intelligent auto-caching fallback
+- ✅ `--max-output` flag for dynamic output size configuration
+
 ---
 
-## Phase 4+: Advanced Formats (v0.5.0.0+)
+## Phase 5+: Advanced Formats (v0.6.0.0+)
 
-### Phase 4.1: Structured Logs (v0.5.0.0)
+### Phase 5.1: Structured Logs (v0.6.0.0)
 
 **Log File Format Handler**
 - Parse common log formats to structured JSON
@@ -46,7 +51,7 @@ Long-term planning for format support and architectural improvements.
 - Handling malformed/incomplete log entries
 - Extracting key-value pairs from unstructured lines
 
-### Phase 4.2: SQL Parsing (v0.5.0.0+)
+### Phase 5.2: SQL Parsing (v0.6.0.0+)
 
 **SQL Format Handler**
 - Parse SQL dumps and INSERT statements to JSON

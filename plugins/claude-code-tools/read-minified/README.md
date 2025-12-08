@@ -321,6 +321,12 @@ export function formatCsv(content: string): any {
   - Auto-close unclosed HTML tags (browser-compatible)
   - Optimized semantic structures: lists `{ordered, list}`, tables `{headers, rows}`
 
+**v0.5.0.0:**
+- ✅ **Markdown anchor line extraction** - Precise navigation with `anchor_line` for key elements
+- ✅ **Output limits handling** - Intelligent auto-caching when output exceeds configured limit
+- ✅ **`--max-output` flag** - Dynamic configuration for output size thresholds
+- ✅ 378 total tests with 88.98%+ statement coverage
+
 ## Planned Formats (Phase 4+)
 
 **Phase 4.1 (v0.5.0.0 roadmap):**

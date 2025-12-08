@@ -7,6 +7,35 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.5.0.0] - 2025-12-08
+
+### Added
+
+- **Markdown anchor line extraction** - Improved original file navigation:
+  - Extract `anchor_line` for key markdown elements to support precise navigation
+  - Enables finding exact line numbers in source files from parsed output
+- **Output limits handling with auto-caching** - Intelligent output management:
+  - Added `--max-output` flag to script for dynamic output limit configuration
+  - Automatic fallback to caching when accumulated output exceeds configured limit
+  - Slash command preconfigured with ~30,000 character limit with fallback logic
+  - No mixed output: either all minified or all cached based on size
+
+### Fixed
+
+- **Slash command parameters** - Corrected parameter passing to improve reliability
+- **Cached output scenarios** - Improved feedback when caching fallback is triggered:
+  - Automatically informs Claude why caching summary is returned instead of full content
+  - Better UX for batch operations exceeding size limits
+- **Output truncation handling** - Detects and gracefully handles truncation when limits exceeded
+
+### Changed
+
+- **Documentation** - Comprehensive guide for output limits and auto-caching:
+  - Added `Output Limits & Auto-Caching` section with configuration details
+  - Documented both `BASH_MAX_OUTPUT_LENGTH` and slash command limits
+  - Provided configuration examples for `.claude/settings.json`
+  - Fallback logic clearly explained with usage instructions
+
 ## [0.4.0.0] - 2025-12-08
 
 ### Added
@@ -81,7 +110,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Slash command `/read-optimized` for Claude Code integration
 - 20-70% file size reduction through minification on typical files
 
-[Unreleased]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...HEAD
+[Unreleased]: https://github.com/anthropics/claude-code/compare/v0.5.0.0...HEAD
+[0.5.0.0]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...v0.5.0.0
 [0.4.0.0]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...v0.4.0.0
 [0.3.0.0]: https://github.com/anthropics/claude-code/compare/v0.2.0.0...v0.3.0.0
 [0.2.0.0]: https://github.com/anthropics/claude-code/compare/v0.1.0.0...v0.2.0.0

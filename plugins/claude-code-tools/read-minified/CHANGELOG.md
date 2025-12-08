@@ -13,6 +13,27 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - **SQL** - Parse SQL dumps and INSERT statements to structured data
 - **Type Storage Review** - Test all parsers with real-world inputs to evaluate type handling improvements
 
+## [0.5.0.0] - 2025-12-08
+
+Markdown anchor line extraction for precise navigation and intelligent output limits handling with auto-caching fallback.
+
+### Added
+
+- **Markdown anchor line extraction** - Improved original file navigation:
+  - Extract `anchor_line` for key markdown elements to support precise navigation
+  - Enables finding exact line numbers in source files from parsed output
+- **Output limits handling with auto-caching** - Intelligent output management:
+  - Added `--max-output` flag to script for dynamic output limit configuration
+  - Automatic fallback to caching when accumulated output exceeds configured limit
+  - No mixed output: either all minified or all cached based on size
+
+### Fixed
+
+- **Cached output scenarios** - Improved feedback when caching fallback is triggered:
+  - Automatically informs Claude why caching summary is returned instead of full content
+  - Better UX for batch operations exceeding size limits
+- **Output truncation handling** - Detects and gracefully handles truncation when limits exceeded
+
 ## [0.4.0.0] - 2025-12-08
 
 HTML format handler with optimized semantic structures and consistent string representation.
@@ -44,7 +65,8 @@ HTML format handler with optimized semantic structures and consistent string rep
 - Wrapper around XML parser (parseXml) for reuse without modification
 - HTML preprocessing pipeline: auto-close tags → strip visual markup → parse as XML → apply semantic enhancements → JSON output
 
-[unreleased]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...HEAD
+[unreleased]: https://github.com/anthropics/claude-code/compare/v0.5.0.0...HEAD
+[0.5.0.0]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...v0.5.0.0
 [0.4.0.0]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...v0.4.0.0
 
 ## [0.3.0.0] - 2025-12-08
