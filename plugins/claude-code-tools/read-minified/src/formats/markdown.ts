@@ -5,11 +5,11 @@ export function isValidMarkdown(content: string): boolean {
 export function parseMarkdown(content: string): any[] {
     const lines = content.split('\n');
     const blocks: any[] = [];
-    let i = 0;
 
-    while (i < lines.length) {
+    for (let i = 0; i < lines.length;) {
         const line = lines[i];
         const trimmed = line.trim();
+        const prevI = i;
 
         if (!trimmed) {
             i++;
@@ -54,6 +54,10 @@ export function parseMarkdown(content: string): any[] {
             blocks.push(paragraphResult.block);
             i = paragraphResult.nextIndex;
         }
+
+        if (i === prevI) {
+            i++;
+        }
     }
 
     return blocks;
@@ -70,7 +74,14 @@ function isFrontMatter(line: string, index: number, lines: string[]): boolean {
 function parseFrontMatter(lines: string[], startIndex: number): { block: any; nextIndex: number } {
     let i = startIndex + 1;
     let content = '';
+    let iterationCount = 0;
+    const maxIterations = lines.length - startIndex + 10;
+
     while (i < lines.length && lines[i].trim() !== '---') {
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+            break;
+        }
         content += lines[i] + '\n';
         i++;
     }
@@ -100,15 +111,33 @@ function parseCodeBlock(lines: string[], startIndex: number): { block: any; next
     const language = firstLine.substring(3).trim();
     let i = startIndex + 1;
     let content = '';
+    let iterationCount = 0;
+    const maxIterations = lines.length - startIndex + 50;
 
-    while (i < lines.length && !lines[i].trim().startsWith('```')) {
+    while (i < lines.length) {
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+            break;
+        }
+
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        // Only a BARE ``` (exactly, no language specifier) closes the code block
+        // Lines like ```bash are content (examples within markdown blocks)
+        if (trimmed === '```') {
+            i++;
+            break;
+        }
+
+        // Everything else is content (including ```<language>, which might be nested examples)
         content += lines[i] + '\n';
         i++;
     }
 
     return {
         block: { type: 'code', language: language, content: content.trimEnd() },
-        nextIndex: i + 1
+        nextIndex: i
     };
 }
 
@@ -126,8 +155,15 @@ function parseList(lines: string[], startIndex: number): { block: any; nextIndex
     const items: any[] = [];
     let i = startIndex;
     const baseIndent = getListIndentation(firstLine);
+    let iterationCount = 0;
+    const maxIterations = lines.length - startIndex + 10;
 
     while (i < lines.length) {
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+            break;
+        }
+
         const line = lines[i];
         const trimmed = line.trim();
 
@@ -192,8 +228,14 @@ function isBlockquoteStart(line: string): boolean {
 function parseBlockquote(lines: string[], startIndex: number): { block: any; nextIndex: number } {
     let i = startIndex;
     let content = '';
+    let iterationCount = 0;
+    const maxIterations = lines.length - startIndex + 10;
 
     while (i < lines.length && lines[i].trim().startsWith('>')) {
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+            break;
+        }
         const line = lines[i].trim();
         content += line.substring(1).trim() + '\n';
         i++;
@@ -224,8 +266,15 @@ function parseTable(lines: string[], startIndex: number): { block: any; nextInde
     const headers = parseTableRow(headerLine);
     const rows: any[] = [];
     let i = startIndex + 2;
+    let iterationCount = 0;
+    const maxIterations = lines.length - startIndex + 10;
 
     while (i < lines.length && isTableRow(lines[i])) {
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+            break;
+        }
+
         const rowData = parseTableRow(lines[i]);
         const row: any = {};
 
@@ -256,8 +305,15 @@ function parseTableRow(line: string): string[] {
 function parseParagraph(lines: string[], startIndex: number): { block: any; nextIndex: number } {
     let i = startIndex;
     let content = '';
+    let iterationCount = 0;
+    const maxIterations = lines.length - startIndex + 10;
 
     while (i < lines.length) {
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+            break;
+        }
+
         const line = lines[i].trim();
 
         if (!line) break;
