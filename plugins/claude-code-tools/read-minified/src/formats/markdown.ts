@@ -21,7 +21,7 @@ export function parseMarkdown(content: string): any[] {
             blocks.push(result.block);
             i = result.nextIndex;
         } else if (isHeading(trimmed)) {
-            const result = parseHeading(trimmed);
+            const result = parseHeading(trimmed, i);
             blocks.push(result);
             i++;
         } else if (isCodeBlockStart(trimmed)) {
@@ -29,7 +29,7 @@ export function parseMarkdown(content: string): any[] {
             blocks.push(result.block);
             i = result.nextIndex;
         } else if (isHorizontalRule(trimmed)) {
-            blocks.push({ type: 'hr' });
+            blocks.push({ type: 'hr', anchor_line: i + 1 });
             i++;
         } else if (isListStart(trimmed)) {
             const result = parseList(lines, i);
@@ -85,20 +85,21 @@ function parseFrontMatter(lines: string[], startIndex: number): { block: any; ne
         content += lines[i] + '\n';
         i++;
     }
-    return { block: { type: 'frontmatter', content: content.trim() }, nextIndex: i + 1 };
+    return { block: { type: 'frontmatter', content: content.trim(), anchor_line: startIndex + 1 }, nextIndex: i + 1 };
 }
 
 function isHeading(line: string): boolean {
     return /^#{1,6}\s+/.test(line);
 }
 
-function parseHeading(line: string): any {
+function parseHeading(line: string, startIndex: number): any {
     const match = line.match(/^(#{1,6})\s+(.*)/);
-    if (!match) return { type: 'heading', level: 1, content: line };
+    if (!match) return { type: 'heading', level: 1, content: line, anchor_line: startIndex + 1 };
     return {
         type: 'heading',
         level: match[1].length,
-        content: stripFormatting(match[2])
+        content: stripFormatting(match[2]),
+        anchor_line: startIndex + 1
     };
 }
 
@@ -136,7 +137,7 @@ function parseCodeBlock(lines: string[], startIndex: number): { block: any; next
     }
 
     return {
-        block: { type: 'code', language: language, content: content.trimEnd() },
+        block: { type: 'code', language: language, content: content.trimEnd(), anchor_line: startIndex + 1 },
         nextIndex: i
     };
 }
@@ -189,7 +190,7 @@ function parseList(lines: string[], startIndex: number): { block: any; nextIndex
     }
 
     return {
-        block: { type: 'list', ordered: isOrdered, items },
+        block: { type: 'list', ordered: isOrdered, items, anchor_line: startIndex + 1 },
         nextIndex: i
     };
 }
@@ -242,7 +243,7 @@ function parseBlockquote(lines: string[], startIndex: number): { block: any; nex
     }
 
     return {
-        block: { type: 'blockquote', content: content.trim() },
+        block: { type: 'blockquote', content: content.trim(), anchor_line: startIndex + 1 },
         nextIndex: i
     };
 }
@@ -288,7 +289,7 @@ function parseTable(lines: string[], startIndex: number): { block: any; nextInde
     }
 
     return {
-        block: { type: 'table', headers, rows },
+        block: { type: 'table', headers, rows, anchor_line: startIndex + 1 },
         nextIndex: i
     };
 }
@@ -328,7 +329,7 @@ function parseParagraph(lines: string[], startIndex: number): { block: any; next
     }
 
     return {
-        block: { type: 'paragraph', content: stripFormatting(content) },
+        block: { type: 'paragraph', content: stripFormatting(content), anchor_line: startIndex + 1 },
         nextIndex: i
     };
 }

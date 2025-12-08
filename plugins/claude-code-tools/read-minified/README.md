@@ -14,7 +14,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
 - **Smart Format Detection:** Auto-detects file type by extension
 - **Minification:** Remove redundant whitespace and formatting from any text file
 - **Structured Parsing:** Convert formats to minified JSON with semantic structure:
-  - Markdown: block-level elements (headings, paragraphs, lists, code blocks, tables)
+  - Markdown: block-level elements (headings, paragraphs, lists, code blocks, tables) with anchor_line for efficient navigation
   - YAML: indentation-based nesting with list support
   - INI: section-based configuration
   - CSV/NDJSON: row/record structures as JSON objects
@@ -86,7 +86,7 @@ The tool automatically detects file format based on file extension and applies a
 - **YAML**: Handles nested structures via indentation; preserves lists and mappings
 - **INI**: Supports sections ([section]) and root-level keys; ignores comments
 - **NDJSON**: Parses JSON objects line-by-line; invalid lines become error objects
-- **Markdown**: Converts to structured JSON with semantic blocks (headings, lists, code, tables, etc.)
+- **Markdown**: Converts to structured JSON with semantic blocks (headings, lists, code, tables, etc.) with anchor_line extraction for precise navigation of original document
 - **XML**: Preserves element tags as field names, attributes with `attribute_` prefix, text content as is values, supports namespaces and CDATA
 - **HTML**: Strips visual tags (`<b>`, `<i>`, `<font>`, etc.), auto-closes unclosed tags, generates optimized structures for lists (`{ordered, list}`) and tables (`{headers, rows}`)
 
@@ -253,7 +253,7 @@ npm run dev -- file.json
 - `src/formats/yaml.ts` - YAML parsing with indentation-based nesting
 - `src/formats/ini.ts` - INI/properties parsing with section support
 - `src/formats/ndjson.ts` - NDJSON line-by-line JSON parsing
-- `src/formats/markdown.ts` - Markdown block-level parsing (headings, lists, code, tables, blockquotes)
+- `src/formats/markdown.ts` - Markdown block-level parsing (headings, lists, code, tables, blockquotes) with anchor_line extraction
 - `src/formats/xml.ts` - XML parsing with full semantic preservation (elements, attributes, namespaces, CDATA)
 - `src/formats/html.ts` - HTML parsing with visual tag stripping, semantic structure preservation, optimized lists/tables
 - `src/formats/plaintext.ts` - Plain text minification (fallback)

@@ -63,6 +63,7 @@ The tool automatically:
 ```bash
 /read-efficient README.md
 # Converts to minified JSON with block structure (headings, lists, code blocks, tables)
+# Includes anchor_line for each element to support precise navigation
 ```
 
 ### Multiple files (mixed formats)
@@ -90,7 +91,7 @@ The tool automatically:
 - **YAML files**: Minified JSON with nested structure preserved
 - **INI files**: Minified JSON with sections as nested objects
 - **NDJSON files**: Minified JSON array of parsed objects
-- **Markdown files**: Minified JSON with block elements (headings, lists, code blocks, tables)
+- **Markdown files**: Minified JSON with block elements (headings, lists, code blocks, tables) with anchor_line extraction for key elements to improve original file query
 - **Code/text**: Minified plaintext (whitespace removed, content intact)
 - **Multiple files**: One line per file (NDJSON format), auto-detected format per file
 - **Parsing fails**: Gracefully degrades to minified plaintext (never errors)
