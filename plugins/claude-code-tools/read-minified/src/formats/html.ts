@@ -136,8 +136,175 @@ function autoCloseTags(html: string): string {
 }
 
 /**
+ * Headings are already semantically encoded in tag names (h1-h6)
+ * No enhancement needed - just passthrough
+ */
+function enhanceHeadings(obj: any): any {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj === 'string') return obj;
+    if (Array.isArray(obj)) return obj.map(item => enhanceHeadings(item));
+
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'object' && value !== null) {
+            result[key] = enhanceHeadings(value);
+        } else {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
+/**
+ * Transform lists to compact semantic format
+ * ul/ol with li items -> {ordered: boolean, list: [...]}
+ * Reuses markdown parsing format for consistency
+ */
+function enhanceLists(obj: any): any {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj === 'string') return obj;
+    if (Array.isArray(obj)) return obj.map(item => enhanceLists(item));
+
+    const result: any = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+        if ((key === 'ul' || key === 'ol') && typeof value === 'object' && value !== null) {
+            const isOrdered = key === 'ol';
+            const valueObj = value as any;
+            const liItems = valueObj.li ? (Array.isArray(valueObj.li) ? valueObj.li : [valueObj.li]) : [];
+
+            // Transform to compact format
+            result[key] = {
+                ordered: isOrdered,
+                list: liItems.map((item: any) => typeof item === 'string' ? item : enhanceLists(item))
+            };
+        } else if (typeof value === 'object' && value !== null) {
+            result[key] = enhanceLists(value);
+        } else {
+            result[key] = value;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Transform table structure to compact format
+ * Converts table > tr > td/th into {headers: [...], rows: [[...]]}
+ */
+function enhanceTables(obj: any): any {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj === 'string') return obj;
+    if (Array.isArray(obj)) return obj.map(item => enhanceTables(item));
+
+    const result: any = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+        if (key === 'table' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            const transformed = transformTableStructure(value);
+            result[key] = transformed;
+        } else if (typeof value === 'object' && value !== null) {
+            result[key] = enhanceTables(value);
+        } else {
+            result[key] = value;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Transform a single table from tr array to compact format
+ * {headers: [...], rows: [[...]]}
+ */
+function transformTableStructure(table: any): any {
+    if (!table.tr) return table;
+
+    const rows = Array.isArray(table.tr) ? table.tr : [table.tr];
+    const transformed: any = { headers: [], rows: [] };
+
+    // Preserve non-tr attributes
+    for (const [key, value] of Object.entries(table)) {
+        if (key !== 'tr') {
+            transformed[key] = value;
+        }
+    }
+
+    // First pass: collect headers from first row if it has th
+    const firstRow = rows[0] as any;
+    let hasHeaders = false;
+    if (firstRow && firstRow.th) {
+        hasHeaders = true;
+        const ths = Array.isArray(firstRow.th) ? firstRow.th : [firstRow.th];
+        transformed.headers = ths.map((th: any) => typeof th === 'string' ? th : extractTextContent(th));
+    }
+
+    // Second pass: collect data rows
+    const startIdx = hasHeaders ? 1 : 0;
+    for (let i = startIdx; i < rows.length; i++) {
+        const row = rows[i] as any;
+        const cells: any[] = [];
+
+        if (row.td || row.th) {
+            const tds = Array.isArray(row.td) ? row.td : row.td ? [row.td] : [];
+            const ths = Array.isArray(row.th) ? row.th : row.th ? [row.th] : [];
+
+            // Add cells (keep as strings for consistency with HTML being string-based)
+            for (const td of tds) {
+                cells.push(typeof td === 'string' ? td : extractTextContent(td));
+            }
+            for (const th of ths) {
+                cells.push(typeof th === 'string' ? th : extractTextContent(th));
+            }
+        }
+
+        if (cells.length > 0) {
+            transformed.rows.push(cells);
+        }
+    }
+
+    return transformed;
+}
+
+/**
+ * Extract text content from nested structures
+ */
+function extractTextContent(obj: any): string {
+    if (typeof obj === 'string') return obj;
+    if (obj === null || obj === undefined) return '';
+
+    const objAny = obj as any;
+    if (objAny._text) return objAny._text;
+
+    // Recursively collect text from nested structure
+    const texts: string[] = [];
+    for (const value of Object.values(obj)) {
+        if (typeof value === 'string') {
+            texts.push(value);
+        } else if (typeof value === 'object' && value !== null) {
+            texts.push(extractTextContent(value));
+        }
+    }
+    return texts.join(' ').trim();
+}
+
+/**
+ * Apply semantic structure enhancements to parsed HTML
+ */
+function applySemanticsEnhancements(parsed: any): any {
+    let result = parsed;
+
+    // Apply enhancements in order
+    result = enhanceHeadings(result);
+    result = enhanceLists(result);
+    result = enhanceTables(result);
+
+    return result;
+}
+
+/**
  * Parse HTML by preprocessing (auto-close, strip visual tags) then delegating to XML parser
- * Reuses parseXml from xml.ts without modification
+ * Applies semantic structure enhancements (headings, lists, tables)
  */
 export function parseHtml(htmlContent: string): any {
     try {
@@ -148,9 +315,13 @@ export function parseHtml(htmlContent: string): any {
         cleaned = stripVisualTags(cleaned);
 
         // Step 3: Use XML parser on cleaned content
-        // Import and use parseXml
         const { parseXml } = require('./xml');
-        return parseXml(cleaned);
+        let parsed = parseXml(cleaned);
+
+        // Step 4: Apply semantic enhancements
+        parsed = applySemanticsEnhancements(parsed);
+
+        return parsed;
     } catch (err) {
         return { error: `Failed to parse HTML: ${err}`, parseError: true };
     }
