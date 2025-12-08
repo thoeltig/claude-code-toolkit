@@ -10,6 +10,7 @@ import { formatIni } from './formats/ini';
 import { formatNdjson } from './formats/ndjson';
 import { formatMarkdown } from './formats/markdown';
 import { formatXml } from './formats/xml';
+import { formatHtml } from './formats/html';
 
 export function parseArguments(args: string[]): {
     paths: string[];
@@ -69,6 +70,10 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 const xmlJson = formatXml(minifiedContent, { minify: true });
                 processedContent = JSON.parse(xmlJson);
                 cacheContent = xmlJson;
+            } else if (format === 'html' && options.toJson) {
+                const htmlJson = formatHtml(minifiedContent, { minify: true });
+                processedContent = JSON.parse(htmlJson);
+                cacheContent = htmlJson;
             } else {
                 processedContent = minifiedContent;
                 cacheContent = minifiedContent;

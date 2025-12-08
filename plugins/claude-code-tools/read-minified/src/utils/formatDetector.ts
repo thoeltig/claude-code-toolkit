@@ -1,6 +1,6 @@
 import { extname } from 'path';
 
-export type FileFormat = 'json' | 'csv' | 'yaml' | 'ini' | 'ndjson' | 'markdown' | 'xml' | 'plaintext';
+export type FileFormat = 'json' | 'csv' | 'yaml' | 'ini' | 'ndjson' | 'markdown' | 'xml' | 'html' | 'plaintext';
 
 export function detectFormat(filePath: string): FileFormat {
     const ext = extname(filePath).toLowerCase();
@@ -12,6 +12,7 @@ export function detectFormat(filePath: string): FileFormat {
         case '.ndjson': case '.jsonl': return 'ndjson';
         case '.md': case '.markdown': return 'markdown';
         case '.xml': return 'xml';
+        case '.html': case '.htm': return 'html';
         case '.txt': case '.text': return 'plaintext';
         default: return 'plaintext';
     }
