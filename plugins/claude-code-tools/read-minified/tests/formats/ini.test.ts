@@ -1,1 +1,156 @@
-import {parseIni,formatIni,isValidIni}from'../../src/formats/ini';describe('INI Format Handler',()=>{describe('isValidIni',()=>{test('should validate non-empty INI content',()=>{expect(isValidIni('[section]\nkey=value')).toBe(true);});test('should reject empty content',()=>{expect(isValidIni('')).toBe(false);});test('should reject whitespace-only content',()=>{expect(isValidIni('   \n  \n  ')).toBe(false);});});describe('parseIni - Basic Key=Value',()=>{test('should parse simple key-value pairs',()=>{const ini='name=John\nage=30\ncity=Boston';const result=parseIni(ini);expect(result).toEqual({name:'John',age:'30',city:'Boston'});});test('should handle values with spaces',()=>{const ini='fullname=John Doe\ndescription=A test user';const result=parseIni(ini);expect(result.fullname).toBe('John Doe');expect(result.description).toBe('A test user');});test('should trim whitespace around equals sign',()=>{const ini='key1 = value1\nkey2  =  value2';const result=parseIni(ini);expect(result.key1).toBe('value1');expect(result.key2).toBe('value2');});});describe('parseIni - Sections',()=>{test('should parse section headers',()=>{const ini='[database]\nhost=localhost\nport=5432\n[logging]\nlevel=debug';const result=parseIni(ini);expect(result.database).toBeDefined();expect(result.database.host).toBe('localhost');expect(result.logging).toBeDefined();expect(result.logging.level).toBe('debug');});test('should handle multiple sections',()=>{const ini='[app]\nname=MyApp\n[server]\nhost=0.0.0.0\nport=3000\n[cache]\nenabled=true';const result=parseIni(ini);expect(result.app).toBeDefined();expect(result.server).toBeDefined();expect(result.cache).toBeDefined();});test('should handle section names with special characters',()=>{const ini='[database.primary]\nhost=db1\n[database.backup]\nhost=db2';const result=parseIni(ini);expect(result['database.primary']).toBeDefined();expect(result['database.backup']).toBeDefined();});});describe('parseIni - Comments',()=>{test('should ignore lines starting with hash',()=>{const ini='# Configuration file\nname=John\n# User settings\nage=30';const result=parseIni(ini);expect(result).toEqual({name:'John',age:'30'});});test('should ignore lines starting with semicolon',()=>{const ini='; Legacy format\nkey1=value1\n; Comment\nkey2=value2';const result=parseIni(ini);expect(result.key1).toBe('value1');expect(result.key2).toBe('value2');});test('should handle comments and sections together',()=>{const ini='# Main config\n[database]\n; Connection settings\nhost=localhost\nport=5432';const result=parseIni(ini);expect(result.database.host).toBe('localhost');expect(result.database.port).toBe('5432');});});describe('parseIni - Edge Cases',()=>{test('should skip lines without equals sign',()=>{const ini='valid=value\nmalformed line\nanother=valid';const result=parseIni(ini);expect(result.valid).toBe('value');expect(result.another).toBe('valid');expect(Object.keys(result)).toHaveLength(2);});test('should handle empty values',()=>{const ini='key1=value\nempty=\nkey2=value';const result=parseIni(ini);expect(result.key1).toBe('value');expect(result.empty).toBeUndefined();expect(result.key2).toBe('value');});test('should handle keys without section prefix at start',()=>{const ini='root_key=root_value\n[section]\nsection_key=section_value';const result=parseIni(ini);expect(result.root_key).toBe('root_value');expect(result.section.section_key).toBe('section_value');});test('should handle special characters in values',()=>{const ini='url=http://example.com/api?v=1\npath=/usr/local/bin\nemail=user@example.com';const result=parseIni(ini);expect(result.url).toBe('http://example.com/api?v=1');expect(result.email).toBe('user@example.com');});test('should handle values with equals signs',()=>{const ini='query=select * where id=5\nformula=a=b+c';const result=parseIni(ini);expect(result.query).toBe('select * where id=5');expect(result.formula).toBe('a=b+c');});test('should handle whitespace-heavy content',()=>{const ini='\n\n[section]\n  key  =  value  \n\n';const result=parseIni(ini);expect(result.section.key).toBe('value');});});describe('formatIni',()=>{test('should format INI to minified JSON',()=>{const ini='name=John\nage=30';const output=formatIni(ini,{minify:true});const parsed=JSON.parse(output);expect(parsed).toEqual({name:'John',age:'30'});});test('should format INI to pretty JSON when not minified',()=>{const ini='name=John\nage=30';const output=formatIni(ini,{minify:false});expect(output).toContain('\n');expect(output).toContain('  ');});test('should handle sections in format',()=>{const ini='[database]\nhost=localhost\nport=5432';const output=formatIni(ini,{minify:true});const parsed=JSON.parse(output);expect(parsed.database.host).toBe('localhost');});});describe('Integration: Real-world INI Examples',()=>{test('should parse windows-style configuration',()=>{const ini='[General]\nVersion=1.0\nAuthor=Test\n[Settings]\nTimeout=30\nRetries=3';const result=parseIni(ini);expect(result.General.Version).toBe('1.0');expect(result.Settings.Timeout).toBe('30');});test('should parse application properties file',()=>{const ini='app.name=MyApplication\napp.version=2.0.1\ndatabase.url=jdbc:mysql://localhost:3306/mydb\ndatabase.user=admin\nserver.port=8080';const result=parseIni(ini);expect(result['app.name']).toBe('MyApplication');expect(result['database.url']).toBe('jdbc:mysql://localhost:3306/mydb');expect(result['server.port']).toBe('8080');});test('should parse .env-style flat configuration',()=>{const ini='NODE_ENV=production\nDATABASE_URL=postgres://localhost\nAPI_KEY=secret123\nDEBUG=false';const result=parseIni(ini);expect(result.NODE_ENV).toBe('production');expect(result.API_KEY).toBe('secret123');});});});
+import { parseIni, formatIni, isValidIni } from '../../src/formats/ini';
+describe('INI Format Handler', () => {
+    describe('isValidIni', () => {
+        test('should validate non-empty INI content', () => {
+            expect(isValidIni('[section]\nkey=value')).toBe(true);
+        });
+        test('should reject empty content', () => {
+            expect(isValidIni('')).toBe(false);
+        });
+        test('should reject whitespace-only content', () => {
+            expect(isValidIni('   \n  \n  ')).toBe(false);
+        });
+    });
+    describe('parseIni - Basic Key=Value', () => {
+        test('should parse simple key-value pairs', () => {
+            const ini = 'name=John\nage=30\ncity=Boston';
+            const result = parseIni(ini);
+            expect(result).toEqual({ name: 'John', age: '30', city: 'Boston' });
+        });
+        test('should handle values with spaces', () => {
+            const ini = 'fullname=John Doe\ndescription=A test user';
+            const result = parseIni(ini);
+            expect(result.fullname).toBe('John Doe');
+            expect(result.description).toBe('A test user');
+        });
+        test('should trim whitespace around equals sign', () => {
+            const ini = 'key1 = value1\nkey2  =  value2';
+            const result = parseIni(ini);
+            expect(result.key1).toBe('value1');
+            expect(result.key2).toBe('value2');
+        });
+    });
+    describe('parseIni - Sections', () => {
+        test('should parse section headers', () => {
+            const ini = '[database]\nhost=localhost\nport=5432\n[logging]\nlevel=debug';
+            const result = parseIni(ini);
+            expect(result.database).toBeDefined();
+            expect(result.database.host).toBe('localhost');
+            expect(result.logging).toBeDefined();
+            expect(result.logging.level).toBe('debug');
+        });
+        test('should handle multiple sections', () => {
+            const ini = '[app]\nname=MyApp\n[server]\nhost=0.0.0.0\nport=3000\n[cache]\nenabled=true';
+            const result = parseIni(ini);
+            expect(result.app).toBeDefined();
+            expect(result.server).toBeDefined();
+            expect(result.cache).toBeDefined();
+        });
+        test('should handle section names with special characters', () => {
+            const ini = '[database.primary]\nhost=db1\n[database.backup]\nhost=db2';
+            const result = parseIni(ini);
+            expect(result['database.primary']).toBeDefined();
+            expect(result['database.backup']).toBeDefined();
+        });
+    });
+    describe('parseIni - Comments', () => {
+        test('should ignore lines starting with hash', () => {
+            const ini = '# Configuration file\nname=John\n# User settings\nage=30';
+            const result = parseIni(ini);
+            expect(result).toEqual({ name: 'John', age: '30' });
+        });
+        test('should ignore lines starting with semicolon', () => {
+            const ini = '; Legacy format\nkey1=value1\n; Comment\nkey2=value2';
+            const result = parseIni(ini);
+            expect(result.key1).toBe('value1');
+            expect(result.key2).toBe('value2');
+        });
+        test('should handle comments and sections together', () => {
+            const ini = '# Main config\n[database]\n; Connection settings\nhost=localhost\nport=5432';
+            const result = parseIni(ini);
+            expect(result.database.host).toBe('localhost');
+            expect(result.database.port).toBe('5432');
+        });
+    });
+    describe('parseIni - Edge Cases', () => {
+        test('should skip lines without equals sign', () => {
+            const ini = 'valid=value\nmalformed line\nanother=valid';
+            const result = parseIni(ini);
+            expect(result.valid).toBe('value');
+            expect(result.another).toBe('valid');
+            expect(Object.keys(result)).toHaveLength(2);
+        });
+        test('should handle empty values', () => {
+            const ini = 'key1=value\nempty=\nkey2=value';
+            const result = parseIni(ini);
+            expect(result.key1).toBe('value');
+            expect(result.empty).toBeUndefined();
+            expect(result.key2).toBe('value');
+        });
+        test('should handle keys without section prefix at start', () => {
+            const ini = 'root_key=root_value\n[section]\nsection_key=section_value';
+            const result = parseIni(ini);
+            expect(result.root_key).toBe('root_value');
+            expect(result.section.section_key).toBe('section_value');
+        });
+        test('should handle special characters in values', () => {
+            const ini = 'url=http://example.com/api?v=1\npath=/usr/local/bin\nemail=user@example.com';
+            const result = parseIni(ini);
+            expect(result.url).toBe('http://example.com/api?v=1');
+            expect(result.email).toBe('user@example.com');
+        });
+        test('should handle values with equals signs', () => {
+            const ini = 'query=select * where id=5\nformula=a=b+c';
+            const result = parseIni(ini);
+            expect(result.query).toBe('select * where id=5');
+            expect(result.formula).toBe('a=b+c');
+        });
+        test('should handle whitespace-heavy content', () => {
+            const ini = '\n\n[section]\n  key  =  value  \n\n';
+            const result = parseIni(ini);
+            expect(result.section.key).toBe('value');
+        });
+    });
+    describe('formatIni', () => {
+        test('should format INI to minified JSON', () => {
+            const ini = 'name=John\nage=30';
+            const output = formatIni(ini, { minify: true });
+            const parsed = JSON.parse(output);
+            expect(parsed).toEqual({ name: 'John', age: '30' });
+        });
+        test('should format INI to pretty JSON when not minified', () => {
+            const ini = 'name=John\nage=30';
+            const output = formatIni(ini, { minify: false });
+            expect(output).toContain('\n');
+            expect(output).toContain('  ');
+        });
+        test('should handle sections in format', () => {
+            const ini = '[database]\nhost=localhost\nport=5432';
+            const output = formatIni(ini, { minify: true });
+            const parsed = JSON.parse(output);
+            expect(parsed.database.host).toBe('localhost');
+        });
+    });
+    describe('Integration: Real-world INI Examples', () => {
+        test('should parse windows-style configuration', () => {
+            const ini = '[General]\nVersion=1.0\nAuthor=Test\n[Settings]\nTimeout=30\nRetries=3';
+            const result = parseIni(ini);
+            expect(result.General.Version).toBe('1.0');
+            expect(result.Settings.Timeout).toBe('30');
+        });
+        test('should parse application properties file', () => {
+            const ini = 'app.name=MyApplication\napp.version=2.0.1\ndatabase.url=jdbc:mysql://localhost:3306/mydb\ndatabase.user=admin\nserver.port=8080';
+            const result = parseIni(ini);
+            expect(result['app.name']).toBe('MyApplication');
+            expect(result['database.url']).toBe('jdbc:mysql://localhost:3306/mydb');
+            expect(result['server.port']).toBe('8080');
+        });
+        test('should parse .env-style flat configuration', () => {
+            const ini = 'NODE_ENV=production\nDATABASE_URL=postgres://localhost\nAPI_KEY=secret123\nDEBUG=false';
+            const result = parseIni(ini);
+            expect(result.NODE_ENV).toBe('production');
+            expect(result.API_KEY).toBe('secret123');
+        });
+    });
+});
+
