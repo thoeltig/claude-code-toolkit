@@ -11,6 +11,7 @@ import { formatNdjson } from './formats/ndjson';
 import { formatMarkdown } from './formats/markdown';
 import { formatXml } from './formats/xml';
 import { formatHtml } from './formats/html';
+import { formatLogs } from './formats/logs';
 
 export function parseArguments(args: string[]): {
     paths: string[];
@@ -78,6 +79,10 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 const htmlJson = formatHtml(minifiedContent, { minify: true });
                 processedContent = JSON.parse(htmlJson);
                 cacheContent = htmlJson;
+            } else if (format === 'log' && options.toJson) {
+                const logJson = formatLogs(minifiedContent, { minify: true });
+                processedContent = JSON.parse(logJson);
+                cacheContent = logJson;
             } else {
                 processedContent = minifiedContent;
                 cacheContent = minifiedContent;
