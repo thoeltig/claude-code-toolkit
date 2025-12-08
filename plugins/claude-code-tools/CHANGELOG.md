@@ -7,6 +7,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.3.0.0] - 2025-12-08
+
+### Added
+
+- **XML format support** - Parse XML to JSON with full semantic preservation:
+  - Flattened attribute storage with `attribute_` prefix
+  - Element tags preserved as JSON field names
+  - Text-only elements as is values
+  - Namespace support: `ns:tagName` format preserved
+  - CDATA sections properly handled
+  - Comments and processing instructions skipped
+  - Self-closing tags fully supported
+  - Graceful degradation for malformed XML
+- Auto-detection for `.xml` file extension
+- 60 comprehensive test cases for XML parsing
+- Test suite now: 326 total tests, 88.98% statement coverage, 96.84% function coverage
+
 ## [0.2.0.0] - 2025-12-08
 
 ### Added

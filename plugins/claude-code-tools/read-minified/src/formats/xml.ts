@@ -136,14 +136,25 @@ function convertToJson(element: XmlElement): any {
     const result: any = {};
 
     if (element.children.length === 0) {
-        return { [element.name]: element.attributes ? { _attributes: element.attributes } : {} };
+        const flattened: any = {};
+        for (const [key, value] of Object.entries(element.attributes)) {
+            flattened[`attribute_${key}`] = value;
+        }
+        return { [element.name]: Object.keys(flattened).length > 0 ? flattened : {} };
     }
 
     const textNodes = element.children.filter(c => typeof c === 'string');
     const elementNodes = element.children.filter(c => typeof c !== 'string') as XmlElement[];
 
+    for (const [key, value] of Object.entries(element.attributes)) {
+        result[`attribute_${key}`] = value;
+    }
+
     if (textNodes.length > 0 && elementNodes.length === 0) {
         const text = textNodes.map(t => t).join(' ').trim();
+        if (Object.keys(result).length === 0) {
+            return { [element.name]: text };
+        }
         result._text = text;
     } else if (textNodes.length > 0 && elementNodes.length > 0) {
         const text = textNodes.map(t => t).join(' ').trim();
@@ -160,7 +171,7 @@ function convertToJson(element: XmlElement): any {
                 result[childName] = [result[childName], childJson[childName]];
             }
         }
-    } else {
+    } else if (elementNodes.length > 0) {
         for (const child of elementNodes) {
             const childJson = convertToJson(child);
             const childName = Object.keys(childJson)[0];
@@ -172,10 +183,6 @@ function convertToJson(element: XmlElement): any {
                 result[childName] = [result[childName], childJson[childName]];
             }
         }
-    }
-
-    if (element.attributes && Object.keys(element.attributes).length > 0) {
-        result._attributes = element.attributes;
     }
 
     return { [element.name]: Object.keys(result).length > 0 ? result : {} };

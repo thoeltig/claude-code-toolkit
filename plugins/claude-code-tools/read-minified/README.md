@@ -1,16 +1,16 @@
-# read-minified
+# read-efficient
 
 Optimize file reading for token efficiency. Convert files to minified format (JSON or plain text), removing formatting noise while preserving information density.
 
 ## Overview
 
-`read-minified` is a TypeScript/Node.js tool designed to reduce token overhead when reading files into Claude Code. It removes redundant whitespace and formatting while preserving semantic structure. The tool automatically detects file formats and applies appropriate minification.
+`read-efficient` is a TypeScript/Node.js tool designed to reduce token overhead when reading files into Claude Code. It removes redundant whitespace and formatting while preserving semantic structure. The tool automatically detects file formats and applies appropriate minification.
 
 **Key Philosophy:** Information density over human readability.
 
 ## Features
 
-- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, Plain Text
+- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, XML, Plain Text
 - **Smart Format Detection:** Auto-detects file type by extension
 - **Minification:** Remove redundant whitespace and formatting from any text file
 - **Structured Parsing:** Convert formats to minified JSON with semantic structure:
@@ -18,6 +18,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
   - YAML: indentation-based nesting with list support
   - INI: section-based configuration
   - CSV/NDJSON: row/record structures as JSON objects
+  - XML: full semantic preservation with element tags, flattened attributes (`attribute_` prefix), namespaces, CDATA
 - **Graceful Degradation:** Parse errors fall back to minified plaintext automatically
 - **Caching:** Optionally cache optimized files for reuse
 - **Batch Processing:** Handle multiple files in one command
@@ -26,7 +27,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
 ## Installation
 
 ```bash
-npm install read-minified
+npm install read-efficient
 ```
 
 Or use directly:
@@ -40,7 +41,7 @@ node dist/index.js <path> [options]
 ### Command Syntax
 
 ```bash
-/read-minified <path1> [path2 path3 ...] [flags]
+/read-efficient <path1> [path2 path3 ...] [flags]
 ```
 
 ### Flags
@@ -63,6 +64,7 @@ The tool automatically detects file format based on file extension and applies a
 | `.ini`, `.conf`, `.cfg`, `.properties` | INI | ✓ Parsed sections | Parse key=value with section support; fallback to plaintext |
 | `.ndjson`, `.jsonl` | NDJSON | ✓ Array of objects | Parse line-by-line JSON; invalid lines create error objects |
 | `.md`, `.markdown` | Markdown | ✓ Block structure | Parse to JSON with heading hierarchy, lists, code blocks, tables |
+| `.xml` | XML | ✓ Element structure | Parse with attributes, namespaces, CDATA, full semantic preservation |
 | `.txt`, `.text` | Plain text | ✗ As-is | Minify whitespace only |
 | `.py`, `.js`, `.go`, etc. | Code (unknown) | ✗ As-is | Treat as plaintext; minify whitespace |
 | Unknown | Plaintext | ✗ As-is | Minify whitespace only |
@@ -73,6 +75,7 @@ The tool automatically detects file format based on file extension and applies a
 - **INI**: Supports sections ([section]) and root-level keys; ignores comments
 - **NDJSON**: Parses JSON objects line-by-line; invalid lines become error objects
 - **Markdown**: Converts to structured JSON with semantic blocks (headings, lists, code, tables, etc.)
+- **XML**: Preserves element tags as field names, attributes with `attribute_` prefix, text content as is values, supports namespaces and CDATA
 
 **Fallback Logic:**
 - Parse error → gracefully degrade to minified plaintext
@@ -83,46 +86,46 @@ The tool automatically detects file format based on file extension and applies a
 
 **Single JSON file, minified output:**
 ```bash
-/read-minified document.json --minify
+/read-efficient document.json --minify
 # Output: {"content":{...parsed json...},"cached":false}
 ```
 
 **Plain text file:**
 ```bash
-/read-minified notes.txt --minify
+/read-efficient notes.txt --minify
 # Output: {"content":"minified text content...","cached":false}
 ```
 
 **Unknown file type (auto-detected as plaintext):**
 ```bash
-/read-minified script.py --minify
+/read-efficient script.py --minify
 # Output: {"content":"minified python code...","cached":false}
 ```
 
 **Broken JSON (fallback to plaintext):**
 ```bash
-/read-minified incomplete.json --minify
+/read-efficient incomplete.json --minify
 # Output: {"content":"{incomplete json...","cached":false}
 # Note: No error; graceful degradation to minified string
 ```
 
 **Batch process with mixed file types and caching:**
 ```bash
-/read-minified data.json notes.txt code.py --minify --cache
+/read-efficient data.json notes.txt code.py --minify --cache
 # Creates: data.compact.json, notes.compact.txt, code.compact.py
 # Returns: NDJSON output for each file
 ```
 
 **Large batch, cache only (no token bloat):**
 ```bash
-/read-minified large1.json large2.txt large3.py --minify --cache --no-output
+/read-efficient large1.json large2.txt large3.py --minify --cache --no-output
 # Returns: Manifest of cached file paths (minimal output)
 # Writes: All files to disk
 ```
 
 **Reprocess with overwrite:**
 ```bash
-/read-minified document.json --minify --cache --overwrite
+/read-efficient document.json --minify --cache --overwrite
 # Overwrites existing document.compact.json
 ```
 
@@ -156,7 +159,7 @@ The tool automatically detects file format based on file extension and applies a
 ## Programmatic Usage
 
 ```typescript
-import {processFile, processFiles} from 'read-minified';
+import {processFile, processFiles} from 'read-efficient';
 
 // Single file
 const result = await processFile('./data.json', {
@@ -182,14 +185,15 @@ const results = await processFiles(
 
 ## Test Coverage
 
-- **Overall: 88.53%** statement coverage, **96.47%** function coverage
-- **266 test cases** across 14 test suites:
+- **Overall: 88.98%** statement coverage, **96.84%** function coverage
+- **326 test cases** across 15 test suites:
   - formats/json.test.ts (13 tests)
   - formats/csv.test.ts (29 tests)
   - formats/yaml.test.ts (20 tests)
   - formats/ini.test.ts (15 tests)
   - formats/ndjson.test.ts (10 tests)
   - formats/markdown.test.ts (45 tests)
+  - formats/xml.test.ts (60 tests)
   - formats/plaintext.test.ts (7 tests)
   - minifier.test.ts (10 tests)
   - utils/fileHandler.test.ts (7 tests)
@@ -236,6 +240,7 @@ npm run dev -- file.json
 - `src/formats/ini.ts` - INI/properties parsing with section support
 - `src/formats/ndjson.ts` - NDJSON line-by-line JSON parsing
 - `src/formats/markdown.ts` - Markdown block-level parsing (headings, lists, code, tables, blockquotes)
+- `src/formats/xml.ts` - XML parsing with full semantic preservation (elements, attributes, namespaces, CDATA)
 - `src/formats/plaintext.ts` - Plain text minification (fallback)
 
 **Infrastructure:**
@@ -278,21 +283,31 @@ export function formatCsv(content: string): any {
 }
 ```
 
-## Completed Formats (v0.2.0.0)
+## Completed Formats
 
+**v0.1.0.0:**
+- ✅ **JSON** - Parse and minify JSON
+- ✅ **Plain Text** - Minify whitespace (fallback)
+
+**v0.2.0.0:**
 - ✅ **CSV** - Parse CSV to JSON array of objects with intelligent delimiter detection
 - ✅ **YAML** - Parse YAML to JSON with indentation-based nesting
 - ✅ **INI** - Parse INI/properties files with section-based configuration
 - ✅ **NDJSON** - Parse newline-delimited JSON for streaming data
 - ✅ **Markdown** - Parse markdown to structured JSON (headings, lists, code blocks, tables, blockquotes)
 
+**v0.3.0.0:**
+- ✅ **XML** - Parse XML to JSON with full semantic preservation (elements, attributes, namespaces, CDATA)
+
 ## Planned Formats (Phase 3+)
 
-**Phase 3: Medium Complexity** (v0.3.0.0 roadmap)
-- **XML** - Parse XML to JSON with element attributes and namespaces
-- **HTML** - Parse HTML to text extraction or structured JSON
+**Phase 3.2 (v0.3.1.0 roadmap):**
+- **HTML** - Parse HTML with visual tag stripping and semantic structure preservation
+  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes)
+  - Preserve informational tags and semantic structure (`<h1>`-`<h6>`, `<p>`, `<code>`, `<li>`/`<ul>`/`<ol>`, etc.)
+  - Keep anything with semantic attributes (`class`, `id`, `data-*`)
 
-**Phase 3: Specialized Formats** (v0.4.0.0 roadmap)
+**Phase 4 (v0.4.0.0 roadmap):**
 - **Log Files** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
 - **SQL** - Parse SQL dumps and INSERT statements to structured data
 

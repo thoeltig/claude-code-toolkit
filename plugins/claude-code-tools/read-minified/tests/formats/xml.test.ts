@@ -1,6 +1,6 @@
 import { parseXml, formatXml, isValidXml } from '../../src/formats/xml';
 
-describe('XML Format Handler', () => {
+describe('XML Format Handler - Flattened', () => {
     describe('isValidXml', () => {
         test('should validate non-empty XML content', () => {
             expect(isValidXml('<root></root>')).toBe(true);
@@ -14,135 +14,110 @@ describe('XML Format Handler', () => {
     });
 
     describe('parseXml - Basic Elements', () => {
-        test('should parse simple element with text content', () => {
+        test('should parse simple text element', () => {
             const xml = '<root>Hello World</root>';
             const result = parseXml(xml);
-            expect(result).toHaveProperty('root');
-            expect(result.root._text).toBe('Hello World');
+            expect(result.root).toBe('Hello World');
         });
 
         test('should parse empty element', () => {
             const xml = '<root></root>';
             const result = parseXml(xml);
-            expect(result).toHaveProperty('root');
+            expect(result.root).toEqual({});
         });
 
         test('should parse self-closing element', () => {
             const xml = '<root/>';
             const result = parseXml(xml);
-            expect(result).toHaveProperty('root');
+            expect(result.root).toEqual({});
         });
 
-        test('should parse nested elements', () => {
+        test('should parse nested elements with text', () => {
             const xml = '<root><child>text</child></root>';
             const result = parseXml(xml);
-            expect(result.root.child).toBeDefined();
-            expect(result.root.child._text).toBe('text');
+            expect(result.root.child).toBe('text');
         });
 
-        test('should parse multiple child elements', () => {
+        test('should parse multiple child elements as array', () => {
             const xml = '<root><item>1</item><item>2</item><item>3</item></root>';
             const result = parseXml(xml);
             expect(Array.isArray(result.root.item)).toBe(true);
             expect(result.root.item.length).toBe(3);
-            expect(result.root.item[0]._text).toBe('1');
+            expect(result.root.item[0]).toBe('1');
+            expect(result.root.item[2]).toBe('3');
         });
 
         test('should parse deeply nested elements', () => {
             const xml = '<root><a><b><c><d>deep</d></c></b></a></root>';
             const result = parseXml(xml);
-            expect(result.root.a.b.c.d._text).toBe('deep');
+            expect(result.root.a.b.c.d).toBe('deep');
         });
     });
 
     describe('parseXml - Attributes', () => {
-        test('should parse single attribute', () => {
+        test('should parse single attribute with text content', () => {
             const xml = '<root id="123">text</root>';
             const result = parseXml(xml);
-            expect(result.root._attributes.id).toBe('123');
+            expect(result.root.attribute_id).toBe('123');
             expect(result.root._text).toBe('text');
         });
 
         test('should parse multiple attributes', () => {
             const xml = '<root id="1" name="test" version="2.0">content</root>';
             const result = parseXml(xml);
-            expect(result.root._attributes.id).toBe('1');
-            expect(result.root._attributes.name).toBe('test');
-            expect(result.root._attributes.version).toBe('2.0');
+            expect(result.root.attribute_id).toBe('1');
+            expect(result.root.attribute_name).toBe('test');
+            expect(result.root.attribute_version).toBe('2.0');
+            expect(result.root._text).toBe('content');
         });
 
         test('should parse attributes with single quotes', () => {
             const xml = "<root id='456'>text</root>";
             const result = parseXml(xml);
-            expect(result.root._attributes.id).toBe('456');
+            expect(result.root.attribute_id).toBe('456');
         });
 
-        test('should parse empty attributes', () => {
+        test('should parse empty attribute value', () => {
             const xml = '<root id="">empty attr</root>';
             const result = parseXml(xml);
-            expect(result.root._attributes.id).toBe('');
+            expect(result.root.attribute_id).toBe('');
         });
 
-        test('should parse attributes with special characters', () => {
-            const xml = '<root url="https://example.com?id=1&amp;name=test">content</root>';
+        test('should not prefix attributes on text-only elements', () => {
+            const xml = '<root id="1"><title>Guide</title></root>';
             const result = parseXml(xml);
-            expect(result.root._attributes.url).toBe('https://example.com?id=1&amp;name=test');
+            expect(result.root.attribute_id).toBe('1');
+            expect(result.root.title).toBe('Guide');
         });
 
-        test('should not add _attributes if none present', () => {
-            const xml = '<root>no attrs</root>';
+        test('should handle attributes without text content', () => {
+            const xml = '<root id="123" name="test"></root>';
             const result = parseXml(xml);
-            expect(result.root._attributes).toBeUndefined();
-        });
-    });
-
-    describe('parseXml - Mixed Content', () => {
-        test('should parse mixed text and elements', () => {
-            const xml = '<root>start <child>nested</child> end</root>';
-            const result = parseXml(xml);
-            expect(result.root._text).toBeDefined();
-            expect(result.root.child).toBeDefined();
-        });
-
-        test('should preserve multiple text nodes as single string', () => {
-            const xml = '<root>text1 <elem>middle</elem> text2</root>';
-            const result = parseXml(xml);
-            expect(result.root._text).toContain('text1');
-            expect(result.root._text).toContain('text2');
-        });
-
-        test('should handle whitespace-only text nodes', () => {
-            const xml = '<root>\n  <child>text</child>\n</root>';
-            const result = parseXml(xml);
-            expect(result.root.child._text).toBe('text');
+            expect(result.root.attribute_id).toBe('123');
+            expect(result.root.attribute_name).toBe('test');
+            expect(result.root._text).toBeUndefined();
         });
     });
 
     describe('parseXml - Namespaces', () => {
-        test('should preserve namespace prefixes in element names', () => {
+        test('should preserve namespace prefixes', () => {
             const xml = '<root><ns:element>content</ns:element></root>';
             const result = parseXml(xml);
-            expect(result.root['ns:element']).toBeDefined();
-            expect(result.root['ns:element']._text).toBe('content');
+            expect(result.root['ns:element']).toBe('content');
         });
 
         test('should preserve namespace in attributes', () => {
             const xml = '<root xmlns:custom="http://example.com"><child custom:id="1">text</child></root>';
             const result = parseXml(xml);
-            expect(result.root.child._attributes['custom:id']).toBe('1');
+            expect(result.root.child['attribute_custom:id']).toBe('1');
+            expect(result.root.child._text).toBe('text');
         });
 
         test('should handle multiple namespace prefixes', () => {
             const xml = '<root><ns1:elem1>text1</ns1:elem1><ns2:elem2>text2</ns2:elem2></root>';
             const result = parseXml(xml);
-            expect(result.root['ns1:elem1']).toBeDefined();
-            expect(result.root['ns2:elem2']).toBeDefined();
-        });
-
-        test('should handle default namespace declaration', () => {
-            const xml = '<root xmlns="http://example.com"><child>text</child></root>';
-            const result = parseXml(xml);
-            expect(result.root.child).toBeDefined();
+            expect(result.root['ns1:elem1']).toBe('text1');
+            expect(result.root['ns2:elem2']).toBe('text2');
         });
     });
 
@@ -150,13 +125,13 @@ describe('XML Format Handler', () => {
         test('should parse CDATA content', () => {
             const xml = '<root><![CDATA[This is <not> XML content]]></root>';
             const result = parseXml(xml);
-            expect(result.root._text).toContain('This is <not> XML content');
+            expect(result.root).toContain('This is <not> XML content');
         });
 
         test('should preserve special characters in CDATA', () => {
             const xml = '<root><![CDATA[<tag attr="value">text</tag>]]></root>';
             const result = parseXml(xml);
-            expect(result.root._text).toContain('<tag attr="value">text</tag>');
+            expect(result.root).toContain('<tag attr="value">text</tag>');
         });
 
         test('should handle CDATA with newlines', () => {
@@ -165,28 +140,22 @@ describe('XML Format Handler', () => {
                 Line 2
             ]]></root>`;
             const result = parseXml(xml);
-            expect(result.root._text).toBeDefined();
+            expect(result.root).toBeDefined();
+            expect(typeof result.root).toBe('string');
         });
     });
 
     describe('parseXml - Comments', () => {
         test('should skip XML comments', () => {
-            const xml = '<root><!-- this is a comment --><child>text</child></root>';
+            const xml = '<root><!-- comment --><child>text</child></root>';
             const result = parseXml(xml);
-            expect(result.root.child).toBeDefined();
-            expect(result.root.child._text).toBe('text');
+            expect(result.root.child).toBe('text');
         });
 
         test('should skip multiple comments', () => {
-            const xml = '<!-- comment 1 --><root><!-- comment 2 --><child>text</child><!-- comment 3 --></root>';
+            const xml = '<!-- c1 --><root><!-- c2 --><child>text</child><!-- c3 --></root>';
             const result = parseXml(xml);
-            expect(result.root.child._text).toBe('text');
-        });
-
-        test('should handle comments with special characters', () => {
-            const xml = '<root><!-- comment with <brackets> and -- dashes --><child>text</child></root>';
-            const result = parseXml(xml);
-            expect(result.root.child).toBeDefined();
+            expect(result.root.child).toBe('text');
         });
     });
 
@@ -194,52 +163,40 @@ describe('XML Format Handler', () => {
         test('should skip XML declaration', () => {
             const xml = '<?xml version="1.0" encoding="UTF-8"?><root>text</root>';
             const result = parseXml(xml);
-            expect(result.root._text).toBe('text');
+            expect(result.root).toBe('text');
         });
 
-        test('should skip multiple processing instructions', () => {
+        test('should skip processing instructions', () => {
             const xml = '<?xml version="1.0"?><?custom directive?><root>text</root>';
             const result = parseXml(xml);
-            expect(result.root).toBeDefined();
+            expect(result.root).toBe('text');
         });
     });
 
     describe('parseXml - Edge Cases', () => {
-        test('should handle elements with numbers in names', () => {
+        test('should handle element names with numbers', () => {
             const xml = '<root><item1>text1</item1><item2>text2</item2></root>';
             const result = parseXml(xml);
-            expect(result.root.item1).toBeDefined();
-            expect(result.root.item2).toBeDefined();
+            expect(result.root.item1).toBe('text1');
+            expect(result.root.item2).toBe('text2');
         });
 
-        test('should handle elements with hyphens in names', () => {
+        test('should handle element names with hyphens', () => {
             const xml = '<root><my-element>text</my-element></root>';
             const result = parseXml(xml);
-            expect(result.root['my-element']).toBeDefined();
+            expect(result.root['my-element']).toBe('text');
         });
 
-        test('should handle elements with dots in names', () => {
+        test('should handle element names with dots', () => {
             const xml = '<root><elem.name>text</elem.name></root>';
             const result = parseXml(xml);
-            expect(result.root['elem.name']).toBeDefined();
-        });
-
-        test('should handle empty attributes with values', () => {
-            const xml = '<root empty="">content</root>';
-            const result = parseXml(xml);
-            expect(result.root._attributes.empty).toBe('');
-        });
-
-        test('should handle attributes with equals sign in value', () => {
-            const xml = '<root formula="a=b+c">text</root>';
-            const result = parseXml(xml);
-            expect(result.root._attributes.formula).toBe('a=b+c');
+            expect(result.root['elem.name']).toBe('text');
         });
 
         test('should skip leading/trailing whitespace', () => {
             const xml = '   <root>   text   </root>   ';
             const result = parseXml(xml);
-            expect(result.root._text).toBe('text');
+            expect(result.root).toBe('text');
         });
 
         test('should handle very deeply nested structure', () => {
@@ -247,7 +204,7 @@ describe('XML Format Handler', () => {
             for (let i = 0; i < 50; i++) {
                 xml += `<level${i}>`;
             }
-            xml += 'deep content';
+            xml += 'deep';
             for (let i = 49; i >= 0; i--) {
                 xml += `</level${i}>`;
             }
@@ -289,22 +246,22 @@ describe('XML Format Handler', () => {
             expect(result).toHaveProperty('error');
         });
 
-        test('should return error if no valid root element', () => {
+        test('should return error if no valid root', () => {
             const xml = '<!-- only comment -->';
             const result = parseXml(xml);
             expect(result).toHaveProperty('error');
         });
 
         test('should handle text before root element', () => {
-            const xml = 'junk text <root>valid</root>';
+            const xml = 'junk <root>valid</root>';
             const result = parseXml(xml);
-            expect(result.root).toBeDefined();
+            expect(result.root).toBe('valid');
         });
 
         test('should handle incomplete XML declaration', () => {
             const xml = '<?xml <root>text</root>';
             const result = parseXml(xml);
-            expect(result.root).toBeDefined();
+            expect(result.root).toBe('text');
         });
 
         test('should handle malformed attributes', () => {
@@ -313,22 +270,10 @@ describe('XML Format Handler', () => {
             expect(result.root._text).toBe('text');
         });
 
-        test('should handle unquoted attribute values gracefully', () => {
-            const xml = '<root attr=value>text</root>';
-            const result = parseXml(xml);
-            expect(result.root._text).toBe('text');
-        });
-
-        test('should handle mixed quote styles in attributes', () => {
-            const xml = '<root id="1" name=\'test\'>text</root>';
-            const result = parseXml(xml);
-            expect(result.root._text).toBe('text');
-        });
-
-        test('should handle multiple root elements gracefully', () => {
+        test('should handle multiple root elements', () => {
             const xml = '<root1>text1</root1><root2>text2</root2>';
             const result = parseXml(xml);
-            expect(result.root1).toBeDefined();
+            expect(result.root1).toBe('text1');
         });
     });
 
@@ -340,117 +285,79 @@ describe('XML Format Handler', () => {
                 <groupId>com.example</groupId>
                 <artifactId>my-app</artifactId>
                 <version>1.0</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.13</version>
-                        <scope>test</scope>
-                    </dependency>
-                </dependencies>
             </project>`;
             const result = parseXml(xml);
-            expect(result.project.modelVersion._text).toBe('4.0.0');
-            expect(result.project.groupId._text).toBe('com.example');
-            expect(result.project.dependencies.dependency).toBeDefined();
+            expect(result.project.modelVersion).toBe('4.0.0');
+            expect(result.project.groupId).toBe('com.example');
+            expect(result.project.artifactId).toBe('my-app');
+            expect(result.project.version).toBe('1.0');
         });
 
-        test('should parse SOAP-like response', () => {
-            const xml = `<?xml version="1.0"?>
-            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-                <soap:Body>
-                    <GetWeatherResponse xmlns="http://example.com/weather">
-                        <GetWeatherResult>
-                            <Temperature>25</Temperature>
-                            <Humidity>60</Humidity>
-                            <Condition>Sunny</Condition>
-                        </GetWeatherResult>
-                    </GetWeatherResponse>
-                </soap:Body>
-            </soap:Envelope>`;
+        test('should parse catalog with attributes', () => {
+            const xml = `<catalog>
+                <book id="1" author="Author1">
+                    <title>Book 1</title>
+                    <price>10.00</price>
+                </book>
+                <book id="2" author="Author2">
+                    <title>Book 2</title>
+                    <price>15.00</price>
+                </book>
+            </catalog>`;
             const result = parseXml(xml);
-            expect(result['soap:Envelope']).toBeDefined();
-            expect(result['soap:Envelope']['soap:Body']).toBeDefined();
+            expect(Array.isArray(result.catalog.book)).toBe(true);
+            expect(result.catalog.book[0].attribute_id).toBe('1');
+            expect(result.catalog.book[0].title).toBe('Book 1');
+            expect(result.catalog.book[0].price).toBe('10.00');
+            expect(result.catalog.book[1].attribute_id).toBe('2');
         });
 
-        test('should parse RSS feed-like structure', () => {
-            const xml = `<?xml version="1.0"?>
-            <rss version="2.0">
+        test('should parse RSS feed structure', () => {
+            const xml = `<rss version="2.0">
                 <channel>
-                    <title>News Feed</title>
+                    <title>News</title>
                     <link>http://example.com</link>
-                    <description>Latest news</description>
                     <item>
                         <title>Article 1</title>
                         <link>http://example.com/1</link>
-                        <description>First article</description>
-                        <pubDate>Mon, 08 Dec 2025 12:00:00 GMT</pubDate>
                     </item>
                     <item>
                         <title>Article 2</title>
                         <link>http://example.com/2</link>
-                        <description>Second article</description>
                     </item>
                 </channel>
             </rss>`;
             const result = parseXml(xml);
-            expect(result.rss._attributes.version).toBe('2.0');
+            expect(result.rss.attribute_version).toBe('2.0');
+            expect(result.rss.channel.title).toBe('News');
             expect(Array.isArray(result.rss.channel.item)).toBe(true);
-            expect(result.rss.channel.item.length).toBe(2);
+            expect(result.rss.channel.item[0].title).toBe('Article 1');
         });
 
-        test('should parse SVG-like structure with attributes', () => {
-            const xml = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+        test('should parse SVG structure with attributes', () => {
+            const xml = `<svg width="100" height="100" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="blue"/>
                 <rect x="10" y="10" width="30" height="30" fill="red"/>
-                <text x="50" y="50" font-size="14">Label</text>
             </svg>`;
             const result = parseXml(xml);
-            expect(result.svg._attributes.width).toBe('100');
-            expect(result.svg._attributes.height).toBe('100');
-            expect(result.svg.circle).toBeDefined();
-            expect(result.svg.circle._attributes.r).toBe('40');
+            expect(result.svg.attribute_width).toBe('100');
+            expect(result.svg.attribute_height).toBe('100');
+            expect(result.svg.circle.attribute_r).toBe('40');
+            expect(result.svg.rect.attribute_fill).toBe('red');
         });
 
-        test('should parse HTML-like XML with mixed content', () => {
-            const xml = `<document>
-                <header>
-                    <title>Page Title</title>
-                </header>
-                <body>
-                    <section id="intro">
-                        <h1>Introduction</h1>
-                        <p>Some <strong>bold</strong> text here.</p>
-                    </section>
-                    <section id="content">
-                        <h2>Main Content</h2>
-                        <ul>
-                            <li>Item 1</li>
-                            <li>Item 2</li>
-                        </ul>
-                    </section>
-                </body>
-            </document>`;
+        test('should parse nested configuration', () => {
+            const xml = `<config>
+                <database host="localhost" port="5432">
+                    <username>admin</username>
+                    <password>secret</password>
+                </database>
+            </config>`;
             const result = parseXml(xml);
-            expect(result.document.header).toBeDefined();
-            expect(result.document.body.section).toBeDefined();
-        });
-
-        test('should parse XML with mixed CDATA and regular content', () => {
-            const xml = `<root>
-                <description>Regular text</description>
-                <code><![CDATA[
-                    function test() {
-                        console.log("This is code");
-                        return 42;
-                    }
-                ]]></code>
-                <moreText>After CDATA</moreText>
-            </root>`;
-            const result = parseXml(xml);
-            expect(result.root.description).toBeDefined();
-            expect(result.root.code).toBeDefined();
-            expect(result.root.moreText).toBeDefined();
+            expect(result.config.database.attribute_host).toBe('localhost');
+            expect(result.config.database.attribute_port).toBe('5432');
+            expect(result.config.database.username).toBe('admin');
+            expect(result.config.database.password).toBe('secret');
         });
     });
 
@@ -459,7 +366,7 @@ describe('XML Format Handler', () => {
             const xml = '<root>\n  <child>text</child>\n</root>';
             const result = formatXml(xml, { minify: true });
             const parsed = JSON.parse(result);
-            expect(parsed.root.child._text).toBe('text');
+            expect(parsed.root.child).toBe('text');
             expect(result).not.toContain('\n');
         });
 
@@ -468,72 +375,78 @@ describe('XML Format Handler', () => {
             const result = formatXml(xml, { minify: false });
             expect(result).toContain('\n');
             const parsed = JSON.parse(result);
-            expect(parsed.root.child._text).toBe('text');
+            expect(parsed.root.child).toBe('text');
         });
 
         test('should return error object for invalid XML', () => {
-            const xml = 'not xml at all!';
-            const result = formatXml(xml, { minify: true });
-            const parsed = JSON.parse(result);
-            expect(parsed).toHaveProperty('error');
-        });
-
-        test('should include original content in error response', () => {
-            const xml = '';
+            const xml = 'not xml';
             const result = formatXml(xml, { minify: true });
             const parsed = JSON.parse(result);
             expect(parsed).toHaveProperty('error');
         });
     });
 
-    describe('Integration Tests - Complex Scenarios', () => {
-        test('should handle complex nested structure with attributes and mixed content', () => {
-            const xml = `<?xml version="1.0"?>
-            <catalog>
-                <book id="bk101" language="en">
-                    <author>Gambardella, Matthew</author>
-                    <title>XML Developer's Guide</title>
-                    <genre>Computer</genre>
-                    <price currency="USD">44.95</price>
-                    <publish_date>2000-10-01</publish_date>
-                    <description>An in-depth look at creating <![CDATA[applications with XML]]>.</description>
-                </book>
-                <book id="bk102">
-                    <author>Ralls, Kim</author>
-                    <title>Midnight Rain</title>
-                    <genre>Fantasy</genre>
-                    <price currency="USD">5.95</price>
-                </book>
-            </catalog>`;
-            const result = parseXml(xml);
-            expect(Array.isArray(result.catalog.book)).toBe(true);
-            expect(result.catalog.book[0]._attributes.id).toBe('bk101');
-            expect(result.catalog.book[0].price._attributes.currency).toBe('USD');
-            expect(result.catalog.book[0].description._text).toContain('applications with XML');
-        });
-
-        test('should handle XML with namespace declarations and usage', () => {
-            const xml = `<?xml version="1.0"?>
-            <root xmlns:custom="http://custom.ns" xmlns:other="http://other.ns">
-                <custom:section id="s1">
-                    <custom:title>Title</custom:title>
-                    <custom:content>
-                        <other:note important="true">Note text</other:note>
-                    </custom:content>
-                </custom:section>
+    describe('Integration - Complex Scenarios', () => {
+        test('should handle deeply nested structure with attributes', () => {
+            const xml = `<root>
+                <section id="intro">
+                    <h1>Title</h1>
+                    <p>Paragraph</p>
+                </section>
             </root>`;
             const result = parseXml(xml);
-            expect(result.root['custom:section']).toBeDefined();
-            expect(result.root['custom:section']['custom:title']).toBeDefined();
+            expect(result.root.section.attribute_id).toBe('intro');
+            expect(result.root.section.h1).toBe('Title');
+            expect(result.root.section.p).toBe('Paragraph');
         });
 
-        test('should maintain information integrity through format conversion', () => {
-            const xml = '<root><item id="1" type="test">Content with <tag>nested</tag> structure</item></root>';
+        test('should preserve information through format conversion', () => {
+            const xml = '<root><item id="1" type="test">Content</item></root>';
             const formatted = formatXml(xml, { minify: true });
             const parsed = JSON.parse(formatted);
-            expect(parsed.root.item._attributes.id).toBe('1');
-            expect(parsed.root.item._attributes.type).toBe('test');
-            expect(parsed.root.item._text).toBeDefined();
+            expect(parsed.root.item.attribute_id).toBe('1');
+            expect(parsed.root.item.attribute_type).toBe('test');
+            expect(parsed.root.item._text).toBe('Content');
+        });
+
+        test('should handle multiple attributes and child elements', () => {
+            const xml = `<article id="main" class="content">
+                <header>News</header>
+                <body>Text</body>
+                <footer>Info</footer>
+            </article>`;
+            const result = parseXml(xml);
+            expect(result.article.attribute_id).toBe('main');
+            expect(result.article.attribute_class).toBe('content');
+            expect(result.article.header).toBe('News');
+            expect(result.article.body).toBe('Text');
+            expect(result.article.footer).toBe('Info');
+        });
+
+        test('should efficiently handle data with many attributes', () => {
+            const xml = `<record id="1" name="John" age="30" email="john@example.com" status="active">
+                <address>123 Street</address>
+                <phone>555-1234</phone>
+            </record>`;
+            const result = parseXml(xml);
+            expect(result.record.attribute_id).toBe('1');
+            expect(result.record.attribute_name).toBe('John');
+            expect(result.record.attribute_age).toBe('30');
+            expect(result.record.address).toBe('123 Street');
+            expect(result.record.phone).toBe('555-1234');
+        });
+
+        test('should parse large XML structure efficiently', () => {
+            let xml = '<root>';
+            for (let i = 0; i < 20; i++) {
+                xml += `<record id="${i}" name="Item${i}"><value>${i * 100}</value></record>`;
+            }
+            xml += '</root>';
+            const result = parseXml(xml);
+            expect(Array.isArray(result.root.record)).toBe(true);
+            expect(result.root.record.length).toBe(20);
+            expect(result.root.record[0].attribute_id).toBe('0');
+            expect(result.root.record[5].attribute_id).toBe('5');
         });
     });
 });

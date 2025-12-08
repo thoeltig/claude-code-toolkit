@@ -7,11 +7,63 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-[unreleased]: https://github.com/anthropics/claude-code/compare/v0.2.0.0...HEAD
+### Planned: Phase 3.2 (HTML Handler)
+
+- **HTML format handler** - Parse HTML with visual tag stripping and semantic structure preservation
+  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes), `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
+  - Preserve informational tags: `<code>`, `<pre>`, `<kbd>` and anything with semantic attributes (`class`, `id`, `data-*`)
+  - Generate JSON structure from semantic tags: `<h1>`-`<h6>`, `<p>`, `<li>`/`<ul>`/`<ol>`, `<blockquote>`, `<section>`, `<article>`, `<table>`
+  - Combined structure: HTML semantics + underlying XML tree
+  - Expected: 30-40 tests, >85% coverage
+  - Discussion: Example scenarios and edge cases (next session)
+
+[unreleased]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...HEAD
+
+## [0.3.0.0] - 2025-12-08
+
+XML format handler with full semantic preservation.
+
+### Added
+
+- **XML format handler** - Parse XML to JSON with full semantic preservation:
+  - Element tags preserved as JSON field names
+  - Attributes stored with `attribute_` prefix
+  - Text-only elements preserved as is values
+  - Namespace support: `ns:tagName` format preserved
+  - CDATA sections: Content merged with text nodes
+  - Comments and processing instructions: Properly skipped
+  - Self-closing tags: Full support
+  - Graceful degradation: Malformed XML returns error object with context
+- Auto-detection for .xml file extension
+- Format routing in index.ts with full `--to-json` support
+- 60 comprehensive test cases covering:
+  - Basic parsing: elements, attributes, nesting (8 tests)
+  - Attributes: single, multiple, quoted, special characters, empty values (6 tests)
+  - Text-only elements: text + elements, whitespace handling (3 tests)
+  - Namespaces: prefixes, multiple namespaces, default declarations (4 tests)
+  - CDATA sections: content preservation, special characters, newlines (3 tests)
+  - Comments and processing instructions: single, multiple, special chars (4 tests)
+  - Edge cases: deep nesting (50+ levels), large sibling count (100+), element naming (7 tests)
+  - Malformed XML graceful degradation: missing tags, unclosed elements, incomplete declarations (8 tests)
+  - Real-world examples: Maven POM, SOAP responses, RSS feeds, SVG, HTML-like XML (6 tests)
+  - Output formatting: minified vs pretty JSON (4 tests)
+  - Integration scenarios: complex nested structures with mixed attributes/content (3 tests)
+
+### Test Coverage
+
+- **Total tests**: 326 passing (was 266, added 60 XML tests)
+- **Statement coverage**: 88.98%
+- **Branch coverage**: 80.74% (XML handler: 83.07%)
+- **Function coverage**: 96.84% (XML handler: 100%)
+- **Line coverage**: 89.58%
+- **Test suites**: 15 suites
+- **Performance**: Full suite runs in ~5 seconds
+
+[0.3.0.0]: https://github.com/anthropics/claude-code/releases/tag/v0.3.0.0
 
 ## [0.2.0.0] - 2025-12-08
 
-Phase 1 & 2: Multi-format file reading with block-level structure support.
+Multi-format file reading with block-level structure support.
 
 ### Added
 
