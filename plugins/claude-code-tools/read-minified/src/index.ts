@@ -12,6 +12,7 @@ import { formatMarkdown } from './formats/markdown';
 import { formatXml } from './formats/xml';
 import { formatHtml } from './formats/html';
 import { formatLogs } from './formats/logs';
+import { formatSql } from './formats/sql';
 
 export function parseArguments(args: string[]): {
     paths: string[];
@@ -83,6 +84,10 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 const logJson = formatLogs(minifiedContent, { minify: true });
                 processedContent = JSON.parse(logJson);
                 cacheContent = logJson;
+            } else if (format === 'sql' && options.toJson) {
+                const sqlJson = formatSql(minifiedContent, { minify: true });
+                processedContent = JSON.parse(sqlJson);
+                cacheContent = sqlJson;
             } else {
                 processedContent = minifiedContent;
                 cacheContent = minifiedContent;
