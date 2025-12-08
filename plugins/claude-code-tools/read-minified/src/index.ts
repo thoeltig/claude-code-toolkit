@@ -87,11 +87,19 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
             cacheContent = minifiedContent;
         } 
         
-        const result: ProcessedFile = { file: filePath, content: processedContent, cached: false, cachedSize: cacheContent.length };
+        const result: ProcessedFile = { 
+            file: filePath, 
+            originalSize: content.length,
+            newSize: cacheContent.length,
+            diffPercentage: cacheContent.length / content.length * 100,
+            content: processedContent, 
+            cached: false,
+         };
 
         // If output limit is provided and exceeded switch automatically to caching
-        if(options.maxOutput && (currentOutputSize + result.cachedSize >= options.maxOutput)){
+        if(options.maxOutput && (currentOutputSize + result.newSize >= options.maxOutput)){
             options.cache = true;
+            options.noOutput = true;
         }
 
         if (options.cache) {
@@ -104,7 +112,7 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
 
         return result;
     } catch (err) {
-        return { file: filePath, error: `${err}`, cached: false, cachedSize: 0 };
+        return { file: filePath, error: `${err}`, cached: false, originalSize: 0, newSize: 0, diffPercentage: 0 };
     }
 }
 
@@ -114,11 +122,6 @@ export async function processFiles(filePaths: string[], options: ReadMinifiedOpt
     for (const filePath of filePaths) {
         const result = await processFile(filePath, options, currentOutputSize);
         results.push(result);
-
-        currentOutputSize += result.cachedSize;        
-        if(options.maxOutput && currentOutputSize >= options.maxOutput){
-            options.cache = true;
-        }
     } 
 
     return results;

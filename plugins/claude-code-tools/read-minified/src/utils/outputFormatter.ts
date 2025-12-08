@@ -2,7 +2,7 @@ import { ProcessedFile, ReadMinifiedOptions } from '../types';
 
 export function formatOutput(files: ProcessedFile[], options: ReadMinifiedOptions): string {
     if (options.noOutput) {
-        return formatManifestOutput(files);
+        return formatManifestOutput(files, options.maxOutput);
     } if (files.length === 1) {
         return formatSingleFileOutput(files[0], options);
     } 
@@ -62,17 +62,32 @@ function formatMultipleFileWithCache(file: ProcessedFile): string {
     return JSON.stringify(wrapper);
 }       
 
-function formatManifestOutput(files: ProcessedFile[]): string {
+function formatManifestOutput(files: ProcessedFile[], maxOutput: number | undefined): string {
+    let newSize:number = 0;
+
     const manifest = {
-        processed: files.map(f => {
-            const item: any = { file: f.file, cached: f.cached, path: f.cachedPath || null };
+        status: 'success_intended_caching',
+        action: "Read the cached files",
+        cached_files: files.map(f => {
+            const item: any = { 
+                original_filepath: f.file,
+                cached_filepath: f.cachedPath || null
+            };
+
             if (f.error) {
                 item.error = f.error;
             } 
 
-        return item;
-        }), total: files.length
+            newSize += f.newSize;
+            return item;
+        }),        
+        cached_file_count: files.length,
     };
+
+    if(maxOutput && newSize >= maxOutput) {
+        manifest.status = 'warning_auto_caching_due_to_output_limit_exceeded';
+        manifest.action = 'Read the cached files with native read tool. The output limit enforced by slash command or bash constraints triggered the automatic caching to avoid output truncation and information loss.';
+    }
     
     return JSON.stringify(manifest);
 }

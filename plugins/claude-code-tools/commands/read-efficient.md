@@ -1,6 +1,6 @@
 ---
 description: Machine-efficient read tool ideal for batch reading multiple files for analysis. Token usage and understanding overhead is reduced by converting files to minified JSON without formatting noise (30-70% reduction) while preserving. Use native read tool for line-number-based editing and if format preservation is necessary.
-argument-hint: <file_path> [additional_paths...] [--format json|plaintext] [--cache] [--overwrite] [--no-minify] [--no-output]
+argument-hint: <file_path> [additional_paths...] [--no-minify] [--no-to-json] [--cache] [--overwrite] [--no-minify] [--no-output]
 allowed-tools: Bash(node:*)
 ---
 

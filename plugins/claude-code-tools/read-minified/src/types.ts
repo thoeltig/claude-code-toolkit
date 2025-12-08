@@ -9,11 +9,13 @@ export interface ReadMinifiedOptions {
 
 export interface ProcessedFile {
     file: string;
+    originalSize:number;
+    newSize:number;
+    diffPercentage:number;    
     content?: any;
     error?: string;
     cached: boolean;
     cachedPath?: string;
-    cachedSize:number;
 }
 
 export interface MinifyOptions {
