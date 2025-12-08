@@ -7,17 +7,45 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-### Planned: Phase 3.2 (HTML Handler)
+### Planned: Phase 4+ (Log Files, SQL)
 
-- **HTML format handler** - Parse HTML with visual tag stripping and semantic structure preservation
+- **Log Files** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
+- **SQL** - Parse SQL dumps and INSERT statements to structured data
+- **Type Storage Review** - Test all parsers with real-world inputs to evaluate type handling improvements
+
+## [0.4.0.0] - 2025-12-08
+
+HTML format handler with optimized semantic structures and consistent string representation.
+
+### Added
+
+- **HTML format handler** - Parse HTML with visual tag stripping and semantic structure preservation:
   - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes), `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
   - Preserve informational tags: `<code>`, `<pre>`, `<kbd>` and anything with semantic attributes (`class`, `id`, `data-*`)
-  - Generate JSON structure from semantic tags: `<h1>`-`<h6>`, `<p>`, `<li>`/`<ul>`/`<ol>`, `<blockquote>`, `<section>`, `<article>`, `<table>`
-  - Combined structure: HTML semantics + underlying XML tree
-  - Expected: 30-40 tests, >85% coverage
-  - Discussion: Example scenarios and edge cases (next session)
+  - Auto-close unclosed HTML tags (browser-compatible: `<p>`, `<li>`, `<tr>`, `<td>`, `<th>`, etc.)
+  - Generate optimized JSON structures from semantic tags:
+    - **Headings**: Semantic encoding in tag names (`h1` vs `h2`); no redundant level markers
+    - **Lists**: Compact format `{ordered: boolean, list: [...]}` vs nested `li` objects
+    - **Tables**: Optimized format `{headers: [...], rows: [[]]}` vs complex cell structures
+  - String-first representation: All HTML values as strings (HTML is text-based markup)
+  - Graceful degradation for malformed HTML and complex nested structures
 
-[unreleased]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...HEAD
+### Test Coverage
+
+- **Total tests**: 378 passing (was 326, added 61 HTML tests)
+- **HTML test suites**: 2 suites (Phase 3.2a + Phase 3.2b)
+  - HTML Format Handler - Phase 3.2a: 40 tests
+  - HTML Format Handler - Phase 3.2b Semantic Structures: 21 tests
+- **Coverage**: Comprehensive testing of visual tag stripping, auto-closing, semantic structures, malformed HTML graceful degradation
+- **Real-world patterns**: Blog posts, documentation, data tables, complex nested structures
+
+### Architecture Notes
+
+- Wrapper around XML parser (parseXml) for reuse without modification
+- HTML preprocessing pipeline: auto-close tags → strip visual markup → parse as XML → apply semantic enhancements → JSON output
+
+[unreleased]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...HEAD
+[0.4.0.0]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...v0.4.0.0
 
 ## [0.3.0.0] - 2025-12-08
 

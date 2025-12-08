@@ -10,7 +10,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
 
 ## Features
 
-- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, XML, Plain Text
+- **Multi-Format Support:** JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, Plain Text
 - **Smart Format Detection:** Auto-detects file type by extension
 - **Minification:** Remove redundant whitespace and formatting from any text file
 - **Structured Parsing:** Convert formats to minified JSON with semantic structure:
@@ -19,6 +19,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
   - INI: section-based configuration
   - CSV/NDJSON: row/record structures as JSON objects
   - XML: full semantic preservation with element tags, flattened attributes (`attribute_` prefix), namespaces, CDATA
+  - HTML: visual tag stripping with semantic structure preservation (headings, lists, tables)
 - **Graceful Degradation:** Parse errors fall back to minified plaintext automatically
 - **Caching:** Optionally cache optimized files for reuse
 - **Batch Processing:** Handle multiple files in one command
@@ -65,6 +66,7 @@ The tool automatically detects file format based on file extension and applies a
 | `.ndjson`, `.jsonl` | NDJSON | ✓ Array of objects | Parse line-by-line JSON; invalid lines create error objects |
 | `.md`, `.markdown` | Markdown | ✓ Block structure | Parse to JSON with heading hierarchy, lists, code blocks, tables |
 | `.xml` | XML | ✓ Element structure | Parse with attributes, namespaces, CDATA, full semantic preservation |
+| `.html`, `.htm` | HTML | ✓ Semantic structure | Strip visual tags, preserve semantic elements; optimized list/table formats |
 | `.txt`, `.text` | Plain text | ✗ As-is | Minify whitespace only |
 | `.py`, `.js`, `.go`, etc. | Code (unknown) | ✗ As-is | Treat as plaintext; minify whitespace |
 | Unknown | Plaintext | ✗ As-is | Minify whitespace only |
@@ -76,6 +78,7 @@ The tool automatically detects file format based on file extension and applies a
 - **NDJSON**: Parses JSON objects line-by-line; invalid lines become error objects
 - **Markdown**: Converts to structured JSON with semantic blocks (headings, lists, code, tables, etc.)
 - **XML**: Preserves element tags as field names, attributes with `attribute_` prefix, text content as is values, supports namespaces and CDATA
+- **HTML**: Strips visual tags (`<b>`, `<i>`, `<font>`, etc.), auto-closes unclosed tags, generates optimized structures for lists (`{ordered, list}`) and tables (`{headers, rows}`)
 
 **Fallback Logic:**
 - Parse error → gracefully degrade to minified plaintext
@@ -185,8 +188,8 @@ const results = await processFiles(
 
 ## Test Coverage
 
-- **Overall: 88.98%** statement coverage, **96.84%** function coverage
-- **326 test cases** across 15 test suites:
+- **Overall: 88.98%+** statement coverage, **96.84%+** function coverage
+- **378 test cases** across 16 test suites:
   - formats/json.test.ts (13 tests)
   - formats/csv.test.ts (29 tests)
   - formats/yaml.test.ts (20 tests)
@@ -194,6 +197,7 @@ const results = await processFiles(
   - formats/ndjson.test.ts (10 tests)
   - formats/markdown.test.ts (45 tests)
   - formats/xml.test.ts (60 tests)
+  - formats/html.test.ts (61 tests) - **NEW**
   - formats/plaintext.test.ts (7 tests)
   - minifier.test.ts (10 tests)
   - utils/fileHandler.test.ts (7 tests)
@@ -241,6 +245,7 @@ npm run dev -- file.json
 - `src/formats/ndjson.ts` - NDJSON line-by-line JSON parsing
 - `src/formats/markdown.ts` - Markdown block-level parsing (headings, lists, code, tables, blockquotes)
 - `src/formats/xml.ts` - XML parsing with full semantic preservation (elements, attributes, namespaces, CDATA)
+- `src/formats/html.ts` - HTML parsing with visual tag stripping, semantic structure preservation, optimized lists/tables
 - `src/formats/plaintext.ts` - Plain text minification (fallback)
 
 **Infrastructure:**
@@ -299,17 +304,21 @@ export function formatCsv(content: string): any {
 **v0.3.0.0:**
 - ✅ **XML** - Parse XML to JSON with full semantic preservation (elements, attributes, namespaces, CDATA)
 
-## Planned Formats (Phase 3+)
+**v0.4.0.0:**
+- ✅ **HTML** - Parse HTML with visual tag stripping and semantic structure preservation
+  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes), `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
+  - Preserve informational tags and semantic structure (`<h1>`-`<h6>`, `<p>`, `<code>`, `<li>`/`<ul>`/`<ol>`, `<table>`, etc.)
+  - Auto-close unclosed HTML tags (browser-compatible)
+  - Optimized semantic structures: lists `{ordered, list}`, tables `{headers, rows}`
 
-**Phase 3.2 (v0.3.1.0 roadmap):**
-- **HTML** - Parse HTML with visual tag stripping and semantic structure preservation
-  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes)
-  - Preserve informational tags and semantic structure (`<h1>`-`<h6>`, `<p>`, `<code>`, `<li>`/`<ul>`/`<ol>`, etc.)
-  - Keep anything with semantic attributes (`class`, `id`, `data-*`)
+## Planned Formats (Phase 4+)
 
-**Phase 4 (v0.4.0.0 roadmap):**
+**Phase 4.1 (v0.5.0.0 roadmap):**
 - **Log Files** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
 - **SQL** - Parse SQL dumps and INSERT statements to structured data
+
+**Future Research:**
+- **Type Storage Review** - Test all parsers with real-world inputs to evaluate type handling improvements and potential benefits of rich type systems
 
 All formats benefit from automatic minification and graceful degradation fallback logic.
 

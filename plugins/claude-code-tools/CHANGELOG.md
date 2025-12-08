@@ -7,6 +7,21 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.4.0.0] - 2025-12-08
+
+### Added
+
+- **HTML format handler** - Parse HTML with visual tag stripping and semantic structure preservation:
+  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes), `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
+  - Preserve informational tags: `<code>`, `<pre>`, `<kbd>` and anything with semantic attributes (`class`, `id`, `data-*`)
+  - Auto-close unclosed HTML tags (browser-compatible)
+  - Generate optimized JSON structures: headings preserve semantic level, lists use compact format, tables use optimized format
+  - String-first representation: all HTML values as strings
+  - Graceful degradation for malformed HTML and complex nested structures
+- Auto-detection for `.html` and `.htm` file extensions
+- 61 comprehensive HTML test cases (2 test suites: Phase 3.2a basic + Phase 3.2b semantic structures)
+- Test suite now: 378 total tests, 88.98% statement coverage, 96.84% function coverage
+
 ## [0.3.0.0] - 2025-12-08
 
 ### Added
@@ -66,6 +81,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Slash command `/read-optimized` for Claude Code integration
 - 20-70% file size reduction through minification on typical files
 
-[Unreleased]: https://github.com/anthropics/claude-code/compare/v0.2.0.0...HEAD
+[Unreleased]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...HEAD
+[0.4.0.0]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...v0.4.0.0
+[0.3.0.0]: https://github.com/anthropics/claude-code/compare/v0.2.0.0...v0.3.0.0
 [0.2.0.0]: https://github.com/anthropics/claude-code/compare/v0.1.0.0...v0.2.0.0
 [0.1.0.0]: https://github.com/anthropics/claude-code/releases/tag/v0.1.0.0

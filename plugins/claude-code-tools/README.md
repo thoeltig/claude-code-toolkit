@@ -31,11 +31,11 @@ Context is precious. Every character you read costs tokens. By minifying files -
 
 The tool automatically:
 
-1. **Detects file format** - JSON, CSV, YAML, INI, NDJSON, Markdown, XML, plaintext, code by file extension
+1. **Detects file format** - JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, plaintext, code by file extension
 2. **Minifies content** - Removes redundant whitespace and formatting noise
 3. **Parses structure** - Converts files to minified JSON:
    - JSON files become structured objects for easier analysis
-   - CSV/YAML/INI/XML files convert to structured JSON
+   - CSV/YAML/INI/XML/HTML files convert to structured JSON
    - Markdown converts to block-level JSON (headings, lists, code blocks, tables)
    - NDJSON processes line-by-line JSON
 4. **Gracefully falls back** - If parsing fails, returns minified plaintext instead
@@ -112,11 +112,11 @@ For package documentation, CLI usage, and programmatic API, see:
 
 The tool is a standalone TypeScript/Node.js package with:
 - Zero external dependencies
-- 8 file format handlers (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, plaintext)
+- 9 file format handlers (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, plaintext)
 - Batch processing support for multiple mixed-format files
 - Smart format detection with graceful fallback to plaintext
 - Optional disk caching
-- 326 passing tests (60 XML tests), 88.98% statement coverage, 96.84% function coverage
+- 378 passing tests (61 HTML tests), 88.98% statement coverage, 96.84% function coverage
 - Processes 10+ files per second
 
 ## Completed in v0.2.0.0
@@ -135,13 +135,22 @@ The tool is a standalone TypeScript/Node.js package with:
 - ✅ 60 comprehensive XML test cases
 - ✅ 326 total tests with 88.98% statement coverage, 96.84% function coverage
 
-## Planned for Phase 3.2+ (v0.3.1.0+)
+## Completed in v0.4.0.0
 
-- **HTML parsing** - Text extraction and semantic structure with visual tag stripping
-- **Log file parsing** - Pattern-based parsing for common log formats
-- **SQL parsing** - SQL dumps and INSERT statements
+- ✅ **HTML format handler** - Parse HTML with visual tag stripping and semantic structure preservation
+  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>`, `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
+  - Preserve informational tags: `<code>`, `<pre>`, `<kbd>`, and elements with semantic attributes
+  - Auto-close unclosed HTML tags (browser-compatible)
+  - Optimized semantic structures: lists `{ordered, list}`, tables `{headers, rows}`
+- ✅ 61 comprehensive HTML test cases
+- ✅ 378 total tests with 88.98% statement coverage, 96.84% function coverage
 
-See `read-minified/roadmap/` for detailed Phase 3+ planning.
+## Planned for Phase 4+ (v0.5.0.0+)
+
+- **Log file parsing** - Pattern-based parsing for common log formats (Apache, Nginx, Syslog)
+- **SQL parsing** - Parse SQL dumps and INSERT statements to structured data
+
+See `read-minified/roadmap/` for detailed Phase 4+ planning.
 
 All formats benefit from automatic minification and graceful fallback behavior.
 
