@@ -1,1 +1,71 @@
-import {readFile,writeFile,fileExists}from'../../src/utils/fileHandler';import {promises as fs}from'fs';import {existsSync,mkdirSync,rmSync}from'fs';import {join}from'path';const testDir=join(__dirname,'../test-temp');beforeAll(()=>{if(!existsSync(testDir)){mkdirSync(testDir,{recursive:true});}});afterAll(()=>{if(existsSync(testDir)){rmSync(testDir,{recursive:true});}});describe('File Handler',()=>{describe('readFile',()=>{test('should read file content',async()=>{const testFile=join(testDir,'test.txt');const content='Hello World';await fs.writeFile(testFile,content,'utf-8');const result=await readFile(testFile);expect(result).toBe(content);});test('should throw error for non-existent file',async()=>{const testFile=join(testDir,'non-existent.txt');await expect(readFile(testFile)).rejects.toThrow();});test('should handle UTF-8 encoding',async()=>{const testFile=join(testDir,'utf8.txt');const content='Hello 世界 😀';await fs.writeFile(testFile,content,'utf-8');const result=await readFile(testFile);expect(result).toBe(content);});});describe('writeFile',()=>{test('should write file to disk',async()=>{const testFile=join(testDir,'output.txt');const content='Test content';await writeFile(testFile,content);const result=await fs.readFile(testFile,'utf-8');expect(result).toBe(content);});test('should create parent directories if needed',async()=>{const testFile=join(testDir,'subdir','nested','file.txt');const content='Nested content';await writeFile(testFile,content);const result=await fs.readFile(testFile,'utf-8');expect(result).toBe(content);});test('should overwrite existing file',async()=>{const testFile=join(testDir,'overwrite.txt');await writeFile(testFile,'original');await writeFile(testFile,'updated');const result=await fs.readFile(testFile,'utf-8');expect(result).toBe('updated');});});describe('fileExists',()=>{test('should return true for existing file',async()=>{const testFile=join(testDir,'exists.txt');await fs.writeFile(testFile,'content','utf-8');expect(fileExists(testFile)).toBe(true);});test('should return false for non-existent file',()=>{const testFile=join(testDir,'does-not-exist.txt');expect(fileExists(testFile)).toBe(false);});});});
+import { readFile, writeFile, fileExists } from '../../src/utils/fileHandler';
+import { promises as fs } from 'fs';
+import { existsSync, mkdirSync, rmSync } from 'fs';
+import { join } from 'path';
+const testDir = join(__dirname, '../test-temp');
+beforeAll(() => {
+    if (!existsSync(testDir)) {
+        mkdirSync(testDir, { recursive: true });
+    }
+});
+afterAll(() => {
+    if (existsSync(testDir)) {
+        rmSync(testDir, { recursive: true });
+    }
+});
+describe('File Handler', () => {
+    describe('readFile', () => {
+        test('should read file content', async () => {
+            const testFile = join(testDir, 'test.txt');
+            const content = 'Hello World';
+            await fs.writeFile(testFile, content, 'utf-8');
+            const result = await readFile(testFile);
+            expect(result).toBe(content);
+        });
+        test('should throw error for non-existent file', async () => {
+            const testFile = join(testDir, 'non-existent.txt');
+            await expect(readFile(testFile)).rejects.toThrow();
+        });
+        test('should handle UTF-8 encoding', async () => {
+            const testFile = join(testDir, 'utf8.txt');
+            const content = 'Hello 世界 😀';
+            await fs.writeFile(testFile, content, 'utf-8');
+            const result = await readFile(testFile);
+            expect(result).toBe(content);
+        });
+    });
+    describe('writeFile', () => {
+        test('should write file to disk', async () => {
+            const testFile = join(testDir, 'output.txt');
+            const content = 'Test content';
+            await writeFile(testFile, content);
+            const result = await fs.readFile(testFile, 'utf-8');
+            expect(result).toBe(content);
+        });
+        test('should create parent directories if needed', async () => {
+            const testFile = join(testDir, 'subdir', 'nested', 'file.txt');
+            const content = 'Nested content';
+            await writeFile(testFile, content);
+            const result = await fs.readFile(testFile, 'utf-8');
+            expect(result).toBe(content);
+        });
+        test('should overwrite existing file', async () => {
+            const testFile = join(testDir, 'overwrite.txt');
+            await writeFile(testFile, 'original');
+            await writeFile(testFile, 'updated');
+            const result = await fs.readFile(testFile, 'utf-8');
+            expect(result).toBe('updated');
+        });
+    });
+    describe('fileExists', () => {
+        test('should return true for existing file', async () => {
+            const testFile = join(testDir, 'exists.txt');
+            await fs.writeFile(testFile, 'content', 'utf-8');
+            expect(fileExists(testFile)).toBe(true);
+        });
+        test('should return false for non-existent file', () => {
+            const testFile = join(testDir, 'does-not-exist.txt');
+            expect(fileExists(testFile)).toBe(false);
+        });
+    });
+});

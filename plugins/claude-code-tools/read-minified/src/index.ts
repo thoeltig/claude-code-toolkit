@@ -91,7 +91,6 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
             file: filePath, 
             originalSize: content.length,
             newSize: cacheContent.length,
-            diffPercentage: cacheContent.length / content.length * 100,
             content: processedContent, 
             cached: false,
          };
@@ -112,7 +111,7 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
 
         return result;
     } catch (err) {
-        return { file: filePath, error: `${err}`, cached: false, originalSize: 0, newSize: 0, diffPercentage: 0 };
+        return { file: filePath, error: `${err}`, cached: false, originalSize: 0, newSize: 0 };
     }
 }
 

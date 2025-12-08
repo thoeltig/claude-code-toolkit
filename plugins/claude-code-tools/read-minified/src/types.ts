@@ -10,8 +10,7 @@ export interface ReadMinifiedOptions {
 export interface ProcessedFile {
     file: string;
     originalSize:number;
-    newSize:number;
-    diffPercentage:number;    
+    newSize:number;   
     content?: any;
     error?: string;
     cached: boolean;

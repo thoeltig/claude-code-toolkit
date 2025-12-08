@@ -1,1 +1,177 @@
-import {processFile,processFiles}from'../src/index';import {formatOutput}from'../src/utils/outputFormatter';import {promises as fs}from'fs';import {existsSync,mkdirSync,rmSync}from'fs';import {join}from'path';const testDir=join(__dirname,'test-integration');beforeAll(()=>{if(!existsSync(testDir)){mkdirSync(testDir,{recursive:true});}});afterAll(()=>{if(existsSync(testDir)){rmSync(testDir,{recursive:true});}});describe('Integration Tests',()=>{test('should read, minify, and cache single JSON file',async()=>{const testFile=join(testDir,'single.json');const prettyJson=JSON.stringify({a:1,b:2},null,2);await fs.writeFile(testFile,prettyJson,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});expect(result.file).toBe(testFile);expect(result.cached).toBe(true);expect(result.cachedPath).toBeTruthy();expect(result.content).toEqual({a:1,b:2});const cachedFileExists=existsSync(result.cachedPath!);expect(cachedFileExists).toBe(true);});test('should process multiple JSON files as NDJSON',async()=>{const file1=join(testDir,'multi1.json');const file2=join(testDir,'multi2.json');await fs.writeFile(file1,'{"a":1}','utf-8');await fs.writeFile(file2,'{"b":2}','utf-8');const results=await processFiles([file1,file2],{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(results).toHaveLength(2);expect(results[0].file).toBe(file1);expect(results[1].file).toBe(file2);expect(results[0].content).toEqual({a:1});expect(results[1].content).toEqual({b:2});});test('should use --no-output mode and return manifest',async()=>{const file1=join(testDir,'manifest1.json');const file2=join(testDir,'manifest2.json');await fs.writeFile(file1,'{"a":1}','utf-8');await fs.writeFile(file2,'{"b":2}','utf-8');const results=await processFiles([file1,file2],{minify:true,toJson:true,cache:true,overwrite:false,noOutput:true});const output=formatOutput(results,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:true});const manifest=JSON.parse(output);expect(manifest.total).toBe(2);expect(manifest.processed).toHaveLength(2);expect(manifest.processed[0].cached).toBe(true);expect(manifest.processed[1].cached).toBe(true);});test('should handle mixed success/error cases',async()=>{const validFile=join(testDir,'valid.json');const invalidFile=join(testDir,'invalid.json');await fs.writeFile(validFile,'{"a":1}','utf-8');await fs.writeFile(invalidFile,'{invalid json}','utf-8');const results=await processFiles([validFile,invalidFile],{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(results).toHaveLength(2);expect(results[0].error).toBeUndefined();expect(results[1].error).toBeUndefined();expect(results[0].content).toEqual({a:1});expect(typeof results[1].content).toBe('string');});test('should overwrite existing cache files',async()=>{const testFile=join(testDir,'overwrite.json');await fs.writeFile(testFile,'{"old":true}','utf-8');const result1=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});expect(result1.cached).toBe(true);const cachedPath=result1.cachedPath!;const cachedContent1=await fs.readFile(cachedPath,'utf-8');expect(cachedContent1).toContain('"old":true');await fs.writeFile(testFile,'{"new":true}','utf-8');const result2=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:true,noOutput:false});expect(result2.cachedPath).toBe(cachedPath);const cachedContent2=await fs.readFile(cachedPath,'utf-8');expect(cachedContent2).toContain('"new":true');});test('should increment cache filename when --overwrite not set',async()=>{const testFile=join(testDir,'increment.json');await fs.writeFile(testFile,'{"v":1}','utf-8');const result1=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});expect(result1.cached).toBe(true);const path1=result1.cachedPath!;await fs.writeFile(testFile,'{"v":2}','utf-8');const result2=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});expect(result2.cached).toBe(true);const path2=result2.cachedPath!;expect(path1).not.toBe(path2);expect(path2).toContain('(1)');});test('should minify and output formatted JSON',async()=>{const testFile=join(testDir,'pretty.json');const prettyJson=`{\n  "user": {\n    "name": "John",\n    "age": 30\n  },\n  "active": true\n}`;await fs.writeFile(testFile,prettyJson,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(result.content).toEqual({user:{name:'John',age:30},active:true});});test('should handle plain text files without JSON parsing',async()=>{const testFile=join(testDir,'notes.txt');const textContent='This is a plain text file.\n\nWith multiple lines.\n\nAnd some content.';await fs.writeFile(testFile,textContent,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(result.cached).toBe(false);expect(typeof result.content).toBe('string');expect(result.content).toContain('plain text');});test('should detect plaintext by .txt extension',async()=>{const testFile=join(testDir,'readme.txt');const content='Read me please!';await fs.writeFile(testFile,content,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(result.error).toBeUndefined();expect(result.content).toBe(content);});test('should fall back to plaintext when JSON parsing fails',async()=>{const testFile=join(testDir,'broken.json');const brokenJson='{"incomplete": ';await fs.writeFile(testFile,brokenJson,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(result.error).toBeUndefined();expect(typeof result.content).toBe('string');expect(result.content).toBe('{"incomplete":');});test('should handle unknown file extensions as plaintext',async()=>{const testFile=join(testDir,'file.unknown');const content='Some arbitrary content';await fs.writeFile(testFile,content,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});expect(result.error).toBeUndefined();expect(result.content).toBe(content);});test('should cache plaintext files correctly',async()=>{const testFile=join(testDir,'cache.txt');const content='Text to cache';await fs.writeFile(testFile,content,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});expect(result.cached).toBe(true);expect(result.cachedPath).toBeTruthy();const cachedExists=existsSync(result.cachedPath!);expect(cachedExists).toBe(true);});test('should output raw JSON for single file without cache',async()=>{const testFile=join(testDir,'raw.json');const content='{"data":"value"}';await fs.writeFile(testFile,content,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});const output=formatOutput([result],{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});const parsed=JSON.parse(output);expect(parsed).toEqual({data:'value'});});test('should output wrapped JSON for single file with cache',async()=>{const testFile=join(testDir,'wrapped.json');const content='{"data":"value"}';await fs.writeFile(testFile,content,'utf-8');const result=await processFile(testFile,{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});const output=formatOutput([result],{minify:true,toJson:true,cache:true,overwrite:false,noOutput:false});const parsed=JSON.parse(output);expect(parsed).toHaveProperty('content');expect(parsed).toHaveProperty('cached');expect(parsed).toHaveProperty('cachedPath');});test('should output NDJSON for multiple files without cache',async()=>{const file1=join(testDir,'ndjson1.json');const file2=join(testDir,'ndjson2.json');await fs.writeFile(file1,'{"a":1}','utf-8');await fs.writeFile(file2,'{"b":2}','utf-8');const results=await processFiles([file1,file2],{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});const output=formatOutput(results,{minify:true,toJson:true,cache:false,overwrite:false,noOutput:false});const lines=output.split('\n');expect(lines).toHaveLength(2);expect(JSON.parse(lines[0])).toEqual({a:1});expect(JSON.parse(lines[1])).toEqual({b:2});});});
+import { processFile, processFiles } from '../src/index';
+import { formatOutput } from '../src/utils/outputFormatter';
+import { promises as fs } from 'fs';
+import { existsSync, mkdirSync, rmSync } from 'fs';
+import { join } from 'path';
+const testDir = join(__dirname, 'test-integration');
+beforeAll(() => {
+    if (!existsSync(testDir)) {
+        mkdirSync(testDir, { recursive: true });
+    }
+});
+afterAll(() => {
+    if (existsSync(testDir)) {
+        rmSync(testDir, { recursive: true });
+    }
+});
+describe('Integration Tests', () => {
+    test('should read, minify, and cache single JSON file', async () => {
+        const testFile = join(testDir, 'single.json');
+        const prettyJson = JSON.stringify({ a: 1, b: 2 }, null, 2);
+        await fs.writeFile(testFile, prettyJson, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false }, 0);
+        expect(result.file).toBe(testFile);
+        expect(result.cached).toBe(true);
+        expect(result.cachedPath).toBeTruthy();
+        expect(result.content).toEqual({ a: 1, b: 2 });
+        const cachedFileExists = existsSync(result.cachedPath!);
+        expect(cachedFileExists).toBe(true);
+    });
+    test('should process multiple JSON files as NDJSON', async () => {
+        const file1 = join(testDir, 'multi1.json');
+        const file2 = join(testDir, 'multi2.json');
+        await fs.writeFile(file1, '{"a":1}', 'utf-8');
+        await fs.writeFile(file2, '{"b":2}', 'utf-8');
+        const results = await processFiles([file1, file2], { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false });
+        expect(results).toHaveLength(2);
+        expect(results[0].file).toBe(file1);
+        expect(results[1].file).toBe(file2);
+        expect(results[0].content).toEqual({ a: 1 });
+        expect(results[1].content).toEqual({ b: 2 });
+    });
+    test('should use --no-output mode and return manifest', async () => {
+        const file1 = join(testDir, 'manifest1.json');
+        const file2 = join(testDir, 'manifest2.json');
+        await fs.writeFile(file1, '{"a":1}', 'utf-8');
+        await fs.writeFile(file2, '{"b":2}', 'utf-8');
+        const results = await processFiles([file1, file2], { minify: true, toJson: true, cache: true, overwrite: false, noOutput: true });
+        const output = formatOutput(results, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: true });
+        const manifest = JSON.parse(output);
+        expect(manifest.total).toBe(2);
+        expect(manifest.processed).toHaveLength(2);
+        expect(manifest.processed[0].cached).toBe(true);
+        expect(manifest.processed[1].cached).toBe(true);
+    });
+    test('should handle mixed success/error cases', async () => {
+        const validFile = join(testDir, 'valid.json');
+        const invalidFile = join(testDir, 'invalid.json');
+        await fs.writeFile(validFile, '{"a":1}', 'utf-8');
+        await fs.writeFile(invalidFile, '{invalid json}', 'utf-8');
+        const results = await processFiles([validFile, invalidFile], { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false });
+        expect(results).toHaveLength(2);
+        expect(results[0].error).toBeUndefined();
+        expect(results[1].error).toBeUndefined();
+        expect(results[0].content).toEqual({ a: 1 });
+        expect(typeof results[1].content).toBe('string');
+    });
+    test('should overwrite existing cache files', async () => {
+        const testFile = join(testDir, 'overwrite.json');
+        await fs.writeFile(testFile, '{"old":true}', 'utf-8');
+        const result1 = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false }, 0);
+        expect(result1.cached).toBe(true);
+        const cachedPath = result1.cachedPath!;
+        const cachedContent1 = await fs.readFile(cachedPath, 'utf-8');
+        expect(cachedContent1).toContain('"old":true');
+        await fs.writeFile(testFile, '{"new":true}', 'utf-8');
+        const result2 = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: true, noOutput: false }, 0);
+        expect(result2.cachedPath).toBe(cachedPath);
+        const cachedContent2 = await fs.readFile(cachedPath, 'utf-8');
+        expect(cachedContent2).toContain('"new":true');
+    });
+    test('should increment cache filename when --overwrite not set', async () => {
+        const testFile = join(testDir, 'increment.json');
+        await fs.writeFile(testFile, '{"v":1}', 'utf-8');
+        const result1 = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false }, 0);
+        expect(result1.cached).toBe(true);
+        const path1 = result1.cachedPath!;
+        await fs.writeFile(testFile, '{"v":2}', 'utf-8');
+        const result2 = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false }, 0);
+        expect(result2.cached).toBe(true);
+        const path2 = result2.cachedPath!;
+        expect(path1).not.toBe(path2);
+        expect(path2).toContain('(1)');
+    });
+    test('should minify and output formatted JSON', async () => {
+        const testFile = join(testDir, 'pretty.json');
+        const prettyJson = `{\n  "user": {\n    "name": "John",\n    "age": 30\n  },\n  "active": true\n}`;
+        await fs.writeFile(testFile, prettyJson, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false }, 0);
+        expect(result.content).toEqual({ user: { name: 'John', age: 30 }, active: true });
+    });
+    test('should handle plain text files without JSON parsing', async () => {
+        const testFile = join(testDir, 'notes.txt');
+        const textContent = 'This is a plain text file.\n\nWith multiple lines.\n\nAnd some content.';
+        await fs.writeFile(testFile, textContent, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false }, 0);
+        expect(result.cached).toBe(false);
+        expect(typeof result.content).toBe('string');
+        expect(result.content).toContain('plain text');
+    });
+    test('should detect plaintext by .txt extension', async () => {
+        const testFile = join(testDir, 'readme.txt');
+        const content = 'Read me please!';
+        await fs.writeFile(testFile, content, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false }, 0);
+        expect(result.error).toBeUndefined();
+        expect(result.content).toBe(content);
+    });
+    test('should fall back to plaintext when JSON parsing fails', async () => {
+        const testFile = join(testDir, 'broken.json');
+        const brokenJson = '{"incomplete": ';
+        await fs.writeFile(testFile, brokenJson, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false }, 0);
+        expect(result.error).toBeUndefined();
+        expect(typeof result.content).toBe('string');
+        expect(result.content).toBe('{"incomplete":');
+    });
+    test('should handle unknown file extensions as plaintext', async () => {
+        const testFile = join(testDir, 'file.unknown');
+        const content = 'Some arbitrary content';
+        await fs.writeFile(testFile, content, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false }, 0);
+        expect(result.error).toBeUndefined();
+        expect(result.content).toBe(content);
+    });
+    test('should cache plaintext files correctly', async () => {
+        const testFile = join(testDir, 'cache.txt');
+        const content = 'Text to cache';
+        await fs.writeFile(testFile, content, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false }, 0);
+        expect(result.cached).toBe(true);
+        expect(result.cachedPath).toBeTruthy();
+        const cachedExists = existsSync(result.cachedPath!);
+        expect(cachedExists).toBe(true);
+    });
+    test('should output raw JSON for single file without cache', async () => {
+        const testFile = join(testDir, 'raw.json');
+        const content = '{"data":"value"}';
+        await fs.writeFile(testFile, content, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false }, 0);
+        const output = formatOutput([result], { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false });
+        const parsed = JSON.parse(output);
+        expect(parsed).toEqual({ data: 'value' });
+    });
+    test('should output wrapped JSON for single file with cache', async () => {
+        const testFile = join(testDir, 'wrapped.json');
+        const content = '{"data":"value"}';
+        await fs.writeFile(testFile, content, 'utf-8');
+        const result = await processFile(testFile, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false }, 0);
+        const output = formatOutput([result], { minify: true, toJson: true, cache: true, overwrite: false, noOutput: false });
+        const parsed = JSON.parse(output);
+        expect(parsed).toHaveProperty('content');
+        expect(parsed).toHaveProperty('cached');
+        expect(parsed).toHaveProperty('cachedPath');
+    });
+    test('should output NDJSON for multiple files without cache', async () => {
+        const file1 = join(testDir, 'ndjson1.json');
+        const file2 = join(testDir, 'ndjson2.json');
+        await fs.writeFile(file1, '{"a":1}', 'utf-8');
+        await fs.writeFile(file2, '{"b":2}', 'utf-8');
+        const results = await processFiles([file1, file2], { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false });
+        const output = formatOutput(results, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false });
+        const lines = output.split('\n');
+        expect(lines).toHaveLength(2);
+        expect(JSON.parse(lines[0])).toEqual({ a: 1 });
+        expect(JSON.parse(lines[1])).toEqual({ b: 2 });
+    });
+});
