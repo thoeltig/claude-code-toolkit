@@ -4,6 +4,7 @@ export interface ReadMinifiedOptions {
     cache: boolean;
     overwrite: boolean;
     noOutput: boolean;
+    maxOutput?: number;
 }
 
 export interface ProcessedFile {
@@ -12,6 +13,7 @@ export interface ProcessedFile {
     error?: string;
     cached: boolean;
     cachedPath?: string;
+    cachedSize:number;
 }
 
 export interface MinifyOptions {

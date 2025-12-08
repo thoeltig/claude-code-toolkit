@@ -105,6 +105,39 @@ By minifying and converting to structured JSON:
 - ✓ **Lower per-operation cost** for batch processing
 - ✓ **More context available** for actual reasoning with same token budget
 
+## Output Limits & Auto-Caching
+
+### Limitations
+
+Claude Code has two output limits that affect `/read-efficient`:
+
+1. **Bash Output Limit** (`BASH_MAX_OUTPUT_LENGTH`): Default 100,000 characters
+   - Configured via: `BASH_MAX_OUTPUT_LENGTH` environment variable
+   - Location: `.claude/settings.json` or `~/.claude/settings.json`
+
+2. **SlashCommand Output Limit**: ~30,000 characters
+   - Hardcoded limit in Claude Code for slash command display output
+   - Cannot be configured, but can be worked around
+
+### Configuration for SlashCommand
+
+The `/read-efficient` slash command is preconfigured with `--max-output=29900` and a defined fallback logic if truncation is detected.
+
+If output exceeds the slash command limit then call the Node script with a custom / configured bash output limit:
+  ```bash
+  !node ${CLAUDE_PLUGIN_ROOT}/read-minified/dist/index.js $ARGUMENTS --max-output=100000
+  ```
+
+If output is also exceeds the bash output limit then you need to override this:
+- **Increase bash output limit** in `.claude/settings.json`:
+  ```json
+  {
+    "env": {
+      "BASH_MAX_OUTPUT_LENGTH": "110000"
+    }
+  }
+  ```
+
 ## Technical Details
 
 For package documentation, CLI usage, and programmatic API, see:

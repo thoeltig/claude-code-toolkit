@@ -27,6 +27,10 @@ export function parseArguments(args: string[]): {
             else if (flag === 'cache') options.cache = true;
             else if (flag === 'overwrite') options.overwrite = true;
             else if (flag === 'no-output') options.noOutput = true;
+            else if (flag.startsWith('max-output=')) {
+                const value = parseInt(flag.split('=')[1], 10);
+                if (!isNaN(value)) options.maxOutput = value;
+            }
         } else {
             paths.push(arg);
         }
@@ -35,7 +39,7 @@ export function parseArguments(args: string[]): {
     return { paths, options };
 }
 
-export async function processFile(filePath: string, options: ReadMinifiedOptions): Promise<ProcessedFile> {
+export async function processFile(filePath: string, options: ReadMinifiedOptions, currentOutputSize: number): Promise<ProcessedFile> {
     try {
         let content = await readFile(filePath);
         const minifiedContent = options.minify ? minifyWhitespace(content) : content;
@@ -83,7 +87,13 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
             cacheContent = minifiedContent;
         } 
         
-        const result: ProcessedFile = { file: filePath, content: processedContent, cached: false };
+        const result: ProcessedFile = { file: filePath, content: processedContent, cached: false, cachedSize: cacheContent.length };
+
+        // If output limit is provided and exceeded switch automatically to caching
+        if(options.maxOutput && (currentOutputSize + result.cachedSize >= options.maxOutput)){
+            options.cache = true;
+        }
+
         if (options.cache) {
             const cacheResult = await writeCache(filePath, cacheContent, options.overwrite);
             if (cacheResult.success) {
@@ -94,15 +104,21 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
 
         return result;
     } catch (err) {
-        return { file: filePath, error: `${err}`, cached: false };
+        return { file: filePath, error: `${err}`, cached: false, cachedSize: 0 };
     }
 }
 
 export async function processFiles(filePaths: string[], options: ReadMinifiedOptions): Promise<ProcessedFile[]> {
+    let currentOutputSize: number = 0;
     const results: ProcessedFile[] = [];
     for (const filePath of filePaths) {
-        const result = await processFile(filePath, options);
+        const result = await processFile(filePath, options, currentOutputSize);
         results.push(result);
+
+        currentOutputSize += result.cachedSize;        
+        if(options.maxOutput && currentOutputSize >= options.maxOutput){
+            options.cache = true;
+        }
     } 
 
     return results;
@@ -116,6 +132,19 @@ export async function main(args: string[]): Promise<void> {
     } 
     
     const results = await processFiles(paths, options);
+
+    // Mixed result is only possible if output limit was exceeded and automatical caching was necessary
+    if(options.cache){
+        var uncachedResults = results.filter(x => x.cached === false);
+        uncachedResults.forEach(async x =>{
+            const cacheResult = await writeCache(x.file, x.content, options.overwrite);
+            if (cacheResult.success) {
+                x.cached = true;
+                x.cachedPath = cacheResult.path;
+            }
+        });
+    }
+
     const output = formatOutput(results, options);
     console.log(output);
 } 

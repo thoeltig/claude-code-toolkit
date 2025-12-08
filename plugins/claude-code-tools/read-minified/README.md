@@ -52,6 +52,16 @@ node dist/index.js <path> [options]
 - `--cache` - Save optimized file to disk
 - `--overwrite` - Replace existing cache files
 - `--no-output` - Return manifest instead of file content
+- `--max-output=<number of characters>` - Auto-switch to caching if output exceeds limit
+
+## Output Limits & Auto-Caching Behavior
+
+When `--max-output=<number of characters>` is provided:
+
+- **Threshold Check**: As files are processed, accumulated output size is tracked
+- **Auto-Switch**: If total output would exceed the limit, `--cache` flag is automatically activated
+- **Graceful Fallback**: Once triggered, all files (including those already processed) are cached
+- **Mixed Output**: Cached results are returned with file references instead of inline content
 
 ## Format Detection & Fallback
 
