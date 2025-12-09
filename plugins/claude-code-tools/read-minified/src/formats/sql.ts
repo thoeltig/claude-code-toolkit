@@ -116,6 +116,29 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                 };
                 if (group.savepointName) output.savepointName = group.savepointName;
                 return output;
+            } else if (group.action === 'GRANT') {
+                const output: any = {
+                    action: 'GRANT',
+                    statementIndex: group.startIndex
+                };
+                if (group.privileges) output.privileges = group.privileges;
+                if (group.objectType) output.objectType = group.objectType;
+                if (group.objectName) output.objectName = group.objectName;
+                if (group.grantee) output.grantee = group.grantee;
+                if (group.grantOption) output.grantOption = group.grantOption;
+                return output;
+            } else if (group.action === 'REVOKE') {
+                const output: any = {
+                    action: 'REVOKE',
+                    statementIndex: group.startIndex
+                };
+                if (group.privileges) output.privileges = group.privileges;
+                if (group.objectType) output.objectType = group.objectType;
+                if (group.objectName) output.objectName = group.objectName;
+                if (group.grantee) output.grantee = group.grantee;
+                if (group.cascade) output.cascade = group.cascade;
+                if (group.restrict) output.restrict = group.restrict;
+                return output;
             }
             return null;
         }).filter((item: any) => item !== null);
@@ -127,7 +150,7 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
 }
 
 interface SqlStatement {
-    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'UNKNOWN';
+    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'UNKNOWN';
     table: string;
     raw: string;
     statementIndex: number;
@@ -169,6 +192,9 @@ interface GroupedStatement {
     orReplace?: boolean;  // For CREATE VIEW
     savepointName?: string;  // For SAVEPOINT, RELEASE, ROLLBACK TO
     toSavepoint?: boolean;   // For ROLLBACK TO SAVEPOINT
+    privileges?: string[];   // For GRANT/REVOKE
+    grantee?: string;        // For GRANT/REVOKE
+    grantOption?: boolean;   // For GRANT
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -228,11 +254,15 @@ function parseSqlStatements(content: string): SqlStatement[] {
             parsed = parseSavepointStatement(raw);
         } else if (type === 'RELEASE') {
             parsed = parseReleaseStatement(raw);
+        } else if (type === 'GRANT') {
+            parsed = parseGrantStatement(raw);
+        } else if (type === 'REVOKE') {
+            parsed = parseRevokeStatement(raw);
         }
 
-        // Include statement if it has a table OR if it's a transaction (no table required)
-        const isTransaction = type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE';
-        if (table || isTransaction) {
+        // Include statement if it has a table OR if it's a transaction/permission statement (no table required)
+        const isSpecialStatement = type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE' || type === 'GRANT' || type === 'REVOKE';
+        if (table || isSpecialStatement) {
             statements.push({
                 type,
                 table: table || type,  // Use type as fallback for transactions
@@ -331,7 +361,7 @@ function splitSqlStatements(content: string): string[] {
     return statements;
 }
 
-function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'UNKNOWN' {
+function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'UNKNOWN' {
     const trimmed = sql.trim().toUpperCase();
 
     if (trimmed.startsWith('CREATE TABLE')) return 'CREATE';
@@ -350,15 +380,17 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     if (/^ROLLBACK/i.test(trimmed)) return 'ROLLBACK';
     if (/^SAVEPOINT/i.test(trimmed)) return 'SAVEPOINT';
     if (/^RELEASE\s+SAVEPOINT/i.test(trimmed)) return 'RELEASE';
+    if (/^GRANT/i.test(trimmed)) return 'GRANT';
+    if (/^REVOKE/i.test(trimmed)) return 'REVOKE';
 
     return 'UNKNOWN';
 }
 
-function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'UNKNOWN'): string {
+function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'UNKNOWN'): string {
     const trimmed = sql.trim();
 
-    // Transactions don't have tables
-    if (type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE') {
+    // Transactions and permission statements don't have tables
+    if (type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE' || type === 'GRANT' || type === 'REVOKE') {
         return '';
     }
 
@@ -998,8 +1030,8 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             // Don't group CREATE INDEX or CREATE VIEW - each should be its own statement
             // Only group CREATE TABLE statements
             canGroup = stmt.parsed?.objectType === 'TABLE' && lastGroup?.objectType === 'TABLE';
-        } else if (action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE') {
-            // Never group transaction statements
+        } else if (action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE' || action === 'GRANT' || action === 'REVOKE') {
+            // Never group transaction/permission statements
             canGroup = false;
         }
 
@@ -1077,6 +1109,14 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             } else if ((action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE') && stmt.parsed) {
                 if (stmt.parsed.toSavepoint) group.toSavepoint = stmt.parsed.toSavepoint;
                 if (stmt.parsed.savepointName) group.savepointName = stmt.parsed.savepointName;
+            } else if ((action === 'GRANT' || action === 'REVOKE') && stmt.parsed) {
+                if (stmt.parsed.privileges) group.privileges = stmt.parsed.privileges;
+                if (stmt.parsed.objectType) group.objectType = stmt.parsed.objectType;
+                if (stmt.parsed.objectName) group.objectName = stmt.parsed.objectName;
+                if (stmt.parsed.grantee) group.grantee = stmt.parsed.grantee;
+                if (stmt.parsed.grantOption) group.grantOption = stmt.parsed.grantOption;
+                if (stmt.parsed.cascade) group.cascade = stmt.parsed.cascade;
+                if (stmt.parsed.restrict) group.restrict = stmt.parsed.restrict;
             }
 
             result.push(group);
@@ -1128,6 +1168,106 @@ function parseReleaseStatement(sql: string): any | null {
     const match = /RELEASE\s+SAVEPOINT\s+(\w+)/i.exec(sql);
     if (match) {
         result.savepointName = match[1];
+    }
+
+    return result;
+}
+
+function parseGrantStatement(sql: string): any | null {
+    const result: any = { action: 'GRANT' };
+
+    // Parse: GRANT privilege(s) ON [object_type] object TO grantee [WITH GRANT OPTION]
+
+    // Extract privileges (before ON)
+    const privilegesMatch = /GRANT\s+(.*?)\s+ON/is.exec(sql);
+    if (privilegesMatch) {
+        const privStr = privilegesMatch[1].trim();
+        if (privStr.toUpperCase() === 'ALL') {
+            result.privileges = ['ALL'];
+        } else {
+            result.privileges = privStr.split(',').map((p: string) => p.trim().toUpperCase()).filter((p: string) => p.length > 0);
+        }
+    }
+
+    // Extract object type and name (ON clause)
+    // Could be: ON object OR ON TABLE object OR ON DATABASE object, etc.
+    let objectTypeMatch = /ON\s+(TABLE|DATABASE|SCHEMA|PROCEDURE|INDEX|VIEW|SEQUENCE)\s+(\w+)/i.exec(sql);
+    if (objectTypeMatch) {
+        result.objectType = objectTypeMatch[1].toUpperCase();
+        result.objectName = objectTypeMatch[2];
+    } else {
+        // Infer TABLE if no explicit type
+        const simpleMatch = /ON\s+(\w+)/i.exec(sql);
+        if (simpleMatch) {
+            result.objectType = 'TABLE';
+            result.objectName = simpleMatch[1];
+        }
+    }
+
+    // Extract grantee (TO clause)
+    const granteeMatch = /TO\s+(\w+|"[^"]+"|'[^']+')(?:\s|;|WITH|$)/i.exec(sql);
+    if (granteeMatch) {
+        let grantee = granteeMatch[1];
+        if (grantee.startsWith('"') || grantee.startsWith("'")) {
+            grantee = grantee.slice(1, -1);
+        }
+        result.grantee = grantee;
+    }
+
+    // Check for WITH GRANT OPTION
+    if (/WITH\s+GRANT\s+OPTION/i.test(sql)) {
+        result.grantOption = true;
+    }
+
+    return result;
+}
+
+function parseRevokeStatement(sql: string): any | null {
+    const result: any = { action: 'REVOKE' };
+
+    // Parse: REVOKE privilege(s) ON [object_type] object FROM grantee [CASCADE|RESTRICT]
+
+    // Extract privileges (before ON)
+    const privilegesMatch = /REVOKE\s+(.*?)\s+ON/is.exec(sql);
+    if (privilegesMatch) {
+        const privStr = privilegesMatch[1].trim();
+        if (privStr.toUpperCase() === 'ALL') {
+            result.privileges = ['ALL'];
+        } else {
+            result.privileges = privStr.split(',').map((p: string) => p.trim().toUpperCase()).filter((p: string) => p.length > 0);
+        }
+    }
+
+    // Extract object type and name (ON clause)
+    let objectTypeMatch = /ON\s+(TABLE|DATABASE|SCHEMA|PROCEDURE|INDEX|VIEW|SEQUENCE)\s+(\w+)/i.exec(sql);
+    if (objectTypeMatch) {
+        result.objectType = objectTypeMatch[1].toUpperCase();
+        result.objectName = objectTypeMatch[2];
+    } else {
+        // Infer TABLE if no explicit type
+        const simpleMatch = /ON\s+(\w+)/i.exec(sql);
+        if (simpleMatch) {
+            result.objectType = 'TABLE';
+            result.objectName = simpleMatch[1];
+        }
+    }
+
+    // Extract grantee (FROM clause)
+    const granteeMatch = /FROM\s+(\w+|"[^"]+"|'[^']+')(?:\s|;|CASCADE|RESTRICT|$)/i.exec(sql);
+    if (granteeMatch) {
+        let grantee = granteeMatch[1];
+        if (grantee.startsWith('"') || grantee.startsWith("'")) {
+            grantee = grantee.slice(1, -1);
+        }
+        result.grantee = grantee;
+    }
+
+    // Check for CASCADE or RESTRICT
+    if (/CASCADE/i.test(sql)) {
+        result.cascade = true;
+    }
+    if (/RESTRICT/i.test(sql)) {
+        result.restrict = true;
     }
 
     return result;
