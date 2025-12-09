@@ -10,6 +10,7 @@ describe('SQL Format Handler', () => {
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
       expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].columns).toEqual(['id', 'name', 'email']);
       expect(result[0].rowCount).toBe(2);
       expect(result[0].rows).toHaveLength(2);
@@ -32,6 +33,8 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('products');
+      expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rowCount).toBe(1);
       expect(result[0].rows[0]).toEqual({
         sku: 'SKU001',
@@ -40,7 +43,7 @@ describe('SQL Format Handler', () => {
       });
     });
 
-    test('should parse multiple INSERT statements', () => {
+    test('should parse multiple INSERT statements on different tables', () => {
       const sql = `INSERT INTO users (id, name) VALUES (1, 'John'), (2, 'Jane');
       INSERT INTO products (sku, name) VALUES ('SKU001', 'Widget'), ('SKU002', 'Gadget');`;
       const output = formatSql(sql, { minify: true });
@@ -48,9 +51,13 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(2);
       expect(result[0].table).toBe('users');
+      expect(result[0].action).toBe('INSERT');
       expect(result[0].rowCount).toBe(2);
+      expect(result[0].statementIndex).toBe(0);
       expect(result[1].table).toBe('products');
+      expect(result[1].action).toBe('INSERT');
       expect(result[1].rowCount).toBe(2);
+      expect(result[1].statementIndex).toBe(1);
       expect(result[0].rows[0].name).toBe('John');
       expect(result[1].rows[0].name).toBe('Widget');
     });
@@ -169,7 +176,10 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
+      expect(result).toHaveLength(2);
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rows[0]).toEqual({ a: 1, b: 2 });
+      expect(result[1].statementIndex).toBe(1);
       expect(result[1].rows[0]).toEqual({ x: 1, y: 2, z: 3, w: 4 });
     });
 
@@ -264,6 +274,8 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
+      expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
     });
 
@@ -273,6 +285,8 @@ describe('SQL Format Handler', () => {
       const result = JSON.parse(output);
 
       expect(result[0].table).toBe('user_data_v2');
+      expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
     });
 
@@ -296,6 +310,8 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
+      expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rowCount).toBe(2);
       expect(result[0].rows[0]).toHaveProperty('user_id', 1001);
       expect(result[0].rows[0]).toHaveProperty('verified', true);
@@ -313,6 +329,8 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('inventory');
+      expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rowCount).toBe(3);
       expect(result[0].rows[0].quantity).toBe(15);
       expect(result[0].rows[2].quantity).toBe(0);
@@ -329,6 +347,8 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('orders');
+      expect(result[0].action).toBe('INSERT');
+      expect(result[0].statementIndex).toBe(0);
       expect(result[0].rowCount).toBe(3);
       expect(result[0].rows[0].status).toBe('shipped');
       expect(result[0].rows[1]).not.toHaveProperty('notes');

@@ -21,39 +21,47 @@ Optimize file reading for token efficiency and semantic clarity by converting an
 
 ### Flags
 
-#### --minify
-- **Default:** Applied to all reads
-- **Behavior:** Removes redundant whitespace and newlines
-  - Multiple spaces → single space
-  - Multiple empty lines (`\n\n\n`) → single newline
-  - Trim start/end of file
-  - Works on any text format
+**Note:** All flags use negative convention (`--no-*`). Default behavior is: minify=true, toJson=true, cache=false, overwrite=false, noOutput=false.
 
-#### --to-json
-- **Default:** Not applied (keep original format structure)
-- **Behavior:** Convert file format to JSON
-  - Currently supported: JSON (first version)
-  - Future: XML, CSV, YAML, Markdown
-- **Output:** Minified JSON
+#### --no-minify
+- **Default:** OFF (minification is applied by default)
+- **Behavior:** Disable minification, keep original whitespace
+  - Useful for preserving formatting structure
+  - Only affects plaintext output (minification always happens before JSON conversion)
 
-#### --cache / --store / --save
-- **Default:** false
-- **Behavior:** Write optimized file to disk with suffix
+#### --no-to-json
+- **Default:** OFF (JSON conversion is applied by default)
+- **Behavior:** Disable JSON conversion, keep original file format
+  - Returns minified plaintext instead of structured JSON
+  - Useful for non-structured formats or when format preservation is needed
+
+#### --cache
+- **Default:** OFF (caching disabled)
+- **Behavior:** Write processed file to disk with `.compact` suffix
   - Naming: `{original_filename}.compact.{extension}`
   - Location: Same directory as original file
   - Conflict handling: Use (1), (2), (3) suffix if file exists
   - User manages cleanup (no TTL, no auto-invalidation)
+- **Example:** `products.csv` → `products.compact.csv`
 
 #### --overwrite
-- **Default:** false (create numbered duplicates)
-- **Behavior:** Overwrite existing cached files
+- **Default:** OFF (create numbered duplicates)
+- **Behavior:** Overwrite existing cached files instead of creating duplicates
 - **Usage:** `--cache --overwrite` to replace cached versions
+- **Note:** Only applies when `--cache` is enabled
 
 #### --no-output
-- **Default:** false (return content to Claude)
-- **Behavior:** Do not output file contents to Claude
+- **Default:** OFF (return content to Claude)
+- **Behavior:** Do not output file contents to stdout
 - **Purpose:** Avoid token bloat for large batches
-- **Output:** Return manifest of cached/processed file paths instead
+- **Returns:** JSON manifest of processed files and cached paths instead of content
+
+#### --max-output=<number>
+- **Default:** Not set (no output limit)
+- **Behavior:** Set maximum output size in bytes
+- **Auto-caching:** If output would exceed limit, automatically enables `--cache` and `--no-output`
+- **Example:** `--max-output=30000` limits output to 30KB, caches remainder
+- **Use case:** Slash commands with output limits (~30KB in Claude Code)
 
 ### Output Format
 
@@ -157,32 +165,53 @@ Manifest list:
 
 ## Use Cases
 
-### Single File, No Cache
+### Single File, Default Processing (Minify + JSON)
 ```bash
-/read-minified document.json --minify --to-json
+/read-minified document.json
+# Default: minify=true, toJson=true
 # Returns: minified JSON content
+# No caching
 ```
 
-### Batch Process, Cache Results
+### Minified Plaintext Only (No JSON Conversion)
 ```bash
-/read-minified doc1.json doc2.json doc3.json --minify --cache
-# Returns: NDJSON with each file
+/read-minified document.csv --no-to-json
+# Behavior: Minify but keep CSV format
+# Returns: minified CSV plaintext (not JSON)
+# Use case: Preserve original format structure
+```
+
+### Batch Process with Caching
+```bash
+/read-minified doc1.json doc2.json doc3.json --cache
+# Behavior: Minify + JSON convert + cache
+# Returns: NDJSON with each file's content
 # Writes: doc1.compact.json, doc2.compact.json, doc3.compact.json
 ```
 
-### Large Batch, No Output, Just Cache
+### Large Batch, Smart Output Limiting
 ```bash
-/read-minified doc1.json doc2.json ... doc10.json --minify --cache --no-output
-# Returns: Manifest of cached paths
+/read-minified doc1.json doc2.json ... doc10.json --cache --max-output=30000
+# Behavior: Process all files, auto-cache if output would exceed 30KB
+# Returns: Manifest of cached paths (not full content)
 # Writes: All compact files
-# (Avoids token bloat, manifest tells Claude where cached files are)
+# Use case: Slash commands with output limits
 ```
 
 ### Reprocess with Overwrite
 ```bash
-/read-minified document.json --minify --cache --overwrite
-# Returns: minified content
+/read-minified document.json --cache --overwrite
+# Behavior: Minify + JSON convert + overwrite cache
+# Returns: minified JSON content
 # Writes: document.compact.json (overwrites if exists)
+```
+
+### Preserve Formatting (No Minification)
+```bash
+/read-minified document.json --no-minify
+# Behavior: Keep original whitespace, convert to JSON
+# Returns: Non-minified JSON (larger output)
+# Use case: When structure visualization is important
 ```
 
 ## Implementation Constraints
