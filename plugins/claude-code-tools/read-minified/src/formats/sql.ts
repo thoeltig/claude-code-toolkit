@@ -84,6 +84,38 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                 if (group.cascade) output.cascade = group.cascade;
                 if (group.restrict) output.restrict = group.restrict;
                 return output;
+            } else if (group.action === 'BEGIN') {
+                return {
+                    action: 'BEGIN',
+                    statementIndex: group.startIndex
+                };
+            } else if (group.action === 'COMMIT') {
+                return {
+                    action: 'COMMIT',
+                    statementIndex: group.startIndex
+                };
+            } else if (group.action === 'ROLLBACK') {
+                const output: any = {
+                    action: 'ROLLBACK',
+                    statementIndex: group.startIndex
+                };
+                if (group.toSavepoint) output.toSavepoint = group.toSavepoint;
+                if (group.savepointName) output.savepointName = group.savepointName;
+                return output;
+            } else if (group.action === 'SAVEPOINT') {
+                const output: any = {
+                    action: 'SAVEPOINT',
+                    statementIndex: group.startIndex
+                };
+                if (group.savepointName) output.savepointName = group.savepointName;
+                return output;
+            } else if (group.action === 'RELEASE') {
+                const output: any = {
+                    action: 'RELEASE',
+                    statementIndex: group.startIndex
+                };
+                if (group.savepointName) output.savepointName = group.savepointName;
+                return output;
             }
             return null;
         }).filter((item: any) => item !== null);
@@ -95,7 +127,7 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
 }
 
 interface SqlStatement {
-    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'UNKNOWN';
+    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'UNKNOWN';
     table: string;
     raw: string;
     statementIndex: number;
@@ -135,6 +167,8 @@ interface GroupedStatement {
     ifNotExists?: boolean; // For CREATE INDEX and VIEW
     viewName?: string;    // For CREATE VIEW
     orReplace?: boolean;  // For CREATE VIEW
+    savepointName?: string;  // For SAVEPOINT, RELEASE, ROLLBACK TO
+    toSavepoint?: boolean;   // For ROLLBACK TO SAVEPOINT
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -184,12 +218,24 @@ function parseSqlStatements(content: string): SqlStatement[] {
                 // For DROP, use table if available, otherwise use objectName
                 table = parsed.table || parsed.objectName || '';
             }
+        } else if (type === 'BEGIN') {
+            parsed = parseBeginStatement(raw);
+        } else if (type === 'COMMIT') {
+            parsed = parseCommitStatement(raw);
+        } else if (type === 'ROLLBACK') {
+            parsed = parseRollbackStatement(raw);
+        } else if (type === 'SAVEPOINT') {
+            parsed = parseSavepointStatement(raw);
+        } else if (type === 'RELEASE') {
+            parsed = parseReleaseStatement(raw);
         }
 
-        if (table) {
+        // Include statement if it has a table OR if it's a transaction (no table required)
+        const isTransaction = type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE';
+        if (table || isTransaction) {
             statements.push({
                 type,
-                table,
+                table: table || type,  // Use type as fallback for transactions
                 raw,
                 statementIndex: statements.length,
                 parsed
@@ -285,7 +331,7 @@ function splitSqlStatements(content: string): string[] {
     return statements;
 }
 
-function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'UNKNOWN' {
+function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'UNKNOWN' {
     const trimmed = sql.trim().toUpperCase();
 
     if (trimmed.startsWith('CREATE TABLE')) return 'CREATE';
@@ -297,12 +343,24 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     if (trimmed.startsWith('DELETE')) return 'DELETE';
     if (trimmed.startsWith('TRUNCATE')) return 'TRUNCATE';
     if (trimmed.startsWith('DROP')) return 'DROP';
+    if (/^BEGIN/i.test(trimmed)) return 'BEGIN';
+    if (/^START\s+TRANSACTION/i.test(trimmed)) return 'BEGIN';
+    if (/^COMMIT/i.test(trimmed)) return 'COMMIT';
+    if (/^ROLLBACK\s+TO/i.test(trimmed)) return 'ROLLBACK';
+    if (/^ROLLBACK/i.test(trimmed)) return 'ROLLBACK';
+    if (/^SAVEPOINT/i.test(trimmed)) return 'SAVEPOINT';
+    if (/^RELEASE\s+SAVEPOINT/i.test(trimmed)) return 'RELEASE';
 
     return 'UNKNOWN';
 }
 
-function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'UNKNOWN'): string {
+function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'UNKNOWN'): string {
     const trimmed = sql.trim();
+
+    // Transactions don't have tables
+    if (type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE') {
+        return '';
+    }
 
     if (type === 'CREATE') {
         // CREATE TABLE
@@ -932,6 +990,7 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
         // Group consecutive statements with same table AND same action
         // For INSERT: only group if columns structure is compatible
         // For CREATE: only group CREATE TABLE statements (never group INDEX/VIEW even on same table)
+        // For transactions: never group (each transaction statement stands alone)
         let canGroup = true;
         if (action === 'INSERT') {
             canGroup = areInsertColumnsCompatible(lastGroup?.columns, stmt.parsed?.columns);
@@ -939,6 +998,9 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             // Don't group CREATE INDEX or CREATE VIEW - each should be its own statement
             // Only group CREATE TABLE statements
             canGroup = stmt.parsed?.objectType === 'TABLE' && lastGroup?.objectType === 'TABLE';
+        } else if (action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE') {
+            // Never group transaction statements
+            canGroup = false;
         }
 
         if (lastGroup && lastGroup.table === stmt.table && lastGroup.action === action && canGroup) {
@@ -1012,10 +1074,60 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 if (stmt.parsed.ifExists) group.ifExists = stmt.parsed.ifExists;
                 if (stmt.parsed.cascade) group.cascade = stmt.parsed.cascade;
                 if (stmt.parsed.restrict) group.restrict = stmt.parsed.restrict;
+            } else if ((action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE') && stmt.parsed) {
+                if (stmt.parsed.toSavepoint) group.toSavepoint = stmt.parsed.toSavepoint;
+                if (stmt.parsed.savepointName) group.savepointName = stmt.parsed.savepointName;
             }
 
             result.push(group);
         }
+    }
+
+    return result;
+}
+
+function parseBeginStatement(_sql: string): any | null {
+    return { action: 'BEGIN' };
+}
+
+function parseCommitStatement(_sql: string): any | null {
+    return { action: 'COMMIT' };
+}
+
+function parseRollbackStatement(sql: string): any | null {
+    const result: any = { action: 'ROLLBACK' };
+
+    // Check for ROLLBACK TO SAVEPOINT
+    if (/ROLLBACK\s+TO\s+SAVEPOINT/i.test(sql)) {
+        result.toSavepoint = true;
+        const match = /ROLLBACK\s+TO\s+SAVEPOINT\s+(\w+)/i.exec(sql);
+        if (match) {
+            result.savepointName = match[1];
+        }
+    }
+
+    return result;
+}
+
+function parseSavepointStatement(sql: string): any | null {
+    const result: any = { action: 'SAVEPOINT' };
+
+    // Extract savepoint name
+    const match = /SAVEPOINT\s+(\w+)/i.exec(sql);
+    if (match) {
+        result.savepointName = match[1];
+    }
+
+    return result;
+}
+
+function parseReleaseStatement(sql: string): any | null {
+    const result: any = { action: 'RELEASE' };
+
+    // Extract savepoint name from RELEASE SAVEPOINT
+    const match = /RELEASE\s+SAVEPOINT\s+(\w+)/i.exec(sql);
+    if (match) {
+        result.savepointName = match[1];
     }
 
     return result;
