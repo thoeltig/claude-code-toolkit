@@ -51,6 +51,12 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                 if (group.columns) output.columns = group.columns;
                 if (group.where) output.where = group.where;
                 return output;
+            } else if (group.action === 'TRUNCATE') {
+                return {
+                    table: group.table,
+                    action: 'TRUNCATE',
+                    statementIndex: group.startIndex
+                };
             }
             return null;
         }).filter((item: any) => item !== null);
@@ -62,7 +68,7 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
 }
 
 interface SqlStatement {
-    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'UNKNOWN';
+    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'UNKNOWN';
     table: string;
     raw: string;
     statementIndex: number;
@@ -123,6 +129,9 @@ function parseSqlStatements(content: string): SqlStatement[] {
             // Table already extracted from regex
         } else if (type === 'SELECT') {
             parsed = parseSelectStatement(raw);
+            // Table already extracted from regex
+        } else if (type === 'TRUNCATE') {
+            parsed = parseTruncateStatement(raw);
             // Table already extracted from regex
         }
 
@@ -225,7 +234,7 @@ function splitSqlStatements(content: string): string[] {
     return statements;
 }
 
-function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'UNKNOWN' {
+function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'UNKNOWN' {
     const trimmed = sql.trim().toUpperCase();
 
     if (trimmed.startsWith('CREATE TABLE')) return 'CREATE';
@@ -233,11 +242,12 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     if (trimmed.startsWith('SELECT')) return 'SELECT';
     if (trimmed.startsWith('UPDATE')) return 'UPDATE';
     if (trimmed.startsWith('DELETE')) return 'DELETE';
+    if (trimmed.startsWith('TRUNCATE')) return 'TRUNCATE';
 
     return 'UNKNOWN';
 }
 
-function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'UNKNOWN'): string {
+function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'UNKNOWN'): string {
     const trimmed = sql.trim();
 
     if (type === 'CREATE') {
@@ -255,6 +265,10 @@ function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'U
         if (match) return match[1];
     } else if (type === 'DELETE') {
         const match = /DELETE\s+FROM\s+(\w+)/i.exec(trimmed);
+        if (match) return match[1];
+    } else if (type === 'TRUNCATE') {
+        // TRUNCATE TABLE name or TRUNCATE name
+        const match = /TRUNCATE\s+(?:TABLE\s+)?(\w+)/i.exec(trimmed);
         if (match) return match[1];
     }
 
@@ -539,6 +553,18 @@ function parseSelectStatement(sql: string): { table: string; columns?: string[];
     };
 }
 
+function parseTruncateStatement(sql: string): { table: string } | null {
+    // TRUNCATE TABLE name or TRUNCATE name
+    const match = /TRUNCATE\s+(?:TABLE\s+)?(\w+)/i.exec(sql);
+    if (!match) return null;
+
+    const table = match[1];
+
+    return {
+        table
+    };
+}
+
 function parseColumns(columnsStr: string): string[] {
     return columnsStr.split(',').map(col => col.trim()).filter(col => col.length > 0);
 }
@@ -744,6 +770,8 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             } else if (action === 'SELECT' && stmt.parsed) {
                 if (!lastGroup.columns) lastGroup.columns = stmt.parsed.columns;
                 if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
+            } else if (action === 'TRUNCATE' && stmt.parsed) {
+                // TRUNCATE has no additional data to merge
             }
         } else {
             const group: GroupedStatement = {
@@ -767,6 +795,8 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             } else if (action === 'SELECT' && stmt.parsed) {
                 group.columns = stmt.parsed.columns;
                 group.where = stmt.parsed.where;
+            } else if (action === 'TRUNCATE' && stmt.parsed) {
+                // TRUNCATE has no additional data
             }
 
             result.push(group);
