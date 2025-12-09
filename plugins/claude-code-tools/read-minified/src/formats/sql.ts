@@ -139,6 +139,21 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                 if (group.cascade) output.cascade = group.cascade;
                 if (group.restrict) output.restrict = group.restrict;
                 return output;
+            } else if (group.action === 'ALTER') {
+                const output: any = {
+                    action: 'ALTER',
+                    table: group.table,
+                    statementIndex: group.startIndex
+                };
+                if (group.alterationType) output.alterationType = group.alterationType;
+                if (group.columnDefinition) output.columnDefinition = group.columnDefinition;
+                if (group.columnName) output.columnName = group.columnName;
+                if (group.newColumnName) output.newColumnName = group.newColumnName;
+                if (group.constraintName) output.constraintName = group.constraintName;
+                if (group.newName) output.newName = group.newName;
+                if (group.cascade) output.cascade = group.cascade;
+                if (group.restrict) output.restrict = group.restrict;
+                return output;
             }
             return null;
         }).filter((item: any) => item !== null);
@@ -150,7 +165,7 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
 }
 
 interface SqlStatement {
-    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'UNKNOWN';
+    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'ALTER' | 'UNKNOWN';
     table: string;
     raw: string;
     statementIndex: number;
@@ -195,6 +210,12 @@ interface GroupedStatement {
     privileges?: string[];   // For GRANT/REVOKE
     grantee?: string;        // For GRANT/REVOKE
     grantOption?: boolean;   // For GRANT
+    alterationType?: string;  // For ALTER (ADD_COLUMN, DROP_COLUMN, MODIFY_COLUMN, etc)
+    columnName?: string;      // For ALTER (column being modified/dropped/renamed)
+    columnDefinition?: any;   // For ALTER ADD/MODIFY COLUMN
+    constraintName?: string;  // For ALTER ADD/DROP CONSTRAINT
+    newName?: string;         // For ALTER RENAME TABLE
+    newColumnName?: string;   // For ALTER RENAME COLUMN
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -258,6 +279,8 @@ function parseSqlStatements(content: string): SqlStatement[] {
             parsed = parseGrantStatement(raw);
         } else if (type === 'REVOKE') {
             parsed = parseRevokeStatement(raw);
+        } else if (type === 'ALTER') {
+            parsed = parseAlterTableStatement(raw);
         }
 
         // Include statement if it has a table OR if it's a transaction/permission statement (no table required)
@@ -361,7 +384,7 @@ function splitSqlStatements(content: string): string[] {
     return statements;
 }
 
-function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'UNKNOWN' {
+function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'ALTER' | 'UNKNOWN' {
     const trimmed = sql.trim().toUpperCase();
 
     if (trimmed.startsWith('CREATE TABLE')) return 'CREATE';
@@ -373,6 +396,7 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     if (trimmed.startsWith('DELETE')) return 'DELETE';
     if (trimmed.startsWith('TRUNCATE')) return 'TRUNCATE';
     if (trimmed.startsWith('DROP')) return 'DROP';
+    if (trimmed.startsWith('ALTER')) return 'ALTER';
     if (/^BEGIN/i.test(trimmed)) return 'BEGIN';
     if (/^START\s+TRANSACTION/i.test(trimmed)) return 'BEGIN';
     if (/^COMMIT/i.test(trimmed)) return 'COMMIT';
@@ -386,11 +410,18 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     return 'UNKNOWN';
 }
 
-function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'UNKNOWN'): string {
+function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'BEGIN' | 'COMMIT' | 'ROLLBACK' | 'SAVEPOINT' | 'RELEASE' | 'GRANT' | 'REVOKE' | 'ALTER' | 'UNKNOWN'): string {
     const trimmed = sql.trim();
 
-    // Transactions and permission statements don't have tables
+    // Transactions and permission statements don't have tables (except ALTER has table)
     if (type === 'BEGIN' || type === 'COMMIT' || type === 'ROLLBACK' || type === 'SAVEPOINT' || type === 'RELEASE' || type === 'GRANT' || type === 'REVOKE') {
+        return '';
+    }
+
+    // Handle ALTER TABLE
+    if (type === 'ALTER') {
+        const match = /ALTER\s+TABLE\s+(\w+)/i.exec(trimmed);
+        if (match) return match[1];
         return '';
     }
 
@@ -1030,8 +1061,8 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             // Don't group CREATE INDEX or CREATE VIEW - each should be its own statement
             // Only group CREATE TABLE statements
             canGroup = stmt.parsed?.objectType === 'TABLE' && lastGroup?.objectType === 'TABLE';
-        } else if (action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE' || action === 'GRANT' || action === 'REVOKE') {
-            // Never group transaction/permission statements
+        } else if (action === 'BEGIN' || action === 'COMMIT' || action === 'ROLLBACK' || action === 'SAVEPOINT' || action === 'RELEASE' || action === 'GRANT' || action === 'REVOKE' || action === 'ALTER') {
+            // Never group transaction/permission/alter statements
             canGroup = false;
         }
 
@@ -1115,6 +1146,15 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 if (stmt.parsed.objectName) group.objectName = stmt.parsed.objectName;
                 if (stmt.parsed.grantee) group.grantee = stmt.parsed.grantee;
                 if (stmt.parsed.grantOption) group.grantOption = stmt.parsed.grantOption;
+                if (stmt.parsed.cascade) group.cascade = stmt.parsed.cascade;
+                if (stmt.parsed.restrict) group.restrict = stmt.parsed.restrict;
+            } else if (action === 'ALTER' && stmt.parsed) {
+                if (stmt.parsed.alterationType) group.alterationType = stmt.parsed.alterationType;
+                if (stmt.parsed.columnDefinition) group.columnDefinition = stmt.parsed.columnDefinition;
+                if (stmt.parsed.columnName) group.columnName = stmt.parsed.columnName;
+                if (stmt.parsed.newColumnName) group.newColumnName = stmt.parsed.newColumnName;
+                if (stmt.parsed.constraintName) group.constraintName = stmt.parsed.constraintName;
+                if (stmt.parsed.newName) group.newName = stmt.parsed.newName;
                 if (stmt.parsed.cascade) group.cascade = stmt.parsed.cascade;
                 if (stmt.parsed.restrict) group.restrict = stmt.parsed.restrict;
             }
@@ -1268,6 +1308,71 @@ function parseRevokeStatement(sql: string): any | null {
     }
     if (/RESTRICT/i.test(sql)) {
         result.restrict = true;
+    }
+
+    return result;
+}
+
+function parseAlterTableStatement(sql: string): any | null {
+    const result: any = { action: 'ALTER' };
+
+    // ADD COLUMN
+    if (/ADD\s+COLUMN/i.test(sql)) {
+        result.alterationType = 'ADD_COLUMN';
+        const match = /ADD\s+COLUMN\s+(\w+)\s+(\w+(?:\([^)]+\))?)/i.exec(sql);
+        if (match) {
+            result.columnDefinition = { name: match[1], type: match[2] };
+        }
+    }
+    // MODIFY COLUMN (MySQL) or ALTER COLUMN (PostgreSQL)
+    else if (/MODIFY\s+COLUMN/i.test(sql)) {
+        result.alterationType = 'MODIFY_COLUMN';
+        const match = /MODIFY\s+COLUMN\s+(\w+)/i.exec(sql);
+        if (match) result.columnName = match[1];
+    }
+    else if (/ALTER\s+COLUMN/i.test(sql)) {
+        result.alterationType = 'MODIFY_COLUMN';
+        const match = /ALTER\s+COLUMN\s+(\w+)/i.exec(sql);
+        if (match) result.columnName = match[1];
+    }
+    // DROP COLUMN
+    else if (/DROP\s+COLUMN/i.test(sql)) {
+        result.alterationType = 'DROP_COLUMN';
+        const match = /DROP\s+COLUMN\s+(\w+)/i.exec(sql);
+        if (match) result.columnName = match[1];
+        if (/CASCADE/i.test(sql)) result.cascade = true;
+        if (/RESTRICT/i.test(sql)) result.restrict = true;
+    }
+    // ADD CONSTRAINT
+    else if (/ADD\s+CONSTRAINT/i.test(sql)) {
+        result.alterationType = 'ADD_CONSTRAINT';
+        const match = /ADD\s+CONSTRAINT\s+(\w+)/i.exec(sql);
+        if (match) result.constraintName = match[1];
+    }
+    // DROP CONSTRAINT
+    else if (/DROP\s+CONSTRAINT/i.test(sql)) {
+        result.alterationType = 'DROP_CONSTRAINT';
+        const match = /DROP\s+CONSTRAINT\s+(\w+)/i.exec(sql);
+        if (match) result.constraintName = match[1];
+        if (/CASCADE/i.test(sql)) result.cascade = true;
+        if (/RESTRICT/i.test(sql)) result.restrict = true;
+    }
+    // RENAME COLUMN (check before RENAME TABLE since it's more specific)
+    else if (/RENAME\s+(?:COLUMN\s+)?(\w+)\s+TO/i.test(sql) && !/RENAME\s+TABLE/i.test(sql)) {
+        result.alterationType = 'RENAME_COLUMN';
+        const match = /RENAME\s+(?:COLUMN\s+)?(\w+)\s+TO\s+(\w+)/i.exec(sql);
+        if (match) {
+            result.columnName = match[1];
+            result.newColumnName = match[2];
+        }
+    }
+    // RENAME TABLE
+    else if (/RENAME/i.test(sql) && /TO\s+\w+/i.test(sql)) {
+        result.alterationType = 'RENAME_TABLE';
+        const renameMatch = /TO\s+(\w+)/i.exec(sql);
+        if (renameMatch) {
+            result.newName = renameMatch[1];
+        }
     }
 
     return result;
