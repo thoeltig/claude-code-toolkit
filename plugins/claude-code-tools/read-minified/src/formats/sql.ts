@@ -65,6 +65,7 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                 };
                 if (group.columns) output.columns = group.columns;
                 if (group.where) output.where = group.where;
+                if (group.unparsedContent) output.unparsedContent = group.unparsedContent;
                 return output;
             } else if (group.action === 'TRUNCATE') {
                 return {
@@ -216,6 +217,7 @@ interface GroupedStatement {
     constraintName?: string;  // For ALTER ADD/DROP CONSTRAINT
     newName?: string;         // For ALTER RENAME TABLE
     newColumnName?: string;   // For ALTER RENAME COLUMN
+    unparsedContent?: string; // Fallback: remainder of statement we couldn't parse (zero information loss)
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -391,6 +393,7 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     if (/^CREATE\s+(?:UNIQUE\s+)?INDEX/i.test(trimmed)) return 'CREATE';
     if (/^CREATE\s+(?:OR\s+REPLACE\s+)?VIEW/i.test(trimmed)) return 'CREATE';
     if (trimmed.startsWith('INSERT INTO')) return 'INSERT';
+    if (trimmed.startsWith('WITH')) return 'SELECT';  // CTE (Common Table Expression) - treat as SELECT
     if (trimmed.startsWith('SELECT')) return 'SELECT';
     if (trimmed.startsWith('UPDATE')) return 'UPDATE';
     if (trimmed.startsWith('DELETE')) return 'DELETE';
@@ -440,7 +443,16 @@ function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'U
         const match = /INSERT\s+INTO\s+(\w+)/i.exec(trimmed);
         if (match) return match[1];
     } else if (type === 'SELECT') {
-        // Extract table from SELECT ... FROM table_name
+        // Handle CTE: WITH cte_name AS (...) SELECT ... FROM table
+        if (trimmed.startsWith('WITH')) {
+            // Extract the CTE name or the main table from the inner SELECT
+            const match = /FROM\s+(\w+)/i.exec(trimmed);
+            if (match) return match[1];
+            // If no FROM found, use CTE name
+            const cteMatch = /WITH\s+(\w+)/i.exec(trimmed);
+            if (cteMatch) return cteMatch[1];
+        }
+        // Regular SELECT: Extract table from SELECT ... FROM table_name
         const match = /FROM\s+(\w+)/i.exec(trimmed);
         if (match) return match[1];
     } else if (type === 'UPDATE') {
@@ -709,7 +721,20 @@ function parseDeleteStatement(sql: string): { table: string; where?: string } | 
     return null;
 }
 
-function parseSelectStatement(sql: string): { table: string; columns?: string[]; where?: string } | null {
+function parseSelectStatement(sql: string): { table: string; columns?: string[]; where?: string; unparsedContent?: string } | null {
+    // Special handling for CTEs (WITH clauses) - store entire thing as unparsed
+    if (/^WITH\s+/i.test(sql.trim())) {
+        // Find the main SELECT's table
+        const mainSelectMatch = /SELECT.*?\s+FROM\s+(\w+)/i.exec(sql);
+        const table = mainSelectMatch ? mainSelectMatch[1] : 'CTE';
+
+        // For CTEs, the entire content is unparsed (too complex to parse now)
+        return {
+            table,
+            unparsedContent: sql
+        };
+    }
+
     // Extract table name from FROM clause
     const fromMatch = /FROM\s+(\w+)/i.exec(sql);
     if (!fromMatch) return null;
@@ -736,10 +761,37 @@ function parseSelectStatement(sql: string): { table: string; columns?: string[];
         where = whereMatch[1].trim();
     }
 
+    // Detect unparsed content: JOINs, subqueries, GROUP BY, HAVING, UNION, etc.
+    let unparsedContent: string | undefined;
+    const hasJoin = /\bJOIN\b/i.test(sql);
+    const hasUnion = /\bUNION\b/i.test(sql);
+    const hasGroupBy = /\bGROUP\s+BY\b/i.test(sql);
+    const hasHaving = /\bHAVING\b/i.test(sql);
+    const hasInSubquery = /\bIN\s*\(\s*SELECT/i.test(sql);
+
+    if (hasJoin || hasUnion || hasGroupBy || hasHaving || hasInSubquery) {
+        // Extract everything after "FROM tablename"
+        // Use the fromMatch we already have and find what comes after it
+        // fromMatch gives us "FROM tablename", and we need everything after that
+        const fromPos = (fromMatch.index || 0) + fromMatch[0].length;
+        let afterFrom = sql.substring(fromPos).trim();
+
+        // Handle table aliases: if the next word looks like an alias (2-3 chars or single letter),  skip it
+        const aliasMatch = /^([a-z]\w?)\s+/i.exec(afterFrom);
+        if (aliasMatch) {
+            afterFrom = afterFrom.substring(aliasMatch[0].length).trim();
+        }
+
+        if (afterFrom.length > 0) {
+            unparsedContent = afterFrom;
+        }
+    }
+
     return {
         table,
         ...(columns.length > 0 && { columns }),
-        ...(where && { where })
+        ...(where && { where }),
+        ...(unparsedContent && { unparsedContent })
     };
 }
 
@@ -1082,6 +1134,7 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             } else if (action === 'SELECT' && stmt.parsed) {
                 if (!lastGroup.columns) lastGroup.columns = stmt.parsed.columns;
                 if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
+                if (!lastGroup.unparsedContent) lastGroup.unparsedContent = stmt.parsed.unparsedContent;
             } else if (action === 'TRUNCATE' && stmt.parsed) {
                 // TRUNCATE has no additional data to merge
             } else if (action === 'DROP' && stmt.parsed) {
@@ -1129,6 +1182,7 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
             } else if (action === 'SELECT' && stmt.parsed) {
                 group.columns = stmt.parsed.columns;
                 group.where = stmt.parsed.where;
+                if (stmt.parsed.unparsedContent) group.unparsedContent = stmt.parsed.unparsedContent;
             } else if (action === 'TRUNCATE' && stmt.parsed) {
                 // TRUNCATE has no additional data
             } else if (action === 'DROP' && stmt.parsed) {
