@@ -1,6 +1,6 @@
 # TDD Implementation Progress - v0.6.1.0
 
-**Status**: In Progress (Green Phase)
+**Status**: In Progress (Green Phase - Major Blocker Fixed!)
 **Date**: 2025-12-09
 **Branch**: feature/ReadMinified_SlashCommand
 
@@ -11,49 +11,63 @@
 - ✅ `tests/formats/sql.mixed-statements.test.ts` (19 tests)
 - ✅ `tests/formats/sql.test.ts` (31 tests updated)
 
-**Total Tests**: 76
+**Total Tests**: 531
 
-## Current Results (Red → Green Phase)
+## Current Results - Session 2 (Major Progress!)
+
+**Overall**: 523/531 passing (98.5% pass rate!) ✅✅✅
+- **Before session**: 491 passing, 40 failing
+- **After session**: 523 passing, 8 failing
+- **Improvement**: 80% reduction in failures
 
 ### INSERT Tests (sql.test.ts)
 **Status**: 30/31 passing ✅
 - ✅ Basic parsing, data types, strings, columns, case insensitivity, edge cases, real-world examples
-- ❌ 1 edge case: Escaped quotes with mixed quote types (minor issue)
+- ❌ 1 failure: Escaped quotes with double single-quote escape (`''`) - only parses 1 row instead of 2
 
 ### CREATE TABLE Tests (sql.create-table.test.ts)
-**Status**: 1/26 passing 🔴
-- ✅ Minified JSON output format working
-- ❌ 25 failures: CREATE TABLE parsing not yet detecting/parsing correctly
-- **Root Cause**: Statement type detection for CREATE TABLE statements needs debugging
+**Status**: 25/26 passing ✅✅
+- ✅ Single/multiple table parsing
+- ✅ Column count and types (including parameterized: `DECIMAL(10,2)`, `VARCHAR(255)`)
+- ✅ Case insensitivity
+- ✅ Multiline with whitespace
+- ✅ Column constraints (PRIMARY KEY, NOT NULL, UNIQUE)
+- ❌ 1 failure: Composite table constraints with commas - regex needs adjustment
 
 ### Mixed Statement Tests (sql.mixed-statements.test.ts)
-**Status**: 8/19 passing 🟡
-- ✅ Execution order grouping working for INSERT statements
+**Status**: 17/19 passing 🟢
+- ✅ Execution order grouping working for INSERT and CREATE statements
 - ✅ Error handling (empty SQL, comments)
-- ✅ Output format integrity for INSERT
-- ❌ 11 failures: All related to CREATE TABLE parsing (cascading from above)
+- ✅ Output format integrity
+- ✅ Complex e-commerce dumps
+- ✅ High-volume insert batching
+- ❌ 2 failures: SELECT statements not creating separate nodes (expected - SELECT not yet supported)
 
 ## Architecture Status
 
-### Implemented ✅
-- `parseSqlStatements()` - Splits and detects statement types
-- `detectStatementType()` - Identifies CREATE/INSERT/SELECT/UPDATE/DELETE
-- `groupByTableAndAction()` - Groups consecutive same table+action statements
-- `removeComments()` - Strips line/block comments
-- `parseInsertStatement()` - Fully working
-- `parseCreateTableStatement()` - Implemented but not detecting statements
+### Fixed This Session ✅✅
+- **CREATE TABLE Detection** - Fixed bug where `parseCreateTableStatement()` result was overwriting extracted table name
+- **Parameterized Types** - Implemented `smartSplit()` to handle nested parentheses in types like `DECIMAL(10,2)`
+- **Column Definition Parsing** - Rewrote `parseColumnDefinition()` to properly handle types with parameters and constraints
+- **SQL Escape Handling** - Updated `parseValueRows()` to recognize `''` and `""` as SQL escape sequences
+- **Smart Comma Splitting** - Column definitions now split correctly respecting parentheses depth
 
 ### Working Features ✅
+- CREATE TABLE and INSERT statement detection
 - Execution order preservation (statementIndex)
-- Consecutive INSERT grouping on same table
+- Consecutive same-action grouping on same table
 - Comment removal in SQL
-- NULL handling, type detection, quoted strings
+- Parameterized column types (VARCHAR(255), DECIMAL(10,2), etc.)
+- Column-level constraints (PRIMARY KEY, NOT NULL, UNIQUE, DEFAULT)
 - Minified/pretty JSON output
+- Case insensitive statement detection
+- Row parsing with proper quote handling
 
-### Blockers 🔴
-- CREATE TABLE statements not being recognized by regex
-- Column constraint parsing (PRIMARY KEY, NOT NULL, etc.)
-- Table-level constraint extraction
+### Remaining Blockers 🔴
+- Multiple row INSERT with SQL-escaped quotes (`''`) - parseValueRows returns 1 instead of 2 rows
+- Composite table-level constraints with commas - needs special handling
+- SELECT/UPDATE/DELETE parsing - not yet implemented (only INSERT/CREATE supported)
+- ALTER statements - not supported
 
 ## Implementation Quality
 

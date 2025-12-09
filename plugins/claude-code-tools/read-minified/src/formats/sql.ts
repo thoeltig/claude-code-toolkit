@@ -82,9 +82,7 @@ function parseSqlStatements(content: string): SqlStatement[] {
             }
         } else if (type === 'CREATE') {
             parsed = parseCreateTableStatement(raw);
-            if (parsed) {
-                table = parsed.table;
-            }
+            // Don't override table - we already have it from extractTableName
         }
 
         if (table) {
@@ -222,7 +220,7 @@ function parseCreateTableStatement(sql: string): CreateTableData | null {
         }
 
         const content = sql.substring(parenStart + 1, parenEnd);
-        const lines = content.split(',').map(line => line.trim());
+        const lines = smartSplit(content);
 
         const columns: ColumnDefinition[] = [];
         const tableConstraints: string[] = [];
@@ -252,65 +250,95 @@ function parseCreateTableStatement(sql: string): CreateTableData | null {
     }
 }
 
-function parseColumnDefinition(def: string): ColumnDefinition | null {
-    const parts = def.trim().split(/\s+/);
-    if (parts.length < 2) return null;
+function smartSplit(content: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let depth = 0;
 
-    const name = parts[0];
+    for (let i = 0; i < content.length; i++) {
+        const char = content[i];
+
+        if (char === '(') {
+            depth++;
+            current += char;
+        } else if (char === ')') {
+            depth--;
+            current += char;
+        } else if (char === ',' && depth === 0) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    if (current.trim().length > 0) {
+        result.push(current.trim());
+    }
+
+    return result;
+}
+
+function parseColumnDefinition(def: string): ColumnDefinition | null {
+    const trimmed = def.trim();
+    if (!trimmed) return null;
+
+    // Extract name (first word)
+    const nameMatch = trimmed.match(/^(\w+)\s+/);
+    if (!nameMatch) return null;
+
+    const name = nameMatch[1];
+    let rest = trimmed.substring(nameMatch[0].length).trim();
+
+    // Extract type (can include parentheses like VARCHAR(255) or DECIMAL(10,2))
     let type = '';
+    let i = 0;
+    let parenDepth = 0;
+
+    while (i < rest.length) {
+        const char = rest[i];
+        if (char === '(') {
+            parenDepth++;
+        } else if (char === ')') {
+            parenDepth--;
+        } else if (char === ' ' && parenDepth === 0) {
+            break;
+        }
+        type += char;
+        i++;
+    }
+
+    if (!type) return null;
+
+    rest = rest.substring(i).trim();
+
+    // Parse constraints
     const constraints: string[] = [];
     let defaultValue: string | undefined;
 
-    let i = 1;
+    while (rest.length > 0) {
+        const upper = rest.toUpperCase();
 
-    while (i < parts.length) {
-        const token = parts[i].toUpperCase();
-
-        if (token === 'PRIMARY' && i + 1 < parts.length && parts[i + 1].toUpperCase() === 'KEY') {
+        if (upper.startsWith('PRIMARY KEY')) {
             constraints.push('PRIMARY KEY');
-            i += 2;
-        } else if (token === 'NOT' && i + 1 < parts.length && parts[i + 1].toUpperCase() === 'NULL') {
+            rest = rest.substring(11).trim();
+        } else if (upper.startsWith('NOT NULL')) {
             constraints.push('NOT NULL');
-            i += 2;
-        } else if (token === 'UNIQUE') {
+            rest = rest.substring(8).trim();
+        } else if (upper.startsWith('UNIQUE')) {
             constraints.push('UNIQUE');
-            i += 1;
-        } else if (token === 'DEFAULT') {
-            if (i + 1 < parts.length) {
-                const defVal = parts.slice(i + 1).join(' ');
-                const match = defVal.match(/^'([^']*)'|^(\w+)|^(\d+\.?\d*)/);
-                if (match) {
-                    defaultValue = match[0];
-                    i = parts.length;
-                } else {
-                    i += 2;
-                }
+            rest = rest.substring(6).trim();
+        } else if (upper.startsWith('DEFAULT')) {
+            rest = rest.substring(7).trim();
+            const defMatch = rest.match(/^'([^']*)'|^(\w+)|^(\d+\.?\d*)/);
+            if (defMatch) {
+                defaultValue = defMatch[0];
+                rest = rest.substring(defMatch[0].length).trim();
             } else {
-                i += 1;
-            }
-        } else if (type.length === 0) {
-            if (i + 1 < parts.length && parts[i + 1] === '(') {
-                const typeStart = parts[i];
-                let j = i + 2;
-                let typeEnd = '';
-                while (j < parts.length && !parts[j].includes(')')) {
-                    typeEnd += parts[j] + ' ';
-                    j++;
-                }
-                if (j < parts.length) {
-                    typeEnd += parts[j];
-                    type = typeStart + '(' + typeEnd;
-                    i = j + 1;
-                } else {
-                    type = parts[i];
-                    i += 1;
-                }
-            } else {
-                type = parts[i];
-                i += 1;
+                break;
             }
         } else {
-            i += 1;
+            break;
         }
     }
 
@@ -371,15 +399,29 @@ function parseValueRows(valuesStr: string): string[] {
     let current = '';
     let depth = 0;
     let inQuotes = false;
+    let quoteChar = '';
 
     for (let i = 0; i < valuesStr.length; i++) {
         const char = valuesStr[i];
+        const nextChar = i + 1 < valuesStr.length ? valuesStr[i + 1] : '';
 
-        if (char === '\'' || char === '"') {
-            if (i > 0 && valuesStr[i - 1] === '\\') {
+        if ((char === '\'' || char === '"') && !(i > 0 && valuesStr[i - 1] === '\\')) {
+            if (!inQuotes) {
+                inQuotes = true;
+                quoteChar = char;
                 current += char;
+            } else if (char === quoteChar) {
+                if (nextChar === quoteChar) {
+                    // SQL escape: '' or "" represents literal quote
+                    current += char + quoteChar;
+                    i++;
+                } else {
+                    // End of quoted string
+                    inQuotes = false;
+                    quoteChar = '';
+                    current += char;
+                }
             } else {
-                inQuotes = !inQuotes;
                 current += char;
             }
         } else if (char === '(' && !inQuotes) {
