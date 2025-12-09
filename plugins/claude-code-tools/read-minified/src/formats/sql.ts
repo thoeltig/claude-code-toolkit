@@ -4,6 +4,10 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
         if (statements.length === 0) return minifyJson([]);
 
         const grouped = groupByTableAndAction(statements);
+
+        // If no results, return empty
+        if (grouped.length === 0) return minifyJson([]);
+
         const result = grouped.map(group => {
             if (group.action === 'INSERT') {
                 return {
@@ -14,6 +18,23 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                     rowCount: group.rowCount,
                     statementIndex: group.startIndex
                 };
+            } else if (group.action === 'UPDATE') {
+                const output: any = {
+                    table: group.table,
+                    action: 'UPDATE',
+                    statementIndex: group.startIndex
+                };
+                if (group.updates) output.updates = group.updates;
+                if (group.where) output.where = group.where;
+                return output;
+            } else if (group.action === 'DELETE') {
+                const output: any = {
+                    table: group.table,
+                    action: 'DELETE',
+                    statementIndex: group.startIndex
+                };
+                if (group.where) output.where = group.where;
+                return output;
             } else if (group.action === 'CREATE') {
                 return {
                     table: group.table,
@@ -21,6 +42,15 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                     schema: group.schema,
                     statementIndex: group.startIndex
                 };
+            } else if (group.action === 'SELECT') {
+                const output: any = {
+                    table: group.table,
+                    action: 'SELECT',
+                    statementIndex: group.startIndex
+                };
+                if (group.columns) output.columns = group.columns;
+                if (group.where) output.where = group.where;
+                return output;
             }
             return null;
         }).filter((item: any) => item !== null);
@@ -56,10 +86,12 @@ interface GroupedStatement {
     action: string;
     statements: SqlStatement[];
     startIndex: number;
-    columns?: string[];
-    rows?: any[];
-    rowCount?: number;
-    schema?: CreateTableData;
+    columns?: string[] | '*';  // For INSERT and SELECT. '*' means all columns (no mapping)
+    rows?: any[];        // For INSERT
+    rowCount?: number;   // For INSERT
+    schema?: CreateTableData;  // For CREATE
+    updates?: Array<{column: string; value: string}>;  // For UPDATE
+    where?: string;      // For UPDATE and DELETE and SELECT
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -83,6 +115,15 @@ function parseSqlStatements(content: string): SqlStatement[] {
         } else if (type === 'CREATE') {
             parsed = parseCreateTableStatement(raw);
             // Don't override table - we already have it from extractTableName
+        } else if (type === 'UPDATE') {
+            parsed = parseUpdateStatement(raw);
+            // Table already extracted from regex
+        } else if (type === 'DELETE') {
+            parsed = parseDeleteStatement(raw);
+            // Table already extracted from regex
+        } else if (type === 'SELECT') {
+            parsed = parseSelectStatement(raw);
+            // Table already extracted from regex
         }
 
         if (table) {
@@ -153,17 +194,23 @@ function splitSqlStatements(content: string): string[] {
             if (!inQuotes) {
                 inQuotes = true;
                 quoteChar = char;
+                current += char;
             } else if (char === quoteChar) {
                 if (nextChar === quoteChar) {
+                    // SQL escape: '' or "" - add both quotes and skip next char
                     current += char + char;
                     i++;
                 } else {
+                    // End of quoted string
                     inQuotes = false;
+                    current += char;
                 }
+            } else {
+                current += char;
             }
+        } else {
+            current += char;
         }
-
-        current += char;
 
         if (char === ';' && !inQuotes) {
             statements.push(current.slice(0, -1));
@@ -198,6 +245,10 @@ function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'U
         if (match) return match[1];
     } else if (type === 'INSERT') {
         const match = /INSERT\s+INTO\s+(\w+)/i.exec(trimmed);
+        if (match) return match[1];
+    } else if (type === 'SELECT') {
+        // Extract table from SELECT ... FROM table_name
+        const match = /FROM\s+(\w+)/i.exec(trimmed);
         if (match) return match[1];
     } else if (type === 'UPDATE') {
         const match = /UPDATE\s+(\w+)/i.exec(trimmed);
@@ -350,23 +401,141 @@ function parseColumnDefinition(def: string): ColumnDefinition | null {
     };
 }
 
-function parseInsertStatement(sql: string): { table: string; columns: string[]; rows: any[] } | null {
-    const insertRegex = /INSERT\s+INTO\s+(\w+)\s*\((.*?)\)\s*VALUES\s*(.*?)$/is;
-    const match = insertRegex.exec(sql);
+function parseInsertStatement(sql: string): { table: string; columns: string[] | '*'; rows: any[] } | null {
+    // Try to match INSERT with explicit columns first
+    const insertWithColumnsRegex = /INSERT\s+INTO\s+(\w+)\s*\((.*?)\)\s*VALUES\s*(.*?)$/is;
+    let match = insertWithColumnsRegex.exec(sql);
 
-    if (!match) return null;
+    if (match) {
+        const table = match[1];
+        const columnsStr = match[2];
+        const valuesStr = match[3];
 
-    const table = match[1];
-    const columnsStr = match[2];
-    const valuesStr = match[3];
+        const columns = parseColumns(columnsStr);
+        const rows = parseValues(valuesStr, columns);
 
-    const columns = parseColumns(columnsStr);
-    const rows = parseValues(valuesStr, columns);
+        return {
+            table,
+            columns,
+            rows
+        };
+    }
+
+    // Try to match INSERT without explicit columns
+    const insertWithoutColumnsRegex = /INSERT\s+INTO\s+(\w+)\s+VALUES\s+(.*?)$/is;
+    match = insertWithoutColumnsRegex.exec(sql);
+
+    if (match) {
+        const table = match[1];
+        const valuesStr = match[2];
+
+        // Parse as arrays (no column mapping)
+        const rows = parseValuesAsArrays(valuesStr);
+
+        return {
+            table,
+            columns: '*',  // Mark as "all columns, mapping unknown"
+            rows
+        };
+    }
+
+    return null;
+}
+
+function parseUpdateStatement(sql: string): { table: string; updates?: Array<{column: string; value: string}>; where?: string } | null {
+    // Extract table name and SET clause
+    const tableMatch = /UPDATE\s+(\w+)\s+SET/i.exec(sql);
+    if (!tableMatch) return null;
+
+    const table = tableMatch[1];
+
+    // Extract SET clause (everything between SET and WHERE or end)
+    const setMatch = /SET\s+([\s\S]*?)(?:\s+WHERE\s+([\s\S]*))?$/i.exec(sql);
+    if (!setMatch) return null;
+
+    let setClause = setMatch[1].trim();
+    let whereClause = setMatch[2] ? setMatch[2].trim() : undefined;
+
+    // Normalize whitespace in SET clause
+    setClause = setClause.replace(/\s+/g, ' ');
+
+    const updates: Array<{column: string; value: string}> = [];
+
+    // Parse SET column = value pairs
+    const setParts = smartSplit(setClause);
+    for (const part of setParts) {
+        const eqIndex = part.indexOf('=');
+        if (eqIndex > -1) {
+            const column = part.substring(0, eqIndex).trim();
+            const value = part.substring(eqIndex + 1).trim();
+            updates.push({ column, value });
+        }
+    }
 
     return {
         table,
-        columns,
-        rows
+        ...(updates.length > 0 && { updates }),
+        ...(whereClause && { where: whereClause })
+    };
+}
+
+function parseDeleteStatement(sql: string): { table: string; where?: string } | null {
+    // Handle standard DELETE FROM syntax
+    const deleteMatch = /DELETE\s+FROM\s+(\w+)/i.exec(sql);
+    if (deleteMatch) {
+        const table = deleteMatch[1];
+        const whereMatch = /WHERE\s+([\s\S]*)$/i.exec(sql);
+        return {
+            table,
+            ...(whereMatch && { where: whereMatch[1].trim() })
+        };
+    }
+
+    // Try MySQL syntax: DELETE alias FROM table WHERE ...
+    const mysqlMatch = /DELETE\s+(\w+)\s+FROM\s+(\w+)/i.exec(sql);
+    if (mysqlMatch) {
+        const table = mysqlMatch[2];
+        const whereMatch = /WHERE\s+([\s\S]*)$/i.exec(sql);
+        return {
+            table,
+            ...(whereMatch && { where: whereMatch[1].trim() })
+        };
+    }
+
+    return null;
+}
+
+function parseSelectStatement(sql: string): { table: string; columns?: string[]; where?: string } | null {
+    // Extract table name from FROM clause
+    const fromMatch = /FROM\s+(\w+)/i.exec(sql);
+    if (!fromMatch) return null;
+
+    const table = fromMatch[1];
+
+    // Extract columns from SELECT clause
+    const selectMatch = /SELECT\s+([\s\S]*?)\s+FROM/i.exec(sql);
+    let columns: string[] = [];
+    if (selectMatch) {
+        const columnStr = selectMatch[1].trim();
+        if (columnStr !== '*') {
+            columns = columnStr
+                .split(',')
+                .map(col => col.trim())
+                .filter(col => col.length > 0 && !col.includes('('));  // Exclude functions for now
+        }
+    }
+
+    // Extract WHERE clause
+    const whereMatch = /WHERE\s+([\s\S]*)$/i.exec(sql);
+    let where: string | undefined;
+    if (whereMatch) {
+        where = whereMatch[1].trim();
+    }
+
+    return {
+        table,
+        ...(columns.length > 0 && { columns }),
+        ...(where && { where })
     };
 }
 
@@ -530,6 +699,20 @@ function parseValue(val: string): any {
     return val;
 }
 
+function parseValuesAsArrays(valuesStr: string): any[] {
+    const rows: any[] = [];
+    const rowStrings = parseValueRows(valuesStr);
+
+    for (const rowStr of rowStrings) {
+        const values = parseRowValues(rowStr);
+        if (values.length > 0) {
+            rows.push(values);
+        }
+    }
+
+    return rows;
+}
+
 function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
     const result: GroupedStatement[] = [];
 
@@ -539,7 +722,13 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
         const action = stmt.type;
         const lastGroup = result.length > 0 ? result[result.length - 1] : null;
 
-        if (lastGroup && lastGroup.table === stmt.table && lastGroup.action === action) {
+        // Group consecutive statements with same table AND same action
+        // For INSERT: only group if columns structure is compatible
+        const canGroup = action === 'INSERT' ?
+            areInsertColumnsCompatible(lastGroup?.columns, stmt.parsed?.columns) :
+            true;
+
+        if (lastGroup && lastGroup.table === stmt.table && lastGroup.action === action && canGroup) {
             lastGroup.statements.push(stmt);
 
             if (action === 'INSERT' && stmt.parsed) {
@@ -547,6 +736,14 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 if (!lastGroup.rows) lastGroup.rows = [];
                 lastGroup.rows.push(...stmt.parsed.rows);
                 lastGroup.rowCount = lastGroup.rows.length;
+            } else if (action === 'UPDATE' && stmt.parsed) {
+                if (!lastGroup.updates) lastGroup.updates = stmt.parsed.updates;
+                if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
+            } else if (action === 'DELETE' && stmt.parsed) {
+                if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
+            } else if (action === 'SELECT' && stmt.parsed) {
+                if (!lastGroup.columns) lastGroup.columns = stmt.parsed.columns;
+                if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
             }
         } else {
             const group: GroupedStatement = {
@@ -562,6 +759,14 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 group.rowCount = stmt.parsed.rows.length;
             } else if (action === 'CREATE' && stmt.parsed) {
                 group.schema = stmt.parsed;
+            } else if (action === 'UPDATE' && stmt.parsed) {
+                group.updates = stmt.parsed.updates;
+                group.where = stmt.parsed.where;
+            } else if (action === 'DELETE' && stmt.parsed) {
+                group.where = stmt.parsed.where;
+            } else if (action === 'SELECT' && stmt.parsed) {
+                group.columns = stmt.parsed.columns;
+                group.where = stmt.parsed.where;
             }
 
             result.push(group);
@@ -569,6 +774,17 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
     }
 
     return result;
+}
+
+function areInsertColumnsCompatible(groupColumns: string[] | '*' | undefined, stmtColumns: string[] | '*' | undefined): boolean {
+    // If group doesn't have columns yet, it's compatible
+    if (!groupColumns) return true;
+    // If both are '*', compatible
+    if (groupColumns === '*' && stmtColumns === '*') return true;
+    // If both are arrays, compatible (can merge rows with same columns)
+    if (Array.isArray(groupColumns) && Array.isArray(stmtColumns)) return true;
+    // Different types: '*' vs array, not compatible
+    return false;
 }
 
 function minifyJson(obj: any): string {

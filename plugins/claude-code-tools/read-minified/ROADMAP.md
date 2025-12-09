@@ -1,401 +1,259 @@
-# SQL Parser Roadmap - v0.6.1.0 to v0.7.0
+# SQL Parser - Roadmap & Next Steps
 
-## Vision
-Complete CRUD statement support (SELECT, UPDATE, DELETE) following the same architecture as INSERT/CREATE, then fix edge cases for 100% test coverage.
+## Current Status
+- ✅ **Session 2 Complete**: INSERT, CREATE, UPDATE, DELETE, SELECT parsing implemented
+- ✅ **Test Coverage**: 87/87 tests passing (100%)
+- ✅ **Examples**: Simple and complex examples created
+- ✅ **Documentation**: Usage guide and output examples documented
 
-## Current Status (End of Session 2)
-- **Tests**: 523/531 passing (98.5%)
-- **Statements**: INSERT ✅, CREATE TABLE ✅
-- **Architecture**: Solid, extensible
-- **Code**: ~525 lines, well-structured
+## Session 3: Enhanced Parsing & Documentation
 
----
+### Phase 1: Update & Delete Conditions (Priority 1)
 
-# SESSION 3: Parser Completeness (CRUD Coverage)
+**Problem**: Currently UPDATE and DELETE nodes don't include WHERE clause conditions, making it unclear what data was affected.
 
-## Goal
-Add SELECT, UPDATE, DELETE parsing with full test coverage and grouping logic.
+**Solution**: Parse and include condition information in UPDATE/DELETE nodes.
 
-## Phase 1: Architecture Setup (1-2 hours)
+#### UPDATE Node - Enhanced
 
-### 1.1 Define Output Data Structures
-**File**: `src/formats/sql.ts` - Add TypeScript interfaces
-
-```typescript
-// SELECT output (simpler - just metadata, no data parsing)
-interface SelectData {
-  tables: string[];      // FROM clauses
-  columns: string[];     // SELECT list
-  conditions?: string;   // WHERE clause (as-is)
-}
-
-// UPDATE output
-interface UpdateData {
-  columns: string[];     // SET clause columns
-  values: any[];         // SET clause values
-  conditions?: string;   // WHERE clause (as-is)
-}
-
-// DELETE output (minimal)
-interface DeleteData {
-  conditions?: string;   // WHERE clause (as-is)
+Current:
+```json
+{
+  "table": "users",
+  "action": "UPDATE",
+  "statementIndex": 3
 }
 ```
 
-### 1.2 Add Output Object Types to GroupedStatement
-Extend interface to support SELECT/UPDATE/DELETE parsed data:
-```typescript
-interface GroupedStatement {
-  // ... existing fields ...
-  selectData?: SelectData;
-  updateData?: UpdateData;
-  deleteData?: DeleteData;
+Target:
+```json
+{
+  "table": "users",
+  "action": "UPDATE",
+  "condition": {
+    "raw": "id = 1",
+    "parsed": {
+      "column": "id",
+      "operator": "=",
+      "value": 1
+    }
+  },
+  "statementIndex": 3
 }
 ```
 
-### 1.3 Update formatSql Output Logic
-Add handling in `formatSql()` for new statement types:
-- SELECT: output `{ table, action: 'SELECT', selectData, statementIndex }`
-- UPDATE: output `{ table, action: 'UPDATE', updateData, statementIndex }`
-- DELETE: output `{ table, action: 'DELETE', deleteData, statementIndex }`
+#### DELETE Node - Enhanced
 
----
-
-## Phase 2: SELECT Implementation (2-3 hours)
-
-### 2.1 Implement parseSelectStatement()
-
-**Complexity**: Medium (table/column extraction)
-
-```typescript
-function parseSelectStatement(sql: string): SelectData | null {
-  // Extract SELECT columns: everything between SELECT and FROM
-  // Extract FROM table(s): table name after FROM
-  // Extract WHERE conditions: everything after WHERE (keep as-is)
-  // Handle JOINs: store all table names
-  // Handle subqueries: optional, parse recursively or skip
+Current:
+```json
+{
+  "table": "products",
+  "action": "DELETE",
+  "statementIndex": 10
 }
 ```
 
-**Test cases to write** (`tests/formats/sql.select.test.ts`):
-1. Basic: `SELECT * FROM users`
-2. Specific columns: `SELECT id, name FROM users`
-3. With WHERE: `SELECT * FROM users WHERE id > 5`
-4. Multiple tables/JOIN: `SELECT * FROM users JOIN orders ON ...`
-5. Aggregate: `SELECT COUNT(*) FROM users`
-6. DISTINCT, ORDER BY, GROUP BY
-7. Nested SELECT (subqueries)
-8. Case insensitivity
-
-### 2.2 Test Execution
-Run tests, debug, iterate until all SELECT tests pass.
-
----
-
-## Phase 3: UPDATE Implementation (1.5-2 hours)
-
-### 3.1 Implement parseUpdateStatement()
-
-**Complexity**: Medium (SET clause parsing)
-
-```typescript
-function parseUpdateStatement(sql: string): UpdateData | null {
-  // Extract table: UPDATE table_name
-  // Extract columns and values from SET clause
-  // Handle quotes in values
-  // Extract WHERE conditions: keep as-is string
-  // Return { columns, values, conditions }
+Target:
+```json
+{
+  "table": "products",
+  "action": "DELETE",
+  "condition": {
+    "raw": "id > 100",
+    "parsed": {
+      "column": "id",
+      "operator": ">",
+      "value": 100
+    }
+  },
+  "statementIndex": 10
 }
 ```
 
-**Test cases** (`tests/formats/sql.update.test.ts`):
-1. Basic: `UPDATE users SET name='John' WHERE id=1`
-2. Multiple columns: `UPDATE ... SET col1=val1, col2=val2 WHERE ...`
-3. Expressions: `UPDATE ... SET count = count + 1`
-4. Various data types: strings, numbers, NULL, expressions
-5. Case insensitivity
-6. Quoted values with escapes
-
-### 3.2 Test Execution
-Run tests, debug, iterate.
-
----
-
-## Phase 4: DELETE Implementation (1-1.5 hours)
-
-### 4.1 Implement parseDeleteStatement()
-
-**Complexity**: Low (simplest statement)
-
-```typescript
-function parseDeleteStatement(sql: string): DeleteData | null {
-  // Extract table: DELETE FROM table_name
-  // Extract WHERE conditions: keep as-is
-  // Return { conditions }
-}
-```
-
-**Test cases** (`tests/formats/sql.delete.test.ts`):
-1. Simple: `DELETE FROM users WHERE id=1`
-2. No WHERE: `DELETE FROM users` (dangerous but valid)
-3. Complex WHERE: with AND/OR conditions
-4. Case insensitivity
-
-### 4.2 Test Execution
-Run tests, debug, iterate.
-
----
-
-## Phase 5: Grouping & Mixed Statements (2-3 hours)
-
-### 5.1 Update groupByTableAndAction()
-
-Handle grouping for new statement types:
-- **SELECT**: Don't group (each SELECT is independent query)
-- **UPDATE**: Group consecutive same table+UPDATE
-- **DELETE**: Group consecutive same table+DELETE
-- **Mixed**: Maintain execution order, create new group for different action
-
-**Logic**:
-```
-INSERT -> INSERT (same table) -> group
-INSERT -> SELECT (same table) -> separate (SELECT breaks grouping)
-UPDATE -> UPDATE (same table) -> group
-UPDATE -> DELETE (same table) -> separate (different action)
-```
-
-### 5.2 Update formatSql() output
-
-Ensure proper output for all combinations in result array.
-
-### 5.3 Create comprehensive mixed-statement tests
-
-**File**: `tests/formats/sql.crud-mixed.test.ts` (new file)
-
-Test cases:
-1. CREATE -> INSERT -> SELECT -> same table
-2. INSERT -> UPDATE -> DELETE -> same table
-3. Multiple tables interleaved
-4. Execution order preserved
-5. Grouping only for same table + same action
-6. Real-world scenario: E-commerce dump with all CRUD ops
-
-### 5.4 Test Execution
-Run full test suite, debug any failures.
-
----
-
-## Phase 6: Documentation & Metrics (1 hour)
-
-### 6.1 Update TDD-PROGRESS.md
-- Document all new statement type support
-- Update test metrics (expected: 600+ tests total)
-- Mark SELECT/UPDATE/DELETE as ✅ complete
-
-### 6.2 Code Review
-- Check for DRY violations
-- Ensure consistent error handling
-- Verify TypeScript types are strict
-
----
-
-## Phase 7: Edge Cases Validation (1 hour)
-
-### 7.1 Identify common edge cases for new types
-- Semicolon handling
-- Comment placement
-- Complex WHERE clauses
-- Special characters in strings
-
-### 7.2 Document in code
-Add comments explaining non-obvious parsing logic.
-
----
-
-## Expected Outcomes (Session 3)
-
-- ✅ SELECT parsing + tests (basic to complex)
-- ✅ UPDATE parsing + tests (with expressions)
-- ✅ DELETE parsing + tests
-- ✅ Grouping logic for all statement types
-- ✅ Mixed statement handling + comprehensive tests
-- **Expected test count**: 600-650 tests
-- **Expected pass rate**: 95%+ (some edge cases from Session 2 still failing)
-- **Code size**: ~700-800 lines (added ~200 lines)
-
----
-
-# SESSION 4: Edge Case Fixes & 100% Coverage
-
-## Goals
-Fix the 8 remaining failures + edge cases in new parsers for 100% pass rate.
-
-### Priority 1: SQL Parser Edge Cases (2-3 hours)
-
-1. **Escaped quotes in INSERT** (1 test)
-   - Root cause: parseValueRows with `''` escape
-   - Debug: Add logging to trace row splitting
-   - Fix: Adjust state machine in parseValueRows
-   - Verify: Test with multiple variations
-
-2. **Composite table constraints** (1 test)
-   - Root cause: Comma inside `PRIMARY KEY (col1, col2)`
-   - Fix: Use smartSplit for table constraints parsing
-   - Verify: Test with various constraint combinations
-
-3. **SELECT grouping** (2 tests)
-   - Likely: SELECT statements should/shouldn't create separate nodes
-   - Debug: Check test expectations vs. implementation
-   - Decision: Align grouping logic with requirements
-
-### Priority 2: Non-SQL Test Failures (1-2 hours)
-
-- outputFormatter tests (originalSize/newSize properties)
-- formatDetector tests (log file detection)
-- integration tests
-
-These are outside SQL parser scope but needed for 100% pass rate.
-
-### Priority 3: Comprehensive Edge Cases (2-3 hours)
-
-For each statement type (INSERT, CREATE, SELECT, UPDATE, DELETE):
-- Unicode characters in strings
-- Very long strings (>1000 chars)
-- Nested structures (subqueries)
-- Comment placement
-- Whitespace variations
-
----
-
-## Expected Outcomes (Session 4)
-
-- ✅ 531+ tests passing
-- ✅ 100% pass rate for SQL parser
-- ✅ Comprehensive edge case coverage
-- ✅ All CRUD statements fully supported
-- **Final code size**: ~750-850 lines
-- **Total test suite**: 600-700 tests
-
----
-
-# Implementation Order (Key Dependencies)
-
-1. **Setup** → must be first (interfaces, types)
-2. **SELECT** → simplest, good warm-up
-3. **DELETE** → even simpler than UPDATE
-4. **UPDATE** → most complex (SET clause parsing)
-5. **Grouping** → depends on all parsers
-6. **Mixed tests** → depends on grouping
-7. **Edge cases** → depends on everything else
-
----
-
-# Testing Strategy per Statement Type
-
-## File Structure (New Test Files)
-- `tests/formats/sql.select.test.ts` - SELECT parsing (30-40 tests)
-- `tests/formats/sql.update.test.ts` - UPDATE parsing (25-30 tests)
-- `tests/formats/sql.delete.test.ts` - DELETE parsing (15-20 tests)
-- `tests/formats/sql.crud-mixed.test.ts` - All CRUD mixed (20-25 tests)
-
-## Test Categories per Type
-
-For SELECT:
-- Basic column/table extraction
-- WHERE clause handling
-- JOIN statements
-- Aggregate functions
-- Subqueries (optional)
-- Case variations
-
-For UPDATE:
-- SET clause parsing (single/multiple columns)
-- Expression values (count+1, etc.)
-- WHERE conditions
-- Data type variations
-- Quoted values with escapes
-
-For DELETE:
-- Basic DELETE
-- WHERE required vs. optional
-- Complex conditions
-- Edge cases
-
----
-
-# Git Workflow
-
-```bash
-# Session 3 structure
-git commit "Add SELECT statement parsing and tests"
-git commit "Add UPDATE statement parsing and tests"
-git commit "Add DELETE statement parsing and tests"
-git commit "Implement CRUD grouping logic for mixed statements"
-git commit "Add comprehensive mixed-statement tests (600+ total tests)"
-
-# Session 4 structure
-git commit "Fix escaped quotes in multi-row INSERT (edge case)"
-git commit "Fix composite table constraints parsing"
-git commit "Fix SELECT grouping logic"
-git commit "Fix non-SQL test failures (formatter, detector)"
-git commit "Add comprehensive edge case coverage - 100% pass rate"
-```
-
----
-
-# Success Criteria
-
-### Session 3: Parser Completeness ✅
-- [ ] SELECT, UPDATE, DELETE fully implemented
-- [ ] All new statement tests passing
-- [ ] Grouping logic correct for all types
-- [ ] Mixed statement tests comprehensive
-- [ ] Pass rate: 95%+
-
-### Session 4: 100% Coverage ✅
-- [ ] All edge cases fixed
-- [ ] 100% test pass rate (531+)
-- [ ] Code well-documented
-- [ ] Ready for production use
-
----
-
-# Notes & Risks
-
-## Risks
-1. **Complex WHERE clauses** - May need special parsing beyond regex
-   - Mitigation: Keep WHERE as-is string, don't parse deeply
-
-2. **Subqueries** - Could complicate SELECT parsing
-   - Mitigation: Support basic SELECT first, subqueries optional enhancement
-
-3. **Performance** - Parser could slow with large dumps
-   - Mitigation: Profile in Session 4 if needed
-
-4. **Edge cases** - May discover more during implementation
-   - Mitigation: Add to test suite incrementally
-
-## Assumptions
-- WHERE clauses can be kept as-is strings (don't need full parsing)
-- Simple regex-based extraction sufficient for tables/columns
-- Semicolons properly terminate statements (already handled)
-- No exotic SQL dialects (MySQL, PostgreSQL specific)
-
----
-
-# Files to Modify/Create
+**Implementation Steps**:
+1. Create `parseUpdateCondition()` function to extract WHERE clause
+2. Create `parseDeleteCondition()` function to extract WHERE clause
+3. Parse conditions into structured format (column, operator, value)
+4. Handle complex conditions with AND/OR (Phase 2)
+5. Add tests for condition parsing (15-20 tests)
+6. Update existing tests to validate condition presence
+
+### Phase 2: Examples & Documentation
+
+**New Examples to Create**:
+
+1. **SELECT Example** (`examples/select-example.ts`)
+   - Show how SELECT statements are handled
+   - Demonstrate exclusion from output
+   - Show behavior when SELECT exists with CREATE
+
+2. **Mixed INSERT & UPDATE Example** (`examples/mixed-insert-update.ts`)
+   - Demonstrate grouping with alternating actions
+   - Show condition information in UPDATE nodes
+   - Display execution order preservation
+
+**Tests to Add**:
+- UPDATE condition parsing (10 tests)
+- DELETE condition parsing (10 tests)
+- Complex conditions (AND/OR) (5 tests)
+- Edge cases (quoted values, functions) (5 tests)
+
+### Phase 3: Documentation Updates
+
+#### Script-Level Documentation
+
+**Update Files**:
+- `read-minified/README.md`
+  - Add SQL parsing section
+  - Document grouping logic
+  - Include example output
+  - Link to examples
+
+- `read-minified/CHANGELOG.md`
+  - Document v0.7.0 changes (conditions support)
+  - List all new features
+  - Breaking changes (if any)
+
+#### Plugin-Level Documentation
+
+**Update Files**:
+- `plugins/claude-code-tools/README.md`
+  - Document read-minified plugin
+  - SQL parsing capabilities
+  - Installation instructions
+
+- `plugins/claude-code-tools/CHANGELOG.md`
+  - Version history
+  - v0.7.0 release notes
+
+### Phase 4: Testing & Validation
+
+**Test Plan**:
+- 20 new tests for condition parsing
+- 100% coverage of UPDATE/DELETE conditions
+- Integration tests with mixed statements
+- Performance tests for large SQL dumps
+
+**Expected Results**:
+- Total tests: 107+ (87 current + 20+ new)
+- Pass rate: 100%
+- All edge cases covered
+
+## Session 4: Advanced Features (Future)
+
+### Complex Conditions
+- AND/OR operators
+- Nested conditions
+- BETWEEN, IN, LIKE operators
+- Subqueries in conditions
+
+### SELECT Details
+- Column selection parsing
+- JOIN information extraction
+- ORDER BY, GROUP BY, LIMIT
+- Alias handling
+
+### ALTER Statements
+- ALTER TABLE support
+- Column modifications
+- Index management
+
+### Transaction Support
+- BEGIN/COMMIT/ROLLBACK
+- Grouped by transaction boundaries
+
+## Files to Modify
 
 ### New Files
-- `tests/formats/sql.select.test.ts`
-- `tests/formats/sql.update.test.ts`
-- `tests/formats/sql.delete.test.ts`
-- `tests/formats/sql.crud-mixed.test.ts`
+```
+read-minified/
+├── examples/
+│   ├── select-example.ts          (NEW)
+│   └── mixed-insert-update.ts     (NEW)
+└── ROADMAP.md                      (NEW - this file)
+
+plugins/claude-code-tools/
+├── README.md                       (UPDATE)
+└── CHANGELOG.md                    (UPDATE)
+```
 
 ### Modified Files
-- `src/formats/sql.ts` (add parsers, update grouping, update output logic)
-- `TDD-PROGRESS.md` (update after each session)
+```
+read-minified/
+├── src/formats/sql.ts
+│   ├── parseUpdateStatement()      (ENHANCE - add conditions)
+│   ├── parseDeleteStatement()      (ENHANCE - add conditions)
+│   └── parseCondition()            (NEW helper function)
+├── tests/formats/
+│   ├── sql.update-delete.test.ts  (ADD 15+ tests)
+│   └── sql.conditions.test.ts     (NEW - 10+ tests)
+├── README.md                       (UPDATE - add SQL section)
+├── CHANGELOG.md                    (UPDATE - v0.7.0)
+└── PARSER_USAGE.md                (UPDATE - conditions section)
+```
 
-### No Changes Needed
-- Other format parsers (json, xml, csv, etc.)
-- Core CLI logic
-- Caching logic
+## Estimated Effort
+
+| Task | Complexity | Time Est | Tests |
+|------|-----------|----------|-------|
+| Parse UPDATE conditions | Medium | 2h | 10 |
+| Parse DELETE conditions | Medium | 2h | 10 |
+| CREATE examples | Low | 1h | - |
+| UPDATE tests | Medium | 1.5h | 15 |
+| Documentation | Low | 2h | - |
+| **Total** | **Medium** | **8.5h** | **35+** |
+
+## Session 3 Checklist
+
+- [ ] Implement condition parsing for UPDATE
+- [ ] Implement condition parsing for DELETE
+- [ ] Add structured condition output to UPDATE nodes
+- [ ] Add structured condition output to DELETE nodes
+- [ ] Create SELECT example
+- [ ] Create mixed INSERT/UPDATE example
+- [ ] Add 20+ tests for condition parsing
+- [ ] Update PARSER_USAGE.md with condition info
+- [ ] Update script-level README
+- [ ] Update script-level CHANGELOG
+- [ ] Update plugin-level README
+- [ ] Update plugin-level CHANGELOG
+- [ ] Run full test suite (target: 100+ tests, 100% pass)
+- [ ] Test examples end-to-end
+- [ ] Code review and cleanup
+
+## Notes for Next Session
+
+1. **Condition Parsing Strategy**:
+   - Start simple: `column operator value`
+   - Support: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`, `IN`, `BETWEEN`
+   - Handle quoted values correctly
+   - Extract numeric values properly
+
+2. **Documentation Priority**:
+   - Script-level README is critical for users
+   - Include actual JSON output examples
+   - Link to examples folder
+   - Document grouping behavior clearly
+
+3. **Testing Approach**:
+   - Create separate test file for conditions
+   - Test each operator independently
+   - Test complex value types (strings, numbers, booleans)
+   - Test edge cases (quotes in conditions, NULL values)
+
+4. **Future Considerations**:
+   - Complex conditions with AND/OR may need tree structure
+   - Consider how to represent in JSON cleanly
+   - Performance impact of deep parsing
+   - Support for functions in conditions (NOW(), DATE_ADD, etc.)
+
+## Session 3 Success Criteria
+
+✅ All listed tasks completed
+✅ 100+ tests passing (100% pass rate)
+✅ Conditions visible in UPDATE/DELETE nodes
+✅ Examples runnable and documented
+✅ README updated at both levels
+✅ CHANGELOG updated at both levels
+✅ Code review passed
+✅ No regressions from Session 2

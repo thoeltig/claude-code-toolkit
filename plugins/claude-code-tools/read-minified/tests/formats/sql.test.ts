@@ -248,12 +248,14 @@ describe('SQL Format Handler', () => {
       expect(output).toBe('[]');
     });
 
-    test('should handle SQL with no INSERT statements', () => {
+    test('should include CREATE and SELECT when no INSERT statements', () => {
       const sql = 'SELECT * FROM users; CREATE TABLE users (id INT);';
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toEqual([]);
+      expect(result).toHaveLength(2);
+      expect(result[0].action).toBe('SELECT');
+      expect(result[1].action).toBe('CREATE');
     });
 
     test('should handle SQL with comments (ignored)', () => {
