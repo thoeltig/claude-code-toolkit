@@ -36,12 +36,27 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                 if (group.where) output.where = group.where;
                 return output;
             } else if (group.action === 'CREATE') {
-                return {
-                    table: group.table,
+                const output: any = {
                     action: 'CREATE',
-                    schema: group.schema,
+                    objectType: group.objectType,
                     statementIndex: group.startIndex
                 };
+                if (group.objectType === 'INDEX') {
+                    if (group.indexName) output.indexName = group.indexName;
+                    if (group.table) output.table = group.table;
+                    if (group.columns) output.columns = group.columns;
+                    if (group.unique) output.unique = group.unique;
+                    if (group.ifNotExists) output.ifNotExists = group.ifNotExists;
+                } else if (group.objectType === 'VIEW') {
+                    if (group.viewName) output.viewName = group.viewName;
+                    if (group.orReplace) output.orReplace = group.orReplace;
+                    if (group.ifNotExists) output.ifNotExists = group.ifNotExists;
+                } else {
+                    // CREATE TABLE
+                    output.table = group.table;
+                    if (group.schema) output.schema = group.schema;
+                }
+                return output;
             } else if (group.action === 'SELECT') {
                 const output: any = {
                     table: group.table,
@@ -107,14 +122,19 @@ interface GroupedStatement {
     columns?: string[] | '*';  // For INSERT and SELECT. '*' means all columns (no mapping)
     rows?: any[];        // For INSERT
     rowCount?: number;   // For INSERT
-    schema?: CreateTableData;  // For CREATE
+    schema?: CreateTableData;  // For CREATE TABLE
     updates?: Array<{column: string; value: string}>;  // For UPDATE
     where?: string;      // For UPDATE and DELETE and SELECT
-    objectType?: string;  // For DROP (TABLE, INDEX, VIEW)
+    objectType?: string;  // For DROP and CREATE (TABLE, INDEX, VIEW)
     objectName?: string;  // For DROP (for INDEX objects)
     ifExists?: boolean;   // For DROP
     cascade?: boolean;    // For DROP
     restrict?: boolean;   // For DROP
+    indexName?: string;   // For CREATE INDEX
+    unique?: boolean;     // For CREATE INDEX
+    ifNotExists?: boolean; // For CREATE INDEX and VIEW
+    viewName?: string;    // For CREATE VIEW
+    orReplace?: boolean;  // For CREATE VIEW
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -136,8 +156,16 @@ function parseSqlStatements(content: string): SqlStatement[] {
                 table = parsed.table;
             }
         } else if (type === 'CREATE') {
-            parsed = parseCreateTableStatement(raw);
-            // Don't override table - we already have it from extractTableName
+            if (/CREATE\s+(?:UNIQUE\s+)?INDEX/i.test(raw)) {
+                parsed = parseCreateIndexStatement(raw);
+                if (parsed) table = parsed.table || '';
+            } else if (/CREATE\s+(?:OR\s+REPLACE\s+)?VIEW/i.test(raw)) {
+                parsed = parseCreateViewStatement(raw);
+                if (parsed) table = parsed.viewName || '';
+            } else {
+                parsed = parseCreateTableStatement(raw);
+                // Don't override table - we already have it from extractTableName
+            }
         } else if (type === 'UPDATE') {
             parsed = parseUpdateStatement(raw);
             // Table already extracted from regex
@@ -261,6 +289,8 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     const trimmed = sql.trim().toUpperCase();
 
     if (trimmed.startsWith('CREATE TABLE')) return 'CREATE';
+    if (/^CREATE\s+(?:UNIQUE\s+)?INDEX/i.test(trimmed)) return 'CREATE';
+    if (/^CREATE\s+(?:OR\s+REPLACE\s+)?VIEW/i.test(trimmed)) return 'CREATE';
     if (trimmed.startsWith('INSERT INTO')) return 'INSERT';
     if (trimmed.startsWith('SELECT')) return 'SELECT';
     if (trimmed.startsWith('UPDATE')) return 'UPDATE';
@@ -275,8 +305,16 @@ function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'U
     const trimmed = sql.trim();
 
     if (type === 'CREATE') {
-        const match = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i.exec(trimmed);
+        // CREATE TABLE
+        let match = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i.exec(trimmed);
         if (match) return match[1];
+        // CREATE INDEX: extract table from ON clause
+        match = /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?\w+\s+ON\s+(\w+)/i.exec(trimmed);
+        if (match) return match[1];
+        // CREATE VIEW: use view name as placeholder (will be overridden by parseCreateViewStatement)
+        match = /CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i.exec(trimmed);
+        if (match) return match[1];
+        return '';
     } else if (type === 'INSERT') {
         const match = /INSERT\s+INTO\s+(\w+)/i.exec(trimmed);
         if (match) return match[1];
@@ -584,6 +622,55 @@ function parseSelectStatement(sql: string): { table: string; columns?: string[];
     };
 }
 
+function parseCreateIndexStatement(sql: string): any | null {
+    const result: any = { objectType: 'INDEX' };
+
+    // Check for UNIQUE
+    if (/CREATE\s+UNIQUE\s+INDEX/i.test(sql)) {
+        result.unique = true;
+    }
+
+    // Check for IF NOT EXISTS
+    if (/IF\s+NOT\s+EXISTS/i.test(sql)) {
+        result.ifNotExists = true;
+    }
+
+    // Extract index name and table
+    const match = /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s+ON\s+(\w+)\s*\((.*?)\)/is.exec(sql);
+    if (!match) return null;
+
+    result.indexName = match[1];
+    result.table = match[2];
+
+    // Parse columns
+    const columnsStr = match[3];
+    result.columns = columnsStr.split(',').map((col: string) => col.trim()).filter((col: string) => col.length > 0);
+
+    return result;
+}
+
+function parseCreateViewStatement(sql: string): any | null {
+    const result: any = { objectType: 'VIEW' };
+
+    // Check for OR REPLACE
+    if (/CREATE\s+OR\s+REPLACE\s+VIEW/i.test(sql)) {
+        result.orReplace = true;
+    }
+
+    // Check for IF NOT EXISTS
+    if (/IF\s+NOT\s+EXISTS/i.test(sql)) {
+        result.ifNotExists = true;
+    }
+
+    // Extract view name
+    const match = /CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i.exec(sql);
+    if (!match) return null;
+
+    result.viewName = match[1];
+
+    return result;
+}
+
 function parseTruncateStatement(sql: string): { table: string } | null {
     // TRUNCATE TABLE name or TRUNCATE name
     const match = /TRUNCATE\s+(?:TABLE\s+)?(\w+)/i.exec(sql);
@@ -844,9 +931,15 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
 
         // Group consecutive statements with same table AND same action
         // For INSERT: only group if columns structure is compatible
-        const canGroup = action === 'INSERT' ?
-            areInsertColumnsCompatible(lastGroup?.columns, stmt.parsed?.columns) :
-            true;
+        // For CREATE: only group CREATE TABLE statements (never group INDEX/VIEW even on same table)
+        let canGroup = true;
+        if (action === 'INSERT') {
+            canGroup = areInsertColumnsCompatible(lastGroup?.columns, stmt.parsed?.columns);
+        } else if (action === 'CREATE') {
+            // Don't group CREATE INDEX or CREATE VIEW - each should be its own statement
+            // Only group CREATE TABLE statements
+            canGroup = stmt.parsed?.objectType === 'TABLE' && lastGroup?.objectType === 'TABLE';
+        }
 
         if (lastGroup && lastGroup.table === stmt.table && lastGroup.action === action && canGroup) {
             lastGroup.statements.push(stmt);
@@ -887,7 +980,22 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 group.rows = stmt.parsed.rows;
                 group.rowCount = stmt.parsed.rows.length;
             } else if (action === 'CREATE' && stmt.parsed) {
-                group.schema = stmt.parsed;
+                if (stmt.parsed.objectType === 'INDEX') {
+                    group.objectType = 'INDEX';
+                    group.indexName = stmt.parsed.indexName;
+                    group.columns = stmt.parsed.columns;
+                    group.unique = stmt.parsed.unique;
+                    group.ifNotExists = stmt.parsed.ifNotExists;
+                } else if (stmt.parsed.objectType === 'VIEW') {
+                    group.objectType = 'VIEW';
+                    group.viewName = stmt.parsed.viewName;
+                    group.orReplace = stmt.parsed.orReplace;
+                    group.ifNotExists = stmt.parsed.ifNotExists;
+                } else {
+                    // CREATE TABLE
+                    group.objectType = 'TABLE';
+                    group.schema = stmt.parsed;
+                }
             } else if (action === 'UPDATE' && stmt.parsed) {
                 group.updates = stmt.parsed.updates;
                 group.where = stmt.parsed.where;
