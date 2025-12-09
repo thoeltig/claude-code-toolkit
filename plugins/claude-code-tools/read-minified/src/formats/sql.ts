@@ -57,6 +57,18 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                     action: 'TRUNCATE',
                     statementIndex: group.startIndex
                 };
+            } else if (group.action === 'DROP') {
+                const output: any = {
+                    action: 'DROP',
+                    statementIndex: group.startIndex
+                };
+                if (group.objectType) output.objectType = group.objectType;
+                if (group.objectName) output.objectName = group.objectName;
+                if (group.table) output.table = group.table;
+                if (group.ifExists) output.ifExists = group.ifExists;
+                if (group.cascade) output.cascade = group.cascade;
+                if (group.restrict) output.restrict = group.restrict;
+                return output;
             }
             return null;
         }).filter((item: any) => item !== null);
@@ -68,7 +80,7 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
 }
 
 interface SqlStatement {
-    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'UNKNOWN';
+    type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'UNKNOWN';
     table: string;
     raw: string;
     statementIndex: number;
@@ -98,6 +110,11 @@ interface GroupedStatement {
     schema?: CreateTableData;  // For CREATE
     updates?: Array<{column: string; value: string}>;  // For UPDATE
     where?: string;      // For UPDATE and DELETE and SELECT
+    objectType?: string;  // For DROP (TABLE, INDEX, VIEW)
+    objectName?: string;  // For DROP (for INDEX objects)
+    ifExists?: boolean;   // For DROP
+    cascade?: boolean;    // For DROP
+    restrict?: boolean;   // For DROP
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -133,6 +150,12 @@ function parseSqlStatements(content: string): SqlStatement[] {
         } else if (type === 'TRUNCATE') {
             parsed = parseTruncateStatement(raw);
             // Table already extracted from regex
+        } else if (type === 'DROP') {
+            parsed = parseDropStatement(raw);
+            if (parsed) {
+                // For DROP, use table if available, otherwise use objectName
+                table = parsed.table || parsed.objectName || '';
+            }
         }
 
         if (table) {
@@ -234,7 +257,7 @@ function splitSqlStatements(content: string): string[] {
     return statements;
 }
 
-function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'UNKNOWN' {
+function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'UNKNOWN' {
     const trimmed = sql.trim().toUpperCase();
 
     if (trimmed.startsWith('CREATE TABLE')) return 'CREATE';
@@ -243,11 +266,12 @@ function detectStatementType(sql: string): 'CREATE' | 'INSERT' | 'SELECT' | 'UPD
     if (trimmed.startsWith('UPDATE')) return 'UPDATE';
     if (trimmed.startsWith('DELETE')) return 'DELETE';
     if (trimmed.startsWith('TRUNCATE')) return 'TRUNCATE';
+    if (trimmed.startsWith('DROP')) return 'DROP';
 
     return 'UNKNOWN';
 }
 
-function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'UNKNOWN'): string {
+function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'DROP' | 'UNKNOWN'): string {
     const trimmed = sql.trim();
 
     if (type === 'CREATE') {
@@ -270,6 +294,13 @@ function extractTableName(sql: string, type: 'CREATE' | 'INSERT' | 'SELECT' | 'U
         // TRUNCATE TABLE name or TRUNCATE name
         const match = /TRUNCATE\s+(?:TABLE\s+)?(\w+)/i.exec(trimmed);
         if (match) return match[1];
+    } else if (type === 'DROP') {
+        // DROP will be handled by parseDropStatement, return placeholder as fallback
+        // Try to extract table/object name
+        const match = /DROP\s+(?:TABLE|INDEX|VIEW)\s+(?:IF\s+EXISTS\s+)?(\w+)/i.exec(trimmed);
+        if (match) return match[1];
+        // If regex doesn't match (e.g., multiline), return placeholder
+        return 'DROP_OBJECT';
     }
 
     return '';
@@ -565,6 +596,69 @@ function parseTruncateStatement(sql: string): { table: string } | null {
     };
 }
 
+function parseDropStatement(sql: string): any | null {
+    const result: any = {};
+    const upper = sql.trim().toUpperCase();
+
+    // Detect DROP object type (TABLE, INDEX, VIEW, etc.)
+    let objectType = '';
+    if (upper.includes('DROP TABLE')) {
+        objectType = 'TABLE';
+    } else if (upper.includes('DROP INDEX')) {
+        objectType = 'INDEX';
+    } else if (upper.includes('DROP VIEW')) {
+        objectType = 'VIEW';
+    } else {
+        return null;
+    }
+
+    result.objectType = objectType;
+
+    // Check for IF EXISTS
+    if (/DROP\s+\w+\s+IF\s+EXISTS/i.test(sql)) {
+        result.ifExists = true;
+    }
+
+    // Check for CASCADE
+    if (/CASCADE/i.test(sql)) {
+        result.cascade = true;
+    }
+
+    // Check for RESTRICT
+    if (/RESTRICT/i.test(sql)) {
+        result.restrict = true;
+    }
+
+    // Extract object name
+    let nameMatch;
+    if (objectType === 'TABLE') {
+        // DROP TABLE [IF EXISTS] name [CASCADE|RESTRICT]
+        nameMatch = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?(\w+)/i.exec(sql);
+        if (nameMatch) {
+            result.table = nameMatch[1];
+        }
+    } else if (objectType === 'INDEX') {
+        // DROP INDEX [IF EXISTS] name [ON table] [CASCADE|RESTRICT]
+        nameMatch = /DROP\s+INDEX\s+(?:IF\s+EXISTS\s+)?(\w+)/i.exec(sql);
+        if (nameMatch) {
+            result.objectName = nameMatch[1];
+        }
+        // Check for ON table clause (MySQL syntax)
+        const onMatch = /ON\s+(\w+)/i.exec(sql);
+        if (onMatch) {
+            result.table = onMatch[1];
+        }
+    } else if (objectType === 'VIEW') {
+        // DROP VIEW [IF EXISTS] name [CASCADE|RESTRICT]
+        nameMatch = /DROP\s+VIEW\s+(?:IF\s+EXISTS\s+)?(\w+)/i.exec(sql);
+        if (nameMatch) {
+            result.table = nameMatch[1];
+        }
+    }
+
+    return result;
+}
+
 function parseColumns(columnsStr: string): string[] {
     return columnsStr.split(',').map(col => col.trim()).filter(col => col.length > 0);
 }
@@ -772,6 +866,13 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
             } else if (action === 'TRUNCATE' && stmt.parsed) {
                 // TRUNCATE has no additional data to merge
+            } else if (action === 'DROP' && stmt.parsed) {
+                // DROP: merge optional properties
+                if (!lastGroup.objectType) lastGroup.objectType = stmt.parsed.objectType;
+                if (!lastGroup.objectName) lastGroup.objectName = stmt.parsed.objectName;
+                if (!lastGroup.ifExists) lastGroup.ifExists = stmt.parsed.ifExists;
+                if (!lastGroup.cascade) lastGroup.cascade = stmt.parsed.cascade;
+                if (!lastGroup.restrict) lastGroup.restrict = stmt.parsed.restrict;
             }
         } else {
             const group: GroupedStatement = {
@@ -797,6 +898,12 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 group.where = stmt.parsed.where;
             } else if (action === 'TRUNCATE' && stmt.parsed) {
                 // TRUNCATE has no additional data
+            } else if (action === 'DROP' && stmt.parsed) {
+                group.objectType = stmt.parsed.objectType;
+                if (stmt.parsed.objectName) group.objectName = stmt.parsed.objectName;
+                if (stmt.parsed.ifExists) group.ifExists = stmt.parsed.ifExists;
+                if (stmt.parsed.cascade) group.cascade = stmt.parsed.cascade;
+                if (stmt.parsed.restrict) group.restrict = stmt.parsed.restrict;
             }
 
             result.push(group);
