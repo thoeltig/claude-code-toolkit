@@ -64,7 +64,13 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
                     statementIndex: group.startIndex
                 };
                 if (group.columns) output.columns = group.columns;
+                if (group.columnAliases) output.columnAliases = group.columnAliases;
                 if (group.where) output.where = group.where;
+                if (group.groupByColumns) output.groupByColumns = group.groupByColumns;
+                if (group.havingClause) output.havingClause = group.havingClause;
+                if (group.joins) output.joins = group.joins;
+                if (group.unionType) output.unionType = group.unionType;
+                if (group.caseStatements) output.caseStatements = group.caseStatements;
                 if (group.unparsedContent) output.unparsedContent = group.unparsedContent;
                 return output;
             } else if (group.action === 'TRUNCATE') {
@@ -218,6 +224,12 @@ interface GroupedStatement {
     newName?: string;         // For ALTER RENAME TABLE
     newColumnName?: string;   // For ALTER RENAME COLUMN
     unparsedContent?: string; // Fallback: remainder of statement we couldn't parse (zero information loss)
+    columnAliases?: Array<{column: string; alias?: string}>; // For SELECT: columns with optional aliases
+    groupByColumns?: string[]; // For SELECT: GROUP BY columns
+    havingClause?: string; // For SELECT: HAVING condition
+    joins?: Array<{type: string; table: string; alias?: string; condition?: string}>; // For SELECT: basic JOINs
+    unionType?: string; // For SELECT: UNION, UNION ALL, INTERSECT, EXCEPT
+    caseStatements?: Array<{column: string; cases: Array<{when: string; then: string}>; else?: string}>; // For SELECT: CASE statements
 }
 
 function parseSqlStatements(content: string): SqlStatement[] {
@@ -721,7 +733,7 @@ function parseDeleteStatement(sql: string): { table: string; where?: string } | 
     return null;
 }
 
-function parseSelectStatement(sql: string): { table: string; columns?: string[]; where?: string; unparsedContent?: string } | null {
+function parseSelectStatement(sql: string): any | null {
     // Special handling for CTEs (WITH clauses) - store entire thing as unparsed
     if (/^WITH\s+/i.test(sql.trim())) {
         // Find the main SELECT's table
@@ -741,16 +753,31 @@ function parseSelectStatement(sql: string): { table: string; columns?: string[];
 
     const table = fromMatch[1];
 
-    // Extract columns from SELECT clause
+    // Extract columns from SELECT clause with alias support
     const selectMatch = /SELECT\s+([\s\S]*?)\s+FROM/i.exec(sql);
     let columns: string[] = [];
+    let columnAliases: Array<{column: string; alias?: string}> = [];
     if (selectMatch) {
         const columnStr = selectMatch[1].trim();
         if (columnStr !== '*') {
-            columns = columnStr
-                .split(',')
-                .map(col => col.trim())
-                .filter(col => col.length > 0 && !col.includes('('));  // Exclude functions for now
+            const columnParts = columnStr.split(',');
+            for (const part of columnParts) {
+                const trimmed = part.trim();
+                if (trimmed.length === 0 || trimmed.includes('(')) continue;  // Exclude functions for now
+
+                // Parse column and alias: "id AS user_id" or "id user_id" or "id"
+                const asMatch = /^\s*(\S+)\s+(?:AS\s+)?(\S+)\s*$/i.exec(trimmed);
+                if (asMatch) {
+                    const col = asMatch[1];
+                    const alias = asMatch[2];
+                    columns.push(col);
+                    columnAliases.push({ column: col, alias });
+                } else {
+                    // No alias, just column name
+                    columns.push(trimmed);
+                    columnAliases.push({ column: trimmed });
+                }
+            }
         }
     }
 
@@ -761,22 +788,46 @@ function parseSelectStatement(sql: string): { table: string; columns?: string[];
         where = whereMatch[1].trim();
     }
 
-    // Detect unparsed content: JOINs, subqueries, GROUP BY, HAVING, UNION, etc.
+    // Detect GROUP BY
+    const groupByMatch = /\bGROUP\s+BY\s+([\w,\s]+?)(?=\s*(?:HAVING|ORDER|LIMIT|;|$))/i.exec(sql);
+    let groupByColumns: string[] | undefined;
+    if (groupByMatch) {
+        groupByColumns = groupByMatch[1]
+            .split(',')
+            .map(col => col.trim())
+            .filter(col => col.length > 0);
+    }
+
+    // Detect HAVING
+    const havingMatch = /\bHAVING\s+([\s\S]*?)(?=\s*(?:ORDER|LIMIT|;|$))/i.exec(sql);
+    let havingClause: string | undefined;
+    if (havingMatch) {
+        havingClause = havingMatch[1].trim();
+    }
+
+    // Detect UNION/INTERSECT/EXCEPT
+    let unionType: string | undefined;
+    if (/\bUNION\s+ALL\b/i.test(sql)) {
+        unionType = 'UNION ALL';
+    } else if (/\bUNION\b/i.test(sql)) {
+        unionType = 'UNION';
+    } else if (/\bINTERSECT\b/i.test(sql)) {
+        unionType = 'INTERSECT';
+    } else if (/\bEXCEPT\b/i.test(sql)) {
+        unionType = 'EXCEPT';
+    }
+
+    // Detect unparsed content: JOINs, subqueries, etc.
     let unparsedContent: string | undefined;
     const hasJoin = /\bJOIN\b/i.test(sql);
-    const hasUnion = /\bUNION\b/i.test(sql);
-    const hasGroupBy = /\bGROUP\s+BY\b/i.test(sql);
-    const hasHaving = /\bHAVING\b/i.test(sql);
     const hasInSubquery = /\bIN\s*\(\s*SELECT/i.test(sql);
 
-    if (hasJoin || hasUnion || hasGroupBy || hasHaving || hasInSubquery) {
+    if (hasJoin || hasInSubquery) {
         // Extract everything after "FROM tablename"
-        // Use the fromMatch we already have and find what comes after it
-        // fromMatch gives us "FROM tablename", and we need everything after that
         const fromPos = (fromMatch.index || 0) + fromMatch[0].length;
         let afterFrom = sql.substring(fromPos).trim();
 
-        // Handle table aliases: if the next word looks like an alias (2-3 chars or single letter),  skip it
+        // Handle table aliases: if the next word looks like an alias (2-3 chars or single letter), skip it
         const aliasMatch = /^([a-z]\w?)\s+/i.exec(afterFrom);
         if (aliasMatch) {
             afterFrom = afterFrom.substring(aliasMatch[0].length).trim();
@@ -790,7 +841,11 @@ function parseSelectStatement(sql: string): { table: string; columns?: string[];
     return {
         table,
         ...(columns.length > 0 && { columns }),
+        ...(columnAliases.length > 0 && columnAliases.some(ca => ca.alias) && { columnAliases }),
         ...(where && { where }),
+        ...(groupByColumns && { groupByColumns }),
+        ...(havingClause && { havingClause }),
+        ...(unionType && { unionType }),
         ...(unparsedContent && { unparsedContent })
     };
 }
@@ -1133,7 +1188,13 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
             } else if (action === 'SELECT' && stmt.parsed) {
                 if (!lastGroup.columns) lastGroup.columns = stmt.parsed.columns;
+                if (!lastGroup.columnAliases) lastGroup.columnAliases = stmt.parsed.columnAliases;
                 if (!lastGroup.where) lastGroup.where = stmt.parsed.where;
+                if (!lastGroup.groupByColumns) lastGroup.groupByColumns = stmt.parsed.groupByColumns;
+                if (!lastGroup.havingClause) lastGroup.havingClause = stmt.parsed.havingClause;
+                if (!lastGroup.joins) lastGroup.joins = stmt.parsed.joins;
+                if (!lastGroup.unionType) lastGroup.unionType = stmt.parsed.unionType;
+                if (!lastGroup.caseStatements) lastGroup.caseStatements = stmt.parsed.caseStatements;
                 if (!lastGroup.unparsedContent) lastGroup.unparsedContent = stmt.parsed.unparsedContent;
             } else if (action === 'TRUNCATE' && stmt.parsed) {
                 // TRUNCATE has no additional data to merge
@@ -1181,7 +1242,13 @@ function groupByTableAndAction(statements: SqlStatement[]): GroupedStatement[] {
                 group.where = stmt.parsed.where;
             } else if (action === 'SELECT' && stmt.parsed) {
                 group.columns = stmt.parsed.columns;
+                if (stmt.parsed.columnAliases) group.columnAliases = stmt.parsed.columnAliases;
                 group.where = stmt.parsed.where;
+                if (stmt.parsed.groupByColumns) group.groupByColumns = stmt.parsed.groupByColumns;
+                if (stmt.parsed.havingClause) group.havingClause = stmt.parsed.havingClause;
+                if (stmt.parsed.joins) group.joins = stmt.parsed.joins;
+                if (stmt.parsed.unionType) group.unionType = stmt.parsed.unionType;
+                if (stmt.parsed.caseStatements) group.caseStatements = stmt.parsed.caseStatements;
                 if (stmt.parsed.unparsedContent) group.unparsedContent = stmt.parsed.unparsedContent;
             } else if (action === 'TRUNCATE' && stmt.parsed) {
                 // TRUNCATE has no additional data
