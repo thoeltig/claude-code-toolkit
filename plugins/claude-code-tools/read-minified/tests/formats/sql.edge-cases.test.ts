@@ -8,9 +8,9 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[0].where).toContain('AND');
-      expect(result[0].updates[0].value).toBe("'active'");
+      expect(result[0].actions[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].where).toContain('AND');
+      expect(result[0].actions[0].updates[0].value).toBe("'active'");
     });
 
     test('should handle UPDATE with OR conditions', () => {
@@ -19,8 +19,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[0].where).toContain('OR');
+      expect(result[0].actions[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].where).toContain('OR');
     });
 
     test('should handle UPDATE with comparison operators', () => {
@@ -29,8 +29,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].updates[0].column).toBe('discount');
-      expect(result[0].updates[0].value).toBe('0.2');
+      expect(result[0].actions[0].updates[0].column).toBe('discount');
+      expect(result[0].actions[0].updates[0].value).toBe('0.2');
     });
 
     test('should handle UPDATE with IN clause', () => {
@@ -39,7 +39,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].where).toContain('IN');
+      expect(result[0].actions[0].where).toContain('IN');
     });
 
     test('should handle UPDATE with BETWEEN clause', () => {
@@ -48,7 +48,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].where).toContain('BETWEEN');
+      expect(result[0].actions[0].where).toContain('BETWEEN');
     });
 
     test('should handle UPDATE with LIKE clause', () => {
@@ -57,7 +57,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].where).toContain('LIKE');
+      expect(result[0].actions[0].where).toContain('LIKE');
     });
 
     test('should handle UPDATE with IS NULL check', () => {
@@ -66,7 +66,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].where).toContain('IS NULL');
+      expect(result[0].actions[0].where).toContain('IS NULL');
     });
 
     test('should handle UPDATE with function calls in WHERE', () => {
@@ -75,7 +75,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].where).toContain('DATE_SUB');
+      expect(result[0].actions[0].where).toContain('DATE_SUB');
     });
   });
 
@@ -85,8 +85,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].updates).toHaveLength(4);
-      expect(result[0].updates.map((u: any) => u.column)).toEqual(['first_name', 'last_name', 'age', 'active']);
+      expect(result[0].actions[0].updates).toHaveLength(4);
+      expect(result[0].actions[0].updates.map((u: any) => u.column)).toEqual(['first_name', 'last_name', 'age', 'active']);
     });
 
     test('should handle numeric values in UPDATE', () => {
@@ -94,10 +94,10 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].updates).toHaveLength(3);
-      expect(result[0].updates[0].value).toBe('29.99');
-      expect(result[0].updates[1].value).toBe('100');
-      expect(result[0].updates[2].value).toBe('4.5');
+      expect(result[0].actions[0].updates).toHaveLength(3);
+      expect(result[0].actions[0].updates[0].value).toBe('29.99');
+      expect(result[0].actions[0].updates[1].value).toBe('100');
+      expect(result[0].actions[0].updates[2].value).toBe('4.5');
     });
 
     test('should handle quoted values with special chars in UPDATE', () => {
@@ -105,7 +105,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].updates).toHaveLength(2);
+      expect(result[0].actions[0].updates).toHaveLength(2);
     });
 
     test('should handle SQL-escaped quotes in UPDATE values', () => {
@@ -113,7 +113,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].updates[0].value).toContain("''");
+      expect(result[0].actions[0].updates[0].value).toContain("''");
     });
   });
 
@@ -124,8 +124,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
-      expect(result[0].where).toContain('(');
+      expect(result[0].actions[0].action).toBe('DELETE');
+      expect(result[0].actions[0].where).toContain('(');
     });
 
     test('should handle DELETE with IN clause', () => {
@@ -133,7 +133,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('IN');
+      expect(result[0].actions[0].where).toContain('IN');
     });
 
     test('should handle DELETE without WHERE clause (cleanup)', () => {
@@ -143,8 +143,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
 
       // Should detect DELETE without WHERE
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
-      expect(result[0].where).toBeUndefined();
+      expect(result[0].actions[0].action).toBe('DELETE');
+      expect(result[0].actions[0].where).toBeUndefined();
     });
 
     test('should handle DELETE with date comparison', () => {
@@ -152,7 +152,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('NOW()');
+      expect(result[0].actions[0].where).toContain('NOW()');
     });
   });
 
@@ -163,10 +163,11 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('INSERT');
-      expect(result[1].action).toBe('UPDATE');
-      expect(result[1].where).toBe('id = 1');
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[1].action).toBe('UPDATE');
+      expect(result[0].actions[1].where).toBe('id = 1');
     });
 
     test('should handle UPDATE before INSERT (unusual but valid)', () => {
@@ -175,9 +176,10 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[1].action).toBe('INSERT');
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('UPDATE');
+      expect(result[0].actions[1].action).toBe('INSERT');
     });
 
     test('should not group INSERT and UPDATE (different actions)', () => {
@@ -188,12 +190,13 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].rowCount).toBe(2);
-      expect(result[1].action).toBe('UPDATE');
-      expect(result[2].action).toBe('INSERT');
-      expect(result[2].rowCount).toBe(1);
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(3);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].rowCount).toBe(2);
+      expect(result[0].actions[1].action).toBe('UPDATE');
+      expect(result[0].actions[2].action).toBe('INSERT');
+      expect(result[0].actions[2].rowCount).toBe(1);
     });
   });
 
@@ -219,8 +222,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const actions = result.map((r: any) => r.action);
-      expect(actions).toEqual(['CREATE', 'CREATE', 'INSERT', 'INSERT', 'UPDATE', 'DELETE']);
+      const actions = result.flatMap((r: any) => r.actions).map((a:any)=>a.action);
+      expect(actions).toEqual(['CREATE', 'INSERT', 'UPDATE', 'CREATE', 'INSERT', 'DELETE']);
     });
   });
 
@@ -230,7 +233,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -243,7 +246,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].updates).toHaveLength(3);
+      expect(result[0].actions[0].updates).toHaveLength(3);
     });
 
     test('should handle DELETE with multiline WHERE clause', () => {
@@ -255,8 +258,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('ERROR');
-      expect(result[0].where).toContain('AND');
+      expect(result[0].actions[0].where).toContain('ERROR');
+      expect(result[0].actions[0].where).toContain('AND');
     });
   });
 
@@ -267,7 +270,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
     });
 
     test('should handle block comments in UPDATE', () => {
@@ -276,8 +279,8 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[0].where).toContain('<');
+      expect(result[0].actions[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].where).toContain('<');
     });
 
     test('should handle comments in DELETE', () => {
@@ -286,7 +289,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
     });
   });
 
@@ -296,7 +299,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
     });
 
     test('should handle mixed case UPDATE', () => {
@@ -304,7 +307,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
     });
 
     test('should handle lowercase DELETE', () => {
@@ -312,7 +315,7 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
     });
   });
 
@@ -335,16 +338,18 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const actions = result.map((r: any) => r.action);
-      expect(actions).toContain('CREATE');
-      expect(actions).toContain('INSERT');
-      expect(actions).toContain('UPDATE');
-      expect(actions).toContain('DELETE');
+      expect(result).toHaveLength(2);
+      const actions0 = result[0].actions.map((r: any) => r.action);
+      expect(actions0).toContain('CREATE');
+      expect(actions0).toContain('INSERT');
+      expect(actions0).toContain('UPDATE');
+      const actions1 = result[1].actions.map((r: any) => r.action);
+      expect(actions1).toContain('DELETE');
     });
 
     test('should handle data export/import with transformations', () => {
       const sql = `-- Data transformation pipeline
-      INSERT INTO archived_users (id, name, email, archived_at)
+      INSERT INTO archived_users (id, name, email, archived_at);
       SELECT id, name, email, NOW() FROM users WHERE status = 'deleted';
 
       UPDATE archived_users SET processed = true WHERE archived_at > '2025-01-01';
@@ -356,8 +361,11 @@ describe('SQL Edge Cases and Complex Scenarios', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      expect(result.map((r: any) => r.action)).toEqual(['INSERT', 'UPDATE', 'DELETE']);
+      expect(result).toHaveLength(2);
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[1].actions).toHaveLength(2);
+      const actions = result.flatMap((r: any) => r.actions).map((a:any)=>a.action);
+      expect(actions).toEqual(['INSERT', 'UPDATE', 'SELECT', 'DELETE']);
     });
   });
 });

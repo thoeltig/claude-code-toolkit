@@ -33,11 +33,12 @@ describe('SQL Reconstruction Decision Gate', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBeDefined();
-      expect(result[0].table).toBeDefined();
+      expect(result[0].actions).toHaveLength(1);
+      expect(result[0].actions[0].action).toBeDefined();
+      expect(result[0].table).toBe('users');
 
       // For simple statements, we should have structured output
-      expect(result[0].action).toMatch(/SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|TRUNCATE/);
+      expect(result[0].actions[0].action).toMatch(/SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|TRUNCATE/);
     });
 
     test('should parse multiple basic statements', () => {
@@ -49,10 +50,11 @@ describe('SQL Reconstruction Decision Gate', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      expect(result[0].action).toBe('SELECT');
-      expect(result[1].action).toBe('INSERT');
-      expect(result[2].action).toBe('UPDATE');
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(3);
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[1].action).toBe('INSERT');
+      expect(result[0].actions[2].action).toBe('UPDATE');
     });
   });
 
@@ -71,12 +73,13 @@ describe('SQL Reconstruction Decision Gate', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toBeDefined();
+      expect(result[0].table).toBeDefined();
+      expect(result[0].actions).toHaveLength(1);
 
       // For complex statements, unparsedContent is acceptable
       // We preserve information, just not in structured format
-      const hasStructuredData = !!(result[0].columns || result[0].updates || result[0].rows);
-      const hasUnparsedData = !!result[0].unparsedContent;
+      const hasStructuredData = !!(result[0].actions[0].columns || result[0].actions[0].updates || result[0].actions[0].rows);
+      const hasUnparsedData = !!result[0].actions[0].unparsedContent;
 
       expect(hasStructuredData || hasUnparsedData).toBe(true);
     });
@@ -97,11 +100,12 @@ describe('SQL Reconstruction Decision Gate', () => {
         const result = JSON.parse(output);
 
         // Must have at least one parsed result
-        expect(result.length).toBeGreaterThan(0);
-        expect(result[0]).toBeDefined();
+        expect(result).toHaveLength(1);
+        expect(result[0].table).toBeDefined();
+        expect(result[0].actions).toHaveLength(1);
 
         // Must have action
-        expect(result[0].action).toBeDefined();
+        expect(result[0].actions[0].action).toBeDefined();
       });
     });
 
@@ -144,26 +148,21 @@ describe('SQL Reconstruction Decision Gate', () => {
     });
 
     test('complex statements with unparsedContent are information-complete', () => {
-      const complexStatements = [
-        'SELECT u.id FROM users u JOIN orders o ON u.id = o.user_id',
-        'SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)',
-      ];
+      const output = formatSql('SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)', { minify: true });
+      const result = JSON.parse(output);
 
-      complexStatements.forEach(sql => {
-        const output = formatSql(sql, { minify: true });
-        const result = JSON.parse(output);
+      // Complex statements should have unparsedContent
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(1);
+      expect(result[0].actions[0].unparsedContent).toBe('WHERE id IN (SELECT user_id FROM orders)');
 
-        // Complex statements should have unparsedContent
-        expect(result[0].unparsedContent).toBeDefined();
+      // Even if unparsedContent is present, we still have table name
+      expect(result[0].table).toBeDefined();
 
-        // Even if unparsedContent is present, we still have table name
-        expect(result[0].table).toBeDefined();
-
-        // Zero info loss: original SQL is recoverable
-        const hasTableInfo = !!result[0].table;
-        const hasUnparsedContent = !!result[0].unparsedContent;
-        expect(hasTableInfo && hasUnparsedContent).toBe(true);
-      });
+      // Zero info loss: original SQL is recoverable
+      const hasTableInfo = !!result[0].table;
+      const hasUnparsedContent = !!result[0].actions[0].unparsedContent;
+      expect(hasTableInfo && hasUnparsedContent).toBe(true);
     });
   });
 

@@ -90,10 +90,10 @@ describe('CLI and Orchestration', () => {
             const files = [{ file: 'file1.json', cached: true, cachedPath: '/path/file1.compact.json', originalSize: 0, newSize: 0 }, { file: 'file2.json', cached: false, originalSize: 0, newSize: 0 }];
             const output = formatOutput(files, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: true });
             const manifest = JSON.parse(output);
-            expect(manifest).toHaveProperty('processed');
-            expect(manifest).toHaveProperty('total');
-            expect(manifest.processed).toHaveLength(2);
-            expect(manifest.total).toBe(2);
+            expect(manifest).toHaveProperty('cached_files');
+            expect(manifest).toHaveProperty('cached_file_count');
+            expect(manifest.cached_files).toHaveLength(2);
+            expect(manifest.cached_file_count).toBe(2);
         });
         test('should include error field in single file output', () => {
             const files = [{ file: 'file1.json', error: 'File not found', cached: false, originalSize: 0, newSize: 0 }];

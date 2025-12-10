@@ -47,10 +47,10 @@ describe('Integration Tests', () => {
         const results = await processFiles([file1, file2], { minify: true, toJson: true, cache: true, overwrite: false, noOutput: true });
         const output = formatOutput(results, { minify: true, toJson: true, cache: true, overwrite: false, noOutput: true });
         const manifest = JSON.parse(output);
-        expect(manifest.total).toBe(2);
-        expect(manifest.processed).toHaveLength(2);
-        expect(manifest.processed[0].cached).toBe(true);
-        expect(manifest.processed[1].cached).toBe(true);
+        expect(manifest.cached_file_count).toBe(2);
+        expect(manifest.cached_files).toHaveLength(2);
+        expect(manifest.cached_files[0].original_filepath).toBe(file1);
+        expect(manifest.cached_files[1].original_filepath).toBe(file2);
     });
     test('should handle mixed success/error cases', async () => {
         const validFile = join(testDir, 'valid.json');

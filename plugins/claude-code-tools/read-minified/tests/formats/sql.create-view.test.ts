@@ -259,6 +259,7 @@ describe('SQL CREATE VIEW Statement Parsing', () => {
       const result = JSON.parse(output);
 
       const stmt = result[0];
+      expect(stmt).toBeUndefined();
       expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('objectType');
       expect(stmt).toHaveProperty('viewName');

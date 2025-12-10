@@ -20,11 +20,12 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].indexName).toBe('users_email_idx');
+      expect(result[0].actions).toHaveLength(1);
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].indexName).toBe('users_email_idx');
       expect(result[0].table).toBe('users');
-      expect(result[0].columns).toEqual(['email']);
+      expect(result[0].actions[0].columns).toEqual(['email']);
     });
 
     test('should parse CREATE UNIQUE INDEX', () => {
@@ -32,10 +33,10 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].unique).toBe(true);
-      expect(result[0].indexName).toBe('users_email_unique');
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].unique).toBe(true);
+      expect(result[0].actions[0].indexName).toBe('users_email_unique');
     });
 
     test('should parse CREATE INDEX with IF NOT EXISTS', () => {
@@ -43,9 +44,9 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].ifNotExists).toBe(true);
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].ifNotExists).toBe(true);
     });
 
     test('should parse CREATE INDEX with multiple columns', () => {
@@ -53,7 +54,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['status', 'created_at']);
+      expect(result[0].actions[0].columns).toEqual(['status', 'created_at']);
     });
 
     test('should handle case insensitivity', () => {
@@ -61,8 +62,8 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
     });
   });
 
@@ -72,8 +73,8 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toHaveLength(2);
-      expect(result[0].columns).toEqual(['user_id', 'created_at']);
+      expect(result[0].actions[0].columns).toHaveLength(2);
+      expect(result[0].actions[0].columns).toEqual(['user_id', 'created_at']);
     });
 
     test('should parse composite index with 3+ columns', () => {
@@ -81,7 +82,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toHaveLength(4);
+      expect(result[0].actions[0].columns).toHaveLength(4);
     });
 
     test('should preserve column order', () => {
@@ -89,7 +90,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['col_z', 'col_a', 'col_m']);
+      expect(result[0].actions[0].columns).toEqual(['col_z', 'col_a', 'col_m']);
     });
   });
 
@@ -99,8 +100,8 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].indexName).toBe('users_idx');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].indexName).toBe('users_idx');
     });
 
     test('should handle newlines', () => {
@@ -110,9 +111,9 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
       expect(result[0].table).toBe('users');
-      expect(result[0].columns).toEqual(['email']);
+      expect(result[0].actions[0].columns).toEqual(['email']);
     });
 
     test('should handle spaces in column list', () => {
@@ -120,7 +121,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['col1', 'col2', 'col3']);
+      expect(result[0].actions[0].columns).toEqual(['col1', 'col2', 'col3']);
     });
   });
 
@@ -130,7 +131,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['user_id', 'email_address']);
+      expect(result[0].actions[0].columns).toEqual(['user_id', 'email_address']);
     });
 
     test('should handle columns with numbers', () => {
@@ -138,7 +139,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['col1', 'col2', 'col3']);
+      expect(result[0].actions[0].columns).toEqual(['col1', 'col2', 'col3']);
     });
   });
 
@@ -148,7 +149,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].indexName).toBe('idx_users_email_status');
+      expect(result[0].actions[0].indexName).toBe('idx_users_email_status');
     });
 
     test('should handle short index names', () => {
@@ -156,7 +157,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].indexName).toBe('idx1');
+      expect(result[0].actions[0].indexName).toBe('idx1');
     });
   });
 
@@ -167,7 +168,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
     });
 
     test('should handle block comment', () => {
@@ -176,7 +177,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
     });
   });
 
@@ -187,11 +188,12 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result.length).toBeGreaterThanOrEqual(2);
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].objectType).toBe('TABLE');
-      expect(result[1].action).toBe('CREATE');
-      expect(result[1].objectType).toBe('INDEX');
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].objectType).toBe('TABLE');
+      expect(result[0].actions[1].action).toBe('CREATE');
+      expect(result[0].actions[1].objectType).toBe('INDEX');
     });
 
     test('should handle multiple CREATE INDEX statements', () => {
@@ -201,7 +203,8 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result.filter((r: any) => r.objectType === 'INDEX').length).toBeGreaterThanOrEqual(3);
+      const indexCount = result.reduce((sum:number,r: any) =>  sum + r.actions.filter((a:any) => a.objectType === 'INDEX').length, 0);
+      expect(indexCount).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -214,7 +217,7 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const indexCount = result.filter((r: any) => r.objectType === 'INDEX').length;
+      const indexCount = result.reduce((sum:number,r: any) =>  sum + r.actions.filter((a:any) => a.objectType === 'INDEX').length, 0);
       expect(indexCount).toBeGreaterThanOrEqual(2);
     });
   });
@@ -225,11 +228,11 @@ describe('SQL CREATE INDEX Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const stmt = result[0];
+      const stmt = result[0].actions[0];
       expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('objectType');
       expect(stmt).toHaveProperty('indexName');
-      expect(stmt).toHaveProperty('table');
+      expect(result[0]).toHaveProperty('table');
       expect(stmt).toHaveProperty('columns');
       expect(stmt).toHaveProperty('statementIndex');
     });

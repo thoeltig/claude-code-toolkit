@@ -25,10 +25,10 @@ describe('SQL DROP Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
-      expect(result[0].objectType).toBe('TABLE');
-      expect(result[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].objectType).toBe('TABLE');
+      expect(result[0].actions[0].statementIndex).toBe(0);
     });
 
     test('should parse DROP TABLE with IF EXISTS', () => {
@@ -36,10 +36,10 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
-      expect(result[0].objectType).toBe('TABLE');
-      expect(result[0].ifExists).toBe(true);
+      expect(result[0].actions[0].objectType).toBe('TABLE');
+      expect(result[0].actions[0].ifExists).toBe(true);
     });
 
     test('should parse DROP TABLE with CASCADE', () => {
@@ -47,9 +47,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
-      expect(result[0].cascade).toBe(true);
+      expect(result[0].actions[0].cascade).toBe(true);
     });
 
     test('should parse DROP TABLE with RESTRICT', () => {
@@ -57,9 +57,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
-      expect(result[0].restrict).toBe(true);
+      expect(result[0].actions[0].restrict).toBe(true);
     });
 
     test('should handle case insensitivity', () => {
@@ -67,9 +67,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
-      expect(result[0].objectType).toBe('TABLE');
+      expect(result[0].actions[0].objectType).toBe('TABLE');
     });
 
     test('should handle mixed case', () => {
@@ -77,8 +77,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('TABLE');
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('TABLE');
     });
   });
 
@@ -89,10 +89,10 @@ describe('SQL DROP Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].objectName).toBe('users_email_idx');
-      expect(result[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].objectName).toBe('users_email_idx');
+      expect(result[0].actions[0].statementIndex).toBe(0);
     });
 
     test('should parse DROP INDEX with IF EXISTS', () => {
@@ -100,9 +100,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].ifExists).toBe(true);
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].ifExists).toBe(true);
     });
 
     test('should parse DROP INDEX with ON table (MySQL syntax)', () => {
@@ -110,9 +110,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].objectName).toBe('users_email_idx');
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].objectName).toBe('users_email_idx');
       expect(result[0].table).toBe('users');
     });
   });
@@ -123,8 +123,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('VIEW');
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('VIEW');
       expect(result[0].table).toBe('users_summary');
     });
 
@@ -133,9 +133,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('VIEW');
-      expect(result[0].ifExists).toBe(true);
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('VIEW');
+      expect(result[0].actions[0].ifExists).toBe(true);
     });
 
     test('should parse DROP VIEW with CASCADE', () => {
@@ -143,9 +143,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('VIEW');
-      expect(result[0].cascade).toBe(true);
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('VIEW');
+      expect(result[0].actions[0].cascade).toBe(true);
     });
   });
 
@@ -159,9 +159,9 @@ describe('SQL DROP Statement Parsing', () => {
       const truncateResult = JSON.parse(formatSql(truncateSql, { minify: true }));
       const deleteResult = JSON.parse(formatSql(deleteSql, { minify: true }));
 
-      expect(dropResult[0].action).toBe('DROP');
-      expect(truncateResult[0].action).toBe('TRUNCATE');
-      expect(deleteResult[0].action).toBe('DELETE');
+      expect(dropResult[0].actions[0].action).toBe('DROP');
+      expect(truncateResult[0].actions[0].action).toBe('TRUNCATE');
+      expect(deleteResult[0].actions[0].action).toBe('DELETE');
     });
 
     test('DROP should not have WHERE clause', () => {
@@ -182,8 +182,9 @@ describe('SQL DROP Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(3);
-      expect(result.map((r: any) => r.action)).toEqual(['DROP', 'DROP', 'DROP']);
-      expect(result.map((r: any) => r.objectType)).toEqual(['TABLE', 'TABLE', 'TABLE']);
+      const actions = result.flatMap((r: any) => r.actions)
+      expect(actions.map((a: any) => a.action)).toEqual(['DROP', 'DROP', 'DROP']);
+      expect(actions.map((a: any) => a.objectType)).toEqual(['TABLE', 'TABLE', 'TABLE']);
     });
 
     test('should group consecutive DROP TABLE statements on same table', () => {
@@ -194,8 +195,8 @@ describe('SQL DROP Statement Parsing', () => {
 
       // Consecutive DROPs on same object should group
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('TABLE');
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('TABLE');
     });
 
     test('should handle mixed DROP types (TABLE, INDEX, VIEW)', () => {
@@ -206,9 +207,9 @@ describe('SQL DROP Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(3);
-      expect(result[0].objectType).toBe('TABLE');
-      expect(result[1].objectType).toBe('INDEX');
-      expect(result[2].objectType).toBe('VIEW');
+      expect(result[0].actions[0].objectType).toBe('TABLE');
+      expect(result[1].actions[0].objectType).toBe('INDEX');
+      expect(result[2].actions[0].objectType).toBe('VIEW');
     });
   });
 
@@ -218,7 +219,7 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
     });
 
@@ -229,7 +230,7 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
     });
 
@@ -238,7 +239,7 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('users');
     });
   });
@@ -265,8 +266,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].objectType).toBe('INDEX');
-      expect(result[0].objectName).toBe('idx_users_email_status');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].objectName).toBe('idx_users_email_status');
     });
   });
 
@@ -277,8 +278,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
-      expect(result[0].objectType).toBe('TABLE');
+      expect(result[0].actions[0].action).toBe('DROP');
+      expect(result[0].actions[0].objectType).toBe('TABLE');
     });
 
     test('should handle block comment before DROP', () => {
@@ -287,7 +288,7 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('DROP');
+      expect(result[0].actions[0].action).toBe('DROP');
       expect(result[0].table).toBe('old_users');
     });
   });
@@ -300,8 +301,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result.length).toBeGreaterThanOrEqual(3);
-      const actions = result.map((r: any) => r.action);
+      expect(result[0].actions.length).toBeGreaterThanOrEqual(3);
+      const actions = result.flatMap((r: any) => r.actions).map((a:any) => a.action);
       expect(actions).toContain('CREATE');
       expect(actions).toContain('INSERT');
       expect(actions).toContain('DROP');
@@ -313,9 +314,9 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('TRUNCATE');
-      expect(result[1].action).toBe('DROP');
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[1].action).toBe('DROP');
     });
   });
 
@@ -329,8 +330,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const dropCount = result.filter((r: any) => r.action === 'DROP').length;
-      expect(dropCount).toBeGreaterThanOrEqual(3);
+      const dropCount = result.flatMap((r: any) => r.actions).filter((a:any) => a.action === 'DROP').length;
+      expect(dropCount).toBe(3);
     });
 
     test('should handle schema rebuild', () => {
@@ -341,7 +342,7 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const actions = result.map((r: any) => r.action);
+      const actions = result.flatMap((r: any) => r.actions).map((a:any) => a.action);
       expect(actions).toContain('DROP');
       expect(actions).toContain('CREATE');
     });
@@ -353,8 +354,8 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const stmt = result[0];
-      expect(stmt).toHaveProperty('table');
+      expect(result[0]).toHaveProperty('table');
+      const stmt = result[0].actions[0];
       expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('objectType');
       expect(stmt).toHaveProperty('statementIndex');
@@ -369,7 +370,7 @@ describe('SQL DROP Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const stmt = result[0];
+      const stmt = result[0].actions[0];
       expect(stmt).toHaveProperty('objectName');
       expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('objectType');

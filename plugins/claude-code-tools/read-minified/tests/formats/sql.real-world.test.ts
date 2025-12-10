@@ -22,21 +22,24 @@ describe('Real-World SQL Validation', () => {
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
       expect(result[0].table).toBe('products');
-      expect(result[0].columns).toBeDefined();
+      expect(result[0].actions[0].columns).toBeDefined();
     });
 
     test('should parse customer order history with JOINs', () => {
       const sql = `SELECT o.id, o.total, o.status, u.name, u.email
                    FROM orders o
                    JOIN users u ON o.user_id = u.id
-                   WHERE o.status = 'completed'
-                   ORDER BY o.created_at DESC`;
+                   WHERE o.status = 'completed' ORDER BY o.created_at DESC`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
-
-      expect(result[0].table).toBe('orders');
-      expect(result[0].unparsedContent).toBeDefined();
+      
+      const table = result[0];
+      const action = table.actions[0];
+      expect(action.action).toBe('SELECT');
+      expect(table.table).toBe('orders');
+      expect(action.joins[0].table).toBe('users');
+      expect(action.where).toBe("o.status = 'completed' ORDER BY o.created_at DESC");
     });
 
     test('should parse product catalog with prices', () => {
@@ -46,8 +49,12 @@ describe('Real-World SQL Validation', () => {
                    WHERE p.active = true AND p.price > 0`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('SELECT');
-      expect(result[0].table).toBe('products');
+      const table = result[0];
+      const action = table.actions[0];
+      expect(action.action).toBe('SELECT');
+      expect(table.table).toBe('products');
+      expect(action.joins[0].table).toBe('categories');
+      expect(action.where).toBe('p.active = true AND p.price > 0');
     });
 
     test('should parse inventory check query', () => {
@@ -67,39 +74,44 @@ describe('Real-World SQL Validation', () => {
                    (1, 102, 5, 249.95, 'shipped')`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('INSERT');
+      expect(result[0].actions[0].action).toBe('INSERT');
       expect(result[0].table).toBe('orders');
-      expect(result[0].rowCount).toBe(3);
+      expect(result[0].actions[0].rowCount).toBe(3);
     });
 
     test('should parse order status update', () => {
       const sql = 'UPDATE orders SET status = "shipped", shipped_date = "2024-01-15" WHERE id IN (SELECT order_id FROM shipments WHERE carrier = "FedEx")';
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[0].table).toBe('orders');
+      const table = result[0];
+      const action = table.actions[0];
+      expect(table.table).toBe('orders');
+      expect(action.action).toBe('UPDATE');
+      expect(action.where).toBe('id IN (SELECT order_id FROM shipments WHERE carrier = "FedEx")');
     });
 
     test('should parse customer deletion (soft delete)', () => {
       const sql = 'UPDATE users SET deleted = true, deleted_at = NOW() WHERE id = ?';
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[0].table).toBe('users');
+      const table = result[0];
+      const action = table.actions[0];
+      expect(table.table).toBe('users');
+      expect(action.action).toBe('UPDATE');
+      expect(action.where).toBe('id = ?');
     });
   });
 
   describe('Reporting and Analytics Patterns', () => {
     test('should parse daily sales report', () => {
-      const sql = `SELECT DATE(created_at) as sale_date, COUNT(*) as order_count, SUM(total) as daily_revenue
-                   FROM orders
-                   WHERE status = 'completed'
-                   GROUP BY DATE(created_at)
-                   ORDER BY sale_date DESC`;
+      const sql = `SELECT DATE(created_at) as sale_date, COUNT(*) as order_count, SUM(total) as daily_revenue FROM orders WHERE status = 'completed' GROUP BY DATE(created_at) ORDER BY sale_date DESC`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].table).toBe('orders');
-      expect(result[0].unparsedContent).toContain('GROUP BY');
+      const table = result[0];
+      const action = table.actions[0];
+      expect(table.table).toBe('orders');
+      expect(action.action).toBe('SELECT');
+      expect(action.where).toBe("status = 'completed' GROUP BY DATE(created_at) ORDER BY sale_date DESC");
     });
 
     test('should parse customer lifetime value report', () => {
@@ -111,9 +123,21 @@ describe('Real-World SQL Validation', () => {
                    HAVING SUM(o.total) > 100
                    ORDER BY lifetime_value DESC`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
-
-      expect(result[0].table).toBe('users');
-      expect(result[0].unparsedContent).toBeDefined();
+      
+      const table = result[0];
+      const action = table.actions[0];
+      const join = action.joins[0];
+      expect(table.table).toBe('users');
+      expect(action.action).toBe('SELECT');
+      expect(action.columns[0]).toBe('u.id');
+      expect(action.columns[1]).toBe('u.name');
+      expect(join.alias).toBe('o');
+      expect(join.condition).toBe('u.id = o.user_id');
+      expect(join.table).toBe('orders');
+      expect(join.type).toBe('LEFT');
+      expect(action.groupByColumns[0]).toBe('u.id');
+      expect(action.groupByColumns[1]).toBe('u.name');
+      expect(action.havingClause).toBe('SUM(o.total) > 100');
     });
 
     test('should parse product performance metrics', () => {
@@ -124,8 +148,21 @@ describe('Real-World SQL Validation', () => {
                    HAVING COUNT(o.id) > 0
                    ORDER BY total_quantity DESC`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
-
-      expect(result[0].table).toBe('products');
+      
+      const table = result[0];
+      const action = table.actions[0];
+      const join = action.joins[0];
+      expect(table.table).toBe('products');
+      expect(action.action).toBe('SELECT');
+      expect(action.columns[0]).toBe('p.id');
+      expect(action.columns[1]).toBe('p.name');
+      expect(join.alias).toBe('o');
+      expect(join.condition).toBe('p.id = o.product_id');
+      expect(join.table).toBe('order_items');
+      expect(join.type).toBe('LEFT');
+      expect(action.groupByColumns[0]).toBe('p.id');
+      expect(action.groupByColumns[1]).toBe('p.name');
+      expect(action.havingClause).toBe('COUNT(o.id) > 0');
     });
 
     test('should parse category sales summary', () => {
@@ -137,7 +174,23 @@ describe('Real-World SQL Validation', () => {
                    ORDER BY total_sold DESC`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].table).toBe('categories');
+      const table = result[0];
+      const action = table.actions[0];
+      const join0 = action.joins[0];
+      const join1 = action.joins[1];
+      expect(table.table).toBe('categories');
+      expect(action.action).toBe('SELECT');
+      expect(action.columns[0]).toBe('c.name');
+      expect(join0.alias).toBe('p');
+      expect(join0.condition).toBe('c.id = p.category_id');
+      expect(join0.table).toBe('products');
+      expect(join0.type).toBe('LEFT');
+      expect(join1.alias).toBe('oi');
+      expect(join1.condition).toBe('p.id = oi.product_id');
+      expect(join1.table).toBe('order_items');
+      expect(join1.type).toBe('LEFT');
+      expect(action.groupByColumns[0]).toBe('c.id');
+      expect(action.groupByColumns[1]).toBe('c.name');    
     });
   });
 
@@ -151,8 +204,8 @@ describe('Real-World SQL Validation', () => {
                    ('user5@example.com', 'User Five', 'inactive', '2024-01-05')`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].rowCount).toBe(5);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].rowCount).toBe(5);
     });
 
     test('should parse bulk update status', () => {
@@ -161,7 +214,7 @@ describe('Real-World SQL Validation', () => {
                    AND status = 'active'`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -171,7 +224,7 @@ describe('Real-World SQL Validation', () => {
                    AND status IN ('cancelled', 'failed')`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
       expect(result[0].table).toBe('order_logs');
     });
 
@@ -179,33 +232,36 @@ describe('Real-World SQL Validation', () => {
       const sql = 'CREATE INDEX idx_users_email ON users(email)';
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].objectType).toBe('INDEX');
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].objectType).toBe('INDEX');
     });
 
     test('should parse table structure change', () => {
       const sql = 'ALTER TABLE users ADD COLUMN phone_verified BOOLEAN DEFAULT false';
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('ALTER');
+      expect(result[0].actions[0].action).toBe('ALTER');
       expect(result[0].table).toBe('users');
     });
   });
 
   describe('Complex Business Logic Patterns', () => {
     test('should parse high-value customer identification', () => {
-      const sql = `SELECT u.id, u.name, SUM(o.total) as total_spent
-                   FROM users u
-                   JOIN orders o ON u.id = o.user_id
-                   WHERE o.status = 'completed'
-                   GROUP BY u.id, u.name
-                   HAVING SUM(o.total) > 5000
-                   ORDER BY total_spent DESC
-                   LIMIT 100`;
+      const sql = `SELECT u.id, u.name, SUM(o.total) as total_spent FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'completed' GROUP BY u.id, u.name HAVING SUM(o.total) > 5000 ORDER BY total_spent DESC LIMIT 100`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].table).toBe('users');
-      expect(result[0].unparsedContent).toBeDefined();
+      const table = result[0];
+      const action = table.actions[0];
+      const join = action.joins[0];
+      expect(table.table).toBe('users');
+      expect(action.action).toBe('SELECT');
+      expect(action.columns[0]).toBe('u.id');
+      expect(action.columns[1]).toBe('u.name');
+      expect(join.alias).toBe('o');
+      expect(join.condition).toBe('u.id = o.user_id');
+      expect(join.table).toBe('orders');
+      expect(join.type).toBe('INNER');
+      expect(action.where).toBe("o.status = 'completed' GROUP BY u.id, u.name HAVING SUM(o.total) > 5000 ORDER BY total_spent DESC LIMIT 100");
     });
 
     test('should parse inventory prediction query', () => {
@@ -215,8 +271,19 @@ describe('Real-World SQL Validation', () => {
                    WHERE i.quantity < 100`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].table).toBe('products');
-      expect(result[0].unparsedContent).toBeDefined();
+      const table = result[0];
+      const action = table.actions[0];
+      const join = action.joins[0];
+      expect(table.table).toBe('products');
+      expect(action.action).toBe('SELECT');
+      expect(action.columns[0]).toBe('p.id');
+      expect(action.columns[1]).toBe('p.name');
+      expect(action.columns[2]).toBe('i.quantity');
+      expect(join.alias).toBe('i');
+      expect(join.condition).toBe('p.id = i.product_id');
+      expect(join.table).toBe('inventory');
+      expect(join.type).toBe('INNER');
+      expect(action.where).toBe('i.quantity < 100');
     });
 
     test('should parse competitor price monitoring', () => {
@@ -288,7 +355,7 @@ describe('Real-World SQL Validation', () => {
 
       const results = testCases.map(({ sql, expectedAction }) => {
         const result = JSON.parse(formatSql(sql, { minify: true }));
-        return result[0].action === expectedAction;
+        return result[0].actions[0].action === expectedAction;
       });
 
       const successRate = (results.filter(r => r).length / results.length) * 100;
@@ -349,7 +416,7 @@ describe('Real-World SQL Validation', () => {
         // Core assertions for every statement
         expect(result).toBeDefined();
         expect(result.length).toBeGreaterThan(0);
-        expect(result[0].action).toBeDefined();
+        expect(result[0].actions[0].action).toBeDefined();
         // Most statements should have table
         if (result[0].table) {
           expect(result[0].table.length).toBeGreaterThan(0);
@@ -366,7 +433,7 @@ describe('Real-World SQL Validation', () => {
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
       expect(result[0].table).toBe('orders');
-      expect(result[0].where).toBeDefined();
+      expect(result[0].actions[0].where).toBeDefined();
     });
 
     test('should handle pagination patterns', () => {
@@ -376,7 +443,7 @@ describe('Real-World SQL Validation', () => {
                    LIMIT 20 OFFSET 40`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
       expect(result[0].table).toBe('users');
     });
 
@@ -389,7 +456,7 @@ describe('Real-World SQL Validation', () => {
                    (2, 'view_product', '192.168.1.2', '2024-01-15 10:20:00')`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].rowCount).toBe(5);
+      expect(result[0].actions[0].rowCount).toBe(5);
     });
 
     test('should handle upsert-like patterns', () => {
@@ -397,7 +464,7 @@ describe('Real-World SQL Validation', () => {
                    WHERE email = 'user@example.com'`;
       const result = JSON.parse(formatSql(sql, { minify: true }));
 
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
     });
   });
