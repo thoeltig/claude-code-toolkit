@@ -165,7 +165,10 @@ export function formatSql(rawContent: string, options: { minify: boolean }): str
             return null;
         }).filter((item: any) => item !== null);
 
-        return options.minify ? minifyJson(result) : JSON.stringify(result, null, 2);
+        // Transform flat structure to table-grouped structure for token efficiency
+        const groupedByTable = transformToTableGrouped(result);
+
+        return options.minify ? minifyJson(groupedByTable) : JSON.stringify(groupedByTable, null, 2);
     } catch (err) {
         return minifyJson({ error: `Failed to parse SQL: ${err}`, content: rawContent });
     }
@@ -1642,6 +1645,62 @@ function areInsertColumnsCompatible(groupColumns: string[] | '*' | undefined, st
     if (Array.isArray(groupColumns) && Array.isArray(stmtColumns)) return true;
     // Different types: '*' vs array, not compatible
     return false;
+}
+
+function transformToTableGrouped(flatStatements: any[]): any[] {
+    const tableMap = new Map<string, any[]>();
+    const systemStatements: any[] = []; // For statements without a table (transactions, permissions)
+
+    for (const stmt of flatStatements) {
+        const table = stmt.table;
+
+        // Determine if this is a table-based or system statement
+        const isSystemStatement = stmt.action === 'BEGIN' || stmt.action === 'COMMIT' ||
+                                 stmt.action === 'ROLLBACK' || stmt.action === 'SAVEPOINT' ||
+                                 stmt.action === 'RELEASE' || stmt.action === 'GRANT' ||
+                                 stmt.action === 'REVOKE';
+
+        if (isSystemStatement) {
+            // System statements go to a separate array
+            systemStatements.push(stmt);
+        } else if (table) {
+            // Table-based statements are grouped by table
+            if (!tableMap.has(table)) {
+                tableMap.set(table, []);
+            }
+
+            // Create action object (remove table field, keep everything else)
+            const action: any = { action: stmt.action };
+
+            // Copy all fields except 'table' and 'action'
+            for (const [key, value] of Object.entries(stmt)) {
+                if (key !== 'table' && key !== 'action') {
+                    action[key] = value;
+                }
+            }
+
+            tableMap.get(table)!.push(action);
+        }
+    }
+
+    // Build result: table groups first, then system statements
+    const result: any[] = [];
+
+    // Add table-grouped statements in order of first appearance
+    for (const [table, actions] of tableMap) {
+        result.push({
+            table,
+            actions
+        });
+    }
+
+    // Add system statements if any exist
+    if (systemStatements.length > 0) {
+        // Add each system statement as a top-level item
+        result.push(...systemStatements);
+    }
+
+    return result;
 }
 
 function minifyJson(obj: any): string {
