@@ -277,14 +277,17 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
     });
 
     test('should maintain zero information loss with unparsedContent', () => {
-      const sql = 'SELECT id AS user_id, name FROM users LEFT JOIN orders ON users.id = orders.user_id;';
+      const sql = 'SELECT id AS user_id, name FROM users LEFT JOIN orders ON users.id = orders.user_id WHERE orders.total > (SELECT AVG(total) FROM orders);';
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
       // Should capture aliases
       expect(result[0].columnAliases).toBeDefined();
-      // Should preserve JOINs in unparsedContent
-      expect(result[0].unparsedContent).toBeDefined();
+      // Should parse simple JOIN
+      expect(result[0].joins).toBeDefined();
+      // Complex WHERE with subquery preserved in where field
+      expect(result[0].where).toBeDefined();
+      expect(result[0].where).toContain('SELECT');
     });
   });
 });
