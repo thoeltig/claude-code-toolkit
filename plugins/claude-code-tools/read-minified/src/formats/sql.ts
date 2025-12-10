@@ -824,6 +824,13 @@ function parseSelectStatement(sql: string): any | null {
         joins = parseJoins(sql);
     }
 
+    // Detect and parse CASE statements
+    let caseStatements: Array<{column?: string; caseType: 'simple' | 'searched'; whens: Array<{when: string; then: string}>; else?: string}> | undefined;
+    const hasCase = /\bCASE\b/i.test(sql);
+    if (hasCase) {
+        caseStatements = parseCaseStatements(sql);
+    }
+
     // Detect unparsed content: subqueries, complex conditions, etc.
     let unparsedContent: string | undefined;
     const hasInSubquery = /\bIN\s*\(\s*SELECT/i.test(sql);
@@ -854,6 +861,7 @@ function parseSelectStatement(sql: string): any | null {
         ...(havingClause && { havingClause }),
         ...(joins && { joins }),
         ...(unionType && { unionType }),
+        ...(caseStatements && { caseStatements }),
         ...(unparsedContent && { unparsedContent })
     };
 }
@@ -893,6 +901,87 @@ function parseJoins(sql: string): Array<{type: string; table: string; alias?: st
     }
 
     return joins.length > 0 ? joins : undefined as any;
+}
+
+function parseCaseStatements(sql: string): Array<{column?: string; caseType: 'simple' | 'searched'; whens: Array<{when: string; then: string}>; else?: string}> | undefined {
+    const caseStatements: Array<{column?: string; caseType: 'simple' | 'searched'; whens: Array<{when: string; then: string}>; else?: string}> = [];
+
+    // Find all CASE...END blocks in the SQL
+    const caseRegex = /\bCASE\b([\s\S]*?)\bEND\b/gi;
+    let caseMatch;
+
+    while ((caseMatch = caseRegex.exec(sql)) !== null) {
+        const caseContent = caseMatch[1].trim();
+
+        // Extract WHEN...THEN pairs
+        const whens: Array<{when: string; then: string}> = [];
+        let caseType: 'simple' | 'searched' = 'searched'; // Default to searched
+
+        // Try to match simple CASE format: CASE expr WHEN val THEN result ...
+        // vs searched CASE format: CASE WHEN cond THEN result ...
+        const simpleMatch = /^(\w+)\s+WHEN/i.exec(caseContent);
+        const searchedMatch = /^WHEN/i.test(caseContent);
+
+        if (simpleMatch) {
+            caseType = 'simple';
+        } else if (searchedMatch) {
+            caseType = 'searched';
+        }
+
+        // Extract all WHEN...THEN pairs
+        // For searched CASE: WHEN condition THEN result
+        // For simple CASE: WHEN value THEN result
+        const whenThenPattern = /\bWHEN\b\s+([\s\S]*?)\s+\bTHEN\b\s+([\s\S]*?)(?=\s+WHEN\b|\s+ELSE\b|\s*$)/gi;
+        let whenThenMatch;
+
+        while ((whenThenMatch = whenThenPattern.exec(caseContent)) !== null) {
+            const whenPart = whenThenMatch[1].trim();
+            const thenPart = whenThenMatch[2].trim();
+
+            // Trim trailing AND/OR if they were included
+            const trimmedWhen = whenPart.replace(/\s+(AND|OR)\s*$/i, '').trim();
+            const trimmedThen = thenPart.replace(/\s+(AND|OR)\s*$/i, '').trim();
+
+            if (trimmedWhen && trimmedThen) {
+                whens.push({
+                    when: trimmedWhen,
+                    then: trimmedThen
+                });
+            }
+        }
+
+        // Extract ELSE clause
+        const elseMatch = /\bELSE\b\s+([\s\S]*?)$/i.exec(caseContent);
+        let elseClause: string | undefined;
+        if (elseMatch) {
+            elseClause = elseMatch[1].trim();
+        }
+
+        // Look for alias after END (check text after the matched END)
+        const endPos = caseMatch.index + caseMatch[0].length;
+        const afterEnd = sql.substring(endPos, Math.min(endPos + 50, sql.length)).trim();
+        const aliasMatch = /^(?:AS\s+)?(\w+)(?:\s|,|FROM|WHERE|GROUP|HAVING|ORDER|LIMIT|UNION|$)/i.exec(afterEnd);
+        let alias: string | undefined;
+        if (aliasMatch && aliasMatch[1]) {
+            const potentialAlias = aliasMatch[1];
+            // Avoid capturing SQL keywords
+            if (!/^(FROM|WHERE|GROUP|HAVING|ORDER|LIMIT|UNION|INTERSECT|EXCEPT|AND|OR|ON|JOIN)$/i.test(potentialAlias)) {
+                alias = potentialAlias;
+            }
+        }
+
+        // Only add if we found WHEN clauses
+        if (whens.length > 0) {
+            caseStatements.push({
+                ...(alias && { column: alias }),
+                caseType,
+                whens,
+                ...(elseClause && { else: elseClause })
+            });
+        }
+    }
+
+    return caseStatements.length > 0 ? caseStatements : undefined;
 }
 
 function parseCreateIndexStatement(sql: string): any | null {
