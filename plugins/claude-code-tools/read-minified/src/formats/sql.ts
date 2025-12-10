@@ -788,8 +788,8 @@ function parseSelectStatement(sql: string): any | null {
         where = whereMatch[1].trim();
     }
 
-    // Detect GROUP BY
-    const groupByMatch = /\bGROUP\s+BY\s+([\w,\s]+?)(?=\s*(?:HAVING|ORDER|LIMIT|;|$))/i.exec(sql);
+    // Detect GROUP BY (including table-qualified columns like u.status)
+    const groupByMatch = /\bGROUP\s+BY\s+([\w.,\s]+?)(?=\s*(?:HAVING|ORDER|LIMIT|;|$))/i.exec(sql);
     let groupByColumns: string[] | undefined;
     if (groupByMatch) {
         groupByColumns = groupByMatch[1]
@@ -817,12 +817,19 @@ function parseSelectStatement(sql: string): any | null {
         unionType = 'EXCEPT';
     }
 
-    // Detect unparsed content: JOINs, subqueries, etc.
-    let unparsedContent: string | undefined;
+    // Detect and parse JOINs
+    let joins: Array<{type: string; table: string; alias?: string; condition?: string}> | undefined;
     const hasJoin = /\bJOIN\b/i.test(sql);
-    const hasInSubquery = /\bIN\s*\(\s*SELECT/i.test(sql);
+    if (hasJoin) {
+        joins = parseJoins(sql);
+    }
 
-    if (hasJoin || hasInSubquery) {
+    // Detect unparsed content: subqueries, complex conditions, etc.
+    let unparsedContent: string | undefined;
+    const hasInSubquery = /\bIN\s*\(\s*SELECT/i.test(sql);
+    const hasComplexJoinConditions = /\bJOIN\b.*\bON\b.*\b(AND|OR|IN|EXISTS|CASE|WHEN)\b/i.test(sql);
+
+    if (hasInSubquery || hasComplexJoinConditions) {
         // Extract everything after "FROM tablename"
         const fromPos = (fromMatch.index || 0) + fromMatch[0].length;
         let afterFrom = sql.substring(fromPos).trim();
@@ -845,9 +852,47 @@ function parseSelectStatement(sql: string): any | null {
         ...(where && { where }),
         ...(groupByColumns && { groupByColumns }),
         ...(havingClause && { havingClause }),
+        ...(joins && { joins }),
         ...(unionType && { unionType }),
         ...(unparsedContent && { unparsedContent })
     };
+}
+
+function parseJoins(sql: string): Array<{type: string; table: string; alias?: string; condition?: string}> {
+    const joins: Array<{type: string; table: string; alias?: string; condition?: string}> = [];
+
+    // Match all JOIN clauses
+    // Pattern: (LEFT|RIGHT|INNER|FULL OUTER|CROSS)? JOIN table_name [alias] ON condition
+    // Condition should stop at next JOIN, WHERE, GROUP, HAVING, ORDER, LIMIT, UNION, etc.
+    const joinPattern = /\b(LEFT\s+OUTER|RIGHT\s+OUTER|FULL\s+OUTER|CROSS|LEFT|RIGHT|INNER|JOIN)?\s*JOIN\s+(\w+)(?:\s+(?:AS\s+)?(\w+))?\s+ON\s+([^;]*?)(?=\s+(?:WHERE|GROUP|HAVING|ORDER|LIMIT|UNION|INTERSECT|EXCEPT)\b|(?=\s+(?:LEFT|RIGHT|INNER|FULL|CROSS)\s+JOIN)|(?=\s+JOIN\s+)|;|$)/gi;
+
+    let match;
+    while ((match = joinPattern.exec(sql)) !== null) {
+        let joinType = 'INNER';  // Default to INNER
+
+        // Determine JOIN type
+        if (match[1]) {
+            const typeStr = match[1].toUpperCase().trim();
+            if (typeStr.includes('LEFT')) joinType = 'LEFT';
+            else if (typeStr.includes('RIGHT')) joinType = 'RIGHT';
+            else if (typeStr.includes('FULL')) joinType = 'FULL OUTER';
+            else if (typeStr.includes('CROSS')) joinType = 'CROSS';
+            else if (typeStr === 'JOIN') joinType = 'INNER';  // Explicit or implicit
+        }
+
+        const joinedTable = match[2];
+        const alias = match[3];
+        const condition = match[4].trim();
+
+        joins.push({
+            type: joinType,
+            table: joinedTable,
+            ...(alias && { alias }),
+            ...(condition && { condition })
+        });
+    }
+
+    return joins.length > 0 ? joins : undefined as any;
 }
 
 function parseCreateIndexStatement(sql: string): any | null {
