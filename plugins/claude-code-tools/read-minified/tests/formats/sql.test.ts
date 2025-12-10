@@ -9,17 +9,17 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
-      expect(result[0].rowCount).toBe(2);
-      expect(result[0].rows).toHaveLength(2);
-      expect(result[0].rows[0]).toEqual({
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].rowCount).toBe(2);
+      expect(result[0].actions[0].rows).toHaveLength(2);
+      expect(result[0].actions[0].rows[0]).toEqual({
         id: 1,
         name: 'John',
         email: 'john@example.com'
       });
-      expect(result[0].rows[1]).toEqual({
+      expect(result[0].actions[0].rows[1]).toEqual({
         id: 2,
         name: 'Jane',
         email: 'jane@example.com'
@@ -33,10 +33,10 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('products');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rowCount).toBe(1);
-      expect(result[0].rows[0]).toEqual({
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rowCount).toBe(1);
+      expect(result[0].actions[0].rows[0]).toEqual({
         sku: 'SKU001',
         name: 'Widget',
         price: 9.99
@@ -51,15 +51,15 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(2);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].rowCount).toBe(2);
-      expect(result[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].rowCount).toBe(2);
+      expect(result[0].actions[0].statementIndex).toBe(0);
       expect(result[1].table).toBe('products');
-      expect(result[1].action).toBe('INSERT');
-      expect(result[1].rowCount).toBe(2);
-      expect(result[1].statementIndex).toBe(1);
-      expect(result[0].rows[0].name).toBe('John');
-      expect(result[1].rows[0].name).toBe('Widget');
+      expect(result[1].actions[0].action).toBe('INSERT');
+      expect(result[1].actions[0].rowCount).toBe(2);
+      expect(result[1].actions[0].statementIndex).toBe(1);
+      expect(result[0].actions[0].rows[0].name).toBe('John');
+      expect(result[1].actions[0].rows[0].name).toBe('Widget');
     });
   });
 
@@ -69,10 +69,10 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].count).toBe(42);
-      expect(result[0].rows[1].count).toBe(100);
-      expect(result[0].rows[2].count).toBe(0);
-      expect(result[0].rows[3].count).toBe(-5);
+      expect(result[0].actions[0].rows[0].count).toBe(42);
+      expect(result[0].actions[0].rows[1].count).toBe(100);
+      expect(result[0].actions[0].rows[2].count).toBe(0);
+      expect(result[0].actions[0].rows[3].count).toBe(-5);
     });
 
     test('should parse float numbers correctly', () => {
@@ -80,9 +80,9 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].amount).toBe(9.99);
-      expect(result[0].rows[1].amount).toBe(3.14159);
-      expect(result[0].rows[2].amount).toBe(0.5);
+      expect(result[0].actions[0].rows[0].amount).toBe(9.99);
+      expect(result[0].actions[0].rows[1].amount).toBe(3.14159);
+      expect(result[0].actions[0].rows[2].amount).toBe(0.5);
     });
 
     test('should parse boolean values', () => {
@@ -90,9 +90,9 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].enabled).toBe(true);
-      expect(result[0].rows[0].active).toBe(false);
-      expect(result[0].rows[1].enabled).toBe(true);
+      expect(result[0].actions[0].rows[0].enabled).toBe(true);
+      expect(result[0].actions[0].rows[0].active).toBe(false);
+      expect(result[0].actions[0].rows[1].enabled).toBe(true);
     });
 
     test('should handle NULL values (omitted from row)', () => {
@@ -100,16 +100,16 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toEqual({
+      expect(result[0].actions[0].rows[0]).toEqual({
         id: 1,
         name: 'John'
       });
-      expect(result[0].rows[0]).not.toHaveProperty('email');
-      expect(result[0].rows[1]).toEqual({
+      expect(result[0].actions[0].rows[0]).not.toHaveProperty('email');
+      expect(result[0].actions[0].rows[1]).toEqual({
         id: 2,
         email: 'jane@example.com'
       });
-      expect(result[0].rows[1]).not.toHaveProperty('name');
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('name');
     });
 
     test('should distinguish NULL from string "NULL"', () => {
@@ -117,8 +117,8 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).not.toHaveProperty('value');
-      expect(result[0].rows[1]).toEqual({ value: 'NULL' });
+      expect(result[0].actions[0].rows[0]).not.toHaveProperty('value');
+      expect(result[0].actions[0].rows[1]).toEqual({ value: 'NULL' });
     });
   });
 
@@ -128,8 +128,8 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].name).toBe('Apple');
-      expect(result[0].rows[1].name).toBe('Banana');
+      expect(result[0].actions[0].rows[0].name).toBe('Apple');
+      expect(result[0].actions[0].rows[1].name).toBe('Banana');
     });
 
     test('should handle strings with commas', () => {
@@ -137,8 +137,8 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].full_address).toBe('123 Main St, Springfield');
-      expect(result[0].rows[1].full_address).toBe('456 Oak Ave, Shelbyville, IL');
+      expect(result[0].actions[0].rows[0].full_address).toBe('123 Main St, Springfield');
+      expect(result[0].actions[0].rows[1].full_address).toBe('456 Oak Ave, Shelbyville, IL');
     });
 
     test('should handle escaped quotes in strings', () => {
@@ -146,8 +146,8 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].text).toContain('hello');
-      expect(result[0].rows[1].text).toContain("'");
+      expect(result[0].actions[0].rows[0].text).toContain('hello');
+      expect(result[0].actions[0].rows[1].text).toContain("'");
     });
 
     test('should preserve spaces in quoted strings', () => {
@@ -155,8 +155,8 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].name).toBe('John Doe');
-      expect(result[0].rows[1].name).toContain('spaces');
+      expect(result[0].actions[0].rows[0].name).toBe('John Doe');
+      expect(result[0].actions[0].rows[1].name).toContain('spaces');
     });
 
     test('should handle special characters in strings', () => {
@@ -164,9 +164,9 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].value).toBe('test@example.com');
-      expect(result[0].rows[1].value).toBe('path/to/file');
-      expect(result[0].rows[2].value).toBe('$100.00');
+      expect(result[0].actions[0].rows[0].value).toBe('test@example.com');
+      expect(result[0].actions[0].rows[1].value).toBe('path/to/file');
+      expect(result[0].actions[0].rows[2].value).toBe('$100.00');
     });
   });
 
@@ -177,10 +177,10 @@ describe('SQL Format Handler', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(2);
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rows[0]).toEqual({ a: 1, b: 2 });
-      expect(result[1].statementIndex).toBe(1);
-      expect(result[1].rows[0]).toEqual({ x: 1, y: 2, z: 3, w: 4 });
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rows[0]).toEqual({ a: 1, b: 2 });
+      expect(result[1].actions[0].statementIndex).toBe(1);
+      expect(result[1].actions[0].rows[0]).toEqual({ x: 1, y: 2, z: 3, w: 4 });
     });
 
     test('should handle whitespace around column names', () => {
@@ -188,7 +188,7 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toEqual({
+      expect(result[0].actions[0].rows[0]).toEqual({
         id: 1,
         name: 'John',
         email: 'john@example.com'
@@ -200,9 +200,9 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toHaveProperty('ID');
-      expect(result[0].rows[0]).toHaveProperty('Name');
-      expect(result[0].rows[0]).toHaveProperty('Email_Address');
+      expect(result[0].actions[0].rows[0]).toHaveProperty('ID');
+      expect(result[0].actions[0].rows[0]).toHaveProperty('Name');
+      expect(result[0].actions[0].rows[0]).toHaveProperty('Email_Address');
     });
   });
 
@@ -212,7 +212,7 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
+      expect(result[0].actions[0].rows[0]).toEqual({ id: 1, name: 'John' });
     });
 
     test('should handle uppercase INSERT', () => {
@@ -220,7 +220,7 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toEqual({ ID: 1, NAME: 'John' });
+      expect(result[0].actions[0].rows[0]).toEqual({ ID: 1, NAME: 'John' });
     });
 
     test('should handle mixed case INSERT', () => {
@@ -228,7 +228,7 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toEqual({ Id: 1, NaMe: 'John' });
+      expect(result[0].actions[0].rows[0]).toEqual({ Id: 1, NaMe: 'John' });
     });
 
     test('should handle case-insensitive NULL', () => {
@@ -236,9 +236,9 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).not.toHaveProperty('name');
-      expect(result[0].rows[1]).not.toHaveProperty('name');
-      expect(result[0].rows[2]).not.toHaveProperty('name');
+      expect(result[0].actions[0].rows[0]).not.toHaveProperty('name');
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('name');
+      expect(result[0].actions[0].rows[2]).not.toHaveProperty('name');
     });
   });
 
@@ -253,9 +253,10 @@ describe('SQL Format Handler', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('SELECT');
-      expect(result[1].action).toBe('CREATE');
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[1].action).toBe('CREATE');
     });
 
     test('should handle SQL with comments (ignored)', () => {
@@ -276,9 +277,9 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rows[0]).toEqual({ id: 1, name: 'John' });
     });
 
     test('should handle table names with underscores and numbers', () => {
@@ -287,9 +288,9 @@ describe('SQL Format Handler', () => {
       const result = JSON.parse(output);
 
       expect(result[0].table).toBe('user_data_v2');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rows[0]).toEqual({ id: 1, name: 'John' });
     });
 
     test('should gracefully handle malformed SQL', () => {
@@ -312,12 +313,12 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rowCount).toBe(2);
-      expect(result[0].rows[0]).toHaveProperty('user_id', 1001);
-      expect(result[0].rows[0]).toHaveProperty('verified', true);
-      expect(result[0].rows[1]).not.toHaveProperty('phone');
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rowCount).toBe(2);
+      expect(result[0].actions[0].rows[0]).toHaveProperty('user_id', 1001);
+      expect(result[0].actions[0].rows[0]).toHaveProperty('verified', true);
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('phone');
     });
 
     test('should parse product inventory', () => {
@@ -331,11 +332,11 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('inventory');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rowCount).toBe(3);
-      expect(result[0].rows[0].quantity).toBe(15);
-      expect(result[0].rows[2].quantity).toBe(0);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rowCount).toBe(3);
+      expect(result[0].actions[0].rows[0].quantity).toBe(15);
+      expect(result[0].actions[0].rows[2].quantity).toBe(0);
     });
 
     test('should parse order data', () => {
@@ -349,11 +350,11 @@ describe('SQL Format Handler', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('orders');
-      expect(result[0].action).toBe('INSERT');
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[0].rowCount).toBe(3);
-      expect(result[0].rows[0].status).toBe('shipped');
-      expect(result[0].rows[1]).not.toHaveProperty('notes');
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].rowCount).toBe(3);
+      expect(result[0].actions[0].rows[0].status).toBe('shipped');
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('notes');
     });
   });
 

@@ -24,10 +24,10 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('ALTER');
+      expect(result[0].actions[0].action).toBe('ALTER');
       expect(result[0].table).toBe('users');
-      expect(result[0].alterationType).toBe('ADD_COLUMN');
-      expect(result[0].columnDefinition).toBeDefined();
+      expect(result[0].actions[0].alterationType).toBe('ADD_COLUMN');
+      expect(result[0].actions[0].columnDefinition).toBeDefined();
     });
 
     test('should parse ADD COLUMN with constraints', () => {
@@ -35,8 +35,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('ADD_COLUMN');
-      expect(result[0].columnDefinition).toBeDefined();
+      expect(result[0].actions[0].alterationType).toBe('ADD_COLUMN');
+      expect(result[0].actions[0].columnDefinition).toBeDefined();
     });
 
     test('should parse ADD COLUMN with PRIMARY KEY', () => {
@@ -44,7 +44,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('ADD_COLUMN');
+      expect(result[0].actions[0].alterationType).toBe('ADD_COLUMN');
     });
 
     test('should handle case insensitivity', () => {
@@ -52,8 +52,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('ADD_COLUMN');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('ADD_COLUMN');
     });
   });
 
@@ -63,9 +63,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('MODIFY_COLUMN');
-      expect(result[0].columnName).toBe('email');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('MODIFY_COLUMN');
+      expect(result[0].actions[0].columnName).toBe('email');
     });
 
     test('should parse PostgreSQL ALTER COLUMN', () => {
@@ -73,8 +73,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('MODIFY_COLUMN');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('MODIFY_COLUMN');
     });
 
     test('should parse ALTER COLUMN SET DEFAULT', () => {
@@ -82,7 +82,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('MODIFY_COLUMN');
+      expect(result[0].actions[0].alterationType).toBe('MODIFY_COLUMN');
     });
 
     test('should parse ALTER COLUMN DROP DEFAULT', () => {
@@ -90,7 +90,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('MODIFY_COLUMN');
+      expect(result[0].actions[0].alterationType).toBe('MODIFY_COLUMN');
     });
 
     test('should parse ALTER COLUMN SET NOT NULL', () => {
@@ -98,7 +98,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('MODIFY_COLUMN');
+      expect(result[0].actions[0].alterationType).toBe('MODIFY_COLUMN');
     });
 
     test('should parse ALTER COLUMN DROP NOT NULL', () => {
@@ -106,7 +106,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('MODIFY_COLUMN');
+      expect(result[0].actions[0].alterationType).toBe('MODIFY_COLUMN');
     });
   });
 
@@ -116,9 +116,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('DROP_COLUMN');
-      expect(result[0].columnName).toBe('age');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('DROP_COLUMN');
+      expect(result[0].actions[0].columnName).toBe('age');
     });
 
     test('should parse DROP COLUMN with CASCADE', () => {
@@ -126,8 +126,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('DROP_COLUMN');
-      expect(result[0].cascade).toBe(true);
+      expect(result[0].actions[0].alterationType).toBe('DROP_COLUMN');
+      expect(result[0].actions[0].cascade).toBe(true);
     });
 
     test('should parse DROP COLUMN with RESTRICT', () => {
@@ -135,8 +135,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('DROP_COLUMN');
-      expect(result[0].restrict).toBe(true);
+      expect(result[0].actions[0].alterationType).toBe('DROP_COLUMN');
+      expect(result[0].actions[0].restrict).toBe(true);
     });
 
     test('should handle case insensitivity', () => {
@@ -144,8 +144,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('DROP_COLUMN');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('DROP_COLUMN');
     });
   });
 
@@ -155,9 +155,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('ADD_CONSTRAINT');
-      expect(result[0].constraintName).toBe('pk_users');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('ADD_CONSTRAINT');
+      expect(result[0].actions[0].constraintName).toBe('pk_users');
     });
 
     test('should parse ADD UNIQUE CONSTRAINT', () => {
@@ -165,8 +165,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('ADD_CONSTRAINT');
-      expect(result[0].constraintName).toBe('uq_email');
+      expect(result[0].actions[0].alterationType).toBe('ADD_CONSTRAINT');
+      expect(result[0].actions[0].constraintName).toBe('uq_email');
     });
 
     test('should parse ADD FOREIGN KEY CONSTRAINT', () => {
@@ -174,8 +174,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('ADD_CONSTRAINT');
-      expect(result[0].constraintName).toBe('fk_user');
+      expect(result[0].actions[0].alterationType).toBe('ADD_CONSTRAINT');
+      expect(result[0].actions[0].constraintName).toBe('fk_user');
     });
 
     test('should parse ADD CHECK CONSTRAINT', () => {
@@ -183,8 +183,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('ADD_CONSTRAINT');
-      expect(result[0].constraintName).toBe('ck_age');
+      expect(result[0].actions[0].alterationType).toBe('ADD_CONSTRAINT');
+      expect(result[0].actions[0].constraintName).toBe('ck_age');
     });
   });
 
@@ -194,9 +194,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('DROP_CONSTRAINT');
-      expect(result[0].constraintName).toBe('pk_users');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('DROP_CONSTRAINT');
+      expect(result[0].actions[0].constraintName).toBe('pk_users');
     });
 
     test('should parse DROP CONSTRAINT with CASCADE', () => {
@@ -204,8 +204,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('DROP_CONSTRAINT');
-      expect(result[0].cascade).toBe(true);
+      expect(result[0].actions[0].alterationType).toBe('DROP_CONSTRAINT');
+      expect(result[0].actions[0].cascade).toBe(true);
     });
 
     test('should parse DROP CONSTRAINT with RESTRICT', () => {
@@ -213,8 +213,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('DROP_CONSTRAINT');
-      expect(result[0].restrict).toBe(true);
+      expect(result[0].actions[0].alterationType).toBe('DROP_CONSTRAINT');
+      expect(result[0].actions[0].restrict).toBe(true);
     });
   });
 
@@ -224,9 +224,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('RENAME_TABLE');
-      expect(result[0].newName).toBe('accounts');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('RENAME_TABLE');
+      expect(result[0].actions[0].newName).toBe('accounts');
     });
 
     test('should parse RENAME TABLE syntax', () => {
@@ -234,7 +234,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('RENAME_TABLE');
+      expect(result[0].actions[0].alterationType).toBe('RENAME_TABLE');
     });
 
     test('should handle case insensitivity', () => {
@@ -242,8 +242,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('RENAME_TABLE');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('RENAME_TABLE');
     });
   });
 
@@ -253,10 +253,10 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('RENAME_COLUMN');
-      expect(result[0].columnName).toBe('old_name');
-      expect(result[0].newColumnName).toBe('new_name');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('RENAME_COLUMN');
+      expect(result[0].actions[0].columnName).toBe('old_name');
+      expect(result[0].actions[0].newColumnName).toBe('new_name');
     });
 
     test('should parse PostgreSQL RENAME syntax', () => {
@@ -264,7 +264,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('RENAME_COLUMN');
+      expect(result[0].actions[0].alterationType).toBe('RENAME_COLUMN');
     });
 
     test('should handle case insensitivity', () => {
@@ -272,8 +272,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('RENAME_COLUMN');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('RENAME_COLUMN');
     });
   });
 
@@ -283,8 +283,8 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
-      expect(result[0].alterationType).toBe('ADD_COLUMN');
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[0].alterationType).toBe('ADD_COLUMN');
     });
 
     test('should handle newlines', () => {
@@ -293,7 +293,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
+      expect(result[0].actions[0].action).toBe('ALTER');
     });
 
     test('should handle multiline constraints', () => {
@@ -304,7 +304,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].alterationType).toBe('ADD_CONSTRAINT');
+      expect(result[0].actions[0].alterationType).toBe('ADD_CONSTRAINT');
     });
   });
 
@@ -315,7 +315,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
+      expect(result[0].actions[0].action).toBe('ALTER');
     });
 
     test('should handle block comment', () => {
@@ -324,7 +324,7 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('ALTER');
+      expect(result[0].actions[0].action).toBe('ALTER');
     });
   });
 
@@ -336,7 +336,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const alterCount = result.filter((r: any) => r.action === 'ALTER').length;
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      const alterCount = result[0].actions.filter((a: any) => a.action === 'ALTER').length;
       expect(alterCount).toBeGreaterThanOrEqual(3);
     });
 
@@ -359,10 +361,11 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const alterCount = result.filter((r: any) => r.action === 'ALTER').length;
-      const insertCount = result.filter((r: any) => r.action === 'INSERT').length;
-      expect(alterCount).toBeGreaterThanOrEqual(1);
-      expect(insertCount).toBeGreaterThanOrEqual(1);
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('ALTER');
+      expect(result[0].actions[1].action).toBe('INSERT');
     });
   });
 
@@ -374,7 +377,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result.length).toBeGreaterThanOrEqual(3);
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions.length).toBeGreaterThanOrEqual(3);
     });
 
     test('should handle constraint management workflow', () => {
@@ -384,7 +389,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const constraintCount = result.filter((r: any) => r.alterationType === 'ADD_CONSTRAINT').length;
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('orders');
+      const constraintCount = result[0].actions.filter((a: any) => a.alterationType === 'ADD_CONSTRAINT').length;
       expect(constraintCount).toBeGreaterThanOrEqual(3);
     });
 
@@ -396,7 +403,9 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result.length).toBeGreaterThanOrEqual(4);
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions.length).toBeGreaterThanOrEqual(4);
     });
   });
 
@@ -407,10 +416,12 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       const stmt = result[0];
-      expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('table');
-      expect(stmt).toHaveProperty('alterationType');
-      expect(stmt).toHaveProperty('statementIndex');
+      expect(stmt).toHaveProperty('actions');
+      const action = stmt.actions[0];
+      expect(action).toHaveProperty('action');
+      expect(action).toHaveProperty('alterationType');
+      expect(action).toHaveProperty('statementIndex');
     });
 
     test('should have correct output structure for ADD CONSTRAINT', () => {
@@ -419,10 +430,12 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       const stmt = result[0];
-      expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('table');
-      expect(stmt).toHaveProperty('alterationType');
-      expect(stmt).toHaveProperty('constraintName');
+      expect(stmt).toHaveProperty('actions');
+      const action = stmt.actions[0];
+      expect(action).toHaveProperty('action');
+      expect(action).toHaveProperty('alterationType');
+      expect(action).toHaveProperty('constraintName');
     });
 
     test('should have correct output structure for RENAME COLUMN', () => {
@@ -431,10 +444,12 @@ describe('SQL ALTER TABLE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       const stmt = result[0];
-      expect(stmt).toHaveProperty('action');
       expect(stmt).toHaveProperty('table');
-      expect(stmt).toHaveProperty('columnName');
-      expect(stmt).toHaveProperty('newColumnName');
+      expect(stmt).toHaveProperty('actions');
+      const action = stmt.actions[0];
+      expect(action).toHaveProperty('action');
+      expect(action).toHaveProperty('columnName');
+      expect(action).toHaveProperty('newColumnName');
     });
 
     test('should return minified JSON', () => {

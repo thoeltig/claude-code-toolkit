@@ -8,8 +8,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].columns).toEqual(['id']);
-      expect(result[0].columnAliases).toEqual([{ column: 'id', alias: 'user_id' }]);
+      expect(result[0].actions[0].columns).toEqual(['id']);
+      expect(result[0].actions[0].columnAliases).toEqual([{ column: 'id', alias: 'user_id' }]);
     });
 
     test('should parse multiple columns with AS aliases', () => {
@@ -17,8 +17,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
-      expect(result[0].columnAliases).toEqual([
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].columnAliases).toEqual([
         { column: 'id', alias: 'user_id' },
         { column: 'name', alias: 'user_name' },
         { column: 'email', alias: 'user_email' }
@@ -30,8 +30,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
-      expect(result[0].columnAliases).toEqual([
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].columnAliases).toEqual([
         { column: 'id', alias: 'user_id' },
         { column: 'name', alias: undefined },
         { column: 'email', alias: 'user_email' }
@@ -45,8 +45,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id']);
-      expect(result[0].columnAliases).toEqual([{ column: 'id', alias: 'user_id' }]);
+      expect(result[0].actions[0].columns).toEqual(['id']);
+      expect(result[0].actions[0].columnAliases).toEqual([{ column: 'id', alias: 'user_id' }]);
     });
 
     test('should parse multiple columns with space-based aliases', () => {
@@ -54,8 +54,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
-      expect(result[0].columnAliases).toEqual([
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].columnAliases).toEqual([
         { column: 'id', alias: 'user_id' },
         { column: 'name', alias: 'user_name' },
         { column: 'email', alias: 'user_email' }
@@ -67,8 +67,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
-      expect(result[0].columnAliases).toEqual([
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].columnAliases).toEqual([
         { column: 'id', alias: 'user_id' },
         { column: 'name', alias: 'user_name' },
         { column: 'email', alias: 'user_email' }
@@ -82,9 +82,9 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
       // columnAliases should not be present if there are no aliases
-      expect(result[0].columnAliases).toBeUndefined();
+      expect(result[0].actions[0].columnAliases).toBeUndefined();
     });
 
     test('should handle whitespace variations in aliases', () => {
@@ -92,8 +92,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name']);
-      expect(result[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].columns).toEqual(['id', 'name']);
+      expect(result[0].actions[0].columnAliases).toBeDefined();
     });
 
     test('should handle special characters in column aliases', () => {
@@ -101,7 +101,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toEqual([
+      expect(result[0].actions[0].columnAliases).toEqual([
         { column: 'id', alias: 'user_id_v2' },
         { column: 'name', alias: 'first_name' }
       ]);
@@ -112,8 +112,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['u.id', 'u.name']);
-      expect(result[0].columnAliases).toEqual([
+      expect(result[0].actions[0].columns).toEqual(['u.id', 'u.name']);
+      expect(result[0].actions[0].columnAliases).toEqual([
         { column: 'u.id', alias: 'user_id' },
         { column: 'u.name', alias: 'user_name' }
       ]);
@@ -126,7 +126,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].groupByColumns).toEqual(['status']);
+      expect(result[0].actions[0].groupByColumns).toEqual(['status']);
     });
 
     test('should parse multiple columns in GROUP BY', () => {
@@ -134,7 +134,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].groupByColumns).toEqual(['country', 'city']);
+      expect(result[0].actions[0].groupByColumns).toEqual(['country', 'city']);
     });
 
     test('should parse GROUP BY with HAVING clause', () => {
@@ -142,8 +142,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].groupByColumns).toEqual(['status']);
-      expect(result[0].havingClause).toBeDefined();
+      expect(result[0].actions[0].groupByColumns).toEqual(['status']);
+      expect(result[0].actions[0].havingClause).toBeDefined();
     });
 
     test('should handle GROUP BY with whitespace variations', () => {
@@ -151,7 +151,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].groupByColumns).toEqual(['status']);
+      expect(result[0].actions[0].groupByColumns).toEqual(['status']);
     });
   });
 
@@ -161,8 +161,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].havingClause).toBeDefined();
-      expect(result[0].havingClause).toContain('COUNT(*)');
+      expect(result[0].actions[0].havingClause).toBeDefined();
+      expect(result[0].actions[0].havingClause).toContain('COUNT(*)');
     });
 
     test('should parse HAVING with multiple conditions', () => {
@@ -170,7 +170,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].havingClause).toBeDefined();
+      expect(result[0].actions[0].havingClause).toBeDefined();
     });
 
     test('should preserve HAVING clause text', () => {
@@ -178,8 +178,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].havingClause).toContain('AVG(salary)');
-      expect(result[0].havingClause).toContain('50000');
+      expect(result[0].actions[0].havingClause).toContain('AVG(salary)');
+      expect(result[0].actions[0].havingClause).toContain('50000');
     });
   });
 
@@ -189,7 +189,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].unionType).toBe('UNION');
+      expect(result[0].actions[0].unionType).toBe('UNION');
     });
 
     test('should detect UNION ALL', () => {
@@ -197,7 +197,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].unionType).toBe('UNION ALL');
+      expect(result[0].actions[0].unionType).toBe('UNION ALL');
     });
 
     test('should detect INTERSECT', () => {
@@ -205,7 +205,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].unionType).toBe('INTERSECT');
+      expect(result[0].actions[0].unionType).toBe('INTERSECT');
     });
 
     test('should detect EXCEPT', () => {
@@ -213,7 +213,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].unionType).toBe('EXCEPT');
+      expect(result[0].actions[0].unionType).toBe('EXCEPT');
     });
 
     test('should not mark regular SELECT as UNION', () => {
@@ -221,7 +221,7 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].unionType).toBeUndefined();
+      expect(result[0].actions[0].unionType).toBeUndefined();
     });
   });
 
@@ -231,9 +231,9 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].groupByColumns).toEqual(['status']);
-      expect(result[0].havingClause).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].groupByColumns).toEqual(['status']);
+      expect(result[0].actions[0].havingClause).toBeDefined();
     });
 
     test('should handle aliases with WHERE and GROUP BY', () => {
@@ -241,9 +241,9 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].where).toBeDefined();
-      expect(result[0].groupByColumns).toEqual(['dept']);
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].where).toBeDefined();
+      expect(result[0].actions[0].groupByColumns).toEqual(['dept']);
     });
 
     test('should handle SELECT with aliases and UNION', () => {
@@ -251,8 +251,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].unionType).toBe('UNION');
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].unionType).toBe('UNION');
     });
   });
 
@@ -262,9 +262,9 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
-      expect(result[0].action).toBe('SELECT');
-      expect(result[0].where).toBeDefined();
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[0].where).toBeDefined();
     });
 
     test('should handle wildcard SELECT', () => {
@@ -272,8 +272,8 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toBeUndefined();
-      expect(result[0].columnAliases).toBeUndefined();
+      expect(result[0].actions[0].columns).toBeUndefined();
+      expect(result[0].actions[0].columnAliases).toBeUndefined();
     });
 
     test('should maintain zero information loss with unparsedContent', () => {
@@ -282,12 +282,12 @@ describe('SQL Column Aliases, GROUP BY, HAVING, and UNION', () => {
       const result = JSON.parse(output);
 
       // Should capture aliases
-      expect(result[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toBeDefined();
       // Should parse simple JOIN
-      expect(result[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
       // Complex WHERE with subquery preserved in where field
-      expect(result[0].where).toBeDefined();
-      expect(result[0].where).toContain('SELECT');
+      expect(result[0].actions[0].where).toBeDefined();
+      expect(result[0].actions[0].where).toContain('SELECT');
     });
   });
 });

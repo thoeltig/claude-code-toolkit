@@ -8,12 +8,12 @@ describe('SQL JOIN Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result[0].table).toBe('users');
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].joins).toHaveLength(1);
-      expect(result[0].joins[0].type).toBe('INNER');
-      expect(result[0].joins[0].table).toBe('orders');
-      expect(result[0].joins[0].alias).toBe('o');
-      expect(result[0].joins[0].condition).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins).toHaveLength(1);
+      expect(result[0].actions[0].joins[0].type).toBe('INNER');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].alias).toBe('o');
+      expect(result[0].actions[0].joins[0].condition).toBeDefined();
     });
 
     test('should parse explicit INNER JOIN', () => {
@@ -21,9 +21,9 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toHaveLength(1);
-      expect(result[0].joins[0].type).toBe('INNER');
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins).toHaveLength(1);
+      expect(result[0].actions[0].joins[0].type).toBe('INNER');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
 
     test('should parse LEFT JOIN', () => {
@@ -31,9 +31,9 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].type).toBe('LEFT');
-      expect(result[0].joins[0].table).toBe('orders');
-      expect(result[0].joins[0].alias).toBe('o');
+      expect(result[0].actions[0].joins[0].type).toBe('LEFT');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].alias).toBe('o');
     });
 
     test('should parse RIGHT JOIN', () => {
@@ -41,8 +41,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].type).toBe('RIGHT');
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].type).toBe('RIGHT');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
 
     test('should parse LEFT OUTER JOIN', () => {
@@ -50,8 +50,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].type).toBe('LEFT');
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].type).toBe('LEFT');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
 
     test('should parse RIGHT OUTER JOIN', () => {
@@ -59,8 +59,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].type).toBe('RIGHT');
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].type).toBe('RIGHT');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
 
     test('should parse FULL OUTER JOIN', () => {
@@ -68,8 +68,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].type).toBe('FULL OUTER');
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].type).toBe('FULL OUTER');
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
   });
 
@@ -79,8 +79,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].condition).toContain('u.id');
-      expect(result[0].joins[0].condition).toContain('o.user_id');
+      expect(result[0].actions[0].joins[0].condition).toContain('u.id');
+      expect(result[0].actions[0].joins[0].condition).toContain('o.user_id');
     });
 
     test('should preserve ON condition text', () => {
@@ -88,7 +88,7 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].condition).toBeDefined();
+      expect(result[0].actions[0].joins[0].condition).toBeDefined();
     });
 
     test('should handle comparison operators in conditions', () => {
@@ -96,7 +96,7 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].condition).toBeDefined();
+      expect(result[0].actions[0].joins[0].condition).toBeDefined();
     });
   });
 
@@ -106,7 +106,7 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].alias).toBe('o');
+      expect(result[0].actions[0].joins[0].alias).toBe('o');
     });
 
     test('should parse JOIN with space-based table alias', () => {
@@ -114,7 +114,7 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].alias).toBe('o');
+      expect(result[0].actions[0].joins[0].alias).toBe('o');
     });
 
     test('should parse JOIN without alias', () => {
@@ -122,8 +122,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].table).toBe('orders');
-      expect(result[0].joins[0].alias).toBeUndefined();
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[0].alias).toBeUndefined();
     });
   });
 
@@ -136,9 +136,9 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toHaveLength(2);
-      expect(result[0].joins[0].table).toBe('orders');
-      expect(result[0].joins[1].table).toBe('products');
+      expect(result[0].actions[0].joins).toHaveLength(2);
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins[1].table).toBe('products');
     });
 
     test('should parse three JOINs with mixed types', () => {
@@ -150,10 +150,10 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toHaveLength(3);
-      expect(result[0].joins[0].type).toBe('LEFT');
-      expect(result[0].joins[1].type).toBe('INNER');
-      expect(result[0].joins[2].type).toBe('RIGHT');
+      expect(result[0].actions[0].joins).toHaveLength(3);
+      expect(result[0].actions[0].joins[0].type).toBe('LEFT');
+      expect(result[0].actions[0].joins[1].type).toBe('INNER');
+      expect(result[0].actions[0].joins[2].type).toBe('RIGHT');
     });
 
     test('should parse multiple JOINs with different aliases', () => {
@@ -164,8 +164,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].alias).toBe('o');
-      expect(result[0].joins[1].alias).toBe('p');
+      expect(result[0].actions[0].joins[0].alias).toBe('o');
+      expect(result[0].actions[0].joins[1].alias).toBe('p');
     });
   });
 
@@ -175,10 +175,10 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].columnAliases).toHaveLength(2);
-      expect(result[0].joins).toHaveLength(1);
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toHaveLength(2);
+      expect(result[0].actions[0].joins).toHaveLength(1);
     });
 
     test('should parse JOINs with WHERE and column aliases', () => {
@@ -186,9 +186,9 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].where).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].where).toBeDefined();
     });
   });
 
@@ -198,8 +198,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].groupByColumns).toEqual(['u.status']);
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].groupByColumns).toEqual(['u.status']);
     });
 
     test('should parse JOINs with GROUP BY and HAVING', () => {
@@ -211,9 +211,9 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].groupByColumns).toEqual(['u.status']);
-      expect(result[0].havingClause).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].groupByColumns).toEqual(['u.status']);
+      expect(result[0].actions[0].havingClause).toBeDefined();
     });
   });
 
@@ -224,8 +224,8 @@ describe('SQL JOIN Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result[0].table).toBe('users');
-      expect(result[0].columns).toEqual(['id', 'name']);
-      expect(result[0].joins).toBeUndefined();
+      expect(result[0].actions[0].columns).toEqual(['id', 'name']);
+      expect(result[0].actions[0].joins).toBeUndefined();
     });
 
     test('should maintain zero information loss with complex JOINs', () => {
@@ -234,9 +234,9 @@ describe('SQL JOIN Parsing', () => {
       const result = JSON.parse(output);
 
       // Should capture basic JOINs
-      expect(result[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
       // Complex conditions should be in unparsedContent
-      expect(result[0].unparsedContent).toBeDefined();
+      expect(result[0].actions[0].unparsedContent).toBeDefined();
     });
   });
 
@@ -246,8 +246,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
 
     test('should handle case insensitivity', () => {
@@ -255,8 +255,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].joins[0].type).toBe('INNER');
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins[0].type).toBe('INNER');
     });
 
     test('should handle mixed case JOIN keywords', () => {
@@ -264,7 +264,7 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins[0].type).toBe('LEFT');
+      expect(result[0].actions[0].joins[0].type).toBe('LEFT');
     });
 
     test('should handle JOIN ending with semicolon', () => {
@@ -272,7 +272,7 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
     });
 
     test('should handle JOIN followed by WHERE', () => {
@@ -280,8 +280,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].where).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].where).toBeDefined();
     });
 
     test('should handle JOIN followed by GROUP BY', () => {
@@ -289,8 +289,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].groupByColumns).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].groupByColumns).toBeDefined();
     });
   });
 
@@ -307,10 +307,10 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].joins[0].type).toBe('LEFT');
-      expect(result[0].groupByColumns).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins[0].type).toBe('LEFT');
+      expect(result[0].actions[0].groupByColumns).toBeDefined();
     });
 
     test('should parse multi-table JOIN', () => {
@@ -323,8 +323,8 @@ describe('SQL JOIN Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toHaveLength(4);
-      expect(result[0].joins.map((j: any) => j.table)).toEqual(['orders', 'order_items', 'products', 'categories']);
+      expect(result[0].actions[0].joins).toHaveLength(4);
+      expect(result[0].actions[0].joins.map((j: any) => j.table)).toEqual(['orders', 'order_items', 'products', 'categories']);
     });
   });
 });

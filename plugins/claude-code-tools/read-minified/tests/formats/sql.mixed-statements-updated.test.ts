@@ -9,12 +9,13 @@ describe('SQL Mixed Statements - Updated Tests', () => {
     const output = formatSql(sql, { minify: true });
     const result = JSON.parse(output);
 
-    expect(result.length).toBe(2);
-    expect(result[0].action).toBe('CREATE');
+    expect(result).toHaveLength(1);
+    expect(result[0].actions).toHaveLength(2);
+    expect(result[0].actions[0].action).toBe('CREATE');
     expect(result[0].table).toBe('events');
-    expect(result[1].action).toBe('INSERT');
-    expect(result[1].table).toBe('events');
-    expect(result[1].rowCount).toBe(5);
+    expect(result[0].actions[1].action).toBe('INSERT');
+    expect(result[0].table).toBe('events');
+    expect(result[0].actions[1].rowCount).toBe(5);
   });
 
   test('should handle database migration with grouping', () => {
@@ -24,9 +25,10 @@ describe('SQL Mixed Statements - Updated Tests', () => {
     const output = formatSql(sql, { minify: true });
     const result = JSON.parse(output);
 
-    expect(result).toHaveLength(2);
-    expect(result[0].action).toBe('CREATE');
-    expect(result[1].action).toBe('INSERT');
-    expect(result[1].rowCount).toBe(2);
+    expect(result).toHaveLength(1);
+    expect(result[0].actions).toHaveLength(2);
+    expect(result[0].actions[0].action).toBe('CREATE');
+    expect(result[0].actions[1].action).toBe('INSERT');
+    expect(result[0].actions[1].rowCount).toBe(2);
   });
 });

@@ -21,9 +21,9 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('users');
-      expect(result[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].statementIndex).toBe(0);
     });
 
     test('should parse TRUNCATE without TABLE keyword', () => {
@@ -32,7 +32,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -41,7 +41,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('products');
     });
 
@@ -50,7 +50,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('events');
     });
   });
@@ -90,8 +90,8 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const truncateResult = JSON.parse(formatSql(truncateSql, { minify: true }));
       const deleteResult = JSON.parse(formatSql(deleteSql, { minify: true }));
 
-      expect(truncateResult[0].action).toBe('TRUNCATE');
-      expect(deleteResult[0].action).toBe('DELETE');
+      expect(truncateResult[0].actions[0].action).toBe('TRUNCATE');
+      expect(deleteResult[0].actions[0].action).toBe('DELETE');
     });
 
     test('TRUNCATE should not have WHERE clause (even if somehow provided)', () => {
@@ -100,7 +100,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       // TRUNCATE never has WHERE
-      expect(result[0]).not.toHaveProperty('where');
+      expect(result[0].actions[0]).not.toHaveProperty('where');
     });
   });
 
@@ -113,7 +113,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(3);
-      expect(result.map((r: any) => r.action)).toEqual(['TRUNCATE', 'TRUNCATE', 'TRUNCATE']);
+      expect(result.map((r: any) => r.actions[0].action)).toEqual(['TRUNCATE', 'TRUNCATE', 'TRUNCATE']);
       expect(result.map((r: any) => r.table)).toEqual(['users', 'products', 'orders']);
     });
 
@@ -125,7 +125,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
 
       // Consecutive TRUNCATEs on same table should group
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('temp');
     });
   });
@@ -136,7 +136,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -145,7 +145,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -156,7 +156,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('users');
     });
   });
@@ -168,7 +168,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -178,7 +178,7 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('TRUNCATE');
+      expect(result[0].actions[0].action).toBe('TRUNCATE');
       expect(result[0].table).toBe('temp_staging');
     });
   });
@@ -191,10 +191,11 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      expect(result[0].action).toBe('CREATE');
-      expect(result[1].action).toBe('INSERT');
-      expect(result[2].action).toBe('TRUNCATE');
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(3);
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[1].action).toBe('INSERT');
+      expect(result[0].actions[2].action).toBe('TRUNCATE');
     });
 
     test('should handle TRUNCATE with UPDATE and DELETE', () => {
@@ -205,9 +206,9 @@ describe('SQL TRUNCATE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(3);
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[1].action).toBe('TRUNCATE');
-      expect(result[2].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
+      expect(result[1].actions[0].action).toBe('TRUNCATE');
+      expect(result[2].actions[0].action).toBe('DELETE');
     });
   });
 
@@ -250,13 +251,13 @@ describe('SQL TRUNCATE Statement Parsing', () => {
 
       const stmt = result[0];
       expect(stmt).toHaveProperty('table');
-      expect(stmt).toHaveProperty('action');
-      expect(stmt).toHaveProperty('statementIndex');
-      expect(stmt.action).toBe('TRUNCATE');
-      expect(stmt).not.toHaveProperty('where');
-      expect(stmt).not.toHaveProperty('rows');
-      expect(stmt).not.toHaveProperty('columns');
-      expect(stmt).not.toHaveProperty('updates');
+      expect(stmt).toHaveProperty('actions');
+      expect(stmt.actions[0]).toHaveProperty('statementIndex');
+      expect(stmt.actions[0].action).toBe('TRUNCATE');
+      expect(stmt.actions[0]).not.toHaveProperty('where');
+      expect(stmt.actions[0]).not.toHaveProperty('rows');
+      expect(stmt.actions[0]).not.toHaveProperty('columns');
+      expect(stmt.actions[0]).not.toHaveProperty('updates');
     });
 
     test('should return minified JSON', () => {

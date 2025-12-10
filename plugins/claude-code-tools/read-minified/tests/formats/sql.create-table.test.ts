@@ -13,20 +13,20 @@ describe('SQL CREATE TABLE Parsing', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('CREATE');
-      expect(result[0].schema).toBeDefined();
-      expect(result[0].schema.columns).toHaveLength(3);
-      expect(result[0].schema.columns[0]).toEqual({
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[0].schema).toBeDefined();
+      expect(result[0].actions[0].schema.columns).toHaveLength(3);
+      expect(result[0].actions[0].schema.columns[0]).toEqual({
         name: 'id',
         type: 'INT',
         constraints: []
       });
-      expect(result[0].schema.columns[1]).toEqual({
+      expect(result[0].actions[0].schema.columns[1]).toEqual({
         name: 'name',
         type: 'VARCHAR(255)',
         constraints: []
       });
-      expect(result[0].schema.columns[2]).toEqual({
+      expect(result[0].actions[0].schema.columns[2]).toEqual({
         name: 'bio',
         type: 'TEXT',
         constraints: []
@@ -41,9 +41,9 @@ describe('SQL CREATE TABLE Parsing', () => {
 
       expect(result).toHaveLength(2);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('CREATE');
+      expect(result[0].actions[0].action).toBe('CREATE');
       expect(result[1].table).toBe('products');
-      expect(result[1].action).toBe('CREATE');
+      expect(result[1].actions[0].action).toBe('CREATE');
     });
 
     test('should parse table with many columns (10+)', () => {
@@ -55,8 +55,8 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].schema.columns).toHaveLength(11);
-      expect(result[0].schema.columns[10].name).toBe('col11');
+      expect(result[0].actions[0].schema.columns).toHaveLength(11);
+      expect(result[0].actions[0].schema.columns[10].name).toBe('col11');
     });
 
     test('should handle case insensitivity (CREATE, Create, create)', () => {
@@ -68,7 +68,7 @@ describe('SQL CREATE TABLE Parsing', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
         expect(result).toHaveLength(1);
-        expect(result[0].action).toBe('CREATE');
+        expect(result[0].actions[0].action).toBe('CREATE');
       });
     });
 
@@ -82,7 +82,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].schema.columns).toHaveLength(3);
+      expect(result[0].actions[0].schema.columns).toHaveLength(3);
     });
   });
 
@@ -98,7 +98,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const types = result[0].schema.columns.map((c: any) => c.type);
+      const types = result[0].actions[0].schema.columns.map((c: any) => c.type);
       expect(types).toContain('INT');
       expect(types).toContain('BIGINT');
       expect(types).toContain('DECIMAL(10,2)');
@@ -115,7 +115,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const types = result[0].schema.columns.map((c: any) => c.type);
+      const types = result[0].actions[0].schema.columns.map((c: any) => c.type);
       expect(types).toContain('VARCHAR(255)');
       expect(types).toContain('TEXT');
       expect(types).toContain('CHAR(10)');
@@ -130,7 +130,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const types = result[0].schema.columns.map((c: any) => c.type);
+      const types = result[0].actions[0].schema.columns.map((c: any) => c.type);
       expect(types).toContain('DATE');
       expect(types).toContain('TIMESTAMP');
       expect(types).toContain('DATETIME');
@@ -144,7 +144,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const types = result[0].schema.columns.map((c: any) => c.type);
+      const types = result[0].actions[0].schema.columns.map((c: any) => c.type);
       expect(types).toContain('BOOLEAN');
       expect(types).toContain('BOOL');
     });
@@ -157,7 +157,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const types = result[0].schema.columns.map((c: any) => c.type);
+      const types = result[0].actions[0].schema.columns.map((c: any) => c.type);
       expect(types).toContain('BLOB');
       expect(types).toContain('UUID');
     });
@@ -169,7 +169,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const idCol = result[0].schema.columns.find((c: any) => c.name === 'id');
+      const idCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'id');
       expect(idCol.constraints).toContain('PRIMARY KEY');
     });
 
@@ -183,8 +183,8 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].schema.tableConstraints).toBeDefined();
-      expect(result[0].schema.tableConstraints).toContain('PRIMARY KEY (order_id, product_id)');
+      expect(result[0].actions[0].schema.tableConstraints).toBeDefined();
+      expect(result[0].actions[0].schema.tableConstraints).toContain('PRIMARY KEY (order_id, product_id)');
     });
 
     test('should parse NOT NULL constraint', () => {
@@ -192,7 +192,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      result[0].schema.columns.forEach((col: any) => {
+      result[0].actions[0].schema.columns.forEach((col: any) => {
         expect(col.constraints).toContain('NOT NULL');
       });
     });
@@ -202,7 +202,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const emailCol = result[0].schema.columns.find((c: any) => c.name === 'email');
+      const emailCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'email');
       expect(emailCol.constraints).toContain('UNIQUE');
     });
 
@@ -216,16 +216,16 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const stringCol = result[0].schema.columns.find((c: any) => c.name === 'string_val');
+      const stringCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'string_val');
       expect(stringCol.default).toBe("'active'");
 
-      const numCol = result[0].schema.columns.find((c: any) => c.name === 'numeric_val');
+      const numCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'numeric_val');
       expect(numCol.default).toBe('0');
 
-      const boolCol = result[0].schema.columns.find((c: any) => c.name === 'bool_val');
+      const boolCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'bool_val');
       expect(boolCol.default).toBe('true');
 
-      const nullCol = result[0].schema.columns.find((c: any) => c.name === 'null_val');
+      const nullCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'null_val');
       expect(nullCol.default).toBe('NULL');
     });
 
@@ -238,8 +238,8 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].schema.tableConstraints).toBeDefined();
-      expect(result[0].schema.tableConstraints).toContain('FOREIGN KEY (user_id) REFERENCES users(id)');
+      expect(result[0].actions[0].schema.tableConstraints).toBeDefined();
+      expect(result[0].actions[0].schema.tableConstraints).toContain('FOREIGN KEY (user_id) REFERENCES users(id)');
     });
 
     test('should parse CHECK constraint', () => {
@@ -251,8 +251,8 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].schema.tableConstraints).toBeDefined();
-      expect(result[0].schema.tableConstraints).toContain('CHECK (price > 0)');
+      expect(result[0].actions[0].schema.tableConstraints).toBeDefined();
+      expect(result[0].actions[0].schema.tableConstraints).toContain('CHECK (price > 0)');
     });
 
     test('should parse multiple constraints on single column', () => {
@@ -260,12 +260,12 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const idCol = result[0].schema.columns.find((c: any) => c.name === 'id');
+      const idCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'id');
       expect(idCol.constraints).toContain('PRIMARY KEY');
       expect(idCol.constraints).toContain('NOT NULL');
       expect(idCol.constraints).toContain('UNIQUE');
 
-      const emailCol = result[0].schema.columns.find((c: any) => c.name === 'email');
+      const emailCol = result[0].actions[0].schema.columns.find((c: any) => c.name === 'email');
       expect(emailCol.constraints).toContain('NOT NULL');
       expect(emailCol.constraints).toContain('UNIQUE');
       expect(emailCol.default).toBe("'user@example.com'");
@@ -293,7 +293,7 @@ describe('SQL CREATE TABLE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].schema.columns).toHaveLength(2);
+      expect(result[0].actions[0].schema.columns).toHaveLength(2);
     });
 
     test('should handle table names with underscores and numbers', () => {
@@ -336,8 +336,8 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].statementIndex).toBe(0);
-      expect(result[1].statementIndex).toBe(1);
+      expect(result[0].actions[0].statementIndex).toBe(0);
+      expect(result[1].actions[0].statementIndex).toBe(1);
     });
 
     test('should include schema with columns array', () => {
@@ -345,8 +345,8 @@ describe('SQL CREATE TABLE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].schema).toHaveProperty('columns');
-      expect(Array.isArray(result[0].schema.columns)).toBe(true);
+      expect(result[0].actions[0].schema).toHaveProperty('columns');
+      expect(Array.isArray(result[0].actions[0].schema.columns)).toBe(true);
     });
   });
 });

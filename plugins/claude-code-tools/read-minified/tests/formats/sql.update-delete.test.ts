@@ -8,9 +8,9 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
-      expect(result[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].statementIndex).toBe(0);
     });
 
     test('should parse UPDATE with multiple columns', () => {
@@ -19,7 +19,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('products');
     });
 
@@ -29,7 +29,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -41,7 +41,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
 
       // Consecutive UPDATE statements on same table are grouped
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -51,7 +51,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
       expect(result[0].table).toBe('users');
     });
 
@@ -61,7 +61,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].action).toBe('UPDATE');
     });
   });
 
@@ -72,9 +72,9 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
       expect(result[0].table).toBe('users');
-      expect(result[0].statementIndex).toBe(0);
+      expect(result[0].actions[0].statementIndex).toBe(0);
     });
 
     test('should parse DELETE with complex WHERE clause', () => {
@@ -83,7 +83,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
       expect(result[0].table).toBe('logs');
     });
 
@@ -93,7 +93,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
       expect(result[0].table).toBe('users');
     });
 
@@ -104,9 +104,9 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
       expect(result[0].table).toBe('logs');
-      expect(result[1].action).toBe('DELETE');
+      expect(result[1].actions[0].action).toBe('DELETE');
       expect(result[1].table).toBe('sessions');
     });
 
@@ -116,7 +116,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
       expect(result[0].table).toBe('comments');
     });
 
@@ -126,7 +126,7 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('DELETE');
+      expect(result[0].actions[0].action).toBe('DELETE');
     });
   });
 
@@ -138,13 +138,12 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      expect(result[0].action).toBe('CREATE');
-      expect(result[1].action).toBe('UPDATE');
-      expect(result[2].action).toBe('DELETE');
+      expect(result).toHaveLength(1);
       expect(result[0].table).toBe('users');
-      expect(result[1].table).toBe('users');
-      expect(result[2].table).toBe('users');
+      expect(result[0].actions).toHaveLength(3);
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[1].action).toBe('UPDATE');
+      expect(result[0].actions[2].action).toBe('DELETE');
     });
 
     test('should handle INSERT, UPDATE, DELETE in sequence', () => {
@@ -154,10 +153,12 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      expect(result[0].action).toBe('INSERT');
-      expect(result[1].action).toBe('UPDATE');
-      expect(result[2].action).toBe('DELETE');
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions).toHaveLength(3);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[1].action).toBe('UPDATE');
+      expect(result[0].actions[2].action).toBe('DELETE');
     });
 
     test('should include SELECT statements in output', () => {
@@ -166,9 +167,11 @@ describe('SQL UPDATE and DELETE Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('SELECT');
-      expect(result[1].action).toBe('UPDATE');
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[1].action).toBe('UPDATE');
     });
   });
 });

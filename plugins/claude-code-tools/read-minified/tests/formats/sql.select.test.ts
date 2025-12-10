@@ -8,7 +8,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
       expect(result[0].table).toBe('users');
     });
 
@@ -20,7 +20,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(3);
-      expect(result.every((r: any) => r.action === 'SELECT')).toBe(true);
+      expect(result.every((r: any) => r.actions[0].action === 'SELECT')).toBe(true);
       expect(result[0].table).toBe('users');
       expect(result[1].table).toBe('products');
       expect(result[2].table).toBe('logs');
@@ -32,8 +32,8 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('SELECT');
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
     });
 
     test('should parse SELECT * (wildcard)', () => {
@@ -42,7 +42,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       // Wildcard SELECT has no columns list
-      expect(result[0].columns).toBeUndefined();
+      expect(result[0].actions[0].columns).toBeUndefined();
     });
 
     test('should include SELECT when mixed with INSERT', () => {
@@ -52,9 +52,15 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(3);
-      const actions = result.map((r: any) => r.action);
-      expect(actions).toEqual(['INSERT', 'SELECT', 'INSERT']);
+      expect(result).toHaveLength(2);
+      // First group: INSERT and SELECT on users table
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('INSERT');
+      expect(result[0].actions[1].action).toBe('SELECT');
+      // Second group: INSERT on products table
+      expect(result[1].table).toBe('products');
+      expect(result[1].actions[0].action).toBe('INSERT');
     });
   });
 
@@ -64,8 +70,8 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('SELECT');
-      expect(result[0].where).toBe('active = true');
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[0].where).toBe('active = true');
     });
 
     test('should parse SELECT with complex WHERE', () => {
@@ -73,9 +79,9 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('SELECT');
-      expect(result[0].columns).toEqual(['id', 'name']);
-      expect(result[0].where).toContain('AND');
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[0].columns).toEqual(['id', 'name']);
+      expect(result[0].actions[0].where).toContain('AND');
     });
 
     test('should parse SELECT with IN clause', () => {
@@ -83,7 +89,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('IN');
+      expect(result[0].actions[0].where).toContain('IN');
     });
 
     test('should parse SELECT with LIKE clause', () => {
@@ -91,7 +97,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('LIKE');
+      expect(result[0].actions[0].where).toContain('LIKE');
     });
 
     test('should parse SELECT with date comparison', () => {
@@ -99,7 +105,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('>');
+      expect(result[0].actions[0].where).toContain('>');
     });
   });
 
@@ -110,9 +116,11 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('CREATE');
-      expect(result[1].action).toBe('SELECT');
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions).toHaveLength(2);
+      expect(result[0].actions[0].action).toBe('CREATE');
+      expect(result[0].actions[1].action).toBe('SELECT');
     });
 
     test('should include CREATE and SELECT on different tables', () => {
@@ -122,9 +130,9 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('CREATE');
+      expect(result[0].actions[0].action).toBe('CREATE');
       expect(result[0].table).toBe('users');
-      expect(result[1].action).toBe('SELECT');
+      expect(result[1].actions[0].action).toBe('SELECT');
       expect(result[1].table).toBe('products');
     });
   });
@@ -139,8 +147,10 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(5);
-      const actions = result.map((r: any) => r.action);
+      expect(result).toHaveLength(1);
+      expect(result[0].table).toBe('users');
+      expect(result[0].actions).toHaveLength(5);
+      const actions = result[0].actions.map((a: any) => a.action);
       expect(actions).toEqual(['CREATE', 'INSERT', 'SELECT', 'UPDATE', 'DELETE']);
     });
 
@@ -150,7 +160,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
       expect(result[0].table).toBe('users');
     });
   });
@@ -163,7 +173,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
     });
 
     test('should handle SELECT with block comments', () => {
@@ -172,7 +182,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
     });
   });
 
@@ -182,7 +192,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
     });
 
     test('should handle SELECT with whitespace variations', () => {
@@ -190,7 +200,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('SELECT');
+      expect(result[0].actions[0].action).toBe('SELECT');
       expect(result[0].table).toBe('users');
     });
 
@@ -204,8 +214,8 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('SELECT');
-      expect(result[0].columns).toEqual(['id', 'name', 'email']);
+      expect(result[0].actions[0].action).toBe('SELECT');
+      expect(result[0].actions[0].columns).toEqual(['id', 'name', 'email']);
     });
 
     test('should preserve WHERE clause exactly as written', () => {
@@ -213,8 +223,8 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].where).toContain('ERROR');
-      expect(result[0].where).toContain('OR');
+      expect(result[0].actions[0].where).toContain('ERROR');
+      expect(result[0].actions[0].where).toContain('OR');
     });
   });
 
@@ -225,7 +235,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const result = JSON.parse(output);
 
       // Function calls are excluded from simple column extraction
-      expect(result[0].columns).toBeUndefined();
+      expect(result[0].actions[0].columns).toBeUndefined();
     });
 
     test('should handle simple column selections', () => {
@@ -233,7 +243,7 @@ describe('SQL SELECT Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toEqual(['user_id', 'product_id', 'quantity']);
+      expect(result[0].actions[0].columns).toEqual(['user_id', 'product_id', 'quantity']);
     });
   });
 });

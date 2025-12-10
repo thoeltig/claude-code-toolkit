@@ -351,9 +351,9 @@ describe('SQL GRANT/REVOKE Statement Parsing', () => {
       INSERT INTO logs (action) VALUES ('Permission granted');`;
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
-
+      
       const grantCount = result.filter((r: any) => r.action === 'GRANT').length;
-      const insertCount = result.filter((r: any) => r.action === 'INSERT').length;
+      const insertCount = result.filter((r: any) => r.table === 'logs' && r.actions[0].action === 'INSERT').length;
       expect(grantCount).toBeGreaterThanOrEqual(1);
       expect(insertCount).toBeGreaterThanOrEqual(1);
     });

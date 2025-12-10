@@ -7,12 +7,12 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].caseStatements).toHaveLength(1);
-      expect(result[0].caseStatements[0].caseType).toBe('simple');
-      expect(result[0].caseStatements[0].whens).toHaveLength(1);
-      expect(result[0].caseStatements[0].whens[0].when).toBe('\'active\'');
-      expect(result[0].caseStatements[0].whens[0].then).toBe('1');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].caseStatements).toHaveLength(1);
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('simple');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(1);
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('\'active\'');
+      expect(result[0].actions[0].caseStatements[0].whens[0].then).toBe('1');
     });
 
     test('should parse simple CASE with multiple WHEN clauses', () => {
@@ -20,11 +20,11 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens).toHaveLength(2);
-      expect(result[0].caseStatements[0].whens[0].when).toBe('\'active\'');
-      expect(result[0].caseStatements[0].whens[0].then).toBe('1');
-      expect(result[0].caseStatements[0].whens[1].when).toBe('\'inactive\'');
-      expect(result[0].caseStatements[0].whens[1].then).toBe('0');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('\'active\'');
+      expect(result[0].actions[0].caseStatements[0].whens[0].then).toBe('1');
+      expect(result[0].actions[0].caseStatements[0].whens[1].when).toBe('\'inactive\'');
+      expect(result[0].actions[0].caseStatements[0].whens[1].then).toBe('0');
     });
 
     test('should parse simple CASE with ELSE clause', () => {
@@ -32,8 +32,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].else).toBe('0');
-      expect(result[0].caseStatements[0].whens).toHaveLength(1);
+      expect(result[0].actions[0].caseStatements[0].else).toBe('0');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(1);
     });
 
     test('should parse simple CASE with numeric comparison', () => {
@@ -41,9 +41,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].caseType).toBe('simple');
-      expect(result[0].caseStatements[0].whens[0].when).toBe('1');
-      expect(result[0].caseStatements[0].whens[0].then).toBe('\'beginner\'');
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('simple');
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('1');
+      expect(result[0].actions[0].caseStatements[0].whens[0].then).toBe('\'beginner\'');
     });
 
     test('should parse simple CASE with string results', () => {
@@ -51,7 +51,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens[1].then).toBe('\'defer\'');
+      expect(result[0].actions[0].caseStatements[0].whens[1].then).toBe('\'defer\'');
     });
   });
 
@@ -61,10 +61,10 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].caseStatements[0].caseType).toBe('searched');
-      expect(result[0].caseStatements[0].whens[0].when).toBe('age > 18');
-      expect(result[0].caseStatements[0].whens[0].then).toBe('\'adult\'');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('searched');
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('age > 18');
+      expect(result[0].actions[0].caseStatements[0].whens[0].then).toBe('\'adult\'');
     });
 
     test('should parse searched CASE with multiple conditions', () => {
@@ -72,10 +72,10 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens).toHaveLength(2);
-      expect(result[0].caseStatements[0].whens[0].when).toBe('age >= 18');
-      expect(result[0].caseStatements[0].whens[1].when).toBe('age >= 13');
-      expect(result[0].caseStatements[0].else).toBe('\'child\'');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('age >= 18');
+      expect(result[0].actions[0].caseStatements[0].whens[1].when).toBe('age >= 13');
+      expect(result[0].actions[0].caseStatements[0].else).toBe('\'child\'');
     });
 
     test('should parse searched CASE with ELSE clause', () => {
@@ -83,7 +83,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].else).toBe('0');
+      expect(result[0].actions[0].caseStatements[0].else).toBe('0');
     });
 
     test('should parse searched CASE with complex conditions', () => {
@@ -91,8 +91,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens[0].when).toContain('salary > 50000');
-      expect(result[0].caseStatements[0].caseType).toBe('searched');
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toContain('salary > 50000');
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('searched');
     });
 
     test('should parse searched CASE with NULL comparison', () => {
@@ -100,8 +100,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens[0].when).toContain('email');
-      expect(result[0].caseStatements[0].whens[0].when).toContain('NULL');
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toContain('email');
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toContain('NULL');
     });
   });
 
@@ -111,7 +111,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].column).toBe('status_code');
+      expect(result[0].actions[0].caseStatements[0].column).toBe('status_code');
     });
 
     test('should extract alias after CASE without AS keyword (space-based)', () => {
@@ -119,7 +119,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].column).toBe('status_flag');
+      expect(result[0].actions[0].caseStatements[0].column).toBe('status_flag');
     });
 
     test('should extract alias from searched CASE with AS', () => {
@@ -127,7 +127,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].column).toBe('age_category');
+      expect(result[0].actions[0].caseStatements[0].column).toBe('age_category');
     });
 
     test('should not confuse END alias with SQL keywords', () => {
@@ -135,8 +135,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].column).toBe('status_code');
-      expect(result[0].where).toBe('id = 1');
+      expect(result[0].actions[0].caseStatements[0].column).toBe('status_code');
+      expect(result[0].actions[0].where).toBe('id = 1');
     });
 
     test('should handle single-character alias', () => {
@@ -144,7 +144,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].column).toBe('s');
+      expect(result[0].actions[0].caseStatements[0].column).toBe('s');
     });
   });
 
@@ -154,9 +154,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toHaveLength(2);
-      expect(result[0].caseStatements[0].column).toBe('s1');
-      expect(result[0].caseStatements[1].column).toBe('s2');
+      expect(result[0].actions[0].caseStatements).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].column).toBe('s1');
+      expect(result[0].actions[0].caseStatements[1].column).toBe('s2');
     });
 
     test('should parse three CASE statements', () => {
@@ -164,10 +164,10 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toHaveLength(3);
-      expect(result[0].caseStatements[0].column).toBe('c1');
-      expect(result[0].caseStatements[1].column).toBe('c2');
-      expect(result[0].caseStatements[2].column).toBe('c3');
+      expect(result[0].actions[0].caseStatements).toHaveLength(3);
+      expect(result[0].actions[0].caseStatements[0].column).toBe('c1');
+      expect(result[0].actions[0].caseStatements[1].column).toBe('c2');
+      expect(result[0].actions[0].caseStatements[2].column).toBe('c3');
     });
 
     test('should parse mixed simple and searched CASE statements', () => {
@@ -175,9 +175,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toHaveLength(2);
-      expect(result[0].caseStatements[0].caseType).toBe('simple');
-      expect(result[0].caseStatements[1].caseType).toBe('searched');
+      expect(result[0].actions[0].caseStatements).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('simple');
+      expect(result[0].actions[0].caseStatements[1].caseType).toBe('searched');
     });
   });
 
@@ -187,8 +187,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].caseStatements[0].whens[0].when).toBe('\'active\'');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('\'active\'');
     });
 
     test('should handle CASE with newlines', () => {
@@ -200,7 +200,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(2);
     });
 
     test('should handle CASE with quoted strings containing keywords', () => {
@@ -208,8 +208,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens[0].when).toBe('\'WHEN\'');
-      expect(result[0].caseStatements[0].whens[1].when).toBe('\'THEN\'');
+      expect(result[0].actions[0].caseStatements[0].whens[0].when).toBe('\'WHEN\'');
+      expect(result[0].actions[0].caseStatements[0].whens[1].when).toBe('\'THEN\'');
     });
 
     test('should be case-insensitive with keywords', () => {
@@ -217,8 +217,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].caseStatements[0].whens[0].then).toBe('1');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].caseStatements[0].whens[0].then).toBe('1');
     });
 
     test('should handle CASE with function results', () => {
@@ -226,7 +226,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens[0].then).toContain('COUNT');
+      expect(result[0].actions[0].caseStatements[0].whens[0].then).toContain('COUNT');
     });
   });
 
@@ -236,8 +236,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].where).toBe('age > 18');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].where).toBe('age > 18');
     });
 
     test('should parse CASE in SELECT with GROUP BY', () => {
@@ -246,7 +246,7 @@ describe('SQL CASE Statement Parsing', () => {
       const result = JSON.parse(output);
 
       // CASE in GROUP BY should be parsed (even if in GROUP BY clause)
-      expect(result[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].caseStatements).toBeDefined();
     });
 
     test('should parse CASE in SELECT with JOINs', () => {
@@ -254,9 +254,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].joins[0].table).toBe('orders');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].joins[0].table).toBe('orders');
     });
 
     test('should parse CASE in SELECT with column aliases and JOINs', () => {
@@ -264,9 +264,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].joins).toBeDefined();
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].joins).toBeDefined();
     });
 
     test('should parse CASE in SELECT with UNION', () => {
@@ -274,8 +274,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeDefined();
-      expect(result[0].unionType).toBe('UNION');
+      expect(result[0].actions[0].caseStatements).toBeDefined();
+      expect(result[0].actions[0].unionType).toBe('UNION');
     });
   });
 
@@ -285,9 +285,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toBeUndefined();
-      expect(result[0].where).toBe('age > 18');
-      expect(result[0].columns).toBeDefined();
+      expect(result[0].actions[0].caseStatements).toBeUndefined();
+      expect(result[0].actions[0].where).toBe('age > 18');
+      expect(result[0].actions[0].columns).toBeDefined();
     });
 
     test('should not break existing SELECT with columns and aliases', () => {
@@ -295,9 +295,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columnAliases).toBeDefined();
-      expect(result[0].columnAliases).toHaveLength(2);
-      expect(result[0].caseStatements).toBeUndefined();
+      expect(result[0].actions[0].columnAliases).toBeDefined();
+      expect(result[0].actions[0].columnAliases).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements).toBeUndefined();
     });
 
     test('should not break existing SELECT with JOINs', () => {
@@ -305,8 +305,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].joins).toBeDefined();
-      expect(result[0].caseStatements).toBeUndefined();
+      expect(result[0].actions[0].joins).toBeDefined();
+      expect(result[0].actions[0].caseStatements).toBeUndefined();
     });
 
     test('should not break existing SELECT with GROUP BY and HAVING', () => {
@@ -314,9 +314,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].groupByColumns).toBeDefined();
-      expect(result[0].havingClause).toBeDefined();
-      expect(result[0].caseStatements).toBeUndefined();
+      expect(result[0].actions[0].groupByColumns).toBeDefined();
+      expect(result[0].actions[0].havingClause).toBeDefined();
+      expect(result[0].actions[0].caseStatements).toBeUndefined();
     });
   });
 
@@ -326,9 +326,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens).toHaveLength(3);
-      expect(result[0].caseStatements[0].column).toBe('band');
-      expect(result[0].caseStatements[0].else).toBe('\'Executive\'');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(3);
+      expect(result[0].actions[0].caseStatements[0].column).toBe('band');
+      expect(result[0].actions[0].caseStatements[0].else).toBe('\'Executive\'');
     });
 
     test('should parse product category mapping with CASE', () => {
@@ -336,8 +336,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens).toHaveLength(3);
-      expect(result[0].caseStatements[0].caseType).toBe('simple');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(3);
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('simple');
     });
 
     test('should parse order status tracking with multiple CASE', () => {
@@ -345,9 +345,9 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements).toHaveLength(2);
-      expect(result[0].caseStatements[0].caseType).toBe('simple');
-      expect(result[0].caseStatements[1].caseType).toBe('searched');
+      expect(result[0].actions[0].caseStatements).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].caseType).toBe('simple');
+      expect(result[0].actions[0].caseStatements[1].caseType).toBe('searched');
     });
 
     test('should parse demographic classification with CASE', () => {
@@ -355,8 +355,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].whens).toHaveLength(3);
-      expect(result[0].caseStatements[0].column).toBe('demographic');
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(3);
+      expect(result[0].actions[0].caseStatements[0].column).toBe('demographic');
     });
   });
 
@@ -366,7 +366,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const caseStmt = result[0].caseStatements[0];
+      const caseStmt = result[0].actions[0].caseStatements[0];
       expect(caseStmt.whens).toHaveLength(4);
       expect(caseStmt.whens.map((w: any) => w.when)).toEqual(['1', '2', '3', '4']);
       expect(caseStmt.whens.map((w: any) => w.then)).toEqual(['\'Low\'', '\'Medium\'', '\'High\'', '\'Critical\'']);
@@ -377,8 +377,8 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].caseStatements[0].else).toBeUndefined();
-      expect(result[0].caseStatements[0].whens).toHaveLength(2);
+      expect(result[0].actions[0].caseStatements[0].else).toBeUndefined();
+      expect(result[0].actions[0].caseStatements[0].whens).toHaveLength(2);
     });
 
     test('should not lose information for complex CASE structure', () => {
@@ -386,7 +386,7 @@ describe('SQL CASE Statement Parsing', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      const stmt = result[0].caseStatements[0];
+      const stmt = result[0].actions[0].caseStatements[0];
       expect(stmt.whens).toHaveLength(3);
       expect(stmt.else).toBe('\'many\'');
       // All information preserved

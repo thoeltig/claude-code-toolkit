@@ -22,12 +22,13 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const result = JSON.parse(output);
 
       expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(1);
       expect(result[0].table).toBe('users');
-      expect(result[0].action).toBe('INSERT');
+      expect(result[0].actions[0].action).toBe('INSERT');
       // DECISION: Mark as '*' to indicate full row (column mapping unknown)
-      expect(result[0].columns).toBe('*');
-      expect(result[0].rows).toHaveLength(1);
-      expect(result[0].rows[0]).toEqual([1, 'John', 'john@example.com']);
+      expect(result[0].actions[0].columns).toBe('*');
+      expect(result[0].actions[0].rows).toHaveLength(1);
+      expect(result[0].actions[0].rows[0]).toEqual([1, 'John', 'john@example.com']);
     });
 
     test('should handle multiple rows without column list', () => {
@@ -35,10 +36,10 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toBe('*');
-      expect(result[0].rows).toHaveLength(2);
-      expect(result[0].rows[0]).toEqual([1, 'Widget', 9.99]);
-      expect(result[0].rows[1]).toEqual([2, 'Gadget', 19.99]);
+      expect(result[0].actions[0].columns).toBe('*');
+      expect(result[0].actions[0].rows).toHaveLength(2);
+      expect(result[0].actions[0].rows[0]).toEqual([1, 'Widget', 9.99]);
+      expect(result[0].actions[0].rows[1]).toEqual([2, 'Gadget', 19.99]);
     });
 
     test('should handle mixed INSERT: some with columns, some without', () => {
@@ -49,13 +50,14 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
+      expect(result[0].actions).toHaveLength(2);
       // First: has explicit columns
-      expect(result[0].columns).toEqual(['id', 'name']);
-      expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
+      expect(result[0].actions[0].columns).toEqual(['id', 'name']);
+      expect(result[0].actions[0].rows[0]).toEqual({ id: 1, name: 'John' });
       // Second: no columns
-      expect(result[1].columns).toBe('*');
-      expect(result[1].rows[0]).toEqual([2, 'Jane', 'jane@example.com']);
+      expect(result[0].actions[1].columns).toBe('*');
+      expect(result[0].actions[1].rows[0]).toEqual([2, 'Jane', 'jane@example.com']);
     });
 
     test('should handle INSERT without columns with NULL values', () => {
@@ -63,8 +65,8 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toBe('*');
-      expect(result[0].rows[0]).toEqual([1, null, 'john@example.com']);
+      expect(result[0].actions[0].columns).toBe('*');
+      expect(result[0].actions[0].rows[0]).toEqual([1, null, 'john@example.com']);
     });
 
     test('should handle INSERT without columns with different data types', () => {
@@ -72,8 +74,8 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].columns).toBe('*');
-      expect(result[0].rows[0]).toEqual([42, 3.14, true, 'text', null]);
+      expect(result[0].actions[0].columns).toBe('*');
+      expect(result[0].actions[0].rows[0]).toEqual([42, 3.14, true, 'text', null]);
     });
   });
 
@@ -84,8 +86,8 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
-        expect(result[0].rows[0]).not.toHaveProperty('email');
+        expect(result[0].actions[0].rows[0]).toEqual({ id: 1, name: 'John' });
+        expect(result[0].actions[0].rows[0]).not.toHaveProperty('email');
       });
 
       test('should preserve NULL in array when columns are "*"', () => {
@@ -93,7 +95,7 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].rows[0]).toEqual([1, 'John', null]);
+        expect(result[0].actions[0].rows[0]).toEqual([1, 'John', null]);
       });
     });
 
@@ -103,9 +105,9 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].action).toBe('UPDATE');
-        expect(result[0].updates).toHaveLength(1);
-        expect(result[0].updates[0]).toEqual({ column: 'phone', value: 'NULL' });
+        expect(result[0].actions[0].action).toBe('UPDATE');
+        expect(result[0].actions[0].updates).toHaveLength(1);
+        expect(result[0].actions[0].updates[0]).toEqual({ column: 'phone', value: 'NULL' });
       });
 
       test('should handle multiple columns with NULL in UPDATE', () => {
@@ -113,9 +115,9 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].updates).toHaveLength(2);
-        expect(result[0].updates[0].value).toBe('NULL');
-        expect(result[0].updates[1].value).toBe('NULL');
+        expect(result[0].actions[0].updates).toHaveLength(2);
+        expect(result[0].actions[0].updates[0].value).toBe('NULL');
+        expect(result[0].actions[0].updates[1].value).toBe('NULL');
       });
 
       test('should handle mixed NULL and non-NULL in UPDATE', () => {
@@ -123,10 +125,10 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].updates).toHaveLength(3);
-        expect(result[0].updates[0].value).toBe("'John'");
-        expect(result[0].updates[1].value).toBe('NULL');
-        expect(result[0].updates[2].value).toBe("'john@example.com'");
+        expect(result[0].actions[0].updates).toHaveLength(3);
+        expect(result[0].actions[0].updates[0].value).toBe("'John'");
+        expect(result[0].actions[0].updates[1].value).toBe('NULL');
+        expect(result[0].actions[0].updates[2].value).toBe("'john@example.com'");
       });
     });
 
@@ -136,7 +138,7 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].where).toContain('NULL');
+        expect(result[0].actions[0].where).toContain('NULL');
       });
 
       test('should handle IS NOT NULL in DELETE WHERE', () => {
@@ -144,7 +146,7 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         const output = formatSql(sql, { minify: true });
         const result = JSON.parse(output);
 
-        expect(result[0].where).toContain('NOT NULL');
+        expect(result[0].actions[0].where).toContain('NOT NULL');
       });
     });
   });
@@ -158,12 +160,12 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const resultWhere = JSON.parse(formatSql(deleteWithWhereSql, { minify: true }));
 
       // DELETE without WHERE: where field is UNDEFINED
-      expect(resultAll[0].where).toBeUndefined();
-      expect(resultAll[0]).not.toHaveProperty('where');
+      expect(resultAll[0].actions[0].where).toBeUndefined();
+      expect(resultAll[0].actions[0]).not.toHaveProperty('where');
 
       // DELETE with WHERE: where field is present
-      expect(resultWhere[0].where).toBeDefined();
-      expect(resultWhere[0].where).toBe('id > 1000');
+      expect(resultWhere[0].actions[0].where).toBeDefined();
+      expect(resultWhere[0].actions[0].where).toBe('id > 1000');
     });
 
     test('should NOT confuse DELETE with no WHERE vs DELETE WHERE 1=1', () => {
@@ -174,8 +176,8 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const resultWhere = JSON.parse(formatSql(deleteWhereOneSql, { minify: true }));
 
       // Must be distinguishable!
-      expect(resultAll[0].where).toBeUndefined();
-      expect(resultWhere[0].where).toBe('1=1');
+      expect(resultAll[0].actions[0].where).toBeUndefined();
+      expect(resultWhere[0].actions[0].where).toBe('1=1');
     });
 
     test('should warn about DELETE without WHERE in multiple row context', () => {
@@ -185,13 +187,15 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
         DELETE FROM temp_data;
       `;
       const result = JSON.parse(formatSql(sql, { minify: true }));
-      const deleteStmt = result.find((stmt: any) => stmt.action === 'DELETE');
+      const deleteStmt = result[0].actions.find((stmt: any) => stmt.action === 'DELETE');
+
+      expect(result[0].table).toEqual('temp_data');
 
       // CRITICAL: This deletes ALL 3 rows, must be obvious
       expect(deleteStmt.where).toBeUndefined();
       // No `affectsAllRows` flag needed if `where: undefined` is clear
+      expect(result[0].table).toEqual('temp_data');
       expect(deleteStmt).toEqual({
-        table: 'temp_data',
         action: 'DELETE',
         statementIndex: expect.any(Number)
       });
@@ -204,9 +208,9 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).toEqual({ value: '' });  // Empty string preserved
-      expect(result[0].rows[1]).not.toHaveProperty('value');  // NULL omitted
-      expect(result[0].rows[2]).toEqual({ value: 'text' });  // Normal string
+      expect(result[0].actions[0].rows[0]).toEqual({ value: '' });  // Empty string preserved
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('value');  // NULL omitted
+      expect(result[0].actions[0].rows[2]).toEqual({ value: 'text' });  // Normal string
     });
 
     test('should preserve empty string in UPDATE', () => {
@@ -214,7 +218,7 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].updates[0]).toEqual({ column: 'bio', value: "''" });
+      expect(result[0].actions[0].updates[0]).toEqual({ column: 'bio', value: "''" });
     });
   });
 
@@ -224,10 +228,10 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].text).toContain("'");
-      expect(result[0].rows[0]).not.toHaveProperty('other');
-      expect(result[0].rows[1]).not.toHaveProperty('text');
-      expect(result[0].rows[1].other).toBe('Also here');
+      expect(result[0].actions[0].rows[0].text).toContain("'");
+      expect(result[0].actions[0].rows[0]).not.toHaveProperty('other');
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('text');
+      expect(result[0].actions[0].rows[1].other).toBe('Also here');
     });
   });
 
@@ -237,9 +241,9 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].action).toBe('UPDATE');
-      expect(result[0].where).toBeUndefined();
-      expect(result[0].updates).toHaveLength(1);
+      expect(result[0].actions[0].action).toBe('UPDATE');
+      expect(result[0].actions[0].where).toBeUndefined();
+      expect(result[0].actions[0].updates).toHaveLength(1);
       // DECISION: Same pattern as DELETE without WHERE
     });
 
@@ -250,8 +254,8 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const resultAll = JSON.parse(formatSql(updateAllSql, { minify: true }));
       const resultWhere = JSON.parse(formatSql(updateWhereSql, { minify: true }));
 
-      expect(resultAll[0].where).toBeUndefined();
-      expect(resultWhere[0].where).toBe('1=1');
+      expect(resultAll[0].actions[0].where).toBeUndefined();
+      expect(resultWhere[0].actions[0].where).toBe('1=1');
     });
   });
 
@@ -261,10 +265,10 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0]).not.toHaveProperty('int_val');
-      expect(result[0].rows[0].float_val).toBe(3.14);
-      expect(result[0].rows[1].int_val).toBe(42);
-      expect(result[0].rows[1]).not.toHaveProperty('float_val');
+      expect(result[0].actions[0].rows[0]).not.toHaveProperty('int_val');
+      expect(result[0].actions[0].rows[0].float_val).toBe(3.14);
+      expect(result[0].actions[0].rows[1].int_val).toBe(42);
+      expect(result[0].actions[0].rows[1]).not.toHaveProperty('float_val');
     });
 
     test('should preserve boolean types with NULL', () => {
@@ -272,9 +276,9 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const output = formatSql(sql, { minify: true });
       const result = JSON.parse(output);
 
-      expect(result[0].rows[0].flag).toBe(true);
-      expect(result[0].rows[1].flag).toBe(false);
-      expect(result[0].rows[2]).not.toHaveProperty('flag');
+      expect(result[0].actions[0].rows[0].flag).toBe(true);
+      expect(result[0].actions[0].rows[1].flag).toBe(false);
+      expect(result[0].actions[0].rows[2]).not.toHaveProperty('flag');
     });
   });
 
@@ -288,11 +292,11 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const result = JSON.parse(output);
 
       // INSERT: NULL omitted from object
-      expect(result[0].rows[0]).toEqual({ id: 1, name: 'John' });
-      expect(result[0].rows[0]).not.toHaveProperty('email');
+      expect(result[0].actions[0].rows[0]).toEqual({ id: 1, name: 'John' });
+      expect(result[0].actions[0].rows[0]).not.toHaveProperty('email');
 
       // UPDATE: NULL as value
-      expect(result[1].updates[0]).toEqual({ column: 'phone', value: 'NULL' });
+      expect(result[0].actions[1].updates[0]).toEqual({ column: 'phone', value: 'NULL' });
     });
 
     test('should maintain consistent WHERE clause handling across UPDATE and DELETE', () => {
@@ -309,12 +313,12 @@ describe('SQL Phase 1: Critical Edge Cases', () => {
       const resultWithout = JSON.parse(formatSql(sqlWithoutWhere, { minify: true }));
 
       // WITH WHERE
-      expect(resultWith[0].where).toBe('id = 1');
-      expect(resultWith[1].where).toBe('id = 2');
+      expect(resultWith[0].actions[0].where).toBe('id = 1');
+      expect(resultWith[0].actions[1].where).toBe('id = 2');
 
       // WITHOUT WHERE
-      expect(resultWithout[0].where).toBeUndefined();
-      expect(resultWithout[1].where).toBeUndefined();
+      expect(resultWithout[0].actions[0].where).toBeUndefined();
+      expect(resultWithout[0].actions[1].where).toBeUndefined();
     });
   });
 });
