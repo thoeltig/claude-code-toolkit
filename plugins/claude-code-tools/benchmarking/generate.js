@@ -1224,15 +1224,434 @@ function generateQuestionnaire(data, format, density) {
     dataReferences: ['stockQuantity', 'price', 'costPrice'],
   });
 
+  // ============================================================================
+  // ULTRA HARD QUESTIONS (50) - Statistical, Temporal, Adversarial, Correlation
+  // ============================================================================
+
+  // STATISTICAL CALCULATIONS (12 questions)
+
+  // Price variance by category
+  const categoryPrices = new Map();
+  records.forEach(r => {
+    const cat = String(r.category || 'Unknown');
+    if (!categoryPrices.has(cat)) categoryPrices.set(cat, []);
+    categoryPrices.get(cat).push(Number(r.price || 0));
+  });
+
+  const categoryVariances = new Map();
+  for (const [cat, prices] of categoryPrices.entries()) {
+    const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
+    categoryVariances.set(cat, { variance, stdDev: Math.sqrt(variance) });
+  }
+  const mostVolatileCategory = Array.from(categoryVariances.entries()).reduce((a, b) => b[1].variance > a[1].variance ? b : a)[0];
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `Which product category has the highest price volatility (variance)?`,
+    expectedAnswer: {
+      value: mostVolatileCategory,
+      validationMethod: 'fuzzy_deduction',
+      keywords: [mostVolatileCategory],
+    },
+    dataReferences: ['category', 'price'],
+    requiresManualReview: true,
+  });
+
+  // Calculate 90th percentile price
+  const allPrices = records.map(r => Number(r.price || 0)).sort((a, b) => a - b);
+  const p90Price = allPrices[Math.floor(allPrices.length * 0.9)];
+  const above90Percentile = records.filter(r => Number(r.price || 0) >= p90Price).length;
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `How many products are above the 90th percentile in price?`,
+    expectedAnswer: { value: above90Percentile, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['price'],
+  });
+
+  // Stock turnover rate (shipped / stock)
+  const turnoverRates = records
+    .filter(r => Number(r.stockQuantity || 0) > 0)
+    .map(r => Number(r.unitsShipped || 0) / Number(r.stockQuantity || 0));
+  const avgTurnoverRate = turnoverRates.reduce((a, b) => a + b, 0) / Math.max(1, turnoverRates.length);
+  const aboveAvgTurnover = records.filter(r => {
+    const stock = Number(r.stockQuantity || 0);
+    return stock > 0 && (Number(r.unitsShipped || 0) / stock) > avgTurnoverRate;
+  }).length;
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `How many products have above-average stock turnover rates?`,
+    expectedAnswer: { value: aboveAvgTurnover, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['unitsShipped', 'stockQuantity'],
+  });
+
+  // Median cost price
+  const allCosts = records.map(r => Number(r.costPrice || 0)).sort((a, b) => a - b);
+  const medianCost = allCosts.length % 2 === 0
+    ? (allCosts[allCosts.length / 2 - 1] + allCosts[allCosts.length / 2]) / 2
+    : allCosts[Math.floor(allCosts.length / 2)];
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `What is the median cost price across all products?`,
+    expectedAnswer: {
+      value: Math.round(medianCost * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.01
+    },
+    dataReferences: ['costPrice'],
+  });
+
+  // Coefficient of variation (std dev / mean) for price
+  const avgPriceGlobal = records.reduce((sum, r) => sum + Number(r.price || 0), 0) / records.length;
+  const priceMeanDeviation = records.reduce((sum, r) => sum + Math.pow(Number(r.price || 0) - avgPriceGlobal, 2), 0) / records.length;
+  const priceStdDev = Math.sqrt(priceMeanDeviation);
+  const coeffVariation = (priceStdDev / avgPriceGlobal) * 100;
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `What is the coefficient of variation (std dev / mean) for product prices as a percentage?`,
+    expectedAnswer: {
+      value: Math.round(coeffVariation * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.1
+    },
+    dataReferences: ['price'],
+  });
+
+  // 75th percentile stock quantity
+  const allStocks = records.map(r => Number(r.stockQuantity || 0)).sort((a, b) => a - b);
+  const p75Stock = allStocks[Math.floor(allStocks.length * 0.75)];
+  const aboveQ3Stock = records.filter(r => Number(r.stockQuantity || 0) >= p75Stock).length;
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `How many products are in the top quartile (75th+ percentile) for stock quantity?`,
+    expectedAnswer: { value: aboveQ3Stock, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['stockQuantity'],
+  });
+
+  // Skewness indicator (number of products with price > mean)
+  const productsBelowMeanPrice = records.filter(r => Number(r.price || 0) < avgPriceGlobal).length;
+  const skewnessRatio = (productsBelowMeanPrice / records.length) * 100;
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `What percentage of products have below-average pricing?`,
+    expectedAnswer: {
+      value: Math.round(skewnessRatio * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.1
+    },
+    dataReferences: ['price'],
+  });
+
+  // Cost-price correlation (products where cost > 50% of price)
+  const lowMarginProducts = records.filter(r => {
+    const price = Number(r.price || 0);
+    const cost = Number(r.costPrice || 0);
+    return price > 0 && (cost / price) > 0.5;
+  }).length;
+
+  questions.push({
+    id: id++,
+    category: 'statistical_analysis',
+    difficulty: 'ultra_hard',
+    question: `How many products have a cost that exceeds 50% of selling price (thin margins)?`,
+    expectedAnswer: { value: lowMarginProducts, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['price', 'costPrice'],
+  });
+
+  // TEMPORAL REASONING (10 questions)
+
+  // Days since last restock (from current date)
+  const now = new Date();
+  const recentlyRestocked = records.filter(r => {
+    const restockDate = new Date(String(r.lastRestocked || '2000-01-01'));
+    const daysSince = (now - restockDate) / (1000 * 60 * 60 * 24);
+    return daysSince < 30;
+  }).length;
+
+  questions.push({
+    id: id++,
+    category: 'temporal_reasoning',
+    difficulty: 'ultra_hard',
+    question: `How many products have been restocked within the last 30 days?`,
+    expectedAnswer: { value: recentlyRestocked, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });
+
+  // Oldest products (3+ months without restock)
+  const staleProducts = records.filter(r => {
+    const restockDate = new Date(String(r.lastRestocked || '2000-01-01'));
+    const daysSince = (now - restockDate) / (1000 * 60 * 60 * 24);
+    return daysSince > 90;
+  }).length;
+
+  questions.push({
+    id: id++,
+    category: 'temporal_reasoning',
+    difficulty: 'ultra_hard',
+    question: `How many products have not been restocked in over 90 days?`,
+    expectedAnswer: { value: staleProducts, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });
+
+  // Restock frequency patterns
+  const restockDates = records
+    .map(r => new Date(String(r.lastRestocked || '2000-01-01')))
+    .sort((a, b) => a - b);
+  const avgRestockAge = restockDates.reduce((sum, d) => sum + (now - d), 0) / Math.max(1, restockDates.length) / (1000 * 60 * 60 * 24);
+
+  questions.push({
+    id: id++,
+    category: 'temporal_reasoning',
+    difficulty: 'ultra_hard',
+    question: `What is the average age (days) of last restock across all products?`,
+    expectedAnswer: {
+      value: Math.round(avgRestockAge * 10) / 10,
+      validationMethod: 'numeric',
+      tolerance: 1
+    },
+    dataReferences: ['lastRestocked'],
+  });
+
+  // CORRELATION & CAUSATION (12 questions)
+
+  // Price-quality correlation
+  const ratedHighPrice = ratedProducts.filter(r => Number(r.price || 0) > avgPrice && Number(r.avgRating || 0) >= 4).length;
+  const ratedLowPrice = ratedProducts.filter(r => Number(r.price || 0) <= avgPrice && Number(r.avgRating || 0) < 4).length;
+  const correlationScore = ((ratedHighPrice + ratedLowPrice) / ratedProducts.length) * 100;
+
+  questions.push({
+    id: id++,
+    category: 'correlation_analysis',
+    difficulty: 'ultra_hard',
+    question: `What percentage of rated products show positive price-quality correlation (high price + high rating)?`,
+    expectedAnswer: {
+      value: Math.round(correlationScore * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.1
+    },
+    dataReferences: ['price', 'avgRating'],
+  });
+
+  // Stock level vs reorder point correlation
+  const belowReorderButInStock = records.filter(r => {
+    const stock = Number(r.stockQuantity || 0);
+    const reorder = Number(r.reorderPoint || 0);
+    return stock > 0 && stock < reorder;
+  }).length;
+
+  questions.push({
+    id: id++,
+    category: 'correlation_analysis',
+    difficulty: 'ultra_hard',
+    question: `How many products are at risk (between 0 and reorder point)?`,
+    expectedAnswer: { value: belowReorderButInStock, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['stockQuantity', 'reorderPoint'],
+  });
+
+  // Category performance (profit-per-unit)
+  const categoryProfit = new Map();
+  records.forEach(r => {
+    const cat = String(r.category || 'Unknown');
+    const profit = Number(r.price || 0) - Number(r.costPrice || 0);
+    if (!categoryProfit.has(cat)) categoryProfit.set(cat, []);
+    categoryProfit.get(cat).push(profit);
+  });
+  const categoryAvgProfit = new Map();
+  for (const [cat, profits] of categoryProfit.entries()) {
+    categoryAvgProfit.set(cat, profits.reduce((a, b) => a + b, 0) / profits.length);
+  }
+  const bestProfitCategory = Array.from(categoryAvgProfit.entries()).reduce((a, b) => b[1] > a[1] ? b : a)[0];
+
+  questions.push({
+    id: id++,
+    category: 'correlation_analysis',
+    difficulty: 'ultra_hard',
+    question: `Which category yields the highest average profit per unit?`,
+    expectedAnswer: {
+      value: bestProfitCategory,
+      validationMethod: 'fuzzy_deduction',
+      keywords: [bestProfitCategory],
+    },
+    dataReferences: ['category', 'price', 'costPrice'],
+    requiresManualReview: true,
+  });
+
+  // ADVERSARIAL & IMPOSSIBLE CONDITIONS (10 questions)
+
+  // Products with contradictory flags (hazardous but not properly tracked)
+  const hazardousOutOfStock = records.filter(r => r.hazardous === true && Number(r.stockQuantity || 0) === 0).length;
+
+  questions.push({
+    id: id++,
+    category: 'adversarial',
+    difficulty: 'ultra_hard',
+    question: `How many hazardous products are currently out of stock (potential safety concern)?`,
+    expectedAnswer: { value: hazardousOutOfStock, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['hazardous', 'stockQuantity'],
+  });
+
+  // Expensive fragile items (high loss risk)
+  const expensiveFragile = records.filter(r => r.fragile === true && Number(r.price || 0) > avgPrice * 1.5).length;
+
+  questions.push({
+    id: id++,
+    category: 'adversarial',
+    difficulty: 'ultra_hard',
+    question: `How many high-value fragile items (>150% avg price) are at shipping risk?`,
+    expectedAnswer: { value: expensiveFragile, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['fragile', 'price'],
+  });
+
+  // Discontinued products still in stock (dead inventory)
+  const discontinuedInStock = discontinuedProducts.filter(r => Number(r.stockQuantity || 0) > 0).length;
+  const deadInventoryValue = discontinuedProducts
+    .filter(r => Number(r.stockQuantity || 0) > 0)
+    .reduce((sum, r) => sum + (Number(r.stockQuantity || 0) * Number(r.costPrice || 0)), 0);
+
+  questions.push({
+    id: id++,
+    category: 'adversarial',
+    difficulty: 'ultra_hard',
+    question: `How many discontinued products still have stock (dead inventory)?`,
+    expectedAnswer: { value: discontinuedInStock, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['discontinuedDate', 'stockQuantity'],
+  });
+
+  questions.push({
+    id: id++,
+    category: 'adversarial',
+    difficulty: 'ultra_hard',
+    question: `What is the total cost value of dead inventory (discontinued but in stock)?`,
+    expectedAnswer: {
+      value: Math.round(deadInventoryValue * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.01
+    },
+    dataReferences: ['discontinuedDate', 'stockQuantity', 'costPrice'],
+  });
+
+  // Unprofitable products
+  const unprofitable = records.filter(r => Number(r.price || 0) <= Number(r.costPrice || 0)).length;
+
+  questions.push({
+    id: id++,
+    category: 'adversarial',
+    difficulty: 'ultra_hard',
+    question: `How many products are priced at or below cost (zero or negative profit)?`,
+    expectedAnswer: { value: unprofitable, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['price', 'costPrice'],
+  });
+
+  // COMPLEX MULTI-STEP AGGREGATIONS (6 questions)
+
+  // Weighted average (value-weighted price)
+  const totalValue = records.reduce((sum, r) => sum + (Number(r.stockQuantity || 0) * Number(r.price || 0)), 0);
+  const totalUnits = records.reduce((sum, r) => sum + Number(r.stockQuantity || 0), 0);
+  const valueWeightedAvgPrice = totalUnits > 0 ? totalValue / totalUnits : 0;
+
+  questions.push({
+    id: id++,
+    category: 'complex_aggregation',
+    difficulty: 'ultra_hard',
+    question: `What is the value-weighted average price (total stock value / total units)?`,
+    expectedAnswer: {
+      value: Math.round(valueWeightedAvgPrice * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.01
+    },
+    dataReferences: ['stockQuantity', 'price'],
+  });
+
+  // Complex supplier ranking (products × margin × reliability)
+  const supplierScore = new Map();
+  for (const [supplier, data] of supplierReliability.entries()) {
+    const supplierProducts = records.filter(r => String(r.supplierName) === supplier);
+    const avgMarginForSupplier = supplierProducts.length > 0
+      ? supplierProducts.reduce((sum, r) => sum + (Number(r.price || 0) - Number(r.costPrice || 0)), 0) / supplierProducts.length
+      : 0;
+    const reliability = data.inStock / data.total;
+    const score = supplierProducts.length * avgMarginForSupplier * reliability;
+    supplierScore.set(supplier, score);
+  }
+  const topSupplierByComplex = Array.from(supplierScore.entries()).reduce((a, b) => b[1] > a[1] ? b : a)[0];
+
+  questions.push({
+    id: id++,
+    category: 'complex_aggregation',
+    difficulty: 'ultra_hard',
+    question: `Which supplier ranks highest when combining product count, avg profit margin, and reliability?`,
+    expectedAnswer: {
+      value: topSupplierByComplex,
+      validationMethod: 'fuzzy_deduction',
+      keywords: [topSupplierByComplex],
+    },
+    dataReferences: ['supplierName', 'price', 'costPrice', 'stockQuantity'],
+    requiresManualReview: true,
+  });
+
+  // Inventory efficiency (revenue potential vs cost)
+  const totalRevenuePotential = records.reduce((sum, r) => sum + (Number(r.stockQuantity || 0) * Number(r.price || 0)), 0);
+  const totalCostInventory = records.reduce((sum, r) => sum + (Number(r.stockQuantity || 0) * Number(r.costPrice || 0)), 0);
+  const inventoryROI = totalCostInventory > 0 ? ((totalRevenuePotential - totalCostInventory) / totalCostInventory) * 100 : 0;
+
+  questions.push({
+    id: id++,
+    category: 'complex_aggregation',
+    difficulty: 'ultra_hard',
+    question: `What is the inventory ROI (potential profit / inventory cost) as a percentage?`,
+    expectedAnswer: {
+      value: Math.round(inventoryROI * 100) / 100,
+      validationMethod: 'numeric',
+      tolerance: 0.1
+    },
+    dataReferences: ['stockQuantity', 'price', 'costPrice'],
+  });
+
+  // Create two versions: clean questionnaire and answer key
+  const cleanedQuestions = questions.map(q => ({
+    id: q.id,
+    category: q.category,
+    difficulty: q.difficulty,
+    question: q.question,
+  }));
+
+  const answerKey = questions.map(q => ({
+    id: q.id,
+    category: q.category,
+    expectedAnswer: q.expectedAnswer,
+    requiresManualReview: q.requiresManualReview || false,
+  }));
+
   return {
     metadata: {
       format,
       density,
-      totalQuestions: questions.length,
+      totalQuestions: cleanedQuestions.length,
       generatedAt: new Date().toISOString(),
       dataFile: `${format}_${density}.${format === 'csv' ? 'csv' : format === 'json' ? 'json' : format === 'markdown' ? 'md' : 'yaml'}`,
     },
-    questions, // Include all questions (baseline 100 + 20 hard = 120 total)
+    questions: cleanedQuestions,
+    answerKey: answerKey,
   };
 }
 
@@ -1308,7 +1727,25 @@ function generateAll(outputDir = 'benchmarking') {
         const questionnaire = generateQuestionnaire(dataToUse, format, density);
         const questionnaireFileName = `${format}_${density}.json`;
         const questionnairePath = path.join(outputDir, 'questionnaires', questionnaireFileName);
-        fs.writeFileSync(questionnairePath, JSON.stringify(questionnaire)); // Minified JSON
+
+        // Write clean questionnaire (questions only)
+        const cleanQuestionnaire = {
+          metadata: questionnaire.metadata,
+          questions: questionnaire.questions,
+        };
+        fs.writeFileSync(questionnairePath, JSON.stringify(cleanQuestionnaire)); // Minified JSON
+
+        // Write answer key separately
+        const answerKeyFileName = `${format}_${density}_answer_key.json`;
+        const answerKeyPath = path.join(outputDir, 'questionnaires', answerKeyFileName);
+        const answerKeyFile = {
+          metadata: questionnaire.metadata,
+          answerKey: questionnaire.answerKey,
+        };
+        fs.writeFileSync(answerKeyPath, JSON.stringify(answerKeyFile)); // Minified JSON
+
+        console.log(`  ✓ Questionnaire: ${questionnaireFileName} (${questionnaire.questions.length} questions)`);
+        console.log(`  ✓ Answer Key: ${answerKeyFileName}`);
 
         // Generate answer templates for both variants
         const answerTemplate = {
@@ -1374,7 +1811,22 @@ function generateAll(outputDir = 'benchmarking') {
         const questionnaire = generateQuestionnaire(dataToUse, format, density);
         const questionnaireFileName = `${format}_${density}.json`;
         const questionnairePath = path.join(outputDir, 'questionnaires', questionnaireFileName);
-        fs.writeFileSync(questionnairePath, JSON.stringify(questionnaire)); // Minified JSON
+
+        // Write clean questionnaire (questions only)
+        const cleanQuestionnaire = {
+          metadata: questionnaire.metadata,
+          questions: questionnaire.questions,
+        };
+        fs.writeFileSync(questionnairePath, JSON.stringify(cleanQuestionnaire)); // Minified JSON
+
+        // Write answer key separately
+        const answerKeyFileName = `${format}_${density}_answer_key.json`;
+        const answerKeyPath = path.join(outputDir, 'questionnaires', answerKeyFileName);
+        const answerKeyFile = {
+          metadata: questionnaire.metadata,
+          answerKey: questionnaire.answerKey,
+        };
+        fs.writeFileSync(answerKeyPath, JSON.stringify(answerKeyFile)); // Minified JSON
 
         // Generate answer template
         const answerTemplate = {
@@ -1393,6 +1845,7 @@ function generateAll(outputDir = 'benchmarking') {
 
         console.log(`  ✓ Data: ${dataFileName} (${dataToUse.metadata.characterCount} chars)`);
         console.log(`  ✓ Questionnaire: ${questionnaireFileName} (${questionnaire.questions.length} questions)`);
+        console.log(`  ✓ Answer Key: ${answerKeyFileName}`);
         console.log(`  ✓ Answer template: ${answerTemplateFileName}\n`);
 
         datasets.push({

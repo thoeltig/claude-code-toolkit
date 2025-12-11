@@ -4,15 +4,15 @@ const fs = require('fs');
 const path = require('path');
 
 const answersFile = process.argv[2];
-const questionnaireFile = process.argv[3];
+const answerKeyFile = process.argv[3];
 
-if (!answersFile || !questionnaireFile) {
-  console.error('Usage: node validate.js <answers.json> <questionnaire.json>');
+if (!answersFile || !answerKeyFile) {
+  console.error('Usage: node validate.js <answers.json> <answer_key.json>');
   process.exit(1);
 }
 
 const answers = JSON.parse(fs.readFileSync(answersFile, 'utf-8'));
-const questionnaire = JSON.parse(fs.readFileSync(questionnaireFile, 'utf-8'));
+const answerKey = JSON.parse(fs.readFileSync(answerKeyFile, 'utf-8'));
 
 let correct = 0;
 let total = 0;
@@ -22,16 +22,16 @@ console.log('\n' + '='.repeat(70));
 console.log('VALIDATION RESULTS');
 console.log('='.repeat(70) + '\n');
 
-for (const question of questionnaire.questions) {
-  const answer = answers.answers.find(a => a.questionId === question.id);
+for (const key of answerKey.answerKey) {
+  const answer = answers.answers.find(a => a.questionId === key.id);
   if (!answer) {
-    console.log(`✗ Q${question.id}: MISSING`);
-    results.push({ questionId: question.id, correct: false, reason: 'missing' });
+    console.log(`✗ Q${key.id}: MISSING`);
+    results.push({ questionId: key.id, correct: false, reason: 'missing' });
     continue;
   }
 
   total++;
-  const expected = question.expectedAnswer;
+  const expected = key.expectedAnswer;
   let isCorrect = false;
   let reason = '';
 
@@ -78,8 +78,7 @@ for (const question of questionnaire.questions) {
   if (isCorrect) correct++;
 
   const status = isCorrect ? '✓' : '✗';
-  const qText = question.question.length > 50 ? question.question.substring(0, 47) + '...' : question.question;
-  console.log(`${status} Q${question.id} (${question.category}): ${qText}`);
+  console.log(`${status} Q${key.id} (${key.category})`);
   if (!isCorrect && expected.validationMethod !== 'manual') {
     console.log(`    Expected: ${JSON.stringify(expected.value)}`);
     console.log(`    Got:      ${JSON.stringify(answer.answer)}`);
@@ -87,10 +86,10 @@ for (const question of questionnaire.questions) {
   console.log(`    [${reason}]`);
 
   results.push({
-    questionId: question.id,
+    questionId: key.id,
     correct: isCorrect,
     reason,
-    category: question.category,
+    category: key.category,
   });
 }
 
