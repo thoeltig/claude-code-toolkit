@@ -204,11 +204,11 @@ function convertToCsv(data) {
 }
 
 function convertToJsonCompact(data) {
-  return JSON.stringify({ metadata: data.metadata, records: data.records });
+  return JSON.stringify({ records: data.records });
 }
 
 function convertToJsonPretty(data) {
-  return JSON.stringify({ metadata: data.metadata, records: data.records }, null, 2);
+  return JSON.stringify({ records: data.records }, null, 2);
 }
 
 function convertToMarkdown(data) {
@@ -1246,8 +1246,9 @@ function generateAll(outputDir = 'benchmarking') {
 
   // Per-format target character counts (scaled for efficiency testing)
   const formatTargets = {
-    csv: 65000,        // Increased: 60KB → 65KB (+5KB)
-    json: 80000,       // Adjusted: 78KB → 80KB (token-constrained for compact variant)
+    csv: 81000,        // Optimized: 65KB → 42KB (aiming for ~85KB minified JSON)
+    json: 80500,       // Adjusted: 80KB → 81KB (aiming for ~69.5KB pretty, ~90KB compact)
+    json_pretty: 54000,
     markdown: 65000,   // Increased: 60KB → 65KB (+5KB)
     yaml: 75000,       // Increased: 70KB → 75KB (+5KB)
     apache: 75000      // Increased: 70KB → 75KB (+5KB)
@@ -1286,7 +1287,7 @@ function generateAll(outputDir = 'benchmarking') {
 
       // Special handling for JSON: create both pretty and compact variants
       if (format === 'json') {
-        // Compact variant (target: 70KB)
+        // Compact variant
         const compactContent = convertToJsonCompact(dataToUse);
         const compactFileName = `json_${density}_compact.json`;
         const compactFilePath = path.join(outputDir, 'data', compactFileName);
@@ -1294,9 +1295,8 @@ function generateAll(outputDir = 'benchmarking') {
         console.log(`  ✓ Data (compact): ${compactFileName} (${compactContent.length} chars)`);
 
         // Pretty variant (generate from smaller dataset to fit token limit)
-        const prettyTargetSize = density === 100 ? 50000 : 40000; // Smaller target for pretty to fit read tool
         const prettyGenerator = new BaseModelGenerator();
-        let prettyBaseData = prettyGenerator.generate(prettyTargetSize);
+        let prettyBaseData = prettyGenerator.generate(formatTargets.json_pretty);
         const prettyDataToUse = density === 50 ? create50PercentVariant(prettyBaseData) : prettyBaseData;
         const prettyContent = convertToJsonPretty(prettyDataToUse);
         const prettyFileName = `json_${density}_pretty.json`;
