@@ -193,6 +193,20 @@ The tool is a standalone TypeScript/Node.js package with:
   - 31 comprehensive tests, all passing
 - ✅ 434 total tests with 89%+ statement coverage, 96.84%+ function coverage
 
+## Completed in v0.7.0.0
+
+- ✅ **Extended SQL Statement Parsing** - Support for additional statement types:
+  - ALTER TABLE statements with ADD COLUMN and constraint tracking
+  - GRANT & REVOKE statements for permission management
+  - Transaction Control (BEGIN, COMMIT, ROLLBACK)
+  - CREATE INDEX statements
+  - DROP statements with IF EXISTS support
+  - TRUNCATE statements
+- ✅ **Improved SELECT Parsing** - Fixed parsing logic for basic SELECT statements with edge cases
+- ✅ **Fallback Mechanism** - Zero-information-loss strategy for complex patterns
+- ✅ **Edge Case Testing** - Comprehensive tests for unparseable, edge case, and real-world SQL patterns
+- ✅ **Benchmark Generation** - Performance analysis script for SQL statement parsing
+
 ## Completed in v0.8.0.0
 
 - ✅ **Comprehensive SQL statement parsing** - Full support for all major SQL operations:

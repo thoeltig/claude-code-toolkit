@@ -40,6 +40,36 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - **read-minified v0.8.0.0**: 70 SQL tests passing (comprehensive + edge cases)
 - **Overall**: 544 total tests passing, 78.68% statement coverage
 
+## [0.7.0.0] - 2025-12-11
+
+### Added
+
+- **Extended SQL Statement Parsing** - Support for additional SQL statement types (via read-minified v0.7.0.0):
+  - ALTER TABLE statements with ADD COLUMN and constraint tracking
+  - GRANT & REVOKE statements for permission management
+  - Transaction Control (BEGIN, COMMIT, ROLLBACK)
+  - CREATE INDEX statements
+  - DROP statements with IF EXISTS support
+  - TRUNCATE statements
+- **Improved SELECT Parsing** - Fixed parsing logic for basic SELECT statements:
+  - Resolved specification errors that incorrectly excluded SELECT statements
+  - Now correctly handles all basic SELECT variants with edge cases
+- **Fallback Mechanism for Complex Patterns** - Added zero-information-loss fallback:
+  - Fallback strategy ensures no information is discarded during parsing
+  - Graceful handling of unparseable sections
+- **Edge Case Testing** - Added comprehensive tests for real-world patterns:
+  - Tests for unparseable content scenarios
+  - Edge case validation in SQL parsing
+  - Real-world SQL data validation
+  - Benchmark generation script for performance analysis
+
+### Changed
+
+- **Parser Robustness** - Improved handling of complex SQL patterns:
+  - Better detection and preservation of complex nested expressions
+  - Improved multiline statement handling
+  - Enhanced quoted string and escape character handling
+
 ## [0.6.0.0] - 2025-12-09
 
 ### Added

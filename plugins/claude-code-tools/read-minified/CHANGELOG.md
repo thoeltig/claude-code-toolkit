@@ -78,6 +78,45 @@ SQL parser improvements with comprehensive test restructuring and quality valida
 - Window function parsing (captured in unparsedContent)
 - CTE parsing improvements (WITH clauses)
 
+## [0.7.0.0] - 2025-12-11
+
+SQL statement parsing expansion with additional statement types and edge case handling.
+
+### Added
+
+- **Extended SQL Statement Parsing** - Support for additional SQL statement types:
+  - **ALTER TABLE statements** - ADD COLUMN support with constraint tracking
+  - **GRANT & REVOKE statements** - Permission management parsing
+  - **Transaction Control** - BEGIN, COMMIT, ROLLBACK statement parsing
+  - **CREATE INDEX statements** - Index creation parsing
+  - **DROP statements** - DROP TABLE with IF EXISTS support
+  - **TRUNCATE statements** - Table truncation parsing
+- **Improved SELECT Parsing** - Fixed parsing logic for basic SELECT statements:
+  - Resolved issues where SELECT was incorrectly excluded due to specification errors
+  - Now correctly handles all basic SELECT variants with edge cases
+- **Fallback Mechanism** - Zero information loss for complex patterns:
+  - Added fallback strategy for complex statements
+  - Ensures no information is discarded during parsing
+  - Graceful handling of unparseable sections
+- **Edge Case Testing** - Comprehensive test coverage for real-world patterns:
+  - Tests for unparseable content scenarios
+  - Tests for edge cases in SQL parsing
+  - Real-world SQL data validation
+  - Benchmark generation script for performance analysis
+
+### Changed
+
+- **Parser Robustness** - Improved handling of complex SQL patterns:
+  - Better detection and preservation of complex nested expressions
+  - Improved multiline statement handling
+  - Enhanced quoted string and escape character handling
+
+### Test Coverage
+
+- Added comprehensive tests for new statement types (ALTER, GRANT/REVOKE, TRANSACTION, CREATE INDEX, DROP, TRUNCATE)
+- Edge case test suites for real-world SQL patterns
+- Benchmark generation script for SQL statement parsing performance
+
 ## [0.6.0.0] - 2025-12-09
 
 Log file and SQL INSERT statement parsing with structured JSON output.
