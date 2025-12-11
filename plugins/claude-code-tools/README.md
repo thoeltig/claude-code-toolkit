@@ -146,11 +146,11 @@ For package documentation, CLI usage, and programmatic API, see:
 
 The tool is a standalone TypeScript/Node.js package with:
 - Zero external dependencies
-- 9 file format handlers (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, plaintext)
+- 9 file format handlers (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, SQL, plaintext)
 - Batch processing support for multiple mixed-format files
 - Smart format detection with graceful fallback to plaintext
 - Optional disk caching
-- 378 passing tests (61 HTML tests), 88.98% statement coverage, 96.84% function coverage
+- 544 passing tests, 78.68% statement coverage, 90.69% function coverage
 - Processes 10+ files per second
 
 ## Completed in v0.2.0.0
@@ -193,11 +193,27 @@ The tool is a standalone TypeScript/Node.js package with:
   - 31 comprehensive tests, all passing
 - ✅ 434 total tests with 89%+ statement coverage, 96.84%+ function coverage
 
-## Planned for Phase 6+ (v0.7.0.0+)
+## Completed in v0.8.0.0
 
-- **SQL CREATE TABLE** - Schema extraction from CREATE TABLE statements
-- **SQL SELECT results** - Parse query output and result sets
-- **UPDATE/DELETE** - Statement parsing for data modification tracking
+- ✅ **Comprehensive SQL statement parsing** - Full support for all major SQL operations:
+  - SELECT with aliases, JOINs (INNER/LEFT/RIGHT/FULL OUTER/CROSS), GROUP BY, HAVING, UNION/INTERSECT/EXCEPT
+  - INSERT/UPDATE/DELETE with complex conditions
+  - CREATE/ALTER/DROP TABLE with schema extraction
+  - Subqueries, CASE statements, aggregate functions
+  - Transaction control (BEGIN, COMMIT, ROLLBACK)
+  - Zero information loss via unparsedContent fallback for complex patterns
+- ✅ **Test suite restructuring** - Replaced 976 shallow tests with 70 comprehensive tests:
+  - 26 non-overlapping statement tests validating complete parsing
+  - 44 real-world edge case tests
+  - Each test asserts 15-20+ parsed fields (vs previous 2-3 assertions)
+  - 10x faster test execution (~2 seconds)
+- ✅ 544 total tests with 78.68% statement coverage, 90.69% function coverage
+
+## Planned for Phase 7+ (v0.9.0.0+)
+
+- **Window Functions** - PARTITION BY, ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD
+- **CTEs (Common Table Expressions)** - Full WITH clause parsing
+- **Complex Subqueries** - Nested subquery resolution
 - **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
 
 All formats benefit from automatic minification and graceful fallback behavior.

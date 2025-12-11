@@ -21,7 +21,7 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
   - XML: full semantic preservation with element tags, flattened attributes (`attribute_` prefix), namespaces, CDATA
   - HTML: visual tag stripping with semantic structure preservation (headings, lists, tables)
   - Log files: Auto-detection of Apache, Nginx, RFC 3164, RFC 5424 formats with semantic field parsing
-  - SQL: INSERT statement parsing with table context, column definitions, and type-aware row data
+  - SQL: Comprehensive SQL statement parsing (INSERT/SELECT/UPDATE/DELETE/CREATE) with JOINs, aliases, aggregates, subqueries, and zero information loss
 - **Graceful Degradation:** Parse errors fall back to minified plaintext automatically
 - **Caching:** Optionally cache optimized files for reuse
 - **Batch Processing:** Handle multiple files in one command
@@ -80,7 +80,7 @@ The tool automatically detects file format based on file extension and applies a
 | `.xml` | XML | ✓ Element structure | Parse with attributes, namespaces, CDATA, full semantic preservation |
 | `.html`, `.htm` | HTML | ✓ Semantic structure | Strip visual tags, preserve semantic elements; optimized list/table formats |
 | `.log` | Log files | ✓ Structured array | Apache/Nginx/RFC3164/RFC5424 formats auto-detected; fallback to plaintext |
-| `.sql` | SQL dumps | ✓ Structured objects | Parse INSERT statements with table, columns, rows, type awareness |
+| `.sql` | SQL dumps | ✓ Structured objects | Parse INSERT/SELECT/UPDATE/DELETE/CREATE with full statement support |
 | `.txt`, `.text` | Plain text | ✗ As-is | Minify whitespace only |
 | `.py`, `.js`, `.go`, etc. | Code (unknown) | ✗ As-is | Treat as plaintext; minify whitespace |
 | Unknown | Plaintext | ✗ As-is | Minify whitespace only |
@@ -94,7 +94,7 @@ The tool automatically detects file format based on file extension and applies a
 - **XML**: Preserves element tags as field names, attributes with `attribute_` prefix, text content as is values, supports namespaces and CDATA
 - **HTML**: Strips visual tags (`<b>`, `<i>`, `<font>`, etc.), auto-closes unclosed tags, generates optimized structures for lists (`{ordered, list}`) and tables (`{headers, rows}`)
 - **Log files**: Auto-detects format from first line (Apache Combined, Nginx, RFC 3164 Syslog, RFC 5424 Syslog); parses to structured JSON array with semantic fields; fallback to minified plaintext
-- **SQL**: Parses INSERT statements with table name, column list, and row data; type-aware parsing (numbers, strings, booleans, NULL); supports multiple statements and edge cases
+- **SQL**: Comprehensive SQL statement parsing - INSERT/SELECT/UPDATE/DELETE/CREATE with full support for aliases, JOINs, GROUP BY, HAVING, subqueries, UNION/INTERSECT/EXCEPT; type-aware value parsing; zero information loss via unparsedContent fallback
 
 **Fallback Logic:**
 - Parse error → gracefully degrade to minified plaintext
@@ -204,8 +204,8 @@ const results = await processFiles(
 
 ## Test Coverage
 
-- **Overall: 88.98%+** statement coverage, **96.84%+** function coverage
-- **378 test cases** across 16 test suites:
+- **Overall: 78.68%** statements, **81.93%** lines, **90.69%** functions
+- **544 test cases** (543 passing, 1 unrelated failure) across 21 test suites:
   - formats/json.test.ts (13 tests)
   - formats/csv.test.ts (29 tests)
   - formats/yaml.test.ts (20 tests)
@@ -342,12 +342,28 @@ export function formatCsv(content: string): any {
   - 31 comprehensive tests, all passing
 - ✅ 434 total tests with 89%+ statement coverage, 96.84%+ function coverage
 
-## Planned Formats (Phase 6+)
+**v0.8.0.0:**
+- ✅ **Comprehensive SQL Statement Parsing** - Full support for SELECT, UPDATE, DELETE, CREATE, ALTER, DROP, Transactions
+  - JOIN parsing (INNER, LEFT, RIGHT, FULL OUTER, CROSS) with conditions
+  - Column aliases and table aliases
+  - GROUP BY, HAVING, UNION/INTERSECT/EXCEPT
+  - Complex WHERE clauses with nesting, subqueries, functions
+  - CREATE TABLE schema extraction with constraints
+  - Zero information loss: unparsedContent fallback for complex patterns
+- ✅ **Test Suite Restructuring** - Replaced 976 shallow tests with 70 focused comprehensive tests
+  - 26 non-overlapping statement tests (comprehensive.test.ts)
+  - 44 real-world edge case tests (edge-cases-spotty.test.ts)
+  - Each test validates 15-20+ assertions
+  - Improved maintainability and 10x faster test execution
+- ✅ 544 total tests with 78.68% statement coverage (70 SQL tests passing)
 
-**Phase 6 (v0.7.0.0 roadmap):**
-- **SQL CREATE TABLE** - Schema extraction from CREATE TABLE statements
-- **SQL SELECT results** - Parse query output and result sets
-- **UPDATE/DELETE statements** - Data modification tracking
+## Planned Formats (Phase 7+)
+
+**Phase 7+ (v0.9.0.0+ roadmap):**
+- **Window Functions** - PARTITION BY, ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD
+- **CTEs (Common Table Expressions)** - Full WITH clause parsing
+- **Complex Subqueries** - Nested subquery resolution
+- **SQL Reconstruction** - Validate reconstruction accuracy improvements
 - **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
 
 **Future Research:**

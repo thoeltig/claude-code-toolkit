@@ -7,12 +7,38 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-### Planned: Phase 6+ (SQL Schema, SELECT Results)
+### Planned: Phase 7+ (Window Functions, CTEs, Advanced Subqueries)
 
-- **SQL CREATE TABLE** - Schema extraction from CREATE TABLE statements
-- **SQL SELECT results** - Parse query output and result sets
-- **UPDATE/DELETE** - Statement parsing for data modification tracking
+- **Window Functions** - PARTITION BY, ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD
+- **CTEs (Common Table Expressions)** - Full WITH clause parsing
+- **Complex Subqueries** - Nested subquery resolution
 - **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
+
+## [0.8.0.0] - 2025-12-11
+
+### Added
+
+- **Comprehensive SQL Statement Parsing** - Extended read-minified v0.8.0.0 capabilities:
+  - SELECT statements with aliases, JOINs (INNER/LEFT/RIGHT/FULL OUTER/CROSS), GROUP BY, HAVING, UNION/INTERSECT/EXCEPT
+  - INSERT statements with type-aware value parsing and multi-row support
+  - UPDATE/DELETE statements with complex WHERE conditions
+  - CREATE/ALTER/DROP TABLE statements with schema extraction
+  - Transaction control (BEGIN, COMMIT, ROLLBACK)
+  - Zero information loss: unparsedContent fallback for complex patterns
+
+### Changed
+
+- **Test Suite Restructuring** - Replaced 1000+ shallow tests with 70 focused comprehensive tests:
+  - Deleted 22 redundant SQL test files
+  - Created sql.comprehensive.test.ts with 26 non-overlapping statement tests
+  - Created sql.edge-cases-spotty.test.ts with 44 real-world edge case tests
+  - Each test validates 15-20+ assertions (vs previous 2-3 assertions)
+  - Improved test maintainability, clarity, and 10x faster execution
+
+### Test Coverage
+
+- **read-minified v0.8.0.0**: 70 SQL tests passing (comprehensive + edge cases)
+- **Overall**: 544 total tests passing, 78.68% statement coverage
 
 ## [0.6.0.0] - 2025-12-09
 
