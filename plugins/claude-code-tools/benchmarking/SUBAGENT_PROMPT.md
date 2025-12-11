@@ -15,12 +15,17 @@ You are executing a benchmarking test. Your task is to:
 - Modify the JSON structure or add extra fields
 - Skip questions or leave answers blank
 - Include explanations or reasoning in the JSON output
+- **Write scripts, code, pseudocode, or attempt to create programs**
+  - Do NOT write Python, JavaScript, SQL, or any code
+  - Do NOT use pseudocode or algorithm descriptions
+  - Analyze and answer directly through reasoning only
 
 **ALWAYS:**
 - Use only values present in the provided data file
 - Answer with precision and accuracy
 - Maintain the exact JSON structure
 - Return valid, minified JSON (no formatting, no markdown)
+- Perform calculations and filtering directly without coding
 
 ## Your Task
 

@@ -346,6 +346,19 @@ function generateQuestionnaire(data, format, density) {
   let id = 1;
 
   // Field retrieval (30 questions - 30%)
+  const fieldDescriptions = {
+    price: 'selling price',
+    productName: 'product name',
+    category: 'category',
+    stockQuantity: 'current stock level',
+    weight: 'weight',
+    description: 'product description',
+    sku: 'SKU code',
+    supplierName: 'supplier',
+    costPrice: 'cost price',
+    lastRestocked: 'last restock date'
+  };
+
   for (let i = 0; i < Math.min(30, records.length); i++) {
     const record = records[i];
     const fields = Object.keys(record).filter(f => record[f] !== null && record[f] !== undefined);
@@ -353,24 +366,33 @@ function generateQuestionnaire(data, format, density) {
     const value = record[field];
 
     if (value !== null && value !== undefined) {
+      const fieldDesc = fieldDescriptions[field] || field;
+      const questions_templates = [
+        `I need to look up a specific product in our catalog. For the product with ID ${record.productId}, what is its ${fieldDesc}?`,
+        `Can you find the ${fieldDesc} associated with product ${record.productId}? I need this information for inventory tracking.`,
+        `We're auditing product records. What is the ${fieldDesc} for the item identified as ${record.productId}?`,
+        `I'm checking product details. What ${fieldDesc} is recorded for product ${record.productId}?`,
+      ];
+      const q = questions_templates[i % questions_templates.length];
+
       questions.push({
         id: id++,
         category: 'field_retrieval',
         difficulty: 'easy',
-        question: `What is the ${field} of product ${record.productId}?`,
+        question: q,
         expectedAnswer: { value: String(value), validationMethod: 'exact' },
         dataReferences: [field, 'productId'],
       });
     }
   }
 
-  // Aggregation (15 questions - 30%)
+  // Aggregation (30 questions - 30%)
   const totalStock = records.reduce((sum, r) => sum + Number(r.stockQuantity || 0), 0);
   questions.push({
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'What is the total stock quantity across all products?',
+    question: 'Our warehouse manager needs to know the total amount of inventory we currently have in stock across our entire product line. Looking at all products, what is the combined stock quantity?',
     expectedAnswer: { value: totalStock, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['stockQuantity'],
   });
@@ -380,7 +402,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'What is the average product price?',
+    question: 'For pricing strategy analysis, we need to calculate the average price of all products in our catalog. What is the mean price across all items?',
     expectedAnswer: { value: Math.round(avgPrice * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
     dataReferences: ['price'],
   });
@@ -390,7 +412,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'What is the highest product price?',
+    question: 'We\'re reviewing our premium product pricing. What is the highest price point among all products we offer?',
     expectedAnswer: { value: maxPrice, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['price'],
   });
@@ -400,7 +422,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'What is the total weight of all products combined?',
+    question: 'For shipping cost estimation, we need the combined weight of all products in our catalog. What is the total weight across every item?',
     expectedAnswer: { value: Math.round(totalWeight * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
     dataReferences: ['weight'],
   });
@@ -410,20 +432,29 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'What is the average stock quantity per product?',
+    question: 'To understand our inventory distribution, calculate the average stock level per product across our entire catalog. What is this average?',
     expectedAnswer: { value: Math.round(avgStock * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
     dataReferences: ['stockQuantity'],
   });
 
   // Add more aggregation questions (25 more = 30 total)
-  for (let i = 0; i < 25; i++) {
-    const questions_data = [
-      { q: 'How many total units have been shipped?', field: 'unitsShipped', agg: 'sum' },
-      { q: 'What is the average cost price?', field: 'costPrice', agg: 'avg' },
-      { q: 'What is the total cost of all products?', field: 'costPrice', agg: 'sum' },
-    ];
+  const aggregationTemplates = [
+    {
+      q: 'Our logistics team needs to know total shipments processed. Across all products, what is the combined units shipped?',
+      field: 'unitsShipped', agg: 'sum'
+    },
+    {
+      q: 'For cost analysis, what is the average cost price we pay for products in our catalog?',
+      field: 'costPrice', agg: 'avg'
+    },
+    {
+      q: 'To understand our total procurement investment, what is the sum of all product cost prices?',
+      field: 'costPrice', agg: 'sum'
+    },
+  ];
 
-    const qd = questions_data[i % questions_data.length];
+  for (let i = 0; i < 25; i++) {
+    const qd = aggregationTemplates[i % aggregationTemplates.length];
     const val = qd.agg === 'sum'
       ? records.reduce((sum, r) => sum + Number(r[qd.field] || 0), 0)
       : records.reduce((sum, r) => sum + Number(r[qd.field] || 0), 0) / records.length;
@@ -438,13 +469,13 @@ function generateQuestionnaire(data, format, density) {
     });
   }
 
-  // Filtering (10 questions - 20%)
+  // Filtering (20 questions - 20%)
   const outOfStock = records.filter(r => Number(r.stockQuantity || 0) === 0).length;
   questions.push({
     id: id++,
     category: 'filtering',
     difficulty: 'medium',
-    question: 'How many products are currently out of stock?',
+    question: 'We\'re doing a stock recount and need to identify which products need to be reordered. How many products in our inventory currently have zero stock?',
     expectedAnswer: { value: outOfStock, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['stockQuantity'],
   });
@@ -454,7 +485,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'filtering',
     difficulty: 'medium',
-    question: 'How many products are marked as hazardous?',
+    question: 'Our compliance team is tracking hazardous materials in our product catalog. How many items are flagged as hazardous?',
     expectedAnswer: { value: hazardous, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['hazardous'],
   });
@@ -464,20 +495,29 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'filtering',
     difficulty: 'medium',
-    question: 'How many products are marked as fragile?',
+    question: 'For shipping and handling purposes, we need to know how many products require special care. How many products are marked as fragile?',
     expectedAnswer: { value: fragile, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['fragile'],
   });
 
   // Add more filtering questions (17 more = 20 total)
-  for (let i = 0; i < 17; i++) {
-    const filter_data = [
-      { q: 'How many products have stock above 5000?', check: r => Number(r.stockQuantity || 0) > 5000 },
-      { q: 'How many products have price below $1000?', check: r => Number(r.price || 0) < 1000 },
-      { q: 'How many products are in the Electronics category?', check: r => String(r.category) === 'Electronics' },
-    ];
+  const filteringTemplates = [
+    {
+      q: 'Our high-inventory products help us understand storage utilization. How many products are currently stocked with quantities above 5000 units?',
+      check: r => Number(r.stockQuantity || 0) > 5000
+    },
+    {
+      q: 'For our budget planning, we\'re focusing on lower-cost items under $1000. How many products fall into this price range?',
+      check: r => Number(r.price || 0) < 1000
+    },
+    {
+      q: 'We\'re analyzing our Electronics division performance. How many products in our catalog are categorized as Electronics?',
+      check: r => String(r.category) === 'Electronics'
+    },
+  ];
 
-    const fd = filter_data[i % filter_data.length];
+  for (let i = 0; i < 17; i++) {
+    const fd = filteringTemplates[i % filteringTemplates.length];
     const count = records.filter(fd.check).length;
 
     questions.push({
