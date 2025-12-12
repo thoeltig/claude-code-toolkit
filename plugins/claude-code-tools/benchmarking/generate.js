@@ -345,18 +345,22 @@ function generateQuestionnaire(data, format, density) {
   const questions = [];
   let id = 1;
 
-  // Field retrieval (30 questions - 30%)
+  // Field retrieval
   const fieldDescriptions = {
     price: 'selling price',
     productName: 'product name',
     category: 'category',
     stockQuantity: 'current stock level',
+    reorderPoint: 'reorder point',
     weight: 'weight',
     description: 'product description',
     sku: 'SKU code',
     supplierName: 'supplier',
+    supplierLocation: 'location of the supplier',
     costPrice: 'cost price',
-    lastRestocked: 'last restock date'
+    manufacturerCode: 'manufacturer code',
+    warehouseLocation: 'warehouse location',
+    dimensions: 'dimensions',
   };
 
   for (let i = 0; i < Math.min(30, records.length); i++) {
@@ -368,10 +372,12 @@ function generateQuestionnaire(data, format, density) {
     if (value !== null && value !== undefined) {
       const fieldDesc = fieldDescriptions[field] || field;
       const questions_templates = [
-        `I need to look up a specific product in our catalog. For the product with ID ${record.productId}, what is its ${fieldDesc}?`,
-        `Can you find the ${fieldDesc} associated with product ${record.productId}? I need this information for inventory tracking.`,
-        `We're auditing product records. What is the ${fieldDesc} for the item identified as ${record.productId}?`,
-        `I'm checking product details. What ${fieldDesc} is recorded for product ${record.productId}?`,
+        `What is the ${fieldDesc} of the product ${record.productId}?`,
+        `Can you find the ${fieldDesc} associated with product ${record.productId}?`,
+        `Check the product ${record.productId} and provide the ${fieldDesc}?`,
+        `For entry ${record.productId} can you identify the ${fieldDesc}?`,
+        `What value has product ${record.productId} in the field ${fieldDesc}?`,
+        `If ${record.productId} has a value for ${fieldDesc} what is it?`,
       ];
       const q = questions_templates[i % questions_templates.length];
 
@@ -386,15 +392,15 @@ function generateQuestionnaire(data, format, density) {
     }
   }
 
-  // Aggregation (30 questions - 30%)
-  const totalStock = records.reduce((sum, r) => sum + Number(r.stockQuantity || 0), 0);
+  // Aggregation 
+  const totalPrice = records.reduce((sum, r) => sum + Number(r.price || 0), 0);
   questions.push({
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'Our warehouse manager needs to know the total amount of inventory we currently have in stock across our entire product line. Looking at all products, what is the combined stock quantity?',
-    expectedAnswer: { value: totalStock, validationMethod: 'numeric', tolerance: 0 },
-    dataReferences: ['stockQuantity'],
+    question: 'Can you calculate the sum of all product prices?',
+    expectedAnswer: { value: totalPrice, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['price'],
   });
 
   const avgPrice = records.reduce((sum, r) => sum + Number(r.price || 0), 0) / records.length;
@@ -402,7 +408,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'For pricing strategy analysis, we need to calculate the average price of all products in our catalog. What is the mean price across all items?',
+    question: 'What is the average product price?',
     expectedAnswer: { value: Math.round(avgPrice * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
     dataReferences: ['price'],
   });
@@ -412,8 +418,18 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'We\'re reviewing our premium product pricing. What is the highest price point among all products we offer?',
+    question: 'What is the highest product price?',
     expectedAnswer: { value: maxPrice, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['price'],
+  });
+  
+  const minPrice = Math.min(...records.map(r => Number(r.price || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the lowest product price?',
+    expectedAnswer: { value: minPrice, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['price'],
   });
 
@@ -422,9 +438,49 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'For shipping cost estimation, we need the combined weight of all products in our catalog. What is the total weight across every item?',
+    question: 'How much is the combined weight of all products?',
     expectedAnswer: { value: Math.round(totalWeight * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
     dataReferences: ['weight'],
+  });
+  
+  const avgWeight = records.reduce((sum, r) => sum + Number(r.weight || 0), 0) / records.length;
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'Can you calculate the average weight across all products?',
+    expectedAnswer: { value: Math.round(avgWeight * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['weight'],
+  });
+    
+  const minWeight = Math.min(...records.map(r => Number(r.weight || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'Which product has the lowest weight?',
+    expectedAnswer: { value: minWeight, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['weight'],
+  });
+  
+  const maxWeight = Math.max(...records.map(r => Number(r.weight || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'Which product has the highest weight?',
+    expectedAnswer: { value: maxWeight, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['weight'],
+  });
+  
+  const totalStockQuantity = records.reduce((sum, r) => sum + Number(r.stockQuantity || 0), 0);
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'How much is the sum of all stock quantities weight?',
+    expectedAnswer: { value: Math.round(totalStockQuantity * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['stockQuantity'],
   });
 
   const avgStock = records.reduce((sum, r) => sum + Number(r.stockQuantity || 0), 0) / records.length;
@@ -432,51 +488,239 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'aggregation',
     difficulty: 'medium',
-    question: 'To understand our inventory distribution, calculate the average stock level per product across our entire catalog. What is this average?',
+    question: 'Can you calculate the average stock quantity of all products?',
     expectedAnswer: { value: Math.round(avgStock * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
     dataReferences: ['stockQuantity'],
   });
+    
+  const minStockQuantity = Math.min(...records.map(r => Number(r.stockQuantity || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the lowest amount of stock quantity?',
+    expectedAnswer: { value: minStockQuantity, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['stockQuantity'],
+  });
+  
+  const maxStockQuantity = Math.max(...records.map(r => Number(r.stockQuantity || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the highest amount of stock quantity?',
+    expectedAnswer: { value: maxStockQuantity, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['stockQuantity'],
+  });
+  
+  const totalUnitsShipped = records.reduce((sum, r) => sum + Number(r.unitsShipped || 0), 0);
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the sum of all units shipped?',
+    expectedAnswer: { value: totalUnitsShipped, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['unitsShipped'],
+  });
+    
+  const avgUnitsShipped = records.reduce((sum, r) => sum + Number(r.unitsShipped || 0), 0) / records.length;
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'Can you calculate the average of units shipped?',
+    expectedAnswer: { value: Math.round(avgUnitsShipped * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['unitsShipped'],
+  });
+  
+  const minUnitsShipped = Math.min(...records.map(r => Number(r.unitsShipped || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the lowest amount of units shipped?',
+    expectedAnswer: { value: minUnitsShipped, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['costPrice'],
+  });
+  
+  const maxUnitsShipped = Math.max(...records.map(r => Number(r.unitsShipped || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the highest amount of units shipped?',
+    expectedAnswer: { value: maxUnitsShipped, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['unitsShipped'],
+  });
+  
+  const totalCostPrice = records.reduce((sum, r) => sum + Number(r.costPrice || 0), 0);
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the sum of all product cost prices?',
+    expectedAnswer: { value: totalCostPrice, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['costPrice'],
+  });
+  
+  const avgCostPrice = records.reduce((sum, r) => sum + Number(r.costPrice || 0), 0) / records.length;
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'Can you calculate the average cost price of all products?',
+    expectedAnswer: { value: Math.round(avgCostPrice * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['costPrice'],
+  });
+  
+  const minCostPrice = Math.min(...records.map(r => Number(r.costPrice || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the lowest cost price?',
+    expectedAnswer: { value: minCostPrice, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['costPrice'],
+  });
+  
+  const maxCostPrice= Math.max(...records.map(r => Number(r.costPrice || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the highest cost price?',
+    expectedAnswer: { value: maxCostPrice, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['costPrice'],
+  });
+    
+  const totalReorderPoint = records.reduce((sum, r) => sum + Number(r.reorderPoint || 0), 0);
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the sum of all reorder points?',
+    expectedAnswer: { value: totalReorderPoint, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+  
+  const avgReorderPointe = records.reduce((sum, r) => sum + Number(r.reorderPoint || 0), 0) / records.length;
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the average reorder points of all products?',
+    expectedAnswer: { value: Math.round(avgReorderPointe * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['reorderPoint'],
+  });
+  
+  const minReorderPoint = Math.min(...records.map(r => Number(r.reorderPoint || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the lowest number of reorder points?',
+    expectedAnswer: { value: minReorderPoint, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+  
+  const maxReorderPoint= Math.max(...records.map(r => Number(r.reorderPoint || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the highest number of reorder points?',
+    expectedAnswer: { value: maxReorderPoint, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+        
+  const avgAvgRating = records.reduce((sum, r) => sum + Number(r.avgRating || 0), 0) / records.length;
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the average of all average ratings?',
+    expectedAnswer: { value: Math.round(avgAvgRating * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['avgRating'],
+  });
+  
+  const minAvgRating = Math.min(...records.map(r => Number(r.avgRating || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the lowest avergae rating?',
+    expectedAnswer: { value: minAvgRating, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['avgRating'],
+  });
+  
+  const maxAvgRating = Math.max(...records.map(r => Number(r.avgRating || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the highest avergae rating?',
+    expectedAnswer: { value: maxAvgRating, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['avgRating'],
+  });
+  
+  const totalShelfLife = records.reduce((sum, r) => sum + Number(r.shelfLife || 0), 0);
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the total shelf life?',
+    expectedAnswer: { value: totalShelfLife, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['shelfLife'],
+  });
+  
+  const avgShelfLife = records.reduce((sum, r) => sum + Number(r.shelfLife || 0), 0) / records.length;
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the average shelf life?',
+    expectedAnswer: { value: Math.round(avgShelfLife * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
+    dataReferences: ['shelfLife'],
+  });
+  
+  const minShelfLife = Math.min(...records.map(r => Number(r.shelfLife || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the smallest shelf life?',
+    expectedAnswer: { value: minShelfLife, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['shelfLife'],
+  });
+  
+  const maxShelfLife = Math.max(...records.map(r => Number(r.shelfLife || 0)));
+  questions.push({
+    id: id++,
+    category: 'aggregation',
+    difficulty: 'medium',
+    question: 'What is the highest shelf life?',
+    expectedAnswer: { value: maxShelfLife, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['shelfLife'],
+  });
 
-  // Add more aggregation questions (25 more = 30 total)
-  const aggregationTemplates = [
-    {
-      q: 'Our logistics team needs to know total shipments processed. Across all products, what is the combined units shipped?',
-      field: 'unitsShipped', agg: 'sum'
-    },
-    {
-      q: 'For cost analysis, what is the average cost price we pay for products in our catalog?',
-      field: 'costPrice', agg: 'avg'
-    },
-    {
-      q: 'To understand our total procurement investment, what is the sum of all product cost prices?',
-      field: 'costPrice', agg: 'sum'
-    },
-  ];
-
-  for (let i = 0; i < 25; i++) {
-    const qd = aggregationTemplates[i % aggregationTemplates.length];
-    const val = qd.agg === 'sum'
-      ? records.reduce((sum, r) => sum + Number(r[qd.field] || 0), 0)
-      : records.reduce((sum, r) => sum + Number(r[qd.field] || 0), 0) / records.length;
-
-    questions.push({
-      id: id++,
-      category: 'aggregation',
-      difficulty: 'medium',
-      question: qd.q,
-      expectedAnswer: { value: qd.agg === 'sum' ? val : Math.round(val * 100) / 100, validationMethod: 'numeric', tolerance: 0.01 },
-      dataReferences: [qd.field],
-    });
-  }
-
-  // Filtering (20 questions - 20%)
+  // Filtering
   const outOfStock = records.filter(r => Number(r.stockQuantity || 0) === 0).length;
   questions.push({
     id: id++,
     category: 'filtering',
     difficulty: 'medium',
-    question: 'We\'re doing a stock recount and need to identify which products need to be reordered. How many products in our inventory currently have zero stock?',
+    question: 'How many products are out of stock?',
     expectedAnswer: { value: outOfStock, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['stockQuantity'],
+  });
+
+  const haveStock = records.filter(r => Number(r.stockQuantity || 0) !== 0).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have stock?',
+    expectedAnswer: { value: haveStock, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['stockQuantity'],
   });
 
@@ -485,8 +729,18 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'filtering',
     difficulty: 'medium',
-    question: 'Our compliance team is tracking hazardous materials in our product catalog. How many items are flagged as hazardous?',
+    question: 'How many items are hazardous?',
     expectedAnswer: { value: hazardous, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['hazardous'],
+  });
+  
+  const notHazardous = records.filter(r => r.hazardous === false).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many items are not hazardous?',
+    expectedAnswer: { value: notHazardous, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['hazardous'],
   });
 
@@ -495,49 +749,219 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'filtering',
     difficulty: 'medium',
-    question: 'For shipping and handling purposes, we need to know how many products require special care. How many products are marked as fragile?',
+    question: 'How many products are marked as fragile?',
     expectedAnswer: { value: fragile, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['fragile'],
   });
-
-  // Add more filtering questions (17 more = 20 total)
-  const filteringTemplates = [
-    {
-      q: 'Our high-inventory products help us understand storage utilization. How many products are currently stocked with quantities above 5000 units?',
-      check: r => Number(r.stockQuantity || 0) > 5000
-    },
-    {
-      q: 'For our budget planning, we\'re focusing on lower-cost items under $1000. How many products fall into this price range?',
-      check: r => Number(r.price || 0) < 1000
-    },
-    {
-      q: 'We\'re analyzing our Electronics division performance. How many products in our catalog are categorized as Electronics?',
-      check: r => String(r.category) === 'Electronics'
-    },
-  ];
-
-  for (let i = 0; i < 17; i++) {
-    const fd = filteringTemplates[i % filteringTemplates.length];
-    const count = records.filter(fd.check).length;
-
-    questions.push({
-      id: id++,
-      category: 'filtering',
-      difficulty: 'medium',
-      question: fd.q,
-      expectedAnswer: { value: count, validationMethod: 'numeric', tolerance: 0 },
-      dataReferences: [],
-    });
-  }
-
-  // Structure awareness (16 questions - 16%)
+  
+  const notFragile = records.filter(r => r.fragile !== true).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products are not marked as fragile?',
+    expectedAnswer: { value: notFragile, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['fragile'],
+  });
+  
+  const categoryElectronics = records.filter(r => r.category === 'Electronics').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products are categorized as electronics?',
+    expectedAnswer: { value: categoryElectronics, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['category'],
+  });
+  
+  const notCategoryElectronics = records.filter(r => r.category !== 'Electronics').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products are not categorized as electronics?',
+    expectedAnswer: { value: notCategoryElectronics, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['category'],
+  });
+  
+  const categoryElectronics2 = records.filter(r => r.category === 'Industrial Equipment').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products are categorized as industrial equipment?',
+    expectedAnswer: { value: categoryElectronics2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['category'],
+  });
+  
+  const notCategoryElectronics2 = records.filter(r => r.category !== 'Industrial Equipment').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products are not categorized as industrial equipment?',
+    expectedAnswer: { value: notCategoryElectronics2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['category'],
+  });
+    
+  const supplierLocationSingapore = records.filter(r => r.supplierLocation === 'Singapore').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many suppliers are located in Singapore?',
+    expectedAnswer: { value: supplierLocationSingapore, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['supplierLocation'],
+  });
+  
+  const notSupplierLocationSingapore = records.filter(r => r.supplierLocation !== 'Singapore').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many suppliers are not located in Singapore?',
+    expectedAnswer: { value: notSupplierLocationSingapore, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['supplierLocation'],
+  });
+  
+  const supplierLocationSingapore2 = records.filter(r => r.supplierLocation === 'Rotterdam, Netherlands').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many suppliers are located in Rotterdam, Netherlands?',
+    expectedAnswer: { value: supplierLocationSingapore2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['supplierLocation'],
+  });
+  
+  const notSupplierLocationSingapore2 = records.filter(r => r.supplierLocation !== 'Rotterdam, Netherlands').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many suppliers are not located in Rotterdam, Netherlands?',
+    expectedAnswer: { value: notSupplierLocationSingapore2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['supplierLocation'],
+  });
+  
+  const durableDescription = records.filter(r => r.description === 'High-quality product with excellent durability.').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have the description "High-quality product with excellent durability."?',
+    expectedAnswer: { value: durableDescription, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['description'],
+  });
+  
+  const notDurableDescription = records.filter(r => r.description !== 'High-quality product with excellent durability.').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products do not have the description "High-quality product with excellent durability."?',
+    expectedAnswer: { value: notDurableDescription, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['description'],
+  });
+  
+  const countLastRestocked = records.filter(r => r.lastRestocked === '2025-10-17').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have been restocked on the 17. October 2025?',
+    expectedAnswer: { value: countLastRestocked, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });
+  
+  const countNotLastRestocked = records.filter(r => r.lastRestocked !== '2025-10-17').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have not been restocked on the 17. October 2025?',
+    expectedAnswer: { value: countNotLastRestocked, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });
+  
+  const countLastRestocked2 = records.filter(r => r.lastRestocked === '2025-11-14').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have been restocked on the 14. November 2025?',
+    expectedAnswer: { value: countLastRestocked2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });
+  
+  const countNotLastRestocked2 = records.filter(r => r.lastRestocked !== '2025-11-14').length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have not been restocked on the 14. November 2025?',
+    expectedAnswer: { value: countNotLastRestocked2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });
+  
+  const countReorderPoint = records.filter(r => r.reorderPoint === 402).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have 402 reorder points?',
+    expectedAnswer: { value: countReorderPoint, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+  
+  const countNotReorderPoint = records.filter(r => r.reorderPoint !== 402).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products do not have 402 reorder points?',
+    expectedAnswer: { value: countNotReorderPoint, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+  
+  const countReorderPoint2 = records.filter(r => r.reorderPoint === 217).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products have 217 reorder points?',
+    expectedAnswer: { value: countReorderPoint2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+  
+  const countNotReorderPoint2 = records.filter(r => r.reorderPoint !== 217).length;
+  questions.push({
+    id: id++,
+    category: 'filtering',
+    difficulty: 'medium',
+    question: 'How many products do not have 217 reorder points?',
+    expectedAnswer: { value: countNotReorderPoint2, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['reorderPoint'],
+  });
+    
+  // Structure awareness
   const categories = Array.from(new Set(records.map(r => String(r.category || 'Unknown')))).sort();
   questions.push({
     id: id++,
     category: 'structure_awareness',
     difficulty: 'medium',
-    question: 'List all unique product categories in the dataset',
+    question: 'Find all product categories and return only the unique values in an array like this ["category1","category2","category3"].',
     expectedAnswer: { value: categories, validationMethod: 'array_set' },
+    dataReferences: ['category'],
+  });
+  
+  const catCount = categories.length;
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'Count all unique product categories.',
+    expectedAnswer: { value: catCount, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['category'],
   });
 
@@ -546,45 +970,122 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'structure_awareness',
     difficulty: 'medium',
-    question: 'How many unique suppliers are in the dataset?',
-    expectedAnswer: { value: suppliers.length, validationMethod: 'numeric', tolerance: 0 },
+    question: 'List all supplier names without duplicates in an array like this ["name1","name2","name3"].',
+    expectedAnswer: { value: suppliers, validationMethod: 'array_set' },
     dataReferences: ['supplierName'],
   });
-
-  const catCount = categories.length;
+    
+  const suppliersCount = suppliers.length;
   questions.push({
     id: id++,
     category: 'structure_awareness',
     difficulty: 'medium',
-    question: 'How many distinct product categories exist?',
-    expectedAnswer: { value: catCount, validationMethod: 'numeric', tolerance: 0 },
-    dataReferences: ['category'],
+    question: 'Count all unique supplier names.',
+    expectedAnswer: { value: suppliersCount, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['supplierName'],
+  });  
+
+  const supplierLocation = Array.from(new Set(records.map(r => String(r.supplierLocation || 'Unknown')))).sort();
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'List all unique supplier location in an array like this ["location1","location2","location3"].',
+    expectedAnswer: { value: supplierLocation, validationMethod: 'array_set' },
+    dataReferences: ['supplierLocation'],
   });
+    
+  const supplierLocationCount = supplierLocation.length;
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'How many unique supplier locations exist?',
+    expectedAnswer: { value: supplierLocationCount, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['supplierLocation'],
+  });  
 
-  // Add more structure questions (13 more = 16 total)
-  for (let i = 0; i < 13; i++) {
-    const struct_data = [
-      { q: 'List all unique warehouse locations', field: 'warehouseLocation' },
-      { q: 'How many distinct manufacturer codes are there?', field: 'manufacturerCode' },
-    ];
+  const warehouseLocation = Array.from(new Set(records.map(r => String(r.warehouseLocation || 'Unknown')))).sort();
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'List all unique warehouse location in an array like this ["warehouse1","warehouse2","warehouse3"].',
+    expectedAnswer: { value: warehouseLocation, validationMethod: 'array_set' },
+    dataReferences: ['warehouseLocation'],
+  });
+    
+  const warehouseLocationCount = warehouseLocation.length;
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'How many unique warehouse locations exist?',
+    expectedAnswer: { value: warehouseLocationCount, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['warehouseLocation'],
+  }); 
+  
+  const manufacturerCode = Array.from(new Set(records.map(r => String(r.manufacturerCode || 'Unknown')))).sort();
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'List all different manufacturer codes in an array like this ["code1","code2","code3"].',
+    expectedAnswer: { value: manufacturerCode, validationMethod: 'array_set' },
+    dataReferences: ['manufacturerCode'],
+  });
+    
+  const manufacturerCodeCount = manufacturerCode.length;
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'How many different manufacturer codes are there?',
+    expectedAnswer: { value: manufacturerCodeCount, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['manufacturerCode'],
+  }); 
+  
+  const description = Array.from(new Set(records.map(r => String(r.description || 'Unknown')))).sort();
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'List all distinct description in an array like this ["description1","description2","description3"].',
+    expectedAnswer: { value: description, validationMethod: 'array_set' },
+    dataReferences: ['description'],
+  });
+    
+  const descriptionCount = manufacturerCode.length;
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'How many different description are there?',
+    expectedAnswer: { value: descriptionCount, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['description'],
+  }); 
+  
+  const lastRestocked = Array.from(new Set(records.map(r => String(r.lastRestocked || 'Unknown')))).sort();
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'List all distinct last restocked dates in an array like this ["date1","date2","date3"].',
+    expectedAnswer: { value: lastRestocked, validationMethod: 'array_set' },
+    dataReferences: ['lastRestocked'],
+  });
+    
+  const lastRestockedCount = lastRestocked.length;
+  questions.push({
+    id: id++,
+    category: 'structure_awareness',
+    difficulty: 'medium',
+    question: 'How many different last restocked dates are there?',
+    expectedAnswer: { value: lastRestockedCount, validationMethod: 'numeric', tolerance: 0 },
+    dataReferences: ['lastRestocked'],
+  });  
 
-    const sd = struct_data[i % struct_data.length];
-    const values = Array.from(new Set(records.map(r => String(r[sd.field] || 'Unknown')))).sort();
-
-    questions.push({
-      id: id++,
-      category: 'structure_awareness',
-      difficulty: 'medium',
-      question: sd.q.includes('How many') ? sd.q : sd.q,
-      expectedAnswer: {
-        value: sd.q.includes('How many') ? values.length : values,
-        validationMethod: sd.q.includes('How many') ? 'numeric' : 'array_set'
-      },
-      dataReferences: [sd.field],
-    });
-  }
-
-  // Deduction (4 questions - 4%)
+  // Deduction
   const supplierCounts = new Map();
   records.forEach(r => {
     const supplier = String(r.supplierName || 'Unknown');
@@ -596,7 +1097,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'deduction',
     difficulty: 'hard',
-    question: `Which supplier supplies the most products?`,
+    question: `Calculate how many different products each supplier name provided. Which supplier name occured most often and in how many products?`,
     expectedAnswer: {
       value: `${topSupplier} with ${supplierCounts.get(topSupplier)} products`,
       validationMethod: 'fuzzy_deduction',
@@ -617,7 +1118,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'deduction',
     difficulty: 'hard',
-    question: `Which category has the highest total stock quantity?`,
+    question: `If you group products by category and sum up all stock quantities in each group which category has the highest total stock quantity and how much is it?`,
     expectedAnswer: {
       value: `${maxStockCat} with ${maxStockCat[1]} total units`,
       validationMethod: 'fuzzy_deduction',
@@ -638,9 +1139,9 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'deduction',
     difficulty: 'hard',
-    question: `Which supplier has the highest total cost value?`,
+    question: `If you look at all supplier names and sum all cost prices per supplier name which supplier would have the highest total cost price and how much is it?`,
     expectedAnswer: {
-      value: `${maxCostSupplier[0]} with ${Math.round(maxCostSupplier[1] * 100) / 100} total cost`,
+      value: `${maxCostSupplier[0]} with ${maxCostSupplier[1]} total cost`,
       validationMethod: 'fuzzy_deduction',
       keywords: [maxCostSupplier[0]],
     },
@@ -665,9 +1166,9 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'deduction',
     difficulty: 'hard',
-    question: `Which category has the highest average product price?`,
+    question: `Group the all product prices by category and calculate the average price per category. Which category has the highest average product price and how much is that price?`,
     expectedAnswer: {
-      value: `${maxAvgPriceCat[0]} with average price ${Math.round(maxAvgPriceCat[1] * 100) / 100}`,
+      value: `${maxAvgPriceCat[0]} with average price ${maxAvgPriceCat[1]}`,
       validationMethod: 'fuzzy_deduction',
       keywords: [maxAvgPriceCat[0]],
     },
@@ -686,7 +1187,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'multi_step_reasoning',
     difficulty: 'hard',
-    question: `How many products are both above average price AND currently out of stock?`,
+    question: `Calculate the average price of all products. How many of all products have no stock and a price which is above the average price?`,
     expectedAnswer: { value: highPriceOutOfStock, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['price', 'stockQuantity'],
   });
@@ -697,7 +1198,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'multi_step_reasoning',
     difficulty: 'hard',
-    question: `In the Electronics category, how many products have above-average stock levels?`,
+    question: `Calculate the average stock of all products. How many products in the category Electronics have a stock above average?`,
     expectedAnswer: { value: electronicsAboveAvgStock, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['category', 'stockQuantity'],
   });
@@ -708,7 +1209,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'multi_step_reasoning',
     difficulty: 'hard',
-    question: `How many products have a profit margin (price > cost) AND are marked fragile?`,
+    question: `How many of all products would be profitable if sold (price > cost) and are also fragile?`,
     expectedAnswer: { value: profitableAndFragile, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['price', 'costPrice', 'fragile'],
   });
@@ -720,7 +1221,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'multi_step_reasoning',
     difficulty: 'hard',
-    question: `How many products have above-average profit margins?`,
+    question: `Calculate the profit margin (price-cost) of all products and then calculate the average of that. How many of all products have a profit margin above average?`,
     expectedAnswer: { value: highMarginProducts, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['price', 'costPrice'],
   });
@@ -739,7 +1240,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'multi_step_reasoning',
     difficulty: 'hard',
-    question: `Which supplier provides the most fragile products?`,
+    question: `Which supplier name is associated with the highest number of fragile products and how many fragile products are that?`,
     expectedAnswer: {
       value: `${topFragileSupplier[0]} with ${topFragileSupplier[1]} fragile products`,
       validationMethod: 'fuzzy_deduction',
@@ -755,7 +1256,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'edge_case',
     difficulty: 'hard',
-    question: `If we removed all out-of-stock products, what would be the new average stock quantity?`,
+    question: `If we exclude all products without stock and calculated the average stock of the remaining products what would be the new average stock quantity?`,
     expectedAnswer: {
       value: zeroStockProducts.length > 0
         ? Math.round((records.filter(r => Number(r.stockQuantity || 0) > 0).reduce((sum, r) => sum + Number(r.stockQuantity || 0), 0) / (records.length - zeroStockProducts.length)) * 100) / 100
@@ -771,7 +1272,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'edge_case',
     difficulty: 'hard',
-    question: `What percentage of products have been discontinued?`,
+    question: `Count all products which have a discontinued date and calculate the how much percentage of all products are discontinued?`,
     expectedAnswer: {
       value: Math.round((discontinuedProducts.length / records.length) * 10000) / 100,
       validationMethod: 'numeric',
@@ -791,7 +1292,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'edge_case',
     difficulty: 'hard',
-    question: `Which category has the fewest products?`,
+    question: `Group all products by category and find the category which has the smallest number of products?`,
     expectedAnswer: {
       value: smallestCategories.length === 1 ? smallestCategories[0] : smallestCategories.join(','),
       validationMethod: 'fuzzy_deduction',
@@ -806,7 +1307,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'edge_case',
     difficulty: 'hard',
-    question: `How many products lack rating information?`,
+    question: `Count how many products do not have rating information?`,
     expectedAnswer: { value: noRatingProducts, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['avgRating'],
   });
@@ -816,7 +1317,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'edge_case',
     difficulty: 'hard',
-    question: `How many products are both hazardous AND fragile (highest risk)?`,
+    question: `Count how many products are both hazardous and fragile at the same time?`,
     expectedAnswer: { value: hazardousAndFragile, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['hazardous', 'fragile'],
   });
@@ -827,27 +1328,6 @@ function generateQuestionnaire(data, format, density) {
     const cat = String(r.category || 'Unknown');
     if (!priceByCategory.has(cat)) priceByCategory.set(cat, []);
     priceByCategory.get(cat).push(Number(r.price || 0));
-  });
-
-  const priceVariation = new Map();
-  for (const [cat, prices] of priceByCategory.entries()) {
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
-    priceVariation.set(cat, Math.sqrt(variance));
-  }
-  const mostConsistentCategory = Array.from(priceVariation.entries()).reduce((a, b) => b[1] < a[1] ? b : a)[0];
-  questions.push({
-    id: id++,
-    category: 'complex_deduction',
-    difficulty: 'hard',
-    question: `Which category has the most consistent pricing (lowest price variance)?`,
-    expectedAnswer: {
-      value: mostConsistentCategory,
-      validationMethod: 'fuzzy_deduction',
-      keywords: [mostConsistentCategory],
-    },
-    dataReferences: ['category', 'price'],
-    requiresManualReview: true,
   });
 
   const weightPerUnit = new Map();
@@ -870,7 +1350,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'complex_deduction',
     difficulty: 'hard',
-    question: `Which supplier offers the best weight-to-shipment ratio (lightest per unit shipped)?`,
+    question: `Group products by supplier name then calculate the sum of all weigth and all units shipped. Calculate the weight to units shipped ratio and return the product with the lowest weight per unit shipped.`,
     expectedAnswer: {
       value: bestEfficiencySupplier,
       validationMethod: 'fuzzy_deduction',
@@ -891,7 +1371,7 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'complex_deduction',
     difficulty: 'hard',
-    question: `Which supplier has the lowest total cost value across all products?`,
+    question: `Group products by supplier and calculate the sum of all cost prices. Find the supplier name with the lowest total cost.`,
     expectedAnswer: {
       value: cheapestSupplier,
       validationMethod: 'fuzzy_deduction',
@@ -909,33 +1389,12 @@ function generateQuestionnaire(data, format, density) {
     id: id++,
     category: 'complex_deduction',
     difficulty: 'hard',
-    question: `How many products are significantly overpriced (>150% of average margin)?`,
+    question: `Calculate the profit margin (price-cost) of all products and then calculate the average of that. HHow many products have a profit margin >150% of average profit margin?`,
     expectedAnswer: { value: overpriced, validationMethod: 'numeric', tolerance: 0 },
     dataReferences: ['price', 'costPrice'],
   });
 
-  const categoryDiversity = new Map();
-  records.forEach(r => {
-    const supplier = String(r.supplierName || 'Unknown');
-    const cat = String(r.category || 'Unknown');
-    if (!categoryDiversity.has(supplier)) categoryDiversity.set(supplier, new Set());
-    categoryDiversity.get(supplier).add(cat);
-  });
-  const mostSpecializedSupplier = Array.from(categoryDiversity.entries()).reduce((a, b) => b[1].size < a[1].size ? b : a)[0];
-  questions.push({
-    id: id++,
-    category: 'complex_deduction',
-    difficulty: 'hard',
-    question: `Which supplier has the narrowest product range (fewest categories)?`,
-    expectedAnswer: {
-      value: mostSpecializedSupplier,
-      validationMethod: 'fuzzy_deduction',
-      keywords: [mostSpecializedSupplier],
-    },
-    dataReferences: ['supplierName', 'category'],
-    requiresManualReview: true,
-  });
-
+  // TODO: Until here questions refactored!
   // Hypothetical Reasoning (5 questions)
   const totalCostValue = records.reduce((sum, r) => sum + Number(r.costPrice || 0), 0);
   const discontinuedCost = discontinuedProducts.reduce((sum, r) => sum + Number(r.costPrice || 0), 0);
