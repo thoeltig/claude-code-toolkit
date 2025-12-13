@@ -1,10 +1,10 @@
 /**
  * Base data model generator
- * Generates ~60k character product catalog dataset
+ * Generates product catalog dataset
  * Can be converted to all target formats
  */
 
-import { BaseDataSet, DataRecord, DataDensity } from "../types";
+import { Metadata, BaseDataSet, DataRecord } from "../types";
 
 interface ProductRecord extends DataRecord {
   productId: string;
@@ -31,7 +31,10 @@ interface ProductRecord extends DataRecord {
   unitsShipped: number;
 }
 
-export class BaseModelGenerator {
+/**
+ * Generates a flat array of random products with 19 mandatory fields + 3 optional fields.
+ */
+export class ProductDataGenerator {
   private readonly categories: string[] = [
     "Electronics",
     "Office Supplies",
@@ -65,6 +68,40 @@ export class BaseModelGenerator {
     "Hong Kong",
     "Los Angeles, USA",
     "Dubai, UAE",
+  ];
+  
+  private readonly descriptions: string[] = [
+    "High-quality product with excellent durability and performance characteristics. Suitable for professional and industrial applications.",
+    "Engineered for reliability with precision manufacturing. Features advanced design for optimal functionality.",
+    "Designed for efficiency and long-term reliability. Built with premium materials and strict quality control.",
+    "Professional-grade equipment meeting international standards. Extensively tested for performance and safety.",
+    "Robust and versatile solution for demanding applications. Features enhanced capabilities and extended lifespan.",
+  ];
+  
+   private readonly productNamePrefixes: string[] = [
+    "Premium", 
+    "Professional", 
+    "Industrial", 
+    "Basic", 
+    "Heavy-Duty", 
+    "Compact", 
+    "Deluxe", 
+    "Standard"
+  ];
+  
+  private readonly productNameTypes: string[] = [
+    "Wrench",
+    "Drill",
+    "Pump",
+    "Motor",
+    "Compressor",
+    "Generator",
+    "Controller",
+    "Sensor",
+    "Valve",
+    "Switch",
+    "Connector",
+    "Cable",
   ];
 
   private rand: () => number;
@@ -111,16 +148,13 @@ export class BaseModelGenerator {
     return `${w}x${h}x${d}cm`;
   }
 
-  public generate(targetCharCount: number = 60000, density: DataDensity = 100): BaseDataSet {
+  public generate(recordCount: number): BaseDataSet {
     const records: ProductRecord[] = [];
     let totalChars = 0;
     let recordIndex = 0;
+    let totalValues = 0;
 
-    // Estimate chars per record (~500 chars average for full record)
-    const estimatedRecordSize = 500;
-    const estimatedRecordCount = Math.ceil(targetCharCount / estimatedRecordSize);
-
-    while (totalChars < targetCharCount && recordIndex < estimatedRecordCount * 1.5) {
+    while (recordIndex < recordCount) {
       const record: ProductRecord = {
         productId: `PROD-${String(recordIndex + 1).padStart(6, "0")}`,
         productName: this.generateProductName(),
@@ -132,7 +166,7 @@ export class BaseModelGenerator {
         lastRestocked: this.generateDate(90),
         supplierName: this.getRandomItem(this.suppliers),
         supplierLocation: this.getRandomItem(this.locations),
-        description: this.generateDescription(),
+        description: this.getRandomItem(this.descriptions),
         sku: this.generateSKU(recordIndex),
         manufacturerCode: `MFR-${this.randomInt(100000, 999999)}`,
         warehouseLocation: `${String.fromCharCode(65 + this.randomInt(0, 9))}-${this.randomInt(1, 99)}-${this.randomInt(1, 50)}`,
@@ -142,16 +176,20 @@ export class BaseModelGenerator {
         fragile: this.rand() > 0.7,
         unitsShipped: this.randomInt(0, 100000),
       };
+      totalValues+=19;
 
       // Add optional fields based on probability
       if (this.rand() > 0.3) {
         record.avgRating = this.randomFloat(1, 5, 1);
+        totalValues+=1;
       }
       if (this.rand() > 0.6) {
         record.shelfLife = this.randomInt(30, 3650);
+        totalValues+=1;
       }
       if (this.rand() > 0.9) {
         record.discontinuedDate = this.generateDate(180);
+        totalValues+=1;
       }
 
       records.push(record);
@@ -159,52 +197,26 @@ export class BaseModelGenerator {
       recordIndex++;
     }
 
-    const metadata = {
+    const metadata:Metadata = {
       characterCount: totalChars,
-      density,
       fieldCount: Object.keys(records[0] || {}).length,
       recordCount: records.length,
+      totalValues: totalValues,
+      avgCharacterCountPerValue: totalChars / totalValues,
+      avgCharacterCountPerRecord: totalChars / recordCount,
       generatedAt: new Date().toISOString(),
-      description: `Product catalog with ${records.length} items, ${totalChars} characters, ${density}% data density`,
+      description: `Product catalog with ${records.length} items, ${totalChars} characters`,
     };
 
     return { metadata, records };
   }
 
   private generateProductName(): string {
-    const prefixes = ["Premium", "Professional", "Industrial", "Basic", "Heavy-Duty", "Compact", "Deluxe", "Standard"];
-    const types = [
-      "Wrench",
-      "Drill",
-      "Pump",
-      "Motor",
-      "Compressor",
-      "Generator",
-      "Controller",
-      "Sensor",
-      "Valve",
-      "Switch",
-      "Connector",
-      "Cable",
-    ];
-    const suffix = this.randomInt(100, 9999);
-
-    return `${this.getRandomItem(prefixes)} ${this.getRandomItem(types)} ${suffix}`;
-  }
-
-  private generateDescription(): string {
-    const descriptions = [
-      "High-quality product with excellent durability and performance characteristics. Suitable for professional and industrial applications.",
-      "Engineered for reliability with precision manufacturing. Features advanced design for optimal functionality.",
-      "Designed for efficiency and long-term reliability. Built with premium materials and strict quality control.",
-      "Professional-grade equipment meeting international standards. Extensively tested for performance and safety.",
-      "Robust and versatile solution for demanding applications. Features enhanced capabilities and extended lifespan.",
-    ];
-    return this.getRandomItem(descriptions);
+    return `${this.getRandomItem(this.productNamePrefixes)} ${this.getRandomItem(this.productNameTypes)} ${this.randomInt(100, 9999)}`;
   }
 }
 
-export function generateBaseData(targetCharCount: number = 60000, density: DataDensity = 100): BaseDataSet {
-  const generator = new BaseModelGenerator();
-  return generator.generate(targetCharCount, density);
+export function generateProductDataGenerator(recordCount: number): BaseDataSet {
+  const generator = new ProductDataGenerator();
+  return generator.generate(recordCount);
 }

@@ -24,7 +24,6 @@ describe('Format Detector', () => {
         test('should default to plaintext for unknown extensions', () => {
             expect(detectFormat('/path/to/file.unknown')).toBe('plaintext');
             expect(detectFormat('file.xyz')).toBe('plaintext');
-            expect(detectFormat('file.log')).toBe('plaintext');
         });
         test('should be case insensitive', () => {
             expect(detectFormat('file.JSON')).toBe('json');

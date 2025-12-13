@@ -7,17 +7,49 @@
 // DATA TYPES
 // ============================================================================
 
-export type DataDensity = 100 | 50;
-export type Format = "csv" | "json" | "markdown" | "yaml" | "apache";
+export type Format = "csv" | "json_pretty" | "json_compact" | "markdown" | "yaml" | "apache";
 export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "deduction";
 
-export interface BaseDataMetadata {
-  characterCount: number;
-  density: DataDensity;
-  fieldCount: number;
-  recordCount: number;
-  generatedAt: string;
-  description: string;
+export interface Product {
+  productId: string,
+  productName: string,
+  category: string,
+  price: number,
+  costPrice: number,
+  stockQuantity: number,
+  reorderPoint: number,
+  lastRestocked: string,
+  supplierName: string,
+  supplierLocation: string,
+  description: string,
+  sku: string,
+  manufacturerCode: string,
+  warehouseLocation: string,
+  weight: number,
+  dimensions: string,
+  hazardous: boolean,
+  fragile: boolean,
+  unitsShipped: number,
+  avgRating?:number,
+  shelfLife?:number,
+  discontinuedDate?:string
+};
+
+export interface Metadata extends ValuesMetadata {
+  generatedAt: string,
+  description: string,
+}
+
+export interface ValuesMetadata {
+  fieldCount: number,
+  recordCount: number,
+  totalValues: number,
+}
+
+export interface CharacterMetadata {
+  characterCount: number,
+  avgCharacterCountPerValue: number,
+  avgCharacterCountPerRecord: number,
 }
 
 export interface DataRecord {
@@ -25,7 +57,7 @@ export interface DataRecord {
 }
 
 export interface BaseDataSet {
-  metadata: BaseDataMetadata;
+  metadata: Metadata;
   records: DataRecord[];
 }
 
@@ -89,23 +121,35 @@ export interface QuestionExpectedAnswer {
 
 export interface Question {
   id: number;
+  question: string;
+}
+
+export interface AnswerAndQuestion extends Question {
   category: QuestionCategory;
   difficulty: "easy" | "medium" | "hard";
-  question: string;
   expectedAnswer: QuestionExpectedAnswer;
   context?: string;
   dataReferences?: string[]; // Which data fields this question uses
   requiresManualReview?: boolean; // True for deduction questions
 }
 
-export interface Questionnaire {
+export interface BaseQuestionnaire {
   metadata: {
-    format: Format;
-    density: DataDensity;
+    recordCount: number,
+    fieldCount: number,
+    totalValues: number,
     totalQuestions: number;
     generatedAt: string;
-    dataFile: string;
+    questionFilePath: string;
+    answerTemplateFilePath: string;
   };
+}
+
+export interface QuestionnaireWithAnswers extends BaseQuestionnaire {
+  answersAndQuestions: AnswerAndQuestion[];
+}
+
+export interface Questionnaire extends BaseQuestionnaire {
   questions: Question[];
 }
 
@@ -117,10 +161,9 @@ export interface ProvidedAnswer {
 
 export interface AnswerTemplate {
   metadata: {
-    format: Format;
-    density: DataDensity;
-    dataFile: string;
-    questionnaireFile: string;
+    format: string,
+    questionsFilePath: string;
+    dataFilePath: string;
   };
   answers: ProvidedAnswer[];
 }
@@ -143,8 +186,6 @@ export interface ValidationResult {
 
 export interface ValidationReport {
   format: Format;
-  density: DataDensity;
-  scenario: "original" | "minified" | "minified_json";
   totalQuestions: number;
   results: ValidationResult[];
   accuracy: {
@@ -179,7 +220,6 @@ export interface TestScenario {
 
 export interface TestExecution {
   format: Format;
-  density: DataDensity;
   scenario: TestScenario;
   timestamp: string;
   tokens: TokenCount;
@@ -190,7 +230,6 @@ export interface TestRun {
   metadata: {
     generatedAt: string;
     formats: Format[];
-    densities: DataDensity[];
     totalTests: number;
   };
   executions: TestExecution[];
@@ -204,14 +243,7 @@ export interface TestRun {
 export interface FormatSummary {
   format: Format;
   densities: {
-    [key in DataDensity]: DensitySummary;
-  };
-}
-
-export interface DensitySummary {
-  density: DataDensity;
-  scenarios: {
-    [key: string]: ScenarioSummary;
+    [key in string]: ScenarioSummary;
   };
 }
 
@@ -236,18 +268,25 @@ export interface TestSummary {
 // GENERATOR CONFIGURATION
 // ============================================================================
 
-export interface GeneratorOptions {
-  targetCharCount: number; // ~60,000 chars
-  densities: DataDensity[]; // [100, 50]
-  formats: Format[];
-  questionsPerDensity: number; // 15-20
+export interface GeneratorResult {
+  generatedAt: string;
+  files: GeneratedFiles[];
 }
 
-export interface GenerationResult {
-  format: Format;
-  density: DataDensity;
-  dataFile: string;
-  questionnaireFile: string;
-  metadata: BaseDataMetadata;
+export interface GeneratedFiles{
+  recordCount: number;
+  fieldCount: number,
+  totalValues: number,
   questionCount: number;
+  answersAndQuestionsForValidationFilePath: string;
+  questionnaireFilePath: string;
+  answerTemplateFilePath: string;
+  dataAndOutput: Map<Format, DataAndOutput>;
+}
+
+export interface DataAndOutput{
+  format: Format;
+  dataFilePath: string;
+  metadata: CharacterMetadata;
+  expectedOutputFilePath: string;
 }

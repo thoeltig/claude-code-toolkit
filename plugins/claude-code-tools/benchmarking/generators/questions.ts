@@ -1,17 +1,13 @@
 /**
  * Questionnaire generator
  * Generates paired questions from dataset with deterministic answers
- * Distribution: 30% field_retrieval, 30% aggregation, 20% filtering, 15% structure_awareness, 5% deduction
  */
 
-import { BaseDataSet, Question, QuestionCategory, DataRecord, Questionnaire, Format, DataDensity } from "../types";
+import { BaseDataSet, DataRecord, QuestionnaireWithAnswers, AnswerAndQuestion } from "../types";
 
 interface QuestionGeneratorContext {
   data: BaseDataSet;
   records: DataRecord[];
-  format: Format;
-  density: DataDensity;
-  dataFile: string;
 }
 
 export class QuestionnaireGenerator {
@@ -33,57 +29,45 @@ export class QuestionnaireGenerator {
     return arr[Math.floor(this.rand() * arr.length)];
   }
 
-  public generate(data: BaseDataSet, format: Format, density: DataDensity, dataFile: string): Questionnaire {
+  public generate(data: BaseDataSet): AnswerAndQuestion[] {
     const ctx: QuestionGeneratorContext = {
       data,
-      records: data.records,
-      format,
-      density,
-      dataFile,
+      records: data.records
     };
 
-    const questions: Question[] = [];
+    const answersAndQuestions: AnswerAndQuestion[] = [];
     let id = 1;
 
     // Distribution: 30% field_retrieval, 30% aggregation, 20% filtering, 15% structure, 5% deduction
-    const targetQuestions = 18; // 18 questions
+    const targetQuestions = 100; // 100 questions
     const distribution = {
-      field_retrieval: Math.ceil(targetQuestions * 0.3), // 5-6
-      aggregation: Math.ceil(targetQuestions * 0.3), // 5-6
-      filtering: Math.ceil(targetQuestions * 0.2), // 3-4
-      structure_awareness: Math.ceil(targetQuestions * 0.15), // 2-3
-      deduction: Math.ceil(targetQuestions * 0.05), // 1
+      field_retrieval: Math.ceil(targetQuestions * 0.3), 
+      aggregation: Math.ceil(targetQuestions * 0.3), 
+      filtering: Math.ceil(targetQuestions * 0.2),
+      structure_awareness: Math.ceil(targetQuestions * 0.15), 
+      deduction: Math.ceil(targetQuestions * 0.05), 
     };
 
     // Generate questions per category
-    questions.push(...this.generateFieldRetrievalQuestions(ctx, distribution.field_retrieval, id));
+    answersAndQuestions.push(...this.generateFieldRetrievalQuestions(ctx, distribution.field_retrieval, id));
     id += distribution.field_retrieval;
 
-    questions.push(...this.generateAggregationQuestions(ctx, distribution.aggregation, id));
+    answersAndQuestions.push(...this.generateAggregationQuestions(ctx, distribution.aggregation, id));
     id += distribution.aggregation;
 
-    questions.push(...this.generateFilteringQuestions(ctx, distribution.filtering, id));
+    answersAndQuestions.push(...this.generateFilteringQuestions(ctx, distribution.filtering, id));
     id += distribution.filtering;
 
-    questions.push(...this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id));
+    answersAndQuestions.push(...this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id));
     id += distribution.structure_awareness;
 
-    questions.push(...this.generateDeductionQuestions(ctx, distribution.deduction, id));
+    answersAndQuestions.push(...this.generateDeductionQuestions(ctx, distribution.deduction, id));
 
-    return {
-      metadata: {
-        format,
-        density,
-        totalQuestions: questions.length,
-        generatedAt: new Date().toISOString(),
-        dataFile,
-      },
-      questions,
-    };
+    return answersAndQuestions;
   }
 
-  private generateFieldRetrievalQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): Question[] {
-    const questions: Question[] = [];
+  private generateFieldRetrievalQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+    const questions: AnswerAndQuestion[] = [];
 
     for (let i = 0; i < count && ctx.records.length > i; i++) {
       const record = ctx.records[i];
@@ -93,7 +77,7 @@ export class QuestionnaireGenerator {
 
       if (value === null || value === undefined) continue;
 
-      const question: Question = {
+      questions.push({
         id: startId + i,
         category: "field_retrieval",
         difficulty: "easy",
@@ -104,16 +88,14 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [field, "productId"],
         context: `Product #${i + 1} in the dataset`,
-      };
-
-      questions.push(question);
+      });
     }
 
     return questions;
   }
 
-  private generateAggregationQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): Question[] {
-    const questions: Question[] = [];
+  private generateAggregationQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+    const questions: AnswerAndQuestion[] = [];
     const { records } = ctx;
 
     if (count >= 1) {
@@ -200,8 +182,8 @@ export class QuestionnaireGenerator {
     return questions.slice(0, count);
   }
 
-  private generateFilteringQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): Question[] {
-    const questions: Question[] = [];
+  private generateFilteringQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+    const questions: AnswerAndQuestion[] = [];
     const { records } = ctx;
 
     if (count >= 1) {
@@ -262,8 +244,8 @@ export class QuestionnaireGenerator {
     return questions.slice(0, count);
   }
 
-  private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): Question[] {
-    const questions: Question[] = [];
+  private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+    const questions: AnswerAndQuestion[] = [];
     const { records } = ctx;
 
     if (count >= 1) {
@@ -304,8 +286,8 @@ export class QuestionnaireGenerator {
     return questions.slice(0, count);
   }
 
-  private generateDeductionQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): Question[] {
-    const questions: Question[] = [];
+  private generateDeductionQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+    const questions: AnswerAndQuestion[] = [];
     const { records } = ctx;
 
     if (count >= 1) {
@@ -338,7 +320,7 @@ export class QuestionnaireGenerator {
   }
 }
 
-export function generateQuestionnaire(data: BaseDataSet, format: Format, density: DataDensity, dataFile: string): Questionnaire {
+export function generateQuestionnaire(data: BaseDataSet): AnswerAndQuestion[] {
   const generator = new QuestionnaireGenerator();
-  return generator.generate(data, format, density, dataFile);
+  return generator.generate(data);
 }

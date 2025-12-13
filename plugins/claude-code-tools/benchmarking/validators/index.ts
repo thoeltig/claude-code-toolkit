@@ -9,8 +9,8 @@ import {
   ValidationResult,
   ValidationReport,
   ProvidedAnswer,
+  AnswerAndQuestion,
   Format,
-  DataDensity,
 } from "../types";
 
 export class AnswerValidator {
@@ -18,32 +18,32 @@ export class AnswerValidator {
    * Validate all answers against questionnaire
    */
   public validateAnswers(
+    format: Format,
     answerTemplate: AnswerTemplate,
-    questions: Question[],
-    scenario: "original" | "minified" | "minified_json"
+    answersAndQuestions: AnswerAndQuestion[]
   ): ValidationReport {
     const results: ValidationResult[] = [];
     const manualReviewRequired: ValidationResult[] = [];
 
-    for (const question of questions) {
-      const providedAnswer = answerTemplate.answers.find((a) => a.questionId === question.id);
+    for (const answerAndQuestion of answersAndQuestions) {
+      const providedAnswer = answerTemplate.answers.find((a) => a.questionId === answerAndQuestion.id);
 
       if (!providedAnswer) {
         results.push({
-          questionId: question.id,
-          question: question.question,
+          questionId: answerAndQuestion.id,
+          question: answerAndQuestion.question,
           givenAnswer: "NOT_ANSWERED",
-          expectedAnswer: question.expectedAnswer.value,
+          expectedAnswer: answerAndQuestion.expectedAnswer.value,
           correct: false,
-          category: question.category,
-          method: question.expectedAnswer.validationMethod,
+          category: answerAndQuestion.category,
+          method: answerAndQuestion.expectedAnswer.validationMethod,
           confidence: 0,
-          requiresManualReview: question.requiresManualReview || false,
+          requiresManualReview: answerAndQuestion.requiresManualReview || false,
         });
         continue;
       }
 
-      const result = this.validateSingleAnswer(question, providedAnswer);
+      const result = this.validateSingleAnswer(answerAndQuestion, providedAnswer);
       results.push(result);
 
       if (result.requiresManualReview) {
@@ -56,9 +56,7 @@ export class AnswerValidator {
     const totalValidatable = results.filter((r) => !r.requiresManualReview).length;
 
     return {
-      format: answerTemplate.metadata.format,
-      density: answerTemplate.metadata.density,
-      scenario,
+      format: format,
       totalQuestions: results.length,
       results,
       accuracy: {
@@ -71,7 +69,7 @@ export class AnswerValidator {
     };
   }
 
-  private validateSingleAnswer(question: Question, providedAnswer: ProvidedAnswer): ValidationResult {
+  private validateSingleAnswer(question: AnswerAndQuestion, providedAnswer: ProvidedAnswer): ValidationResult {
     const expected = question.expectedAnswer;
     let correct = false;
     let confidence = 0;
@@ -210,10 +208,10 @@ export class AnswerValidator {
 }
 
 export function validateAnswers(
+  format: Format,
   answerTemplate: AnswerTemplate,
-  questions: Question[],
-  scenario: "original" | "minified" | "minified_json"
+  questions: AnswerAndQuestion[]
 ): ValidationReport {
   const validator = new AnswerValidator();
-  return validator.validateAnswers(answerTemplate, questions, scenario);
+  return validator.validateAnswers(format, answerTemplate, questions);
 }

@@ -5,24 +5,31 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { BaseModelGenerator, generateBaseData } from "./generators/baseModel";
-import { generateDensityVariants } from "./generators/density";
+import { generateProductDataGenerator } from "./generators/generateProductDataGenerator";
 import { convertToFormat } from "./converters/index";
 import { generateQuestionnaire } from "./generators/questions";
 import { validateAnswers } from "./validators/index";
 import {
   Format,
-  DataDensity,
-  GeneratorOptions,
-  GenerationResult,
-  BaseDataSet,
   AnswerTemplate,
   ValidationReport,
+  Question,
+  QuestionnaireWithAnswers,
+  ProvidedAnswer,
+  GeneratedFiles,
+  DataAndOutput,
+  GeneratorResult
 } from "./types";
 
-const TARGET_CHAR_COUNT = 60000;
-const FORMATS: Format[] = ["csv", "json", "markdown", "yaml", "apache"];
-const DENSITIES: DataDensity[] = [100, 50];
+const TARGET_SIZES: number[] = [140, 105, 70, 35]
+const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "markdown", "yaml", "apache"];
+const DATA_DIRECTORY = "data";
+const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
+const QUESTIONS_DIRECTORY = "questions";
+const ANSWERS_TEMPLATE_DIRECTORY = "answers_template";
+const SUBAGENT_OUTPUT_DIRECTORY = "subagent_outputs";
+const RESULTS_DIRECTORY = "results";
+const DIRECTORIES = [DATA_DIRECTORY, ANSWERS_VALIDATION_DIRECTORY, QUESTIONS_DIRECTORY, ANSWERS_TEMPLATE_DIRECTORY, SUBAGENT_OUTPUT_DIRECTORY, RESULTS_DIRECTORY];
 
 export class BenchmarkingOrchestrator {
   private outputDir: string;
@@ -33,99 +40,133 @@ export class BenchmarkingOrchestrator {
   }
 
   private ensureDirectories(): void {
-    const dirs = ["data", "questionnaires", "answers", "results"];
-    for (const dir of dirs) {
-      const fullPath = path.join(this.outputDir, dir);
-      if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath, { recursive: true });
-      }
+    let fullPath:string;
+    for (const dir of DIRECTORIES) {
+      fullPath = path.join(this.outputDir, dir);
+      this.createDirectory(fullPath);
+    }
+    
+    for (const format of FORMATS) {
+      fullPath = path.join(this.outputDir, DATA_DIRECTORY, format);
+      this.createDirectory(fullPath);
+      
+      fullPath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format);
+      this.createDirectory(fullPath);
+    }
+  }
+
+  private createDirectory(fullPath: string){
+    if (!fs.existsSync(fullPath)) {
+            fs.mkdirSync(fullPath, { recursive: true });
     }
   }
 
   /**
    * Generate all test data and questionnaires
    */
-  public generateAllTestData(): Map<string, GenerationResult> {
-    const results = new Map<string, GenerationResult>();
+  public generateAllTestData(): GeneratorResult {
+    const fileCreated: GeneratedFiles[] = [];
 
-    console.log(`Generating test data targeting ~${TARGET_CHAR_COUNT} characters per file...\n`);
+    for (const targetSize of TARGET_SIZES) {
+      console.log(`Generating test data with ${targetSize} records per file...\n`);
 
-    for (const format of FORMATS) {
-      for (const density of DENSITIES) {
-        console.log(`Generating ${format.toUpperCase()} @ ${density}% density...`);
+      // Generate data
+      const dataToUse = generateProductDataGenerator(targetSize);
+      const recordCount = dataToUse.records.length;
+      
+      // Generate questionnaire
+      const answersAndQuestions = generateQuestionnaire(dataToUse);
+      
+      const answersAndQuestionsFileName = `questions_and_answers_for_${recordCount}_records.json`;
+      const answersAndQuestionsFilePath = path.join(this.outputDir, ANSWERS_VALIDATION_DIRECTORY, answersAndQuestionsFileName);
+      const questionnaireFileName = `questions_for_${recordCount}_records.json`;
+      const questionnaireFilePath = path.join(this.outputDir, QUESTIONS_DIRECTORY, questionnaireFileName);
+      const answerTemplateFileName = `answers_for_${recordCount}_records_template.json`;
+      const answerTemplateFilePath = path.join(this.outputDir, ANSWERS_TEMPLATE_DIRECTORY, answerTemplateFileName);
 
-        // Generate base data
-        const baseData = generateBaseData(TARGET_CHAR_COUNT, density);
+      const questionaireWithAnswers: QuestionnaireWithAnswers = {
+        metadata: {
+          recordCount: dataToUse.metadata.recordCount,
+          fieldCount: dataToUse.metadata.fieldCount,
+          totalValues: dataToUse.metadata.totalValues,
+          totalQuestions: answersAndQuestions.length,
+          generatedAt: new Date().toISOString(),
+          questionFilePath: questionnaireFilePath, 
+          answerTemplateFilePath: answerTemplateFilePath        
+        },
+        answersAndQuestions: answersAndQuestions,
+      }
 
-        // Generate variants
-        let fullData = baseData;
-        let sparseData = baseData;
+      // Write answer and questions for validation
+      fs.writeFileSync(answersAndQuestionsFilePath, JSON.stringify(questionaireWithAnswers));
+      console.log(`✓ Questions and answers: ${answersAndQuestionsFilePath} (${answersAndQuestions.length} questions)`);
 
-        if (density === 50) {
-          const variants = generateDensityVariants(baseData);
-          fullData = baseData; // Use original for 100%
-          sparseData = variants.sparse; // Use sparse for 50%
-        }
+      // Write questions
+      const questions = answersAndQuestions.map<Question>(x => ({id: x.id, question: x.question}));
+      fs.writeFileSync(questionnaireFilePath, JSON.stringify(questions));
+      console.log(`✓ Questions: ${questionnaireFileName} (${questions.length} questions)`);
+    
+      // Generate empty answer template
+      const answerTemplate: AnswerTemplate = {
+        metadata: {
+          format: "",
+          questionsFilePath: "",
+          dataFilePath: "",
+        },
+        answers: answersAndQuestions.map<ProvidedAnswer>((q) => ({questionId: q.id, answer: ""}))
+      };
+      fs.writeFileSync(answerTemplateFilePath, JSON.stringify(answerTemplate));
+      console.log(`✓ Answer template: ${answerTemplateFileName}`);
+      
+      // Prepare result
+      const generatedFiles: GeneratedFiles = {
+        recordCount: targetSize,
+        fieldCount: dataToUse.metadata.fieldCount,
+        totalValues: dataToUse.metadata.totalValues,
+        questionCount: questions.length,
+        answersAndQuestionsForValidationFilePath: answersAndQuestionsFilePath,
+        questionnaireFilePath: questionnaireFilePath, 
+        answerTemplateFilePath: answerTemplateFilePath,
+        dataAndOutput: new Map<Format, DataAndOutput>()
+      };
 
-        // For 50% density, use the sparse version
-        const dataToUse = density === 50 ? sparseData : fullData;
+      // Generate formats
+      for (const format of FORMATS) {
+        console.log(`Generating ${format.toUpperCase()} file with ${targetSize} records`);
 
         // Convert to format
         const fileContent = convertToFormat(dataToUse, format);
+        const characterCount = fileContent.length;
         const fileExt = this.getFileExtension(format);
-        const dataFileName = `${format}_${density}.${fileExt}`;
-        const dataFilePath = path.join(this.outputDir, "data", dataFileName);
-
+        const dataFileName = `${format}_with_${recordCount}_records.${fileExt}`;
+        const dataFilePath = path.join(this.outputDir, DATA_DIRECTORY, format, dataFileName);
+        const expectedOutputFilePath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format,`answers_for_${recordCount}_records.json`);
         fs.writeFileSync(dataFilePath, fileContent);
-
-        // Generate questionnaire
-        const questionnaire = generateQuestionnaire(dataToUse, format, density, dataFileName);
-        const questionnaireFileName = `${format}_${density}.json`;
-        const questionnairePath = path.join(this.outputDir, "questionnaires", questionnaireFileName);
-
-        fs.writeFileSync(questionnairePath, JSON.stringify(questionnaire, null, 2));
-
-        // Generate empty answer template
-        const answerTemplate: AnswerTemplate = {
-          metadata: {
-            format,
-            density,
-            dataFile: dataFileName,
-            questionnaireFile: questionnaireFileName,
-          },
-          answers: questionnaire.questions.map((q) => ({
-            questionId: q.id,
-            answer: "",
-          })),
-        };
-
-        const answerTemplateFileName = `${format}_${density}_template.json`;
-        const answerTemplatePath = path.join(this.outputDir, "answers", answerTemplateFileName);
-
-        fs.writeFileSync(answerTemplatePath, JSON.stringify(answerTemplate, null, 2));
+        console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} data set rows)`);
 
         // Track result
-        results.set(`${format}_${density}`, {
-          format,
-          density,
-          dataFile: dataFileName,
-          questionnaireFile: questionnaireFileName,
-          metadata: dataToUse.metadata,
-          questionCount: questionnaire.questions.length,
+        generatedFiles.dataAndOutput.set(format, {
+          format: format,
+          dataFilePath: dataFilePath,
+          expectedOutputFilePath: expectedOutputFilePath,
+          metadata: {
+            characterCount: characterCount,
+            avgCharacterCountPerRecord: characterCount / generatedFiles.recordCount,
+            avgCharacterCountPerValue: characterCount / generatedFiles.totalValues
+          }
         });
-
-        console.log(
-          `  ✓ Data: ${dataFileName} (${dataToUse.metadata.characterCount} chars)`
-        );
-        console.log(
-          `  ✓ Questionnaire: ${questionnaireFileName} (${questionnaire.questions.length} questions)`
-        );
-        console.log(`  ✓ Answer template: ${answerTemplateFileName}\n`);
       }
+      fileCreated.push(generatedFiles);
     }
 
     // Write metadata
-    this.writeMetadata(results);
+    const results: GeneratorResult = {
+      generatedAt: new Date().toISOString(),
+      files: fileCreated
+    };    
+    const metadataPath = path.join(this.outputDir, "metadata.json");
+    fs.writeFileSync(metadataPath, JSON.stringify(results));
+    console.log(`Metadata written to ${metadataPath}`);
 
     return results;
   }
@@ -134,51 +175,54 @@ export class BenchmarkingOrchestrator {
    * Validate answers from a test execution
    */
   public validateTestResults(
-    answerFilePath: string,
-    questionnaireFilePath: string,
-    scenario: "original" | "minified" | "minified_json"
+    subagentAnswerFilePath: string,
+    metaDataFilePath: string
   ): ValidationReport {
-    if (!fs.existsSync(answerFilePath)) {
-      throw new Error(`Answer file not found: ${answerFilePath}`);
+    if (!fs.existsSync(subagentAnswerFilePath)) {
+      throw new Error(`Answers file not found: ${subagentAnswerFilePath}`);
     }
-    if (!fs.existsSync(questionnaireFilePath)) {
-      throw new Error(`Questionnaire file not found: ${questionnaireFilePath}`);
+    
+    if (!fs.existsSync(metaDataFilePath)) {
+      throw new Error(`Meta data file not found: ${metaDataFilePath}`);
     }
 
-    const answerData = JSON.parse(fs.readFileSync(answerFilePath, "utf-8")) as AnswerTemplate;
-    const questionnaireData = JSON.parse(fs.readFileSync(questionnaireFilePath, "utf-8"));
+    const generatorResult = JSON.parse(fs.readFileSync(metaDataFilePath, "utf-8")) as GeneratorResult;
+    
+    let format: Format | undefined;
+    let generatedFiles: GeneratedFiles | undefined;
+    let questionaireWithAnswers: QuestionnaireWithAnswers | undefined;
+    generatorResult.files.forEach(x => {
+      x.dataAndOutput.forEach(y => {
+        if(y.expectedOutputFilePath === subagentAnswerFilePath){
+          generatedFiles = x;          
+          format = y.format;
+          questionaireWithAnswers = JSON.parse(fs.readFileSync(x.answersAndQuestionsForValidationFilePath, "utf-8")) as QuestionnaireWithAnswers;
+        }
+      });
+    });
 
-    const report = validateAnswers(answerData, questionnaireData.questions, scenario);
+    if (!questionaireWithAnswers || !format || !generatedFiles) {
+      throw new Error('Answers and questions for validation file not found. Provided subagent output filepath does not match expected output filepath in meta data file.');
+    }
+
+    const answerData = JSON.parse(fs.readFileSync(subagentAnswerFilePath, "utf-8")) as AnswerTemplate;
+
+    const report = validateAnswers(format, answerData, questionaireWithAnswers.answersAndQuestions);
 
     // Write validation report
-    const reportFileName = `${answerData.metadata.format}_${answerData.metadata.density}_${scenario}_validation.json`;
-    const reportPath = path.join(this.outputDir, "results", reportFileName);
+    const reportFileName = `${format}_${generatedFiles.recordCount}_validation.json`;
+    const reportPath = path.join(this.outputDir, RESULTS_DIRECTORY, reportFileName);
 
-    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    fs.writeFileSync(reportPath, JSON.stringify(report));
 
     return report;
-  }
-
-  private writeMetadata(results: Map<string, GenerationResult>): void {
-    const metadata = {
-      generatedAt: new Date().toISOString(),
-      targetCharCount: TARGET_CHAR_COUNT,
-      formats: FORMATS,
-      densities: DENSITIES,
-      totalDatasets: results.size,
-      datasets: Array.from(results.values()),
-    };
-
-    const metadataPath = path.join(this.outputDir, "data", "metadata.json");
-    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-
-    console.log(`Metadata written to ${metadataPath}`);
   }
 
   private getFileExtension(format: Format): string {
     const extensions: Record<Format, string> = {
       csv: "csv",
-      json: "json",
+      json_pretty: "json",
+      json_compact: "json",
       markdown: "md",
       yaml: "yaml",
       apache: "log",
@@ -199,7 +243,7 @@ if (require.main === module) {
   const results = orchestrator.generateAllTestData();
 
   console.log(`${"=".repeat(60)}`);
-  console.log(`Generated ${results.size} dataset(s) with questionnaires`);
+  console.log(`Generated ${results.files.reduce((sum, current) => sum + current.dataAndOutput.values.length, 0)} dataset(s) with questionnaires`);
   console.log(`Output directory: ${outputDir}`);
   console.log(`${"=".repeat(60)}\n`);
 }
