@@ -25,18 +25,17 @@ export class QuestionnaireGenerator {
       records: data.records
     };
 
+    const targetQuestions = 120;
+    const distribution = {
+      field_retrieval: Math.ceil(targetQuestions * 0.25), 
+      aggregation: Math.ceil(targetQuestions * 0.25), 
+      filtering: Math.ceil(targetQuestions * 0.2),
+      structure_awareness: Math.ceil(targetQuestions * 0.2), 
+      multi_step: Math.ceil(targetQuestions * 0.1), 
+    };
+    
     const answersAndQuestions: AnswerAndQuestion[] = [];
     let id = 1;
-
-    // Distribution: 30% field_retrieval, 30% aggregation, 20% filtering, 15% structure, 5% deduction
-    const targetQuestions = 100; // 100 questions
-    const distribution = {
-      field_retrieval: Math.ceil(targetQuestions * 0.3), 
-      aggregation: Math.ceil(targetQuestions * 0.3), 
-      filtering: Math.ceil(targetQuestions * 0.2),
-      structure_awareness: Math.ceil(targetQuestions * 0.15), 
-      deduction: Math.ceil(targetQuestions * 0.05), 
-    };
 
     // Generate questions per category
     let entries = this.generateFieldRetrievalQuestions(ctx, distribution.field_retrieval, id, productIdField);
@@ -52,14 +51,14 @@ export class QuestionnaireGenerator {
     entries = this.generateFilteringQuestions(ctx, distribution.filtering, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
-    console.log("filtering questions: "+ entries.length);
+    console.log("Filtering questions: "+ entries.length);
 
-    entries = this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id, productIdField);
+    entries = this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Structure questions: "+ entries.length);
 
-    entries = this.generateMultiStepQuestions(ctx, distribution.deduction, id);
+    entries = this.generateMultiStepQuestions(ctx, distribution.multi_step, id);
     answersAndQuestions.push(...entries);
     console.log("Multi step questions: "+ entries.length);
 
@@ -139,15 +138,6 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private getValues(record: DataRecord, fields: string[]){
-    const values:string[] = [];
-    fields.forEach(field => {
-      const value = record[field];
-      return values.push(value.toString());
-    });
-    return values;
-  }
-
   private generateAggregationQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
     const splitCount = Math.ceil(count / 4); // sum, min, max
     const remainingCount = count - splitCount * 3; // avg
@@ -158,7 +148,7 @@ export class QuestionnaireGenerator {
       const record = records[i];
       const field = this.rand.getRandomNumbericField(record, idField);
 
-      startId += 1;
+      startId++;
       const expectedSum = records.reduce((sum, r) => sum + Number(r[field] || 0), 0);
       questions.push({
         id: startId,
@@ -179,7 +169,7 @@ export class QuestionnaireGenerator {
       const record = records[i];
       const field = this.rand.getRandomNumbericField(record, idField);
 
-      startId += 1;
+      startId++;
       const expectedMin = Math.min(...records.map((r) => Number(r[field] || 0)));
       questions.push({
         id: startId,
@@ -200,7 +190,7 @@ export class QuestionnaireGenerator {
       const record = records[i];
       const field = this.rand.getRandomNumbericField(record, idField);
 
-      startId += 1;
+      startId++;
       const expectedMax = Math.max(...records.map((r) => Number(r[field] || 0)));
       questions.push({
         id: startId,
@@ -221,7 +211,7 @@ export class QuestionnaireGenerator {
       const record = records[i];
       const field = this.rand.getRandomNumbericField(record, idField);
 
-      startId += 1;
+      startId++;
       const expectedAvg = records.reduce((sum, r) => sum + Number(r[field] || 0), 0) / records.length;
       questions.push({
         id: startId,
@@ -364,47 +354,173 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
-    const remainingCount = count - 2; // total row count, uniquee field count, unique fields
+  private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
     const questions: AnswerAndQuestion[] = [];
-        
-    startId += 1;
-    questions.push({
-      id: startId,
-      category: "structure_awareness",
-      difficulty: "easy",
-      question: `How many entries are in the data in total?`,
-      expectedAnswer: {
-        value: ctx.records.length,
-        validationMethod: "numeric",
-      }
-    });
 
-    startId += 1;
-    const uniqueFields = new Set<string>();
+    if(count > 0){
+      return questions;
+    }
+    
+    let remainingCount = count;
+    
+    const totalRows = ctx.records.length;
+    let countOfSetValues = 0;
+    const fieldHistogram = new Map<string, number>();
     ctx.records.forEach(r => {
       this.rand.getFields(r).forEach(f => {
-        uniqueFields.add(f);
+        fieldHistogram.set(f, (fieldHistogram.get(f) || 0)+1);
+        countOfSetValues++;
       });
     });
-    questions.push({
-      id: startId,
-      category: "structure_awareness",
-      difficulty: "medium",
-      question: `Whate are all the unique field names across all products?`,
-      expectedAnswer: {
-        value: [...uniqueFields],
-        validationMethod: "array_set",
+    
+    let mandatoryFieldCount = 0;
+    const fieldsPerOccurence = new Map<number, string[]>();
+    fieldHistogram.forEach((value, key) => {
+      var arr = (fieldsPerOccurence.get(value) || []);
+      arr.push(key);      
+
+      fieldsPerOccurence.set(value, arr);
+
+      if(value > mandatoryFieldCount){
+        mandatoryFieldCount = value;
       }
     });
+    let totalUniqueFieldCount = fieldHistogram.size;
 
-    let records = this.rand.getRandomItems(ctx.records, remainingCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
+    const optionalFields= new Set<string>();
+    const mandatoryFields= new Set<string>();
+    fieldsPerOccurence.forEach((value, key) => {
+      if(key < mandatoryFieldCount){
+        value.forEach(v => optionalFields.add(v));
+      }else{        
+        value.forEach(v => mandatoryFields.add(v));
+      }
+    });
+    
+    if(remainingCount > 0){
+      startId++;  
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `How many entries are in the data in total?`,
+        expectedAnswer: {
+          value: totalRows,
+          validationMethod: "numeric",
+        }
+      });
+    }
+    
+    if(remainingCount > 0){
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `How many values are in the data in total?`,
+        expectedAnswer: {
+          value: totalRows * totalUniqueFieldCount,
+          validationMethod: "numeric",
+        }
+      });
+    }
+    
+    if(remainingCount > 0){
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `How many values are set in the data in total?`,
+        expectedAnswer: {
+          value: countOfSetValues,
+          validationMethod: "numeric",
+        }
+      });
+    }
 
-      startId += 1;
-      const expectedArray = Array.from(new Set(records.map((r) => String(r[field] || "")).filter(f => f !== "")));
+    if(remainingCount > 0){
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `How many values are not set in the data in total?`,
+        expectedAnswer: {
+          value: (totalRows * totalUniqueFieldCount) - countOfSetValues,
+          validationMethod: "numeric",
+        }
+      });
+    }
+         
+    if(remainingCount > 0){   
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `How many unique fields names are in the data in total?`,
+        expectedAnswer: {
+          value: totalUniqueFieldCount,
+          validationMethod: "numeric",
+        }
+      });
+    }
+
+    if(remainingCount > 0){
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `Whate are all the unique field names across all products?`,
+        expectedAnswer: {
+          value: [...fieldHistogram.keys()],
+          validationMethod: "array_set",
+        }
+      });
+    }
+    
+    if(remainingCount > 0){
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `Whate are all the optional field names across all products?`,
+        expectedAnswer: {
+          value: [...optionalFields],
+          validationMethod: "array_set",
+        }
+      });
+    }
+    
+    if(remainingCount > 0){
+      startId++;
+      remainingCount--;
+      questions.push({
+        id: startId,
+        category: "structure_awareness",
+        difficulty: "medium",
+        question: `Whate are all the mandatory field names across all products?`,
+        expectedAnswer: {
+          value: [...mandatoryFields],
+          validationMethod: "array_set",
+        }
+      });
+    }
+
+    const map = this.rand.getUniqueFieldsAndValues(ctx.records, remainingCount);
+    map.forEach((_, field) => {
+      startId++;
+      const expectedArray = Array.from(new Set(ctx.records.map((r) => String(r[field] || "")).filter(f => f !== "")));
       questions.push({
         id: startId,
         category: "structure_awareness",
@@ -416,7 +532,7 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [field]
       });
-    }
+    });
 
     return questions;
   }
@@ -456,6 +572,14 @@ export class QuestionnaireGenerator {
 
     return questions;
   }
+  
+  private getValues<T>(record: T, fields: string[]): string[]{
+    const values:string[] = [];
+    fields.forEach(field => {
+      const value = record[field];
+      return values.push(value.toString());
+    });
+    return values;
   }
 }
 
