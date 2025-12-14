@@ -3,7 +3,8 @@
  * Generates paired questions from dataset with deterministic answers
  */
 
-import { BaseDataSet, DataRecord, QuestionnaireWithAnswers, AnswerAndQuestion } from "../types";
+import { BaseDataSet, DataRecord, AnswerAndQuestion } from "../types";
+import { Randomizer } from "./randomizer";
 
 interface QuestionGeneratorContext {
   data: BaseDataSet;
@@ -11,22 +12,10 @@ interface QuestionGeneratorContext {
 }
 
 export class QuestionnaireGenerator {
-  private rand: () => number;
+  private readonly rand: Randomizer;
 
   constructor(seed: number = 12345) {
-    this.rand = this.seededRandom(seed);
-  }
-
-  private seededRandom(seed: number): () => number {
-    let current = seed;
-    return () => {
-      current = (current * 9301 + 49297) % 233280;
-      return current / 233280;
-    };
-  }
-
-  private getRandomItem<T>(arr: T[]): T {
-    return arr[Math.floor(this.rand() * arr.length)];
+    this.rand = new Randomizer(seed);
   }
 
   public generate(data: BaseDataSet): AnswerAndQuestion[] {
@@ -67,18 +56,22 @@ export class QuestionnaireGenerator {
   }
 
   private generateFieldRetrievalQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+    const productIdField = "productId";
+    const split = count / 3;
     const questions: AnswerAndQuestion[] = [];
 
-    for (let i = 0; i < count && ctx.records.length > i; i++) {
-      const record = ctx.records[i];
-      const fields = Object.keys(record).filter((f) => record[f] !== null && record[f] !== undefined);
-      const field = this.getRandomItem(fields);
+    let retrivalStartIdx = startId;
+    let records = this.rand.getRandomItems(ctx.records, split);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, productIdField);
       const value = record[field];
 
       if (value === null || value === undefined) continue;
 
+      retrivalStartIdx += 1;
       questions.push({
-        id: startId + i,
+        id: retrivalStartIdx,
         category: "field_retrieval",
         difficulty: "easy",
         question: `What is the ${field} of product ${record.productId}?`,
@@ -86,12 +79,65 @@ export class QuestionnaireGenerator {
           value: String(value),
           validationMethod: "exact",
         },
-        dataReferences: [field, "productId"],
-        context: `Product #${i + 1} in the dataset`,
+        dataReferences: [field, productIdField],
+      });
+    }
+    
+    records = this.rand.getRandomItems(ctx.records, split);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const radomFields = this.rand.getRandomFields(record, productIdField);
+      const values = this.getValues(record, radomFields);
+
+      retrivalStartIdx += 1;
+      questions.push({
+        id: retrivalStartIdx,
+        category: "field_retrieval",
+        difficulty: "medium",
+        question: `What are the ${radomFields.join(", ")} of product ${record.productId}?`,
+        expectedAnswer: {
+          value: values,
+          validationMethod: "exact",
+        },
+        dataReferences: [...radomFields, productIdField],
+      });
+    }
+
+    const remainingCount = count-split*2;
+    records = this.rand.getRandomItems(ctx.records, remainingCount*2);
+    for (let i = 0; i < records.length; i+=2) {
+      const record = records[i];
+      const radomFields = this.rand.getRandomFields(record, productIdField);
+      const values = this.getValues(record, radomFields);
+      
+      const record2 = records[(i+1)];
+      const radomFields2 = this.rand.getRandomFields(record2, productIdField);
+      const values2 = this.getValues(record2, radomFields2);
+
+      retrivalStartIdx += 1;
+      questions.push({
+        id: retrivalStartIdx,
+        category: "field_retrieval",
+        difficulty: "hard",
+        question: `What are the ${radomFields.join(", ")} of product ${record.productId} and the ${radomFields2.join(", ")} of product ${record2.productId}?`,
+        expectedAnswer: {
+          value: [...values, ...values2],
+          validationMethod: "exact",
+        },
+        dataReferences: [...new Set([...radomFields, ...radomFields2]), productIdField],
       });
     }
 
     return questions;
+  }
+
+  private getValues(record: DataRecord, fields: string[]){
+    const values:string[] = [];
+    fields.forEach(field => {
+      const value = record[field];
+      return values.push(value.toString());
+    });
+    return values;
   }
 
   private generateAggregationQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
@@ -111,8 +157,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["stockQuantity"],
-        context: "Sum of stockQuantity field across all records",
+        dataReferences: ["stockQuantity"]
       });
     }
 
@@ -129,8 +174,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0.01,
         },
-        dataReferences: ["price"],
-        context: "Average of price field across all records",
+        dataReferences: ["price"]
       });
     }
 
@@ -147,8 +191,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["price"],
-        context: "Maximum price in the dataset",
+        dataReferences: ["price"]
       });
     }
 
@@ -174,8 +217,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["category"],
-        context: `Count of records where category = "${topCategory}"`,
+        dataReferences: ["category"]
       });
     }
 
@@ -199,8 +241,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["stockQuantity"],
-        context: "Count of records where stockQuantity equals 0",
+        dataReferences: ["stockQuantity"]
       });
     }
 
@@ -218,8 +259,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["price"],
-        context: "Count of records where price exceeds average",
+        dataReferences: ["price"]
       });
     }
 
@@ -236,8 +276,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["hazardous"],
-        context: "Count of records where hazardous = true",
+        dataReferences: ["hazardous"]
       });
     }
 
@@ -260,8 +299,7 @@ export class QuestionnaireGenerator {
           value: categories,
           validationMethod: "array_set",
         },
-        dataReferences: ["category"],
-        context: "Unique values from category field",
+        dataReferences: ["category"]
       });
     }
 
@@ -278,8 +316,7 @@ export class QuestionnaireGenerator {
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["supplierName"],
-        context: "Count of unique values in supplierName field",
+        dataReferences: ["supplierName"]
       });
     }
 
@@ -310,9 +347,7 @@ export class QuestionnaireGenerator {
           validationMethod: "fuzzy_deduction",
           keywords: [topSupplier, String(supplierCounts.get(topSupplier))],
         },
-        dataReferences: ["supplierName"],
-        context: "Requires aggregation and ranking by supplier",
-        requiresManualReview: true,
+        dataReferences: ["supplierName"]
       });
     }
 
