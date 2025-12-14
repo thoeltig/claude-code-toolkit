@@ -16,6 +16,30 @@ export class Randomizer{
       return current / 233280;
     };
   }
+  
+  public getUniqueFieldsAndValues<T>(values: T[], count: number, fieldToSkip?: string): Map<string, T>{  
+    const map = new Map<string, T>();
+    let randomValues = this.getRandomItems(values, count);
+    for (let i = 0; i < randomValues.length; i++) {
+      const value = randomValues[i];
+      
+      let addValueToMap = false;
+      for (let retryCount = 0; retryCount < 3; retryCount++) {
+        const field = this.getRandomField(value, fieldToSkip);
+        addValueToMap = map.get(field) ? false : true;
+        if(addValueToMap){
+          map.set(field, value);
+          break;
+        }
+      }
+
+      if(!addValueToMap){
+        i--;
+      }
+    }
+  
+    return map;
+  }
 
   public getRandomItem<T>(arr: T[]): T {
     return arr[Math.floor(this.rand() * arr.length)];
@@ -34,28 +58,28 @@ export class Randomizer{
     return [...result]
   }
   
-  public getRandomFields(obj: object, fieldToSkip?: string, maxCount: number = 7){
+  public getRandomFields<T>(obj: T, fieldToSkip?: string, maxCount: number = 7){
     const fields = this.getFieldsAndSkip(obj, fieldToSkip);
     const fieldCountToUse = this.randomInt(2, maxCount);
     return this.getRandomItems(fields, fieldCountToUse);
   }
 
-  public getRandomField(obj: object, fieldToSkip?: string){
+  public getRandomField<T>(obj: T, fieldToSkip?: string){
     const fields = this.getFieldsAndSkip(obj, fieldToSkip);
     return this.getRandomItem(fields);
   }
   
-  public getRandomNumbericField(obj: object, fieldToSkip?: string){
+  public getRandomNumbericField<T>(obj: T, fieldToSkip?: string){
     const fields = this.getFieldsAndSkip(obj, fieldToSkip).filter(field => typeof obj[field] === 'number');
     return this.getRandomItem(fields);
   }
   
-  private getFieldsAndSkip(obj: object, fieldToSkip?: string): string[]{
+  private getFieldsAndSkip<T>(obj: T, fieldToSkip?: string): string[]{
     const fields = this.getFields(obj);
     return fieldToSkip ? fields.filter((field) => field !== fieldToSkip) : fields;  
   }
   
-  public getFields(obj: object): string[]{
+  public getFields<T>(obj: T): string[]{
     return Object.keys(obj).filter((field) => obj[field] !== null && obj[field] !== undefined);  
   }
 

@@ -59,9 +59,9 @@ export class QuestionnaireGenerator {
     id += entries.length;
     console.log("Structure questions: "+ entries.length);
 
-    entries = this.generateDeductionQuestions(ctx, distribution.deduction, id);
+    entries = this.generateMultiStepQuestions(ctx, distribution.deduction, id);
     answersAndQuestions.push(...entries);
-    console.log("Deduction questions: "+ entries.length);
+    console.log("Multi step questions: "+ entries.length);
 
     console.log("Total questions: "+ answersAndQuestions.length);
     return answersAndQuestions;
@@ -421,35 +421,41 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private generateDeductionQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+  private generateMultiStepQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
     const questions: AnswerAndQuestion[] = [];
-    const { records } = ctx;
 
-    if (count >= 1) {
-      // Which supplier supplies the most products
-      const supplierCounts = new Map<string, number>();
-      records.forEach((r) => {
-        const supplier = String(r.supplierName || "Unknown");
-        supplierCounts.set(supplier, (supplierCounts.get(supplier) || 0) + 1);
+    let i = 0;
+    const map = this.rand.getUniqueFieldsAndValues(ctx.records, count);
+    map.forEach((_, field) => {
+      const filterForMost = i % 2 === 0;
+      i++;
+
+      const valueHistogram = new Map<string, number>();
+      ctx.records.forEach(r => {
+        const value = String(r[field] || '');
+        valueHistogram.set(value, (valueHistogram.get(value) || 0) + 1);
       });
+      const firstValue = Array.from(valueHistogram.entries()).filter(x => x[0] !== '').reduce((a, b) =>{
+          return filterForMost ? (b[1] > a[1] ? b : a) : (b[1] < a[1] ? a : b);
+      })[0];
 
-      const topSupplier = Array.from(supplierCounts.entries()).reduce((a, b) => (b[1] > a[1] ? b : a))[0];
-
+      startId++;
       questions.push({
         id: startId,
         category: "deduction",
         difficulty: "hard",
-        question: "Which supplier supplies the most products, and how many products do they supply?",
+        question: `Which ${field} occures the ${filterForMost ? 'most' : 'least'} across all products and in how many products in total?`,
         expectedAnswer: {
-          value: `${topSupplier} supplies ${supplierCounts.get(topSupplier)} products`,
+          value: `${firstValue} occures ${filterForMost ? 'most' : 'least'} in ${valueHistogram.get(firstValue)} products`,
           validationMethod: "fuzzy_deduction",
-          keywords: [topSupplier, String(supplierCounts.get(topSupplier))],
+          keywords: [firstValue, String(valueHistogram.get(firstValue))],
         },
-        dataReferences: ["supplierName"]
+        dataReferences: [field]
       });
-    }
+    });
 
-    return questions.slice(0, count);
+    return questions;
+  }
   }
 }
 
