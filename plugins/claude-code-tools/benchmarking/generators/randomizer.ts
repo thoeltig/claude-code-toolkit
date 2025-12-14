@@ -34,24 +34,29 @@ export class Randomizer{
     return [...result]
   }
   
-  public getRandomFields(obj: object, fieldToSkip: string, maxCount: number = 7){
-    const fields = this.getFields(obj, fieldToSkip);
+  public getRandomFields(obj: object, fieldToSkip?: string, maxCount: number = 7){
+    const fields = this.getFieldsAndSkip(obj, fieldToSkip);
     const fieldCountToUse = this.randomInt(2, maxCount);
     return this.getRandomItems(fields, fieldCountToUse);
   }
 
-  public getRandomField(obj: object, fieldToSkip: string){
-    const fields = this.getFields(obj, fieldToSkip);
+  public getRandomField(obj: object, fieldToSkip?: string){
+    const fields = this.getFieldsAndSkip(obj, fieldToSkip);
     return this.getRandomItem(fields);
   }
   
-  public getRandomNumbericField(obj: object, fieldToSkip: string){
-    const fields = this.getFields(obj, fieldToSkip).filter(field => typeof obj[field] === 'number');
+  public getRandomNumbericField(obj: object, fieldToSkip?: string){
+    const fields = this.getFieldsAndSkip(obj, fieldToSkip).filter(field => typeof obj[field] === 'number');
     return this.getRandomItem(fields);
   }
   
-  private getFields(obj: object, fieldToSkip: string): string[]{
-    return Object.keys(obj).filter((field) => field !== fieldToSkip && obj[field] !== null && obj[field] !== undefined);  
+  private getFieldsAndSkip(obj: object, fieldToSkip?: string): string[]{
+    const fields = this.getFields(obj);
+    return fieldToSkip ? fields.filter((field) => field !== fieldToSkip) : fields;  
+  }
+  
+  public getFields(obj: object): string[]{
+    return Object.keys(obj).filter((field) => obj[field] !== null && obj[field] !== undefined);  
   }
 
   public randomInt(min: number, max: number): number {

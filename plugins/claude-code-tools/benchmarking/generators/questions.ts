@@ -54,7 +54,7 @@ export class QuestionnaireGenerator {
     id += entries.length;
     console.log("filtering questions: "+ entries.length);
 
-    entries = this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id);
+    entries = this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Structure questions: "+ entries.length);
@@ -106,7 +106,7 @@ export class QuestionnaireGenerator {
         question: `What are the ${radomFields.join(", ")} of product ${record[idField]}?`,
         expectedAnswer: {
           value: values,
-          validationMethod: "exact",
+          validationMethod: "array_set",
         },
         dataReferences: [...radomFields, idField],
       });
@@ -130,7 +130,7 @@ export class QuestionnaireGenerator {
         question: `What are the ${radomFields.join(", ")} of product ${record[idField]} and the ${radomFields2.join(", ")} of product ${record2[idField]}?`,
         expectedAnswer: {
           value: [...values, ...values2],
-          validationMethod: "exact",
+          validationMethod: "array_set",
         },
         dataReferences: [...new Set([...radomFields, ...radomFields2]), idField],
       });
@@ -240,7 +240,7 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private generateFilteringQuestions(ctx: QuestionGeneratorContext,  count: number, startId: number, idField: string): AnswerAndQuestion[] {
+  private generateFilteringQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
     const splitCount = Math.ceil(count / 5); // equal, above avg, belowe avg, equal + above avg
     const remainingCount = count - splitCount * 4; // equal + belowe avg
     const questions: AnswerAndQuestion[] = [];
@@ -364,44 +364,61 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+  private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
+    const remainingCount = count - 2; // total row count, uniquee field count, unique fields
     const questions: AnswerAndQuestion[] = [];
-    const { records } = ctx;
+        
+    startId += 1;
+    questions.push({
+      id: startId,
+      category: "structure_awareness",
+      difficulty: "easy",
+      question: `How many entries are in the data in total?`,
+      expectedAnswer: {
+        value: ctx.records.length,
+        validationMethod: "numeric",
+      }
+    });
 
-    if (count >= 1) {
-      // List unique categories
-      const categories = Array.from(new Set(records.map((r) => String(r.category || "Unknown")))).sort();
+    startId += 1;
+    const uniqueFields = new Set<string>();
+    ctx.records.forEach(r => {
+      this.rand.getFields(r).forEach(f => {
+        uniqueFields.add(f);
+      });
+    });
+    questions.push({
+      id: startId,
+      category: "structure_awareness",
+      difficulty: "medium",
+      question: `Whate are all the unique field names across all products?`,
+      expectedAnswer: {
+        value: [...uniqueFields],
+        validationMethod: "array_set",
+      }
+    });
+
+    let records = this.rand.getRandomItems(ctx.records, remainingCount);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, idField);
+
+      startId += 1;
+      const expectedArray = Array.from(new Set(records.map((r) => String(r[field] || "")).filter(f => f !== "")));
       questions.push({
         id: startId,
         category: "structure_awareness",
-        difficulty: "medium",
-        question: "List all unique product categories in the dataset",
+        difficulty: "hard",
+        question: `Whate are all the unique ${field} across all products?`,
         expectedAnswer: {
-          value: categories,
+          value: expectedArray,
           validationMethod: "array_set",
         },
-        dataReferences: ["category"]
+        dataReferences: [field]
       });
     }
 
-    if (count >= 2) {
-      // List unique suppliers
-      const suppliers = Array.from(new Set(records.map((r) => String(r.supplierName || "Unknown")))).sort();
-      questions.push({
-        id: startId + 1,
-        category: "structure_awareness",
-        difficulty: "hard",
-        question: "How many unique suppliers are represented in the dataset?",
-        expectedAnswer: {
-          value: suppliers.length,
-          validationMethod: "numeric",
-          tolerance: 0,
-        },
-        dataReferences: ["supplierName"]
-      });
-    }
-
-    return questions.slice(0, count);
+    return questions;
   }
 
   private generateDeductionQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
