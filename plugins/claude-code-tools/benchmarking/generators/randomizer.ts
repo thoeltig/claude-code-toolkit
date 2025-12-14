@@ -45,8 +45,13 @@ export class Randomizer{
     return this.getRandomItem(fields);
   }
   
-  private getFields(obj: object, fieldToSkip: string){
-    return Object.keys(obj).filter((f) => f !== fieldToSkip && obj[f] !== null && obj[f] !== undefined);  
+  public getRandomNumbericField(obj: object, fieldToSkip: string){
+    const fields = this.getFields(obj, fieldToSkip).filter(field => typeof obj[field] === 'number');
+    return this.getRandomItem(fields);
+  }
+  
+  private getFields(obj: object, fieldToSkip: string): string[]{
+    return Object.keys(obj).filter((field) => field !== fieldToSkip && obj[field] !== null && obj[field] !== undefined);  
   }
 
   public randomInt(min: number, max: number): number {
