@@ -49,7 +49,7 @@ export class QuestionnaireGenerator {
     id += entries.length;
     console.log("Aggregation questions: "+ entries.length);
 
-    entries = this.generateFilteringQuestions(ctx, distribution.filtering, id);
+    entries = this.generateFilteringQuestions(ctx, distribution.filtering, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("filtering questions: "+ entries.length);
@@ -68,7 +68,7 @@ export class QuestionnaireGenerator {
   }
 
   private generateFieldRetrievalQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
-    const splitCount = count / 3;
+    const splitCount = Math.ceil(count / 3);
     const remainingCount = count - splitCount * 2;
     const questions: AnswerAndQuestion[] = [];
 
@@ -149,33 +149,11 @@ export class QuestionnaireGenerator {
   }
 
   private generateAggregationQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
-    const splitCount = count / 5; // count, sum, min, max
-    const remainingCount = count - splitCount * 4; // avg
+    const splitCount = Math.ceil(count / 4); // sum, min, max
+    const remainingCount = count - splitCount * 3; // avg
     const questions: AnswerAndQuestion[] = [];
-
-    let records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
-      const value = record[field];
-
-      startId += 1;
-      const expectedCount = records.filter(x => x[field] === value).length;
-      questions.push({
-        id: startId,
-        category: "aggregation",
-        difficulty: "easy",
-        question: `How many products have the value '${value}' in ${field}?`,
-        expectedAnswer: {
-          value: expectedCount,
-          validationMethod: "numeric",
-          tolerance: 0,
-        },
-        dataReferences: [field],
-      });
-    }
     
-    records = this.rand.getRandomItems(ctx.records, splitCount);
+    let records = this.rand.getRandomItems(ctx.records, splitCount);
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
       const field = this.rand.getRandomNumbericField(record, idField);
@@ -262,63 +240,128 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private generateFilteringQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+  private generateFilteringQuestions(ctx: QuestionGeneratorContext,  count: number, startId: number, idField: string): AnswerAndQuestion[] {
+    const splitCount = Math.ceil(count / 5); // equal, above avg, belowe avg, equal + above avg
+    const remainingCount = count - splitCount * 4; // equal + belowe avg
     const questions: AnswerAndQuestion[] = [];
-    const { records } = ctx;
+    
+    let records = this.rand.getRandomItems(ctx.records, splitCount);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, idField);
+      const value = record[field];
 
-    if (count >= 1) {
-      // Count out of stock
-      const outOfStock = records.filter((r) => Number(r.stockQuantity || 0) === 0).length;
+      startId += 1;
+      const expectedCount = records.filter(x => x[field] === value).length;
+      questions.push({
+        id: startId,
+        category: "filtering",
+        difficulty: "easy",
+        question: `How many products have '${value}' in ${field}?`,
+        expectedAnswer: {
+          value: expectedCount,
+          validationMethod: "numeric",
+          tolerance: 0,
+        },
+        dataReferences: [field],
+      });
+    }
+    
+    records = this.rand.getRandomItems(ctx.records, splitCount);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, idField);
+      const value = record[field];
+
+      startId += 1;
+      const expectedAvg = records.filter(x => x[field] === value).length;
+      const expectedCount = records.filter((r) => Number(r.price || 0) > expectedAvg).length;
       questions.push({
         id: startId,
         category: "filtering",
         difficulty: "medium",
-        question: "How many products are currently out of stock (stockQuantity = 0)?",
+        question: `How many products have a value above the average in ${field}?`,
         expectedAnswer: {
-          value: outOfStock,
+          value: expectedCount,
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["stockQuantity"]
+        dataReferences: [field],
       });
     }
 
-    if (count >= 2) {
-      // Count expensive items
-      const avgPrice = records.reduce((sum, r) => sum + Number(r.price || 0), 0) / records.length;
-      const expensiveCount = records.filter((r) => Number(r.price || 0) > avgPrice).length;
+    records = this.rand.getRandomItems(ctx.records, splitCount);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, idField);
+      const value = record[field];
+
+      startId += 1;
+      const expectedAvg = records.filter(x => x[field] === value).length;
+      const expectedCount = records.filter((r) => Number(r.price || 0) < expectedAvg).length;
       questions.push({
-        id: startId + 1,
+        id: startId,
         category: "filtering",
         difficulty: "medium",
-        question: `How many products are priced above the average price (>${Math.round(avgPrice)})?`,
+        question: `How many products have a value belowe the average in ${field}?`,
         expectedAnswer: {
-          value: expensiveCount,
+          value: expectedCount,
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["price"]
+        dataReferences: [field],
       });
     }
 
-    if (count >= 3) {
-      // Count hazardous items
-      const hazardousCount = records.filter((r) => r.hazardous === true).length;
+    records = this.rand.getRandomItems(ctx.records, splitCount);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, idField);
+      const value = record[field];
+      const numericField = this.rand.getRandomNumbericField(record, field);
+
+      startId += 1;
+      const expectedAvg = records.filter(x => x[numericField] === value).length;
+      const expectedCount = records.filter((r) => Number(r[numericField] || 0) > expectedAvg).length;
       questions.push({
-        id: startId + 2,
+        id: startId,
         category: "filtering",
-        difficulty: "medium",
-        question: "How many products are marked as hazardous?",
+        difficulty: "hard",
+        question: `How many products have '${value}' in ${field} and a value above the average in ${numericField}?`,
         expectedAnswer: {
-          value: hazardousCount,
+          value: expectedCount,
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: ["hazardous"]
+        dataReferences: [field, numericField],
       });
     }
 
-    return questions.slice(0, count);
+    records = this.rand.getRandomItems(ctx.records, remainingCount);
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const field = this.rand.getRandomField(record, idField);
+      const value = record[field];
+      const numericField = this.rand.getRandomNumbericField(record, field);
+
+      startId += 1;
+      const expectedAvg = records.filter(x => x[numericField] === value).length;
+      const expectedCount = records.filter((r) => Number(r[numericField] || 0) < expectedAvg).length;
+      questions.push({
+        id: startId,
+        category: "filtering",
+        difficulty: "hard",
+        question: `How many products have '${value}' in ${field} and a value belowe the average in ${numericField}?`,
+        expectedAnswer: {
+          value: expectedCount,
+          validationMethod: "numeric",
+          tolerance: 0,
+        },
+        dataReferences: [field, numericField],
+      });
+    }
+
+    return questions;
   }
 
   private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
