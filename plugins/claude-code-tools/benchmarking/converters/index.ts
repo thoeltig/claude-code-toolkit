@@ -5,7 +5,7 @@
 
 import { BaseDataSet, Format } from "../types";
 import { convertToCsv } from "./csv";
-import { convertToJson, convertToMinifiedJson } from "./json";
+import { convertToPrettyJson, convertToMinifiedJson } from "./json";
 import { convertToMarkdown } from "./markdown";
 import { convertToYaml } from "./yaml";
 import { convertToApacheLogs } from "./apache";
@@ -14,8 +14,10 @@ export function convertToFormat(data: BaseDataSet, format: Format): string {
   switch (format) {
     case "csv":
       return convertToCsv(data);
-    case "json":
-      return convertToJson(data);
+    case "json_pretty":
+      return convertToPrettyJson(data);
+    case "json_compact":
+      return convertToMinifiedJson(data);
     case "markdown":
       return convertToMarkdown(data);
     case "yaml":
@@ -27,10 +29,3 @@ export function convertToFormat(data: BaseDataSet, format: Format): string {
       return _exhaustive;
   }
 }
-
-export function convertToMinifiedJson(data: BaseDataSet): string {
-  return convertToMinifiedJson(data);
-}
-
-// Re-export for convenience
-export { convertToCsv, convertToJson, convertToMarkdown, convertToYaml, convertToApacheLogs };

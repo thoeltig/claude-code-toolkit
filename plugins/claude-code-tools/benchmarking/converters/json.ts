@@ -5,26 +5,10 @@
 
 import { BaseDataSet } from "../types";
 
-export function convertToJson(data: BaseDataSet): string {
-  // Create structure with metadata and records
-  const structure = {
-    metadata: data.metadata,
-    records: data.records,
-  };
-
-  // Return minified JSON (no whitespace)
-  return JSON.stringify(structure);
+export function convertToPrettyJson(data: BaseDataSet): string {
+  return JSON.stringify(data.records, null, 2);
 }
 
-/**
- * Convert to minified JSON (for comparison)
- * Even stricter minification
- */
 export function convertToMinifiedJson(data: BaseDataSet): string {
-  const structure = {
-    m: data.metadata,
-    r: data.records,
-  };
-
-  return JSON.stringify(structure);
+  return JSON.stringify(data.records);
 }

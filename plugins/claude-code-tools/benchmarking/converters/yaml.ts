@@ -3,19 +3,10 @@
  * Converts base dataset to YAML format
  */
 
-import { BaseDataSet, DataRecord } from "../types";
+import { BaseDataSet } from "../types";
 
 export function convertToYaml(data: BaseDataSet): string {
   const lines: string[] = [];
-
-  // Add metadata
-  lines.push("metadata:");
-  lines.push(`  characterCount: ${data.metadata.characterCount}`);
-  lines.push(`  density: ${data.metadata.density}`);
-  lines.push(`  fieldCount: ${data.metadata.fieldCount}`);
-  lines.push(`  recordCount: ${data.metadata.recordCount}`);
-  lines.push(`  generatedAt: "${data.metadata.generatedAt}"`);
-  lines.push("");
 
   // Add products
   lines.push("products:");

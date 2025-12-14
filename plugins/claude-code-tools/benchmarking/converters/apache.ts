@@ -27,8 +27,8 @@ function generateApacheLogLine(record: DataRecord): string {
   const method = getHttpMethod(String(record.category || "GET"));
   const path = `/api/products/${record.productId}`;
   const protocol = "HTTP/1.1";
-  const status = getHttpStatus(record.stockQuantity);
-  const bytes = Math.round((record.weight || 0) * 1024);
+  const status = getHttpStatus(Number(record.stockQuantity) || undefined);
+  const bytes = Math.round((Number(record.weight) || 0) * 1024);
   const referer = `https://example.com/category/${record.category}`;
   const userAgent = "Mozilla/5.0 (Benchmarking Framework)";
 

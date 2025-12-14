@@ -8,14 +8,6 @@ import { BaseDataSet, DataRecord } from "../types";
 export function convertToMarkdown(data: BaseDataSet): string {
   const lines: string[] = [];
 
-  // Add header
-  lines.push("# Product Catalog");
-  lines.push("");
-  lines.push(`Total Products: ${data.records.length}`);
-  lines.push(`Last Updated: ${data.metadata.generatedAt}`);
-  lines.push(`Data Density: ${data.metadata.density}%`);
-  lines.push("");
-
   // Group records by category
   const byCategory = new Map<string, DataRecord[]>();
   for (const record of data.records) {

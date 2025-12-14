@@ -270,7 +270,7 @@ export interface TestSummary {
 
 export interface GeneratorResult {
   generatedAt: string;
-  files: GeneratedFiles[];
+  filesPerRecordCount: GeneratedFiles[];
 }
 
 export interface GeneratedFiles{
@@ -281,7 +281,7 @@ export interface GeneratedFiles{
   answersAndQuestionsForValidationFilePath: string;
   questionnaireFilePath: string;
   answerTemplateFilePath: string;
-  dataAndOutput: Map<Format, DataAndOutput>;
+  dataAndOutput: DataAndOutput[];
 }
 
 export interface DataAndOutput{

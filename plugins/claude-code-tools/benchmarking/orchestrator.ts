@@ -21,7 +21,7 @@ import {
   GeneratorResult
 } from "./types";
 
-const TARGET_SIZES: number[] = [140, 105, 70, 35]
+const TARGET_SIZES: number[] = [100, 75, 50, 25]
 const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "markdown", "yaml", "apache"];
 const DATA_DIRECTORY = "data";
 const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
@@ -65,7 +65,7 @@ export class BenchmarkingOrchestrator {
    * Generate all test data and questionnaires
    */
   public generateAllTestData(): GeneratorResult {
-    const fileCreated: GeneratedFiles[] = [];
+    const filesCreated: GeneratedFiles[] = [];
 
     for (const targetSize of TARGET_SIZES) {
       console.log(`Generating test data with ${targetSize} records per file...\n`);
@@ -127,7 +127,7 @@ export class BenchmarkingOrchestrator {
         answersAndQuestionsForValidationFilePath: answersAndQuestionsFilePath,
         questionnaireFilePath: questionnaireFilePath, 
         answerTemplateFilePath: answerTemplateFilePath,
-        dataAndOutput: new Map<Format, DataAndOutput>()
+        dataAndOutput: []
       };
 
       // Generate formats
@@ -145,7 +145,7 @@ export class BenchmarkingOrchestrator {
         console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} data set rows)`);
 
         // Track result
-        generatedFiles.dataAndOutput.set(format, {
+        generatedFiles.dataAndOutput.push({
           format: format,
           dataFilePath: dataFilePath,
           expectedOutputFilePath: expectedOutputFilePath,
@@ -156,13 +156,14 @@ export class BenchmarkingOrchestrator {
           }
         });
       }
-      fileCreated.push(generatedFiles);
+
+      filesCreated.push(generatedFiles);
     }
 
     // Write metadata
     const results: GeneratorResult = {
       generatedAt: new Date().toISOString(),
-      files: fileCreated
+      filesPerRecordCount: filesCreated
     };    
     const metadataPath = path.join(this.outputDir, "metadata.json");
     fs.writeFileSync(metadataPath, JSON.stringify(results));
@@ -191,14 +192,14 @@ export class BenchmarkingOrchestrator {
     let format: Format | undefined;
     let generatedFiles: GeneratedFiles | undefined;
     let questionaireWithAnswers: QuestionnaireWithAnswers | undefined;
-    generatorResult.files.forEach(x => {
-      x.dataAndOutput.forEach(y => {
-        if(y.expectedOutputFilePath === subagentAnswerFilePath){
-          generatedFiles = x;          
-          format = y.format;
-          questionaireWithAnswers = JSON.parse(fs.readFileSync(x.answersAndQuestionsForValidationFilePath, "utf-8")) as QuestionnaireWithAnswers;
-        }
-      });
+    generatorResult.filesPerRecordCount.forEach((files) => {
+        files.dataAndOutput.forEach((dataAndOutput) => {
+          if(dataAndOutput.expectedOutputFilePath === subagentAnswerFilePath){
+            generatedFiles = files;          
+            format = dataAndOutput.format;
+            questionaireWithAnswers = JSON.parse(fs.readFileSync(files.answersAndQuestionsForValidationFilePath, "utf-8")) as QuestionnaireWithAnswers;
+          }
+        });
     });
 
     if (!questionaireWithAnswers || !format || !generatedFiles) {
@@ -236,16 +237,18 @@ if (require.main === module) {
   const outputDir = process.argv[2] || "benchmarking";
   const orchestrator = new BenchmarkingOrchestrator(outputDir);
 
-  console.log(`\n${"=".repeat(60)}`);
+  const logSeparator = "=".repeat(60);
+  console.log(`\n${logSeparator}`);
   console.log("BENCHMARKING FRAMEWORK - TEST DATA GENERATION");
-  console.log(`${"=".repeat(60)}\n`);
+  console.log(`${logSeparator}\n`);
 
   const results = orchestrator.generateAllTestData();
 
-  console.log(`${"=".repeat(60)}`);
-  console.log(`Generated ${results.files.reduce((sum, current) => sum + current.dataAndOutput.values.length, 0)} dataset(s) with questionnaires`);
+  console.log(`${logSeparator}`);
+  const fileCount = FORMATS.length * TARGET_SIZES.length;
+  console.log(`Generated ${fileCount} dataset(s) with questionnaires`);
   console.log(`Output directory: ${outputDir}`);
-  console.log(`${"=".repeat(60)}\n`);
+  console.log(`${logSeparator}\n`);
 }
 
 export default BenchmarkingOrchestrator;

@@ -150,7 +150,6 @@ export class ProductDataGenerator {
 
   public generate(recordCount: number): BaseDataSet {
     const records: ProductRecord[] = [];
-    let totalChars = 0;
     let recordIndex = 0;
     let totalValues = 0;
 
@@ -193,19 +192,15 @@ export class ProductDataGenerator {
       }
 
       records.push(record);
-      totalChars += JSON.stringify(record).length;
       recordIndex++;
     }
 
     const metadata:Metadata = {
-      characterCount: totalChars,
       fieldCount: Object.keys(records[0] || {}).length,
       recordCount: records.length,
       totalValues: totalValues,
-      avgCharacterCountPerValue: totalChars / totalValues,
-      avgCharacterCountPerRecord: totalChars / recordCount,
       generatedAt: new Date().toISOString(),
-      description: `Product catalog with ${records.length} items, ${totalChars} characters`,
+      description: `Product catalog with ${records.length} items`,
     };
 
     return { metadata, records };
