@@ -10,31 +10,6 @@
 export type Format = "csv" | "json_pretty" | "json_compact" | "markdown" | "yaml" | "apache";
 export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "deduction";
 
-export interface Product {
-  productId: string,
-  productName: string,
-  category: string,
-  price: number,
-  costPrice: number,
-  stockQuantity: number,
-  reorderPoint: number,
-  lastRestocked: string,
-  supplierName: string,
-  supplierLocation: string,
-  description: string,
-  sku: string,
-  manufacturerCode: string,
-  warehouseLocation: string,
-  weight: number,
-  dimensions: string,
-  hazardous: boolean,
-  fragile: boolean,
-  unitsShipped: number,
-  avgRating?:number,
-  shelfLife?:number,
-  discontinuedDate?:string
-};
-
 export interface Metadata extends ValuesMetadata {
   generatedAt: string,
   description: string,
@@ -50,6 +25,31 @@ export interface CharacterMetadata {
   characterCount: number,
   avgCharacterCountPerValue: number,
   avgCharacterCountPerRecord: number,
+}
+
+export interface ProductRecord extends DataRecord {
+  productId: string;
+  productName: string;
+  category: string;
+  price: number;
+  costPrice: number;
+  stockQuantity: number;
+  reorderPoint: number;
+  lastRestocked: string;
+  supplierName: string;
+  supplierLocation: string;
+  description: string;
+  sku: string;
+  manufacturerCode: string;
+  warehouseLocation: string;
+  weight: number;
+  dimensions: string;
+  hazardous: boolean;
+  fragile: boolean;
+  unitsShipped: number;
+  avgRating?:number;
+  shelfLife?:number;
+  discontinuedDate?:string;
 }
 
 export interface DataRecord {
@@ -128,7 +128,6 @@ export interface AnswerAndQuestion extends Question {
   category: QuestionCategory;
   difficulty: "easy" | "medium" | "hard";
   expectedAnswer: QuestionExpectedAnswer;
-  context?: string;
   dataReferences?: string[]; // Which data fields this question uses
   requiresManualReview?: boolean; // True for deduction questions
 }
