@@ -21,7 +21,7 @@ import {
 } from "./types";
 
 const MANDATORY_STATE: boolean[] = [true, false];
-const TARGET_SIZES: number[] = [90, 45];
+const TARGET_SIZES: number[] = [80, 40];
 const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "jsonl", "toon", "markdown", "yaml", "apache"];
 const DATA_DIRECTORY = "data";
 const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
