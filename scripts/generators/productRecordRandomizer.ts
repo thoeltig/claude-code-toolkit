@@ -78,7 +78,7 @@ export class ProductRecordRandomizer{
     this.rand = new Randomizer(seed);
   }
   
-  public getRandomProduct(index:number){
+  public getRandomProduct(index:number, allFieldsManadatory: boolean){
     const product: ProductRecord = {
         productId: `PROD-${String(index + 1).padStart(6, "0")}`,
         productName: this.generateProductName(),
@@ -102,13 +102,13 @@ export class ProductRecordRandomizer{
     };
 
     // Add optional fields based on probability
-    if (this.rand.getRandomNumber() > 0.3) {
+    if (allFieldsManadatory || this.rand.getRandomNumber() > 0.3) {
         product.avgRating = this.rand.randomFloat(1, 5, 1);
     }
-    if (this.rand.getRandomNumber() > 0.6) {
+    if (allFieldsManadatory || this.rand.getRandomNumber() > 0.6) {
         product.shelfLife = this.rand.randomInt(30, 3650);
     }
-    if (this.rand.getRandomNumber() > 0.9) {
+    if (allFieldsManadatory || this.rand.getRandomNumber() > 0.9) {
         product.discontinuedDate = this.rand.generateDate(180);
     }
 

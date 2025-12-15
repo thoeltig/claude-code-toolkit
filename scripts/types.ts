@@ -110,7 +110,7 @@ export type ConcreteDataSet = CsvData | JsonData | MarkdownData | YamlData | Apa
 // QUESTION & ANSWER TYPES
 // ============================================================================
 
-export type AnswerValidationMethod = "exact" | "numeric" | "array_set" | "fuzzy_deduction" | "manual";
+export type AnswerValidationMethod = "exact" | "numeric" | "array_set";
 
 export interface QuestionExpectedAnswer {
   value: string | number | string[] | boolean;
@@ -155,7 +155,6 @@ export interface Questionnaire extends BaseQuestionnaire {
 export interface ProvidedAnswer {
   questionId: number;
   answer: string | number | string[] | boolean;
-  confidence?: "high" | "medium" | "low";
 }
 
 export interface AnswerTemplate {
@@ -179,8 +178,6 @@ export interface ValidationResult {
   correct: boolean;
   category: QuestionCategory;
   method: AnswerValidationMethod;
-  confidence?: number; // 0-1, for fuzzy matches
-  requiresManualReview: boolean; // True for deduction questions
 }
 
 export interface ValidationReport {
@@ -285,6 +282,7 @@ export interface GeneratedFiles{
 
 export interface DataAndOutput{
   format: Format;
+  allFieldsManadatory: boolean;
   dataFilePath: string;
   metadata: CharacterMetadata;
   expectedOutputFilePath: string;

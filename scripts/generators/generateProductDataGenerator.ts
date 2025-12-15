@@ -14,13 +14,13 @@ export class ProductDataGenerator {
     this.data = new ProductRecordRandomizer(seed);
   }
 
-  public generate(recordCount: number): BaseDataSet {
+  public generate(recordCount: number, allFieldsManadatory: boolean): BaseDataSet {
     const records: ProductRecord[] = [];
     let recordIndex = 0;
     let totalValues = 0;
 
     while (recordIndex < recordCount) {
-      const product = this.data.getRandomProduct(recordIndex);
+      const product = this.data.getRandomProduct(recordIndex, allFieldsManadatory);
       totalValues+=19;
 
       if (product.avgRating) {
@@ -51,7 +51,7 @@ export class ProductDataGenerator {
   }
 }
 
-export function generateProductDataGenerator(recordCount: number): BaseDataSet {
+export function generateProductDataGenerator(recordCount: number, allFieldsManadatory: boolean): BaseDataSet {
   const generator = new ProductDataGenerator();
-  return generator.generate(recordCount);
+  return generator.generate(recordCount, allFieldsManadatory);
 }
