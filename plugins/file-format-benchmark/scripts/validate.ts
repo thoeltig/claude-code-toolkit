@@ -37,7 +37,7 @@ const answerTemplate: any = {
     questionsFilePath: validationKeyFile,
     dataFilePath: answersData.metadata?.dataFilePath || "unknown",
   },
-  answersData: answersData.answers,
+  answers: answersData.answers,
 };
 
 // Run validation
