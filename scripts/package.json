@@ -1,0 +1,27 @@
+{
+  "name": "benchmarking-suite",
+  "version": "1.0.0",
+  "description": "Token efficiency and accuracy benchmarking suite for file formats",
+  "main": "dist/orchestrator.js",
+  "scripts": {
+    "build": "tsc",
+    "generate": "node dist/orchestrator.js benchmarking",
+    "validate": "node validate.js",
+    "analyze": "node dist/analytics.js",
+    "test": "npm run build && npm run generate"
+  },
+  "keywords": [
+    "benchmarking",
+    "token-efficiency",
+    "file-formats"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "25.0.1",
+    "typescript": "5.3.3"
+  },
+  "dependencies": {
+    "@toon-format/toon": "2.1.0"
+  }
+}

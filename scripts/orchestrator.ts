@@ -1,0 +1,255 @@
+/**
+ * Benchmarking orchestrator
+ * Main entry point for generating test data, questionnaires, and coordinating test execution
+ */
+
+import * as fs from "fs";
+import * as path from "path";
+import { generateProductDataGenerator } from "./generators/generateProductDataGenerator";
+import { convertToFormat } from "./converters/index";
+import { generateQuestionnaire } from "./generators/questions";
+import { validateAnswers } from "./validators/index";
+import {
+  Format,
+  AnswerTemplate,
+  ValidationReport,
+  Question,
+  QuestionnaireWithAnswers,
+  ProvidedAnswer,
+  GeneratedFiles,
+  GeneratorResult
+} from "./types";
+
+const TARGET_SIZES: number[] = [100, 75, 50, 25]
+const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "markdown", "yaml", "apache", "jsonl", "toon"];
+const DATA_DIRECTORY = "data";
+const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
+const QUESTIONS_DIRECTORY = "questions";
+const ANSWERS_TEMPLATE_DIRECTORY = "answers_template";
+const SUBAGENT_OUTPUT_DIRECTORY = "subagent_outputs";
+const RESULTS_DIRECTORY = "results";
+const DIRECTORIES = [DATA_DIRECTORY, ANSWERS_VALIDATION_DIRECTORY, QUESTIONS_DIRECTORY, ANSWERS_TEMPLATE_DIRECTORY, SUBAGENT_OUTPUT_DIRECTORY, RESULTS_DIRECTORY];
+
+export class BenchmarkingOrchestrator {
+  private outputDir: string;
+
+  constructor(outputDir: string = "benchmarking") {
+    this.outputDir = outputDir;
+    this.ensureDirectories();
+  }
+
+  private ensureDirectories(): void {
+    let fullPath:string;
+    for (const dir of DIRECTORIES) {
+      fullPath = path.join(this.outputDir, dir);
+      this.createDirectory(fullPath);
+    }
+    
+    for (const format of FORMATS) {
+      fullPath = path.join(this.outputDir, DATA_DIRECTORY, format);
+      this.createDirectory(fullPath);
+      
+      fullPath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format);
+      this.createDirectory(fullPath);
+    }
+  }
+
+  private createDirectory(fullPath: string){
+    if (!fs.existsSync(fullPath)) {
+            fs.mkdirSync(fullPath, { recursive: true });
+    }
+  }
+
+  /**
+   * Generate all test data and questionnaires
+   */
+  public generateAllTestData(): GeneratorResult {
+    const filesCreated: GeneratedFiles[] = [];
+
+    for (const targetSize of TARGET_SIZES) {
+      console.log(`Generating test data with ${targetSize} records per file...\n`);
+
+      // Generate data
+      const dataToUse = generateProductDataGenerator(targetSize);
+      const recordCount = dataToUse.records.length;
+      
+      // Generate questionnaire
+      const answersAndQuestions = generateQuestionnaire(dataToUse);
+      
+      const answersAndQuestionsFileName = `questions_and_answers_for_${recordCount}_records.json`;
+      const answersAndQuestionsFilePath = path.join(this.outputDir, ANSWERS_VALIDATION_DIRECTORY, answersAndQuestionsFileName);
+      const questionnaireFileName = `questions_for_${recordCount}_records.json`;
+      const questionnaireFilePath = path.join(this.outputDir, QUESTIONS_DIRECTORY, questionnaireFileName);
+      const answerTemplateFileName = `answers_for_${recordCount}_records_template.json`;
+      const answerTemplateFilePath = path.join(this.outputDir, ANSWERS_TEMPLATE_DIRECTORY, answerTemplateFileName);
+
+      const questionaireWithAnswers: QuestionnaireWithAnswers = {
+        metadata: {
+          recordCount: dataToUse.metadata.recordCount,
+          fieldCount: dataToUse.metadata.fieldCount,
+          totalValues: dataToUse.metadata.totalValues,
+          totalQuestions: answersAndQuestions.length,
+          generatedAt: new Date().toISOString(),
+          questionFilePath: questionnaireFilePath, 
+          answerTemplateFilePath: answerTemplateFilePath        
+        },
+        answersAndQuestions: answersAndQuestions,
+      }
+
+      // Write answer and questions for validation
+      fs.writeFileSync(answersAndQuestionsFilePath, JSON.stringify(questionaireWithAnswers));
+      console.log(`✓ Questions and answers: ${answersAndQuestionsFilePath} (${answersAndQuestions.length} questions)`);
+
+      // Write questions
+      const questions = answersAndQuestions.map<Question>(x => ({id: x.id, question: x.question}));
+      fs.writeFileSync(questionnaireFilePath, JSON.stringify(questions));
+      console.log(`✓ Questions: ${questionnaireFileName} (${questions.length} questions)`);
+    
+      // Generate empty answer template
+      const answerTemplate: AnswerTemplate = {
+        metadata: {
+          format: "",
+          questionsFilePath: questionnaireFilePath,
+          dataFilePath: "",
+        },
+        answers: answersAndQuestions.map<ProvidedAnswer>((q) => ({questionId: q.id, answer: ""}))
+      };
+      fs.writeFileSync(answerTemplateFilePath, JSON.stringify(answerTemplate));
+      console.log(`✓ Answer template: ${answerTemplateFileName}`);
+      
+      // Prepare result
+      const generatedFiles: GeneratedFiles = {
+        recordCount: targetSize,
+        fieldCount: dataToUse.metadata.fieldCount,
+        totalValues: dataToUse.metadata.totalValues,
+        questionCount: questions.length,
+        answersAndQuestionsForValidationFilePath: answersAndQuestionsFilePath,
+        questionnaireFilePath: questionnaireFilePath, 
+        answerTemplateFilePath: answerTemplateFilePath,
+        dataAndOutput: []
+      };
+
+      // Generate formats
+      for (const format of FORMATS) {
+        console.log(`Generating ${format.toUpperCase()} file with ${targetSize} records`);
+
+        // Convert to format
+        const fileContent = convertToFormat(dataToUse, format);
+        const characterCount = fileContent.length;
+        const fileExt = this.getFileExtension(format);
+        const dataFileName = `${format}_with_${recordCount}_records.${fileExt}`;
+        const dataFilePath = path.join(this.outputDir, DATA_DIRECTORY, format, dataFileName);
+        const expectedOutputFilePath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format,`answers_for_${recordCount}_records.json`);
+        fs.writeFileSync(dataFilePath, fileContent);
+        console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} data set rows)`);
+
+        // Track result
+        generatedFiles.dataAndOutput.push({
+          format: format,
+          dataFilePath: dataFilePath,
+          expectedOutputFilePath: expectedOutputFilePath,
+          metadata: {
+            characterCount: characterCount,
+            avgCharacterCountPerRecord: characterCount / generatedFiles.recordCount,
+            avgCharacterCountPerValue: characterCount / generatedFiles.totalValues
+          }
+        });
+      }
+
+      filesCreated.push(generatedFiles);
+    }
+
+    // Write metadata
+    const results: GeneratorResult = {
+      generatedAt: new Date().toISOString(),
+      filesPerRecordCount: filesCreated
+    };    
+    const metadataPath = path.join(this.outputDir, "metadata.json");
+    fs.writeFileSync(metadataPath, JSON.stringify(results));
+    console.log(`Metadata written to ${metadataPath}`);
+
+    return results;
+  }
+
+  /**
+   * Validate answers from a test execution
+   */
+  public validateTestResults(
+    subagentAnswerFilePath: string,
+    metaDataFilePath: string
+  ): ValidationReport {
+    if (!fs.existsSync(subagentAnswerFilePath)) {
+      throw new Error(`Answers file not found: ${subagentAnswerFilePath}`);
+    }
+    
+    if (!fs.existsSync(metaDataFilePath)) {
+      throw new Error(`Meta data file not found: ${metaDataFilePath}`);
+    }
+
+    const generatorResult = JSON.parse(fs.readFileSync(metaDataFilePath, "utf-8")) as GeneratorResult;
+    
+    let format: Format | undefined;
+    let generatedFiles: GeneratedFiles | undefined;
+    let questionaireWithAnswers: QuestionnaireWithAnswers | undefined;
+    generatorResult.filesPerRecordCount.forEach((files) => {
+        files.dataAndOutput.forEach((dataAndOutput) => {
+          if(dataAndOutput.expectedOutputFilePath === subagentAnswerFilePath){
+            generatedFiles = files;          
+            format = dataAndOutput.format;
+            questionaireWithAnswers = JSON.parse(fs.readFileSync(files.answersAndQuestionsForValidationFilePath, "utf-8")) as QuestionnaireWithAnswers;
+          }
+        });
+    });
+
+    if (!questionaireWithAnswers || !format || !generatedFiles) {
+      throw new Error('Answers and questions for validation file not found. Provided subagent output filepath does not match expected output filepath in meta data file.');
+    }
+
+    const answerData = JSON.parse(fs.readFileSync(subagentAnswerFilePath, "utf-8")) as AnswerTemplate;
+
+    const report = validateAnswers(format, answerData, questionaireWithAnswers.answersAndQuestions);
+
+    // Write validation report
+    const reportFileName = `${format}_${generatedFiles.recordCount}_validation.json`;
+    const reportPath = path.join(this.outputDir, RESULTS_DIRECTORY, reportFileName);
+
+    fs.writeFileSync(reportPath, JSON.stringify(report));
+
+    return report;
+  }
+
+  private getFileExtension(format: Format): string {
+    const extensions: Record<Format, string> = {
+      csv: "csv",
+      json_pretty: "json",
+      json_compact: "json",
+      jsonl: "jsonl",
+      toon: "toon",
+      markdown: "md",
+      yaml: "yaml",
+      apache: "log",
+    };
+    return extensions[format];
+  }
+}
+
+// CLI entry point
+if (require.main === module) {
+  const outputDir = process.argv[2] || "benchmarking";
+  const orchestrator = new BenchmarkingOrchestrator(outputDir);
+
+  const logSeparator = "=".repeat(60);
+  console.log(`\n${logSeparator}`);
+  console.log("BENCHMARKING FRAMEWORK - TEST DATA GENERATION");
+  console.log(`${logSeparator}\n`);
+
+  const results = orchestrator.generateAllTestData();
+
+  console.log(`${logSeparator}`);
+  const fileCount = FORMATS.length * TARGET_SIZES.length;
+  console.log(`Generated ${fileCount} dataset(s) with questionnaires`);
+  console.log(`Output directory: ${outputDir}`);
+  console.log(`${logSeparator}\n`);
+}
+
+export default BenchmarkingOrchestrator;
