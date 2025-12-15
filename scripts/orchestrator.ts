@@ -21,8 +21,8 @@ import {
 } from "./types";
 
 const MANDATORY_STATE: boolean[] = [true, false];
-const TARGET_SIZES: number[] = [96, 48];
-const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "markdown", "yaml", "apache", "jsonl", "toon"];
+const TARGET_SIZES: number[] = [90, 45];
+const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "jsonl", "toon", "markdown", "yaml", "apache"];
 const DATA_DIRECTORY = "data";
 const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
 const QUESTIONS_DIRECTORY = "questions";
@@ -79,11 +79,11 @@ export class BenchmarkingOrchestrator {
         // Generate questionnaire
         const answersAndQuestions = generateQuestionnaire(dataToUse);
         
-        const answersAndQuestionsFileName = `questions_and_answers_with_${fieldsMandatoryText}_for_${recordCount}_records.json`;
+        const answersAndQuestionsFileName = `questions_and_answers_with_${fieldsMandatoryText}_${recordCount}_records.json`;
         const answersAndQuestionsFilePath = path.join(this.outputDir, ANSWERS_VALIDATION_DIRECTORY, answersAndQuestionsFileName);
-        const questionnaireFileName = `questions_with_${fieldsMandatoryText}_for_${recordCount}_records.json`;
+        const questionnaireFileName = `questions_with_${fieldsMandatoryText}_${recordCount}_records.json`;
         const questionnaireFilePath = path.join(this.outputDir, QUESTIONS_DIRECTORY, questionnaireFileName);
-        const answerTemplateFileName = `answers_with_${fieldsMandatoryText}_for_${recordCount}_records_template.json`;
+        const answerTemplateFileName = `answers_with_${fieldsMandatoryText}_${recordCount}_records_template.json`;
         const answerTemplateFilePath = path.join(this.outputDir, ANSWERS_TEMPLATE_DIRECTORY, answerTemplateFileName);
 
         const questionaireWithAnswers: QuestionnaireWithAnswers = {
@@ -134,15 +134,15 @@ export class BenchmarkingOrchestrator {
 
         // Generate formats
         for (const format of FORMATS) {
-          console.log(`Generating ${format.toUpperCase()} file with ${fieldsMandatoryText} data and ${targetSize} records`);
+          console.log(`Generating ${format.toUpperCase()} file with ${fieldsMandatoryText} ${targetSize} records`);
 
           // Convert to format
           const fileContent = convertToFormat(dataToUse, format);
           const characterCount = fileContent.length;
           const fileExt = this.getFileExtension(format);
-          const dataFileName = `${format}_with_${fieldsMandatoryText}_and_${recordCount}_records.${fileExt}`;
+          const dataFileName = `${format}_with_${fieldsMandatoryText}_${recordCount}_records.${fileExt}`;
           const dataFilePath = path.join(this.outputDir, DATA_DIRECTORY, format, dataFileName);
-          const expectedOutputFilePath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format,`answers_with_${fieldsMandatoryText}_for_${recordCount}_records.json`);
+          const expectedOutputFilePath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format,`answers_with_${fieldsMandatoryText}_${recordCount}_records.json`);
           fs.writeFileSync(dataFilePath, fileContent);
           console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} data set rows and ${fieldsMandatoryText} data)`);
 
@@ -252,7 +252,7 @@ if (require.main === module) {
   const results = orchestrator.generateAllTestData();
 
   console.log(`${logSeparator}`);
-  const fileCount = FORMATS.length * TARGET_SIZES.length;
+  const fileCount = FORMATS.length * TARGET_SIZES.length * MANDATORY_STATE.length;
   console.log(`Generated ${fileCount} dataset(s) with questionnaires`);
   console.log(`Output directory: ${outputDir}`);
   console.log(`${logSeparator}\n`);

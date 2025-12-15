@@ -1,6 +1,6 @@
 ---
 description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), JSONL, TOON, Markdown, YAML, Apache). Generates test data, executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
-argument-hint: [--formats csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache] [--model haiku|sonnet] [--thinking on|off]
+argument-hint: [--formats csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache] [--variant optional,mandatory] [--model haiku|sonnet] [--thinking on|off]
 allowed-tools: Bash
 ---
 
@@ -23,7 +23,8 @@ You are orchestrating a comprehensive benchmarking test suite for measuring file
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
-- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,markdown,yaml,apache)
+- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache)
+- `--variant`: Data variant with optional or mandatory values (default: both - optional,mandatory)
 - `--model`: haiku or sonnet (default: haiku)
 - `--thinking`: on or off (default: on)
 
@@ -38,7 +39,6 @@ Build the TypeScript project and run test data generation:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
-npm install
 npm run build
 npm run generate
 ```
@@ -47,8 +47,9 @@ This:
 1. Installs dependencies (TypeScript)
 2. Compiles TypeScript to JavaScript (orchestrator.ts, analytics.ts, etc.)
 3. Generates test data:
-   - Data files (CSV, JSON compact/pretty, Markdown, YAML, Apache logs)
-   - 4 densities per format: 100, 75, 50, 25 record rows
+   - Data files (CSV, JSON compact/pretty, JSONL, TOON, Markdown, YAML, Apache logs)
+   - 2 data variants: optional, mandatory
+   - Record count format: 100, 50
    - Questionnaires with 100+ questions per dataset
    - Answer templates
    - metadata.json with all dataset information
@@ -59,18 +60,19 @@ This:
 Read `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/metadata.json` to get all test cases.
 
 For each format in the selected formats list:
-  For each data size (100, 75, 50, 25):
-    Create a test case: `{format}_{size}_{model}_{thinking}`
+  For each optional data variant in the selected variant list:
+    For each recordCount (100, 50):
+      Create a test case: `{format}_{variant}_{recordCount}_{model}_{thinking}`
 
 Example test cases:
-- csv_100_haiku_on
-- csv_75_haiku_on
-- json_compact_50_sonnet_off
-- markdown_25_haiku_on
+- csv_optional_100_haiku_on
+- csv_mandatory_75_haiku_on
+- json_mandatory_compact_50_sonnet_off
+- markdown_optional_25_haiku_on
 
-**Total test cases**: selected_formats × 4 densities = N × 4
+**Total test cases**: selected_formats × selected_variant × 2 record counts
 
-If all 6 formats selected: 6 × 4 = 24 test cases
+If all 9 formats selected: 8 x 2 × 2 = 32 test cases
 
 ## Step 3: Execute Tests SEQUENTIALLY
 
@@ -84,17 +86,17 @@ For EACH test case in order:
 Use the Task tool:
 
 Task(
-  description: "Read-only test for {format}_{size}",
+  description: "Read-only test for {format}_{variant}_{recordCount}",
   subagent_type: "benchmark-read-only",
   model: "{model}",
-  prompt: "Read the data file at: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{recordCount}_records.{ext}",
+  prompt: "Read the data file at: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}",
   thinking_mode: "{thinking}"
 )
 ```
 
 Replace:
 - `{format}`: Format name (csv, json_compact, json_pretty, jsonl, toon, markdown, yaml, apache)
-- `{recordCount}`: Row count (100, 75, 50, or 25)
+- `{recordCount}`: Row count (100, 50)
 - `{ext}`: File extension (.csv, .json, .jsonl, .toon, .md, .yaml, .log)
 - `{model}`: haiku or sonnet
 - `{thinking}`: on or off
@@ -107,19 +109,19 @@ Wait for completion. Display the token usage from the system message (note it).
 Use the Task tool:
 
 Task(
-  description: "Full test for {format}_{size}",
+  description: "Full test for {format}_{variant}_{recordCount}",
   subagent_type: "benchmark-full-test",
   model: "{model}",
   prompt: "
 Format: {format}
-size: {size}
+Variant: {variant}
 Record Count: {recordCount}
 
 Files to process:
-- Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{recordCount}_records.{ext}
-- Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{recordCount}_records.json
-- Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{recordCount}_records_template.json
-- Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{recordCount}_records.json
+- Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
+- Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
+- Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
+- Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records.json
 
 Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path.
   ",
@@ -133,17 +135,13 @@ Wait for completion. Display the token usage from the system message (note it).
 
 Repeat 3a and 3b for the next test case.
 
-**Example sequence** (if --formats csv,json_compact):
-1. Read: csv_100_haiku_on
-2. Full: csv_100_haiku_on
-3. Read: csv_75_haiku_on
-4. Full: csv_75_haiku_on
-5. Read: csv_50_haiku_on
-6. Full: csv_50_haiku_on
-7. Read: csv_25_haiku_on
-8. Full: csv_25_haiku_on
-9. Read: json_compact_100_haiku_on
-10. Full: json_compact_100_haiku_on
+**Example sequence** (if --formats csv,json_compact --variant optional):
+1. Read: csv_optional_100_haiku_on
+2. Full: csv_optional_100_haiku_on
+5. Read: csv_optional_50_haiku_on
+6. Full: csv_optional_50_haiku_on
+9. Read: json_compact_optional_100_haiku_on
+10. Full: json_compact_optional_100_haiku_on
 ... (and so on)
 
 ## Step 4: Run Validation
@@ -153,11 +151,11 @@ After ALL tests complete, validate all answers using the TypeScript validator:
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# For each format × size combination, validate the answers
+# For each format × recordCount combination, validate the answers
 node dist/validate.js \
-  ./benchmarking/subagent_outputs/{format}/answers_for_{recordCount}_records.json \
-  ./benchmarking/answers_validation/questions_and_answers_for_{recordCount}_records.json \
-  ./benchmarking/results/{format}_{recordCount}_validation.json
+  ./benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records.json \
+  ./benchmarking/answers_validation/questions_and_answers_for_{variant}_{recordCount}_records.json \
+  ./benchmarking/results/{format}_{variant}_{recordCount}_validation.json
 
 # Repeat for each test case
 ```
@@ -186,14 +184,14 @@ The file should contain an array of test results with this structure:
 ```json
 [
   {
-    "testCase": "csv_100_haiku_on",
+    "testCase": "csv_optional_100_haiku_on",
     "readDuration": 12,
     "readTokens": 2450,
     "fullDuration": 45,
     "fullTokens": 18500
   },
   {
-    "testCase": "csv_75_haiku_on",
+    "testCase": "csv_optional_75_haiku_on",
     "readDuration": 11,
     "readTokens": 2100,
     "fullDuration": 42,
@@ -225,7 +223,7 @@ The analytics script will:
 2. Load metadata with character counts and record info
 3. Load validation results for accuracy data
 4. Calculate efficiency scores (chars/token, tokens/question, etc.)
-5. Compare formats and densities
+5. Compare formats and record counts
 6. Generate insights and rankings
 7. Write comprehensive results JSON
 
@@ -268,31 +266,23 @@ ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
 ├── benchmarking/
 │   ├── data/
 │   │   ├── {format}/
-│   │   │   ├── {format}_with_100_records.{ext}
-│   │   │   ├── {format}_with_75_records.{ext}
-│   │   │   ├── {format}_with_50_records.{ext}
-│   │   │   └── {format}_with_25_records.{ext}
+│   │   │   ├── {format}_with_{variant}_100_records.{ext}
+│   │   │   ├── {format}_with_{variant}_50_records.{ext}
 │   │   └── metadata.json
 │   ├── questions/
-│   │   ├── questions_for_100_records.json
-│   │   ├── questions_for_75_records.json
-│   │   ├── questions_for_50_records.json
-│   │   └── questions_for_25_records.json
+│   │   ├── questions_for_{variant}_100_records.json
+│   │   ├── questions_for_{variant}_50_records.json
 │   ├── answers_template/
-│   │   ├── answers_for_100_records_template.json
-│   │   ├── answers_for_75_records_template.json
-│   │   ├── answers_for_50_records_template.json
-│   │   └── answers_for_25_records_template.json
+│   │   ├── answers_for_{variant}_100_records_template.json
+│   │   ├── answers_for_{variant}_50_records_template.json
 │   ├── answers_validation/
-│   │   └── questions_and_answers_for_{recordCount}_records.json
+│   │   └── questions_and_answers_for_{variant}_{recordCount}_records.json
 │   ├── subagent_outputs/
 │   │   └── {format}/
-│   │       ├── answers_for_100_records.json
-│   │       ├── answers_for_75_records.json
-│   │       ├── answers_for_50_records.json
-│   │       └── answers_for_25_records.json
+│   │       ├── answers_for_{variant}_100_records.json
+│   │       ├── answers_for_{variant}_50_records.json
 │   ├── results/
-│   │   └── {format}_{recordCount}_validation.json
+│   │   └── {format}_{variant}_{recordCount}_validation.json
 │   └── metrics_{model}_{thinking}.json
 ├── dist/
 │   ├── orchestrator.js
