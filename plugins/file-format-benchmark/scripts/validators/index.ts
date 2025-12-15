@@ -4,7 +4,6 @@
  */
 
 import {
-  Question,
   AnswerTemplate,
   ValidationResult,
   ValidationReport,
@@ -36,24 +35,18 @@ export class AnswerValidator {
           expectedAnswer: answerAndQuestion.expectedAnswer.value,
           correct: false,
           category: answerAndQuestion.category,
-          method: answerAndQuestion.expectedAnswer.validationMethod,
-          confidence: 0,
-          requiresManualReview: answerAndQuestion.requiresManualReview || false,
+          method: answerAndQuestion.expectedAnswer.validationMethod
         });
         continue;
       }
 
       const result = this.validateSingleAnswer(answerAndQuestion, providedAnswer);
       results.push(result);
-
-      if (result.requiresManualReview) {
-        manualReviewRequired.push(result);
-      }
     }
 
     // Calculate accuracy
-    const correctCount = results.filter((r) => r.correct && !r.requiresManualReview).length;
-    const totalValidatable = results.filter((r) => !r.requiresManualReview).length;
+    const correctCount = results.filter((r) => r.correct).length;
+    const totalValidatable = results.length;
 
     return {
       format: format,
@@ -91,18 +84,6 @@ export class AnswerValidator {
         correct = arrayResult.correct;
         confidence = arrayResult.confidence;
         break;
-
-      case "fuzzy_deduction":
-        const fuzzyResult = this.validateFuzzyDeduction(providedAnswer.answer, expected.keywords || []);
-        correct = fuzzyResult.correct;
-        confidence = fuzzyResult.confidence;
-        break;
-
-      case "manual":
-        // Manual validation - always mark as requiring review
-        correct = false;
-        confidence = 0;
-        break;
     }
 
     return {
@@ -113,8 +94,6 @@ export class AnswerValidator {
       correct,
       category: question.category,
       method: expected.validationMethod,
-      confidence,
-      requiresManualReview: expected.validationMethod === "fuzzy_deduction" || expected.validationMethod === "manual",
     };
   }
 
@@ -171,25 +150,6 @@ export class AnswerValidator {
 
     const correct = matchCount === expectedSet.size;
     const confidence = matchCount / expectedSet.size;
-
-    return { correct, confidence };
-  }
-
-  /**
-   * Fuzzy deduction validation - check if answer contains key terms
-   */
-  private validateFuzzyDeduction(given: unknown, keywords: string[]): {correct: boolean; confidence: number} {
-    const givenStr = String(given).toLowerCase();
-
-    let matchCount = 0;
-    for (const keyword of keywords) {
-      if (givenStr.includes(keyword.toLowerCase())) {
-        matchCount++;
-      }
-    }
-
-    const correct = matchCount >= Math.ceil(keywords.length * 0.7); // 70% of keywords
-    const confidence = matchCount / keywords.length;
 
     return { correct, confidence };
   }

@@ -48,6 +48,16 @@
         "name": "Thore Höltig"
       },
       "strict": false
-    }
+    },
+    {
+      "name": "file-format-benchmark",
+      "source": "./plugins/file-format-benchmark",
+      "description": "Benchmarking framework to analyse tokenization per file format.",
+      "version": "0.1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    }    
   ]
 }

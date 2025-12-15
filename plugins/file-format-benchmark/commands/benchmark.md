@@ -8,6 +8,18 @@ allowed-tools: Bash
 
 You are orchestrating a comprehensive benchmarking test suite for measuring file format token efficiency.
 
+## Primary Scripts
+
+**Main Orchestration & Validation Entry Points:**
+- `orchestrator.ts` → `dist/orchestrator.js` - Generates test data and metadata
+- `validate.ts` → `dist/validate.js` - **Primary validation script** (compiles AnswerValidator class)
+- `analytics.ts` → `dist/analytics.js` - Generates efficiency metrics and rankings
+
+**Supporting Utilities:**
+- `validators/index.ts` - Core AnswerValidator class (used by validate.ts)
+- `generators/` - Data generation utilities
+- `converters/` - Format conversion tools
+
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
@@ -25,7 +37,7 @@ Example:
 Build the TypeScript project and run test data generation:
 
 ```bash
-cd benchmarking
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 npm install
 npm run build
 npm run generate
@@ -44,7 +56,7 @@ This:
 
 ## Step 2: Load Test Configuration
 
-Read `benchmarking/benchmarking/data/metadata.json` to get all test cases.
+Read `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/metadata.json` to get all test cases.
 
 For each format in the selected formats list:
   For each data size (100, 75, 50, 25):
@@ -75,7 +87,7 @@ Task(
   description: "Read-only test for {format}_{size}",
   subagent_type: "benchmark-read-only",
   model: "{model}",
-  prompt: "Read the data file at: benchmarking/benchmarking/data/{format}/{format}_with_{recordCount}_records.{ext}",
+  prompt: "Read the data file at: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{recordCount}_records.{ext}",
   thinking_mode: "{thinking}"
 )
 ```
@@ -104,10 +116,10 @@ size: {size}
 Record Count: {recordCount}
 
 Files to process:
-- Data file: benchmarking/benchmarking/data/{format}/{format}_with_{recordCount}_records.{ext}
-- Questionnaire: benchmarking/benchmarking/questions/questions_for_{recordCount}_records.json
-- Answer template: benchmarking/benchmarking/answers_template/answers_for_{recordCount}_records_template.json
-- Output path: benchmarking/benchmarking/subagent_outputs/{format}/answers_for_{recordCount}_records.json
+- Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{recordCount}_records.{ext}
+- Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{recordCount}_records.json
+- Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{recordCount}_records_template.json
+- Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{recordCount}_records.json
 
 Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path.
   ",
@@ -136,15 +148,16 @@ Repeat 3a and 3b for the next test case.
 
 ## Step 4: Run Validation
 
-After ALL tests complete, validate all answers:
+After ALL tests complete, validate all answers using the TypeScript validator:
 
 ```bash
-cd benchmarking
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 # For each format × size combination, validate the answers
-npm run validate -- \
-  benchmarking/subagent_outputs/{format}/answers_for_{recordCount}_records.json \
-  benchmarking/answers_validation/questions_and_answers_for_{recordCount}_records.json
+node dist/validate.js \
+  ./benchmarking/subagent_outputs/{format}/answers_for_{recordCount}_records.json \
+  ./benchmarking/answers_validation/questions_and_answers_for_{recordCount}_records.json \
+  ./benchmarking/results/{format}_{recordCount}_validation.json
 
 # Repeat for each test case
 ```
@@ -154,17 +167,19 @@ This will output validation results showing:
 - Questions answered incorrectly
 - Overall accuracy percentage per test case
 
-Results will be written to `benchmarking/results/` directory.
+Results will be written to `./benchmarking/results/` directory.
+
+**Note:** The `validate.ts` script (compiled to `dist/validate.js`) is the primary validation entry point. It uses the AnswerValidator class to deterministically validate answers against ground truth questionnaires.
 
 ## Step 5: Collect User Metrics
 
 Pause and request metrics from the user:
 
-"✓ All tests complete. Validation results written to benchmarking/results/
+"✓ All tests complete. Validation results written to ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/results/
 
 Now I need the token and time metrics for each test. Please provide the metrics JSON file.
 
-Expected location: benchmarking/metrics_{model}_{thinking}.json
+Expected location: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/metrics_{model}_{thinking}.json
 
 The file should contain an array of test results with this structure:
 
@@ -197,12 +212,12 @@ Please provide the file path when ready."
 Once user provides the metrics file path:
 
 ```bash
-cd benchmarking
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 node dist/analytics.js \
   --metrics {user_provided_path} \
-  --metadata benchmarking/data/metadata.json \
-  --validation-dir benchmarking/results/ \
-  --output benchmarking/analytics_results_{model}_{thinking}.json
+  --metadata ./benchmarking/metadata.json \
+  --validation-dir ./benchmarking/results/ \
+  --output ./benchmarking/analytics_results_{model}_{thinking}.json
 ```
 
 The analytics script will:
@@ -213,6 +228,8 @@ The analytics script will:
 5. Compare formats and densities
 6. Generate insights and rankings
 7. Write comprehensive results JSON
+
+**Note:** The `analytics.ts` script (compiled to `dist/analytics.js`) loads the `filesPerRecordCount` metadata structure and generates efficiency rankings and insights.
 
 ## Step 7: Display Results Summary
 
@@ -240,14 +257,14 @@ Insights:
 - {insight 3}
 - {insight 4}
 
-Full results saved to: benchmarking/analytics_results_{model}_{thinking}.json
+Full results saved to: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/analytics_results_{model}_{thinking}.json
 =================================================================
 ```
 
 ## File Structure Reference
 
 ```
-benchmarking/
+${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
 ├── benchmarking/
 │   ├── data/
 │   │   ├── {format}/
@@ -274,11 +291,21 @@ benchmarking/
 │   │       ├── answers_for_75_records.json
 │   │       ├── answers_for_50_records.json
 │   │       └── answers_for_25_records.json
-│   └── results/
-│       └── {format}_{recordCount}_validation.json
-├── generate.js
+│   ├── results/
+│   │   └── {format}_{recordCount}_validation.json
+│   └── metrics_{model}_{thinking}.json
+├── dist/
+│   ├── orchestrator.js
+│   ├── analytics.js
+│   ├── validate.js
+│   └── validators/
+├── generators/
+├── converters/
+├── validators/
+├── orchestrator.ts
 ├── analytics.ts
-└── validate.js
+├── validate.ts
+└── package.json
 ```
 
 ## Format Extensions

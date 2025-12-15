@@ -155,9 +155,12 @@ class BenchmarkAnalytics {
 
     // Build lookup map from metadata
     const datasetMap = new Map<string, any>();
-    if (metadata.files) {
-      for (const file of metadata.files) {
-        for (const [format, dataAndOutput] of file.dataAndOutput) {
+    const filesArray = metadata.files || metadata.filesPerRecordCount || [];
+
+    for (const file of filesArray) {
+      if (Array.isArray(file.dataAndOutput)) {
+        for (const dataAndOutput of file.dataAndOutput) {
+          const format = dataAndOutput.format;
           const key = `${format}_${file.recordCount}`;
           datasetMap.set(key, {
             format,
