@@ -31,7 +31,7 @@ export class QuestionnaireGenerator {
       aggregation: Math.ceil(targetQuestions * 0.275), 
       filtering: Math.ceil(targetQuestions * 0.2),
       structure_awareness: Math.ceil(targetQuestions * 0.125), 
-      multi_step: Math.ceil(targetQuestions * 0.05), 
+      multiple_steps: Math.ceil(targetQuestions * 0.05), 
     };
     
     const answersAndQuestions: AnswerAndQuestion[] = [];
@@ -58,9 +58,9 @@ export class QuestionnaireGenerator {
     id += entries.length;
     console.log("Structure questions: "+ entries.length);
 
-    entries = this.generateMultiStepQuestions(ctx, distribution.multi_step, id);
+    entries = this.generateMultipleStepsQuestions(ctx, distribution.multiple_steps, id);
     answersAndQuestions.push(...entries);
-    console.log("Multi step questions: "+ entries.length);
+    console.log("Multiple steps questions: "+ entries.length);
 
     console.log("Total questions: "+ answersAndQuestions.length);
     return answersAndQuestions;
@@ -505,7 +505,7 @@ export class QuestionnaireGenerator {
     return questions;
   }
 
-  private generateMultiStepQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
+  private generateMultipleStepsQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
     const questions: AnswerAndQuestion[] = [];
 
     let i = 0;
@@ -526,7 +526,7 @@ export class QuestionnaireGenerator {
       startId++;
       questions.push({
         id: startId,
-        category: "deduction",
+        category: "multiple_steps",
         difficulty: "hard",
         question: `Which ${field} occures the ${filterForMost ? 'most' : 'least'} across all products and in how many products in total?`,
         expectedAnswer: {

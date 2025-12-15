@@ -9,6 +9,8 @@ import { convertToPrettyJson, convertToMinifiedJson } from "./json";
 import { convertToMarkdown } from "./markdown";
 import { convertToYaml } from "./yaml";
 import { convertToApacheLogs } from "./apache";
+import { convertToJsonl } from "./jsonl";
+import { convertToToonV21 } from "./toon-v2-1";
 
 export function convertToFormat(data: BaseDataSet, format: Format): string {
   switch (format) {
@@ -24,6 +26,10 @@ export function convertToFormat(data: BaseDataSet, format: Format): string {
       return convertToYaml(data);
     case "apache":
       return convertToApacheLogs(data);
+    case "jsonl":
+      return convertToJsonl(data);
+    case "toon_v2_1":
+      return convertToToonV21(data);
     default:
       const _exhaustive: never = format;
       return _exhaustive;

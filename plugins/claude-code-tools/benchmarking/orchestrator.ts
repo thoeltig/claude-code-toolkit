@@ -17,12 +17,11 @@ import {
   QuestionnaireWithAnswers,
   ProvidedAnswer,
   GeneratedFiles,
-  DataAndOutput,
   GeneratorResult
 } from "./types";
 
 const TARGET_SIZES: number[] = [100, 75, 50, 25]
-const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "markdown", "yaml", "apache"];
+const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "markdown", "yaml", "apache", "jsonl", "toon"];
 const DATA_DIRECTORY = "data";
 const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
 const QUESTIONS_DIRECTORY = "questions";
@@ -224,6 +223,8 @@ export class BenchmarkingOrchestrator {
       csv: "csv",
       json_pretty: "json",
       json_compact: "json",
+      jsonl: "jsonl",
+      toon: "toon",
       markdown: "md",
       yaml: "yaml",
       apache: "log",

@@ -7,8 +7,8 @@
 // DATA TYPES
 // ============================================================================
 
-export type Format = "csv" | "json_pretty" | "json_compact" | "markdown" | "yaml" | "apache";
-export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "deduction";
+export type Format = "csv" | "json_pretty" | "json_compact" | "jsonl" | "toon" | "markdown" | "yaml" | "apache";
+export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "multiple_steps";
 
 export interface Metadata extends ValuesMetadata {
   generatedAt: string,
