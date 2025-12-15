@@ -10,7 +10,7 @@ import { convertToMarkdown } from "./markdown";
 import { convertToYaml } from "./yaml";
 import { convertToApacheLogs } from "./apache";
 import { convertToJsonl } from "./jsonl";
-import { convertToToonV21 } from "./toon-v2-1";
+import { encode } from "@toon-format/toon";
 
 export function convertToFormat(data: BaseDataSet, format: Format): string {
   switch (format) {
@@ -28,8 +28,8 @@ export function convertToFormat(data: BaseDataSet, format: Format): string {
       return convertToApacheLogs(data);
     case "jsonl":
       return convertToJsonl(data);
-    case "toon_v2_1":
-      return convertToToonV21(data);
+    case "toon":
+      return encode(data.records);
     default:
       const _exhaustive: never = format;
       return _exhaustive;
