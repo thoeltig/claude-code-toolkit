@@ -110,7 +110,7 @@ export class BenchmarkingOrchestrator {
       const answerTemplate: AnswerTemplate = {
         metadata: {
           format: "",
-          questionsFilePath: "",
+          questionsFilePath: questionnaireFilePath,
           dataFilePath: "",
         },
         answers: answersAndQuestions.map<ProvidedAnswer>((q) => ({questionId: q.id, answer: ""}))

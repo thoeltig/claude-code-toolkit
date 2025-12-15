@@ -27,11 +27,11 @@ export class QuestionnaireGenerator {
 
     const targetQuestions = 120;
     const distribution = {
-      field_retrieval: Math.ceil(targetQuestions * 0.25), 
-      aggregation: Math.ceil(targetQuestions * 0.25), 
+      field_retrieval: Math.ceil(targetQuestions * 0.35), 
+      aggregation: Math.ceil(targetQuestions * 0.275), 
       filtering: Math.ceil(targetQuestions * 0.2),
-      structure_awareness: Math.ceil(targetQuestions * 0.2), 
-      multi_step: Math.ceil(targetQuestions * 0.1), 
+      structure_awareness: Math.ceil(targetQuestions * 0.125), 
+      multi_step: Math.ceil(targetQuestions * 0.05), 
     };
     
     const answersAndQuestions: AnswerAndQuestion[] = [];
@@ -67,17 +67,20 @@ export class QuestionnaireGenerator {
   }
 
   private generateFieldRetrievalQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
-    const splitCount = Math.ceil(count / 3);
-    const remainingCount = count - splitCount * 2;
     const questions: AnswerAndQuestion[] = [];
 
-    let records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
+    if(count < 0){
+      return questions;
+    }
+
+    const splitCount = Math.ceil(count / 3);
+    const remainingCount = count - splitCount * 2;
+
+    const map = this.rand.getUniqueFieldsAndValues(ctx.records, splitCount, idField);
+    map.forEach((record, field) => {
       const value = record[field];
 
-      startId += 1;
+      startId++;
       questions.push({
         id: startId,
         category: "field_retrieval",
@@ -89,15 +92,15 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [field, idField],
       });
-    }
+    });
     
-    records = this.rand.getRandomItems(ctx.records, splitCount);
+    let records = this.rand.getRandomItems(ctx.records, splitCount);
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
       const radomFields = this.rand.getRandomFields(record, idField);
       const values = this.getValues(record, radomFields);
 
-      startId += 1;
+      startId++;
       questions.push({
         id: startId,
         category: "field_retrieval",
@@ -111,7 +114,16 @@ export class QuestionnaireGenerator {
       });
     }
 
-    records = this.rand.getRandomItems(ctx.records, remainingCount*2);
+    let doubleAmount =  remainingCount*2;
+    if(doubleAmount > ctx.records.length){
+      doubleAmount = ctx.records.length;
+    }
+    
+    if(doubleAmount % 2 !== 0){
+      doubleAmount--;
+    }
+
+    records = this.rand.getRandomItems(ctx.records, doubleAmount);
     for (let i = 0; i < records.length; i+=2) {
       const record = records[i];
       const radomFields = this.rand.getRandomFields(record, idField);
@@ -121,7 +133,7 @@ export class QuestionnaireGenerator {
       const radomFields2 = this.rand.getRandomFields(record2, idField);
       const values2 = this.getValues(record2, radomFields2);
 
-      startId += 1;
+      startId++;
       questions.push({
         id: startId,
         category: "field_retrieval",
@@ -139,91 +151,80 @@ export class QuestionnaireGenerator {
   }
 
   private generateAggregationQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
-    const splitCount = Math.ceil(count / 4); // sum, min, max
-    const remainingCount = count - splitCount * 3; // avg
     const questions: AnswerAndQuestion[] = [];
+    
+    if(count < 0){
+      return questions;
+    }
+
+    const splitCount = Math.ceil(count / 3); // sum, min/max, avg
+    const remainingCount = count - splitCount * 2;
     
     let records = this.rand.getRandomItems(ctx.records, splitCount);
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
-      const field = this.rand.getRandomNumbericField(record, idField);
+      const numericField = this.rand.getRandomNumbericField(record, idField);
 
+      const expectedSum = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0);
+      
       startId++;
-      const expectedSum = records.reduce((sum, r) => sum + Number(r[field] || 0), 0);
       questions.push({
         id: startId,
         category: "aggregation",
         difficulty: "easy",
-        question: `How much is the sum of all values in ${field} across all products?`,
+        question: `How much is the sum of all values in ${numericField} across all products?`,
         expectedAnswer: {
           value: expectedSum,
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: [field],
+        dataReferences: [numericField],
       });
     }
     
     records = this.rand.getRandomItems(ctx.records, splitCount);
     for (let i = 0; i < records.length; i++) {
+      const isMin = i % 2;
       const record = records[i];
-      const field = this.rand.getRandomNumbericField(record, idField);
+      const numericField = this.rand.getRandomNumbericField(record, idField);
 
+      var numbers = ctx.records.map((r) => Number(r[numericField] || 0));
+      const expected = isMin ? Math.min(...numbers) : Math.max(...numbers);
+      
       startId++;
-      const expectedMin = Math.min(...records.map((r) => Number(r[field] || 0)));
       questions.push({
         id: startId,
         category: "aggregation",
         difficulty: "medium",
-        question: `What is the lowest value in ${field} across all products?`,
+        question: `What is the ${isMin ? 'lowest' : 'highest'} value in ${numericField} across all products?`,
         expectedAnswer: {
-          value: expectedMin,
+          value: expected,
           validationMethod: "numeric",
           tolerance: 0,
         },
-        dataReferences: [field],
+        dataReferences: [numericField],
       });
     }
-        
-    records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomNumbericField(record, idField);
-
-      startId++;
-      const expectedMax = Math.max(...records.map((r) => Number(r[field] || 0)));
-      questions.push({
-        id: startId,
-        category: "aggregation",
-        difficulty: "medium",
-        question: `What is the highest value in ${field} across all products?`,
-        expectedAnswer: {
-          value: expectedMax,
-          validationMethod: "numeric",
-          tolerance: 0,
-        },
-        dataReferences: [field],
-      });
-    }
-        
+                
     records = this.rand.getRandomItems(ctx.records, remainingCount);
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
-      const field = this.rand.getRandomNumbericField(record, idField);
+      const numericField = this.rand.getRandomNumbericField(record, idField);
 
+      const expectedAvg = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / ctx.records.length;
+      
       startId++;
-      const expectedAvg = records.reduce((sum, r) => sum + Number(r[field] || 0), 0) / records.length;
       questions.push({
         id: startId,
         category: "aggregation",
         difficulty: "hard",
-        question: `What is the average value in ${field} across all products?`,
+        question: `What is the average value in ${numericField} across all products?`,
         expectedAnswer: {
           value: Math.round(expectedAvg * 100) / 100,
           validationMethod: "numeric",
           tolerance: 0.01,
         },
-        dataReferences: [field],
+        dataReferences: [numericField],
       });
     }
 
@@ -231,18 +232,21 @@ export class QuestionnaireGenerator {
   }
 
   private generateFilteringQuestions(ctx: QuestionGeneratorContext, count: number, startId: number, idField: string): AnswerAndQuestion[] {
-    const splitCount = Math.ceil(count / 5); // equal, above avg, belowe avg, equal + above avg
-    const remainingCount = count - splitCount * 4; // equal + belowe avg
     const questions: AnswerAndQuestion[] = [];
     
-    let records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
-      const value = record[field];
+    if(count < 0){
+      return questions;
+    }
 
-      startId += 1;
-      const expectedCount = records.filter(x => x[field] === value).length;
+    const splitCount = Math.ceil(count / 3); // equal, above/belowe avg, equal + above/belowe avg
+    const remainingCount = count - splitCount * 2;
+        
+    const map = this.rand.getUniqueFieldsAndValues(ctx.records, splitCount);
+    map.forEach((record, field) => {
+      const value = record[field];
+      const expectedCount = ctx.records.filter(x => x[field] === value).length;
+
+      startId++;
       questions.push({
         id: startId,
         category: "filtering",
@@ -255,93 +259,56 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [field],
       });
+    });
+    
+    let records = this.rand.getRandomItems(ctx.records, splitCount);
+    for (let i = 0; i < records.length; i++) {
+      const filterForAbove = i % 2 === 0;
+      const record = records[i];
+      const numericField = this.rand.getRandomNumbericField(record, idField);
+
+      const avg = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / ctx.records.length;
+      const expectedCount = ctx.records.filter((r) => {
+        const num = Number(r[numericField] || 0);
+        return filterForAbove ? num > avg : num < avg;
+      }).length;
+      
+      startId++;
+      questions.push({
+        id: startId,
+        category: "filtering",
+        difficulty: "medium",
+        question: `How many products have a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}?`,
+        expectedAnswer: {
+          value: expectedCount,
+          validationMethod: "numeric",
+          tolerance: 0,
+        },
+        dataReferences: [numericField],
+      });
     }
     
-    records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
-      const value = record[field];
-
-      startId += 1;
-      const expectedAvg = records.filter(x => x[field] === value).length;
-      const expectedCount = records.filter((r) => Number(r.price || 0) > expectedAvg).length;
-      questions.push({
-        id: startId,
-        category: "filtering",
-        difficulty: "medium",
-        question: `How many products have a value above the average in ${field}?`,
-        expectedAnswer: {
-          value: expectedCount,
-          validationMethod: "numeric",
-          tolerance: 0,
-        },
-        dataReferences: [field],
-      });
-    }
-
-    records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
-      const value = record[field];
-
-      startId += 1;
-      const expectedAvg = records.filter(x => x[field] === value).length;
-      const expectedCount = records.filter((r) => Number(r.price || 0) < expectedAvg).length;
-      questions.push({
-        id: startId,
-        category: "filtering",
-        difficulty: "medium",
-        question: `How many products have a value belowe the average in ${field}?`,
-        expectedAnswer: {
-          value: expectedCount,
-          validationMethod: "numeric",
-          tolerance: 0,
-        },
-        dataReferences: [field],
-      });
-    }
-
-    records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const field = this.rand.getRandomField(record, idField);
-      const value = record[field];
-      const numericField = this.rand.getRandomNumbericField(record, field);
-
-      startId += 1;
-      const expectedAvg = records.filter(x => x[numericField] === value).length;
-      const expectedCount = records.filter((r) => Number(r[numericField] || 0) > expectedAvg).length;
-      questions.push({
-        id: startId,
-        category: "filtering",
-        difficulty: "hard",
-        question: `How many products have '${value}' in ${field} and a value above the average in ${numericField}?`,
-        expectedAnswer: {
-          value: expectedCount,
-          validationMethod: "numeric",
-          tolerance: 0,
-        },
-        dataReferences: [field, numericField],
-      });
-    }
-
     records = this.rand.getRandomItems(ctx.records, remainingCount);
     for (let i = 0; i < records.length; i++) {
+      const filterForAbove = i % 2 === 0;
       const record = records[i];
       const field = this.rand.getRandomField(record, idField);
       const value = record[field];
       const numericField = this.rand.getRandomNumbericField(record, field);
 
-      startId += 1;
-      const expectedAvg = records.filter(x => x[numericField] === value).length;
-      const expectedCount = records.filter((r) => Number(r[numericField] || 0) < expectedAvg).length;
+      const filtered = ctx.records.filter(x => x[field] === value);
+      const avg = filtered.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / filtered.length;
+      const expectedCount = ctx.records.filter((r) => {
+        const num = Number(r[numericField] || 0);
+        return filterForAbove ? num > avg : num < avg;
+      }).length;
+
+      startId++;
       questions.push({
         id: startId,
         category: "filtering",
         difficulty: "hard",
-        question: `How many products have '${value}' in ${field} and a value belowe the average in ${numericField}?`,
+        question: `How many products have '${value}' in ${field} and a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -357,7 +324,7 @@ export class QuestionnaireGenerator {
   private generateStructureAwarenessQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
     const questions: AnswerAndQuestion[] = [];
 
-    if(count > 0){
+    if(count < 0){
       return questions;
     }
     
@@ -519,8 +486,9 @@ export class QuestionnaireGenerator {
 
     const map = this.rand.getUniqueFieldsAndValues(ctx.records, remainingCount);
     map.forEach((_, field) => {
-      startId++;
       const expectedArray = Array.from(new Set(ctx.records.map((r) => String(r[field] || "")).filter(f => f !== "")));
+
+      startId++;
       questions.push({
         id: startId,
         category: "structure_awareness",
