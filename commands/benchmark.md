@@ -76,9 +76,9 @@ If all 8 formats selected: 8 x 2 × 2 = 32 test cases
 
 ## Step 3: Execute Tests
 
-### 3a. Launch Read-Only Tests in PARALLEL
+### 3a. Launch Read-Only Tests
 
-All readonly tests are launched in parallel (background tasks) to measure token cost of reading data files.
+You can invoke up to 4 readonly tests in parallel to measure token cost of reading data files. After each group of tests wait until all test are completed and only then continue with the next group of tests.        
 
 **Launch readonly tests Data files** - Measure read overhead for actual data
 
@@ -90,14 +90,28 @@ for data_file in ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/ben
   Task(
     description: "Readonly test for data: $(basename $data_file)",
     subagent_type: "benchmark-read-only",
+    tools: ["Read"],
     model: "haiku",
-    prompt: "Read this file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/${data_file} . Do not process or analyze.",
-    run_in_background: true
-  )
+    prompt: "You are executing a benchmarking read-only test.
+
+## Your Task
+1. Read the data file completely and carefully
+2. Return confirmation only
+3. DO NOT process, analyze, or answer questions
+
+## Critical
+This test measures baseline token usage for reading the file format. Any additional processing will invalidate the measurement.
+
+## Instructions
+- The data file path will be provided in your task prompt.
+- After reading the complete file, respond with: 'Read complete.'
+- That's all. No analysis, no summaries, no additional output.
+
+Begin. Read the data file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/${data_file}")
 done
 ```
 
-This launches ALL readonly tests immediately without waiting. Each task will:
+This launches readonly tests. Each task will:
 1. Execute in the background
 2. Read the file completely
 3. Generate a transcript with cache_creation_input_tokens
@@ -107,7 +121,8 @@ This launches ALL readonly tests immediately without waiting. Each task will:
 
 ### 3b. Launch Full Tests in PARALLEL
 
-After readonly tests are launched, launch ALL full tests in parallel (background tasks). Each test processes data, reads questionnaire, and generates answers.
+You can invoke up to 4 readonly tests in parallel to tests the reasoning usage. After each group of tests wait until all test are completed and only then continue with the next group of tests.       
+Each test processes data, reads questionnaire, and generates answers.
 
 For EACH test case:
 
@@ -117,19 +132,82 @@ Use the Task tool with run_in_background: true:
 Task(
   description: "Full test for {format}_{variant}_{recordCount}",
   subagent_type: "benchmark-full-test",
+  tools: ["Read"],
   model: "{model}",
   prompt: "
-Format: {format}
-Variant: {variant}
-Record Count: {recordCount}
+You are executing a benchmarking test. Your task is to:
+1. **Read the provided data file** completely and carefully
+2. **Analyze the accompanying questionnaire** to understand what you need to find
+3. **Answer all questions** based only on data present in the file
+4. **Return your answers** in the exact JSON format specified
 
-Files to process:
+## Priority
+**You have no time pressure. Make sure to be right instead of fast.**
+Take whatever time you need to carefully read all data and answer accurately. Speed is not the goal here.
+
+## Critical Guard Rails
+**NEVER:**
+- Guess, assume, or infer values not explicitly in the data
+- Hallucinate numbers, categories, or relationships
+- Modify the JSON structure or add extra fields
+- Skip questions or leave answers blank
+- Include explanations or reasoning in the JSON output
+- **Write scripts, code, pseudocode, or attempt to create programs**
+  - Do NOT write Python, JavaScript, SQL, or any code
+  - Do NOT use pseudocode or algorithm descriptions
+  - Analyze and answer directly through reasoning only
+
+**ALWAYS:**
+- Use only values present in the provided data file
+- Answer with precision and accuracy
+- Maintain the exact JSON structure
+- Return valid, minified JSON (no formatting, no markdown)
+- Perform calculations and filtering directly without coding
+
+## Your Task
+You have been provided with:
+1. A data file to analyze
+2. A questionnaire with questions about that data
+3. An answer template to fill
+4. An output folder to save results
+
+**Do this:**
+1. Read and analyze the data file thoroughly
+2. Study the questionnaire to understand what each question asks
+3. For each question, find the answer in the data
+4. Fill the answer template with your responses
+5. Save the completed JSON to the specified output path
+6. Return confirmation that the file was saved
+
+## Output File Path
+The output file path will be provided in your task prompt. Create any necessary parent directories and save the file with the exact path provided.
+
+## Before You Return
+Verify:
+- [ ] You read the complete data file
+- [ ] You read all questions
+- [ ] You answered all questions (no blanks)
+- [ ] Your answers match the data exactly
+- [ ] JSON is valid (proper syntax)
+- [ ] No hallucinated values
+- [ ] Metadata preserved exactly
+- [ ] File saved to the correct output path
+- [ ] Output confirms file location
+ 
+## Sources 
+### Information
+-Format: {format}
+-Variant: {variant}
+-Record Count: {recordCount}
+
+### Files to process:
 - Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
 - Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
 - Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
 - Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records.json
 
-Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path.
+## Begin
+Proceed with reading the files and answering all questions. Save the completed JSON to the specified output path and confirm the file was saved.
   ",
   model: "{model}",
   thinking_mode: "{thinking}",
@@ -176,7 +254,7 @@ After ALL tests complete (readonly and full), extract metrics from all agent tra
 
 ### Step 5a: Extract Read Token Usage from ALL Readonly Tests
 
-Combine results from data, questions, and template readonly tests:
+Combine results from data readonly tests:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
@@ -200,16 +278,6 @@ python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.
 {
   "files": [
       {
-          "file": "answers_with_optional_80_records_template.json",
-          "agentId": "a158d54",
-          "fileType": "template",
-          "format": null,
-          "variant": "optional",
-          "recordCount": 80,
-          "readTokens": 1315,
-          "readDurationMs": 2317.0
-      },
-      {
           "file": "toon_with_optional_80_records.toon",
           "fileType": "data",
           "format": "toon",
@@ -217,23 +285,14 @@ python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.
           "recordCount": 80,
           "readTokens": 22166,
           "readDurationMs": 2231.0
-      },
-      {
-          "file": "questions_with_optional_80_records.json",
-          "fileType": "questions",
-          "format": null,
-          "variant": "optional",
-          "recordCount": 80,
-          "readTokens": 4781,
-          "readDurationMs": 2296.0
       }
   ],
   "summary": {
       "totalFiles": 3,
-      "totalReadTokens": 28262,
-      "totalReadDurationMs": 6844.0,
-      "averageReadTokens": 9420.666666666666,
-      "averageDurationMs": 2281.3333333333335
+      "totalReadTokens": 22166,
+      "totalReadDurationMs": 2231.0,
+      "averageReadTokens": 22166,
+      "averageDurationMs": 2231.0
   }
 }
 ```
