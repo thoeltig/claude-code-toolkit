@@ -72,41 +72,47 @@ Example test cases:
 
 **Total test cases**: selected_formats × selected_variant × 2 record counts
 
-If all 9 formats selected: 8 x 2 × 2 = 32 test cases
+If all 8 formats selected: 8 x 2 × 2 = 32 test cases
 
-## Step 3: Execute Tests SEQUENTIALLY
+## Step 3: Execute Tests
 
-**CRITICAL**: Tests must run sequentially (NOT parallel). User needs to see token usage after each test.
+### 3a. Launch Read-Only Tests in PARALLEL
 
-For EACH test case in order:
+All readonly tests are launched in parallel (background tasks) to measure token cost of reading data files.
 
-### 3a. Invoke Read-Only Test
+**Launch readonly tests Data files** - Measure read overhead for actual data
+
+For EACH file:
+
+```bash
+# Data files readonly tests
+for data_file in ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/*/*.{csv,json,jsonl,toon,md,yaml,log}; do
+  Task(
+    description: "Readonly test for data: $(basename $data_file)",
+    subagent_type: "benchmark-read-only",
+    model: "haiku",
+    prompt: "Read this file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/${data_file} . Do not process or analyze.",
+    run_in_background: true
+  )
+done
+```
+
+This launches ALL readonly tests immediately without waiting. Each task will:
+1. Execute in the background
+2. Read the file completely
+3. Generate a transcript with cache_creation_input_tokens
+4. Return an agent ID (e.g., agent-ae4a357)
+
+**Important**: Collect all agent IDs from data file readonly tests (e.g., a613419, aa7992a, a44bacd, abe6c4f)
+
+### 3b. Launch Full Tests in PARALLEL
+
+After readonly tests are launched, launch ALL full tests in parallel (background tasks). Each test processes data, reads questionnaire, and generates answers.
+
+For EACH test case:
 
 ```
-Use the Task tool:
-
-Task(
-  description: "Read-only test for {format}_{variant}_{recordCount}",
-  subagent_type: "benchmark-read-only",
-  model: "{model}",
-  prompt: "Read the data file at: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}",
-  thinking_mode: "{thinking}"
-)
-```
-
-Replace:
-- `{format}`: Format name (csv, json_compact, json_pretty, jsonl, toon, markdown, yaml, apache)
-- `{recordCount}`: Row count (100, 50)
-- `{ext}`: File extension (.csv, .json, .jsonl, .toon, .md, .yaml, .log)
-- `{model}`: haiku or sonnet
-- `{thinking}`: on or off
-
-Wait for completion. Display the token usage from the system message (note it).
-
-### 3b. Invoke Full Test
-
-```
-Use the Task tool:
+Use the Task tool with run_in_background: true:
 
 Task(
   description: "Full test for {format}_{variant}_{recordCount}",
@@ -125,24 +131,19 @@ Files to process:
 
 Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path.
   ",
-  thinking_mode: "{thinking}"
+  model: "{model}",
+  thinking_mode: "{thinking}",
+  run_in_background: true
 )
 ```
 
-Wait for completion. Display the token usage from the system message (note it).
+This launches ALL full tests immediately without waiting. Each task will:
+1. Execute in the background
+2. Process data file and questions
+3. Generate answer JSON to output path
+4. Return an agent ID (e.g., agent-ae4b456)
 
-### 3c. Move to Next Test Case
-
-Repeat 3a and 3b for the next test case.
-
-**Example sequence** (if --formats csv,json_compact --variant optional):
-1. Read: csv_optional_100_haiku_on
-2. Full: csv_optional_100_haiku_on
-5. Read: csv_optional_50_haiku_on
-6. Full: csv_optional_50_haiku_on
-9. Read: json_compact_optional_100_haiku_on
-10. Full: json_compact_optional_100_haiku_on
-... (and so on)
+**Important**: Note all returned agent IDs for step 5b (full test metrics extraction).
 
 ## Step 4: Run Validation
 
@@ -165,69 +166,154 @@ This will output validation results showing:
 - Questions answered incorrectly
 - Overall accuracy percentage per test case
 
-Results will be written to `./benchmarking/results/` directory.
+Results will be written to `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/results/` directory.
 
 **Note:** The `validate.ts` script (compiled to `dist/validate.js`) is the primary validation entry point. It uses the AnswerValidator class to deterministically validate answers against ground truth questionnaires.
 
-## Step 5: Collect User Metrics
+## Step 5: Extract Metrics from Test Transcripts
 
-Pause and request metrics from the user:
+After ALL tests complete (readonly and full), extract metrics from all agent transcripts.
 
-"✓ All tests complete. Validation results written to ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/results/
+### Step 5a: Extract Read Token Usage from ALL Readonly Tests
 
-Now I need the token and time metrics for each test. Please provide the metrics JSON file.
-
-Expected location: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/metrics_{model}_{thinking}.json
-
-The file should contain an array of test results with this structure:
-
-```json
-[
-  {
-    "testCase": "csv_optional_100_haiku_on",
-    "readDuration": 12,
-    "readTokens": 2450,
-    "fullDuration": 45,
-    "fullTokens": 18500
-  },
-  {
-    "testCase": "csv_optional_75_haiku_on",
-    "readDuration": 11,
-    "readTokens": 2100,
-    "fullDuration": 42,
-    "fullTokens": 17200
-  },
-  ... more test cases ...
-]
-```
-
-You can generate this file template using the orchestrator (or extend generate.js), then fill in the actual token usage and time values from the system messages above.
-
-Please provide the file path when ready."
-
-## Step 6: Run Analytics
-
-Once user provides the metrics file path:
+Combine results from data, questions, and template readonly tests:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
+
+# Collect ALL readonly agent IDs from step 3a:
+# - Data file IDs: a613419 aa7992a a44bacd abe6c4f ...
+# - Question file IDs: ae1a234 ae1a235 ...
+# - Template file IDs: ae1a236 ae1a237 ...
+
+python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.py \
+  {data_agent_1} {data_agent_2} ... \
+  {question_agent_1} {question_agent_2} ... \
+  {template_agent_1} {template_agent_2} ... \
+  --projects-dir ~/.claude/projects \
+  --json \
+  --output ./benchmarking/read_token_usage.json
+```
+
+**Output includes all files** with breakdown (sample):
+```json
+{
+  "files": [
+      {
+          "file": "answers_with_optional_80_records_template.json",
+          "agentId": "a158d54",
+          "fileType": "template",
+          "format": null,
+          "variant": "optional",
+          "recordCount": 80,
+          "readTokens": 1315,
+          "readDurationMs": 2317.0
+      },
+      {
+          "file": "toon_with_optional_80_records.toon",
+          "fileType": "data",
+          "format": "toon",
+          "variant": "optional",
+          "recordCount": 80,
+          "readTokens": 22166,
+          "readDurationMs": 2231.0
+      },
+      {
+          "file": "questions_with_optional_80_records.json",
+          "fileType": "questions",
+          "format": null,
+          "variant": "optional",
+          "recordCount": 80,
+          "readTokens": 4781,
+          "readDurationMs": 2296.0
+      }
+  ],
+  "summary": {
+      "totalFiles": 3,
+      "totalReadTokens": 28262,
+      "totalReadDurationMs": 6844.0,
+      "averageReadTokens": 9420.666666666666,
+      "averageDurationMs": 2281.3333333333335
+  }
+}
+```
+
+### Step 5b: Extract Full Test Metrics (Duration & Tokens)
+
+After ALL full tests complete, extract metrics stopping at first Write tool call:
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
+
+# Collect ALL full test agent IDs from step 3b
+python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractReasoning.py \
+  {full_test_agent_id_1} {full_test_agent_id_2} ... \
+  --projects-dir ~/.claude/projects \
+  --json \
+  --output ./benchmarking/reasoning_token_usage.json
+```
+
+**Output includes all files** with breakdown (sample):
+```json
+{
+  "files": [
+      {
+          "agentId": "ae1bdca",
+          "format": "toon",
+          "variant": "optional",
+          "recordCount": 80,
+          "durationMs": 49984.0,
+          "inputTokens": 5941,
+          "outputTokens": 881
+      }
+  ],
+  "summary": {
+      "totalTests": 1,
+      "totalDurationMs": 49984.0,
+      "totalReasoningTokens": 5941,
+      "totalOutputTokens": 881,
+      "totalCacheCreationTokens": 47345,
+      "averageDurationMs": 49984.0,
+      "averageReasoningTokens": 5941.0,
+      "averageOutputTokens": 881
+  }
+}
+```
+
+**Calculate Actual Reasoning Tokens:**
+```
+For each test case:
+  readTokens = read_token_usage.json (matching format/variant/recordCount)
+  reasoningTokens = reasoning_token_usage.json (matching format/variant/recordCount)
+```
+
+## Step 6: Run Analytics
+
+After both readonly and full test metrics are extracted, analytics processes the complete benchmark data:
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
+
 node dist/analytics.js \
-  --metrics {user_provided_path} \
   --metadata ./benchmarking/metadata.json \
   --validation-dir ./benchmarking/results/ \
-  --output ./benchmarking/analytics_results_{model}_{thinking}.json
+  --read-tokens ./benchmarking/read_token_usage.json \
+  --reasoning-tokens ./benchmarking/reasoning_token_usage.json \
+  --output ./benchmarking/analytics_results.json
 ```
 
 The analytics script will:
-1. Load all metrics from user-provided JSON
-2. Load metadata with character counts and record info
-3. Load validation results for accuracy data
-4. Calculate efficiency scores (chars/token, tokens/question, etc.)
-5. Compare formats and record counts
-6. Generate insights and rankings
-7. Write comprehensive results JSON
-
-**Note:** The `analytics.ts` script (compiled to `dist/analytics.js`) loads the `filesPerRecordCount` metadata structure and generates efficiency rankings and insights.
+1. Load read token usage from `benchmarking/read_token_usage.json`
+2. Load full test metrics from `benchmarking/reasoning_token_usage.json`
+3. Load metadata with character counts and record info
+4. Load validation results for accuracy data
+5. Calculate efficiency scores:
+   - Read efficiency: chars/token from readonly tests
+   - Full test efficiency: tokens/question, time/token
+   - Per-format comparisons
+6. Compare formats and record counts
+7. Generate insights and rankings
+8. Write comprehensive results JSON
 
 ## Step 7: Display Results Summary
 
@@ -255,7 +341,7 @@ Insights:
 - {insight 3}
 - {insight 4}
 
-Full results saved to: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/analytics_results_{model}_{thinking}.json
+Full results saved to: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/analytics_results.json
 =================================================================
 ```
 
@@ -265,25 +351,27 @@ Full results saved to: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scrip
 ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
 ├── benchmarking/
 │   ├── data/
-│   │   ├── {format}/
-│   │   │   ├── {format}_with_{variant}_100_records.{ext}
-│   │   │   ├── {format}_with_{variant}_50_records.{ext}
-│   │   └── metadata.json
+│   │   └── {format}/
+│   │       ├── {format}_with_{variant}_100_records.{ext}
+│   │       └── {format}_with_{variant}_50_records.{ext}
 │   ├── questions/
 │   │   ├── questions_for_{variant}_100_records.json
-│   │   ├── questions_for_{variant}_50_records.json
+│   │   └── questions_for_{variant}_50_records.json
 │   ├── answers_template/
 │   │   ├── answers_for_{variant}_100_records_template.json
-│   │   ├── answers_for_{variant}_50_records_template.json
+│   │   └── answers_for_{variant}_50_records_template.json
 │   ├── answers_validation/
 │   │   └── questions_and_answers_for_{variant}_{recordCount}_records.json
 │   ├── subagent_outputs/
 │   │   └── {format}/
 │   │       ├── answers_for_{variant}_100_records.json
-│   │       ├── answers_for_{variant}_50_records.json
+│   │       └── answers_for_{variant}_50_records.json
 │   ├── results/
 │   │   └── {format}_{variant}_{recordCount}_validation.json
-│   └── metrics_{model}_{thinking}.json
+│   ├── metadata.json
+│   ├── read_token_usage.json
+│   ├── reasoning_token_usage.json
+│   └── analytics_results.json
 ├── dist/
 │   ├── orchestrator.js
 │   ├── analytics.js
@@ -311,10 +399,27 @@ ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
 
 ## Important Notes
 
-1. **Sequential Execution**: Tests must run one after another so token usage is visible
-2. **User Documents Metrics Separately**: User documents read/full token counts and durations in parallel - no need to wait
-3. **Validation Deferred**: All validation runs after test execution completes
-4. **Analytics Last**: Analytics runs only after user provides metrics file
-5. **Default All Formats**: If --formats not specified, test all 6 formats
-6. **Default Haiku**: If --model not specified, use haiku
-7. **Default With Thinking**: If --thinking not specified, use on
+1. **Full Tests**: All data files in parallel Data files (8 formats × 2 variants × 2 record counts = 32 tests)
+
+2. **Full Tests**: All in parallel (8 formats × 2 variants × 2 record counts = 32 tests)
+
+3. **Agent ID Collection**: Capture ALL agent IDs:
+   - From readonly tests (data)
+   - From full tests
+   - Total: ~32 agent IDs to track
+
+4. **Two-Stage Metric Extraction**:
+   - **5a**: Extract all readonly tokens → `read_token_usage.json`
+   - **5b**: Extract all reasoning tokens → `reasoning_token_usage.json`
+
+6. **Both Scripts Use Same Pattern**: Search `~/.claude/projects` recursively for matching `agent-*.jsonl` files by ID
+
+7. **Validation Deferred**: All validation runs after test execution completes
+
+8. **Analytics Requires Both**: Analytics step requires both metric files to be present
+
+9. **Default All Formats**: If --formats not specified, test all 8 formats
+
+10. **Default Haiku**: If --model not specified, use haiku
+
+11. **Default With Thinking**: If --thinking not specified, use on
