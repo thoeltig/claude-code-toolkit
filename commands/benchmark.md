@@ -44,9 +44,8 @@ npm run generate
 ```
 
 This:
-1. Installs dependencies (TypeScript)
-2. Compiles TypeScript to JavaScript (orchestrator.ts, analytics.ts, etc.)
-3. Generates test data:
+1. Compiles TypeScript to JavaScript (orchestrator.ts, analytics.ts, etc.)
+2. Generates test data:
    - Data files (CSV, JSON compact/pretty, JSONL, TOON, Markdown, YAML, Apache logs)
    - 2 data variants: optional, mandatory
    - Record count format: 100, 50
@@ -62,181 +61,87 @@ Read `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/m
 For each format in the selected formats list:
   For each optional data variant in the selected variant list:
     For each recordCount (100, 50):
-      Create a test case: `{format}_{variant}_{recordCount}_{model}_{thinking}`
+      Create three test cases: `{format}_{variant}_{recordCount}_{model}_{thinking}_{one/two/three}`
 
 Example test cases:
-- csv_optional_100_haiku_on
-- csv_mandatory_75_haiku_on
-- json_mandatory_compact_50_sonnet_off
-- markdown_optional_25_haiku_on
+- csv_optional_100_haiku_on_1, csv_optional_100_haiku_on_2, csv_optional_100_haiku_on_3 
+- json_compact_mandatory_50_sonnet_off_1, json_compact_mandatory_50_sonnet_off_2, json_compact_mandatory_50_sonnet_off_3
 
-**Total test cases**: selected_formats × selected_variant × 2 record counts
+**Total test cases**: selected_formats × selected_variant × 2 record counts x 3 test runs
 
-If all 8 formats selected: 8 x 2 × 2 = 32 test cases
+If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
 
 ## Step 3: Execute Tests
 
-### 3a. Launch Read-Only Tests
+For each format + variant + record count combination in '${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/*/*.{csv,json,jsonl,toon,md,yaml,log}' run first 1 read-only test, wait till finish and then run 3 full tests in parallel. Again wait till finished before continuing with the next combination. Remember each agent id to later use in token usage extraction via script. This approach first provides the read token usage and also caches the file content which is important so the cost of the 3 full test runs are not so high. The 3 full test runs are necessary to get an average duration, reasoning token usages and information accuracy.
 
-You can invoke up to 4 readonly tests in parallel to measure token cost of reading data files. After each group of tests wait until all test are completed and only then continue with the next group of tests.        
+### 3a. Launch Read-Only Test
 
-**Launch readonly tests Data files** - Measure read overhead for actual data
-
-For EACH file:
-
-```bash
-# Data files readonly tests
-for data_file in ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/*/*.{csv,json,jsonl,toon,md,yaml,log}; do
-  Task(
-    description: "Readonly test for data: $(basename $data_file)",
-    subagent_type: "benchmark-read-only",
-    tools: ["Read"],
-    model: "haiku",
-    prompt: "You are executing a benchmarking read-only test.
-
-## Your Task
-1. Read the data file completely and carefully
-2. Return confirmation only
-3. DO NOT process, analyze, or answer questions
-
-## Critical
-This test measures baseline token usage for reading the file format. Any additional processing will invalidate the measurement.
-
-## Instructions
-- The data file path will be provided in your task prompt.
-- After reading the complete file, respond with: 'Read complete.'
-- That's all. No analysis, no summaries, no additional output.
-
-Begin. Read the data file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/${data_file}")
-done
-```
-
-This launches readonly tests. Each task will:
-1. Execute in the background
-2. Read the file completely
-3. Generate a transcript with cache_creation_input_tokens
-4. Return an agent ID (e.g., agent-ae4a357)
-
-**Important**: Collect all agent IDs from data file readonly tests (e.g., a613419, aa7992a, a44bacd, abe6c4f)
-
-### 3b. Launch Full Tests in PARALLEL
-
-You can invoke up to 4 readonly tests in parallel to tests the reasoning usage. After each group of tests wait until all test are completed and only then continue with the next group of tests.       
-Each test processes data, reads questionnaire, and generates answers.
-
-For EACH test case:
-
-```
-Use the Task tool with run_in_background: true:
-
+``` bash
 Task(
-  description: "Full test for {format}_{variant}_{recordCount}",
-  subagent_type: "benchmark-full-test",
-  tools: ["Read"],
-  model: "{model}",
-  prompt: "
-You are executing a benchmarking test. Your task is to:
-1. **Read the provided data file** completely and carefully
-2. **Analyze the accompanying questionnaire** to understand what you need to find
-3. **Answer all questions** based only on data present in the file
-4. **Return your answers** in the exact JSON format specified
-
-## Priority
-**You have no time pressure. Make sure to be right instead of fast.**
-Take whatever time you need to carefully read all data and answer accurately. Speed is not the goal here.
-
-## Critical Guard Rails
-**NEVER:**
-- Guess, assume, or infer values not explicitly in the data
-- Hallucinate numbers, categories, or relationships
-- Modify the JSON structure or add extra fields
-- Skip questions or leave answers blank
-- Include explanations or reasoning in the JSON output
-- **Write scripts, code, pseudocode, or attempt to create programs**
-  - Do NOT write Python, JavaScript, SQL, or any code
-  - Do NOT use pseudocode or algorithm descriptions
-  - Analyze and answer directly through reasoning only
-
-**ALWAYS:**
-- Use only values present in the provided data file
-- Answer with precision and accuracy
-- Maintain the exact JSON structure
-- Return valid, minified JSON (no formatting, no markdown)
-- Perform calculations and filtering directly without coding
-
-## Your Task
-You have been provided with:
-1. A data file to analyze
-2. A questionnaire with questions about that data
-3. An answer template to fill
-4. An output folder to save results
-
-**Do this:**
-1. Read and analyze the data file thoroughly
-2. Study the questionnaire to understand what each question asks
-3. For each question, find the answer in the data
-4. Fill the answer template with your responses
-5. Save the completed JSON to the specified output path
-6. Return confirmation that the file was saved
-
-## Output File Path
-The output file path will be provided in your task prompt. Create any necessary parent directories and save the file with the exact path provided.
-
-## Before You Return
-Verify:
-- [ ] You read the complete data file
-- [ ] You read all questions
-- [ ] You answered all questions (no blanks)
-- [ ] Your answers match the data exactly
-- [ ] JSON is valid (proper syntax)
-- [ ] No hallucinated values
-- [ ] Metadata preserved exactly
-- [ ] File saved to the correct output path
-- [ ] Output confirms file location
- 
-## Sources 
-### Information
--Format: {format}
--Variant: {variant}
--Record Count: {recordCount}
-
-### Files to process:
-- Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
-- Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
-- Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
-- Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records.json
-
-## Begin
-Proceed with reading the files and answering all questions. Save the completed JSON to the specified output path and confirm the file was saved.
-  ",
-  model: "{model}",
-  thinking_mode: "{thinking}",
-  run_in_background: true
+  description: "Readonly test for data: $(basename {format}_with_{variant}_{recordCount}_records.{ext})",
+  subagent_type: "benchmark-read-only",
+  model: "haiku",
+  prompt: "Read this file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext} . Do not process or analyze."
 )
 ```
 
-This launches ALL full tests immediately without waiting. Each task will:
-1. Execute in the background
-2. Process data file and questions
-3. Generate answer JSON to output path
-4. Return an agent ID (e.g., agent-ae4b456)
+This launches readonly test which will:
+1. Read the file completely
+2. Generate a transcript with cache_creation_input_tokens
+3. Return an agent ID (e.g., agent-ae4a357)
 
-**Important**: Note all returned agent IDs for step 5b (full test metrics extraction).
+**Important**: Collect returned agent ID for step 5a (read-only test metrics extraction).
+
+### 3b. Launch 3 Full Tests in PARALLEL
+
+``` bash
+# Data files readonly tests
+for test_number in {1..3}; do
+  Task(
+    description: "Full test for {format}_{variant}_{recordCount}",
+    subagent_type: "benchmark-full-test",
+    model: "{model}",
+    thinking_mode: "{thinking}",
+    prompt: "
+  Format: {format}
+  Variant: {variant}
+  Record Count: {recordCount}
+
+  Files to process:
+  - Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
+  - Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
+  - Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
+  - Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
+
+  Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path."
+  )
+done
+```
+
+This launches full test which will:
+1. Process data file and questions
+2. Generate answer JSON to output path
+3. Return an agent ID (e.g., agent-ae4b456)
+
+**Important**: Collect all returned agent IDs for step 5b (full test metrics extraction).
 
 ## Step 4: Run Validation
 
-After ALL tests complete, validate all answers using the TypeScript validator:
+After ALL tests complete, validate all answers using the TypeScript validator. For each format × variant × recordCount combination, validate each of the 3 test outputs:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# For each format × recordCount combination, validate the answers
-node dist/validate.js \
-  ./benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records.json \
-  ./benchmarking/answers_validation/questions_and_answers_for_{variant}_{recordCount}_records.json \
-  ./benchmarking/results/{format}_{variant}_{recordCount}_validation.json
+# For each format × variant × recordCount combination, validate each of the 3 test outputs
+for test_number in {1..3}; do
+  node dist/validate.js \
+    ./benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json \
+    ./benchmarking/answers_validation/questions_and_answers_for_{variant}_{recordCount}_records.json \
+    ./benchmarking/results/{format}_{variant}_{recordCount}_test{test_number}_validation.json
+done
 
-# Repeat for each test case
+# Repeat for each format/variant/recordCount combination
 ```
 
 This will output validation results showing:
@@ -244,7 +149,7 @@ This will output validation results showing:
 - Questions answered incorrectly
 - Overall accuracy percentage per test case
 
-Results will be written to `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/results/` directory.
+Results will be written to `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/results/` directory with test numbers in the filename (e.g., `{format}_{variant}_{recordCount}_test1_validation.json`).
 
 **Note:** The `validate.ts` script (compiled to `dist/validate.js`) is the primary validation entry point. It uses the AnswerValidator class to deterministically validate answers against ground truth questionnaires.
 
@@ -354,10 +259,10 @@ After both readonly and full test metrics are extracted, analytics processes the
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 node dist/analytics.js \
+  --read-metrics ./benchmarking/read_token_usage.json \
+  --reasoning-metrics ./benchmarking/reasoning_token_usage.json \
   --metadata ./benchmarking/metadata.json \
   --validation-dir ./benchmarking/results/ \
-  --read-tokens ./benchmarking/read_token_usage.json \
-  --reasoning-tokens ./benchmarking/reasoning_token_usage.json \
   --output ./benchmarking/analytics_results.json
 ```
 
