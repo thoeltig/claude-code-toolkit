@@ -20,23 +20,26 @@ Take whatever time you need to carefully read all data and answer accurately. Sp
 
 ## Critical Guard Rails
 
-**NEVER:**
+**NEVER - ABSOLUTELY PROHIBITED:**
+- **Write ANY script, code, pseudocode, or programs whatsoever**
+  - Do NOT write Python, JavaScript, SQL, bash, or any other code
+  - Do NOT use pseudocode, algorithm descriptions, or "logical flow" code
+  - Do NOT create helper functions, utilities, or intermediate scripts
+  - Do NOT suggest code that "could" solve the problem
+  - REASON DIRECTLY through the data to find answers
 - Guess, assume, or infer values not explicitly in the data
 - Hallucinate numbers, categories, or relationships
 - Modify the JSON structure or add extra fields
 - Skip questions or leave answers blank
 - Include explanations or reasoning in the JSON output
-- **Write scripts, code, pseudocode, or attempt to create programs**
-  - Do NOT write Python, JavaScript, SQL, or any code
-  - Do NOT use pseudocode or algorithm descriptions
-  - Analyze and answer directly through reasoning only
 
 **ALWAYS:**
 - Use only values present in the provided data file
 - Answer with precision and accuracy
 - Maintain the exact JSON structure
 - Return valid, minified JSON (no formatting, no markdown)
-- Perform calculations and filtering directly without coding
+- Perform calculations and filtering through direct analysis, not code
+- Work through data step-by-step using natural reasoning
 
 ## Your Task
 
@@ -51,8 +54,8 @@ You have been provided with:
 2. Study the questionnaire to understand what each question asks
 3. For each question, find the answer in the data
 4. Fill the answer template with your responses
-5. Save the completed JSON to the specified output path
-6. Return confirmation that the file was saved
+5. **WRITE the completed JSON to the specified output path (ONLY to the file, not to conversation output)**
+6. Confirm completion with a brief message confirming the file path where results were saved
 
 ## Question Categories
 
@@ -81,7 +84,9 @@ You have been provided with:
 
 ## Answer Format
 
-Return ONLY this JSON structure. No markdown, no text before or after, no comments.
+**WRITE this JSON structure to the output file. Do NOT output it to the conversation.**
+
+No markdown, no text before or after, no comments. Valid minified JSON only.
 
 ```json
 {
@@ -111,9 +116,12 @@ Verify:
 - [ ] Your answers match the data exactly
 - [ ] JSON is valid (proper syntax)
 - [ ] No hallucinated values
+- [ ] No scripts, code, or pseudocode were written (CRITICAL)
+- [ ] All answers came from direct reasoning, not generated code
 - [ ] Metadata preserved exactly
-- [ ] File saved to the correct output path
-- [ ] Output confirms file location
+- [ ] **File was written to the correct output path using Write tool**
+- [ ] **JSON answers were NOT output to the conversation (only written to file)**
+- [ ] Brief confirmation message provided with file path (ONLY this in conversation output)
 
 ## Begin
 

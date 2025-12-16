@@ -14,6 +14,28 @@ interface UserMetrics {
   fullTokens: number;
 }
 
+interface ReadMetricsFile {
+  file: string;
+  path: string;
+  agentId: string;
+  fileType: string;
+  format: string;
+  variant: string;
+  recordCount: number;
+  readTokens: number;
+  readDurationMs: number;
+}
+
+interface ReasoningMetricsFile {
+  agentId: string;
+  format: string;
+  variant: string;
+  recordCount: number;
+  durationMs: number;
+  reasoningTokens: number;
+  outputTokens: number;
+}
+
 interface ValidationResult {
   format: string;
   density: number;
@@ -74,21 +96,29 @@ interface AnalyticsOutput {
 }
 
 class BenchmarkAnalytics {
-  private metricsFile: string;
   private metadataFile: string;
   private validationDir: string;
   private outputFile: string;
+  private readMetricsFile: string;
+  private reasoningMetricsFile: string;
 
-  constructor(metricsFile: string, metadataFile: string, validationDir: string, outputFile: string) {
-    this.metricsFile = metricsFile;
+  constructor(readMetricsFile: string, reasoningMetricsFile: string, metadataFile: string, validationDir: string, outputFile: string) {
+    this.readMetricsFile = readMetricsFile;
+    this.reasoningMetricsFile = reasoningMetricsFile;
     this.metadataFile = metadataFile;
     this.validationDir = validationDir;
     this.outputFile = outputFile;
   }
 
   public analyze(): void {
-    console.log("Loading metrics...");
-    const userMetrics = this.loadUserMetrics();
+    console.log("Loading read metrics...");
+    const readMetrics = this.loadReadMetrics();
+
+    console.log("Loading reasoning metrics...");
+    const reasoningMetrics = this.loadReasoningMetrics();
+
+    console.log("Merging metrics...");
+    const userMetrics = this.mergeMetrics(readMetrics, reasoningMetrics);
 
     console.log("Loading metadata...");
     const metadata = this.loadMetadata();
@@ -109,14 +139,6 @@ class BenchmarkAnalytics {
     console.log(`\nResults saved to: ${this.outputFile}`);
   }
 
-  private loadUserMetrics(): UserMetrics[] {
-    const content = fs.readFileSync(this.metricsFile, "utf-8");
-    try {
-      return JSON.parse(content);
-    } catch (err) {
-      throw new Error(`Failed to parse metrics JSON: ${err}`);
-    }
-  }
 
   private loadMetadata(): any {
     const content = fs.readFileSync(this.metadataFile, "utf-8");
@@ -144,6 +166,59 @@ class BenchmarkAnalytics {
     }
 
     return results;
+  }
+
+  private loadReadMetrics(): ReadMetricsFile[] {
+    const content = fs.readFileSync(this.readMetricsFile, "utf-8");
+    try {
+      const data = JSON.parse(content);
+      return data.files || data || [];
+    } catch (err) {
+      throw new Error(`Failed to parse read metrics from ${this.readMetricsFile}: ${err}`);
+    }
+  }
+
+  private loadReasoningMetrics(): ReasoningMetricsFile[] {
+    const content = fs.readFileSync(this.reasoningMetricsFile, "utf-8");
+    try {
+      const data = JSON.parse(content);
+      return data.files || data || [];
+    } catch (err) {
+      throw new Error(`Failed to parse reasoning metrics from ${this.reasoningMetricsFile}: ${err}`);
+    }
+  }
+
+  private mergeMetrics(readMetrics: ReadMetricsFile[], reasoningMetrics: ReasoningMetricsFile[]): UserMetrics[] {
+    const merged: UserMetrics[] = [];
+
+    // Group read metrics by format+variant+recordCount
+    const readMap = new Map<string, ReadMetricsFile>();
+    for (const read of readMetrics) {
+      if (read.fileType === "data") {
+        const key = `${read.format}_${read.variant}_${read.recordCount}`;
+        readMap.set(key, read);
+      }
+    }
+
+    // Merge with reasoning metrics
+    for (const reasoning of reasoningMetrics) {
+      const key = `${reasoning.format}_${reasoning.variant}_${reasoning.recordCount}`;
+      const readData = readMap.get(key);
+
+      if (!readData) {
+        throw new Error(`No read data found for ${key}. Ensure both read and reasoning metrics cover the same test cases.`);
+      }
+
+      merged.push({
+        testCase: `${reasoning.format}_${reasoning.recordCount}_${reasoning.variant}`,
+        readDuration: readData.readDurationMs,
+        readTokens: readData.readTokens,
+        fullDuration: reasoning.durationMs,
+        fullTokens: reasoning.reasoningTokens + reasoning.outputTokens,
+      });
+    }
+
+    return merged;
   }
 
   private calculateMetrics(
@@ -398,15 +473,19 @@ class BenchmarkAnalytics {
 // CLI entry point
 if (require.main === module) {
   const args = process.argv.slice(2);
-  let metricsFile: string | undefined;
+  let readMetricsFile: string | undefined;
+  let reasoningMetricsFile: string | undefined;
   let metadataFile: string | undefined;
   let validationDir: string | undefined;
   let outputFile: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
-      case "--metrics":
-        metricsFile = args[++i];
+      case "--read-metrics":
+        readMetricsFile = args[++i];
+        break;
+      case "--reasoning-metrics":
+        reasoningMetricsFile = args[++i];
         break;
       case "--metadata":
         metadataFile = args[++i];
@@ -420,13 +499,13 @@ if (require.main === module) {
     }
   }
 
-  if (!metricsFile || !metadataFile || !validationDir || !outputFile) {
-    console.error("Usage: ts-node analytics.ts --metrics <file> --metadata <file> --validation-dir <dir> --output <file>");
+  if (!readMetricsFile || !reasoningMetricsFile || !metadataFile || !validationDir || !outputFile) {
+    console.error("Usage: ts-node analytics.ts --read-metrics <file> --reasoning-metrics <file> --metadata <file> --validation-dir <dir> --output <file>");
     process.exit(1);
   }
 
   try {
-    const analytics = new BenchmarkAnalytics(metricsFile, metadataFile, validationDir, outputFile);
+    const analytics = new BenchmarkAnalytics(readMetricsFile, reasoningMetricsFile, metadataFile, validationDir, outputFile);
     analytics.analyze();
   } catch (err) {
     console.error(`Error: ${err}`);
