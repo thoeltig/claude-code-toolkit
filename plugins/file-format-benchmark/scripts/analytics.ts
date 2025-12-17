@@ -5,24 +5,13 @@
 
 import * as fs from "fs";
 import * as path from "path";
-
-interface UserMetrics {
-  testCase: string;
-  format: string;
-  variant: string;
-  recordCount: number;
-  hasOptionalData: boolean;
-  readDuration: number;
-  readTokens: number;
-  testDuration: number;
-  reasoningTokens: number;
-}
+import MetricsExtraction from "./metrics-extraction";
+import { UserMetrics } from "./types";
 
 interface ReadMetricsFile {
   file: string;
   path: string;
   agentId: string;
-  fileType: string;
   format: string;
   variant: string;
   recordCount: number;
@@ -31,13 +20,38 @@ interface ReadMetricsFile {
 }
 
 interface ReasoningMetricsFile {
-  agentId: string;
   format: string;
   variant: string;
   recordCount: number;
+  testRuns: number;
   durationMs: number;
   reasoningTokens: number;
   outputTokens: number;
+}
+
+interface CombinedMetricsFile {
+  read: {
+    files: ReadMetricsFile[];
+    summary: {
+      totalFiles: number;
+      totalReadTokens: number;
+      totalReadDurationMs: number;
+      averageReadTokens: number;
+      averageDurationMs: number;
+    };
+  };
+  reasoning: {
+    files: ReasoningMetricsFile[];
+    summary: {
+      totalTestCases: number;
+      totalDurationMs: number;
+      totalReasoningTokens: number;
+      totalOutputTokens: number;
+      averageDurationMs: number;
+      averageReasoningTokens: number;
+      averageOutputTokens: number;
+    };
+  };
 }
 
 interface ValidationResult {
@@ -47,7 +61,6 @@ interface ValidationResult {
   accuracy: {
     correct: number;
     incorrect: number;
-    requiresReview: number;
     accuracyPercent: number;
   };
 }
@@ -93,8 +106,9 @@ interface TestMetrics {
 interface AnalyticsOutput {
   timestamp: string;
   testConfigurations: {
-    readMetricsFile: string;
-    reasoningMetricsFile: string;
+    metadataFile: string;
+    agentIdsFile: string;
+    metricsFile: string;
     model: string;
     thinking: string;
     formats: string[];
@@ -115,26 +129,20 @@ class BenchmarkAnalytics {
   private metadataFile: string;
   private validationDir: string;
   private outputFile: string;
-  private readMetricsFile: string;
-  private reasoningMetricsFile: string;
+  private metricsFile: string;
+  private agentIdsFile: string;
 
-  constructor(readMetricsFile: string, reasoningMetricsFile: string, metadataFile: string, validationDir: string, outputFile: string) {
-    this.readMetricsFile = readMetricsFile;
-    this.reasoningMetricsFile = reasoningMetricsFile;
+  constructor(agentIdsFile: string, metadataFile: string, validationDir: string, outputDir: string) {
+    this.agentIdsFile = agentIdsFile;
     this.metadataFile = metadataFile;
     this.validationDir = validationDir;
-    this.outputFile = outputFile;
+    this.outputFile = path.join(outputDir, "analytics_results.json");
+    this.metricsFile = path.join(outputDir, "metrics.json");
   }
 
   public analyze(): void {
-    console.log("Loading read metrics...");
-    const readMetrics = this.loadReadMetrics();
-
-    console.log("Loading reasoning metrics...");
-    const reasoningMetrics = this.loadReasoningMetrics();
-
-    console.log("Merging metrics...");
-    const userMetrics = this.mergeMetrics(readMetrics, reasoningMetrics);
+    console.log("Extracting metrics from agent transcripts...");
+    const userMetrics = this.extractMetrics();
 
     console.log("Loading metadata...");
     const metadata = this.loadMetadata();
@@ -153,6 +161,20 @@ class BenchmarkAnalytics {
 
     console.log("✓ Analytics complete");
     console.log(`\nResults saved to: ${this.outputFile}`);
+  }
+
+  private extractMetrics(): UserMetrics[] {
+    if (fs.existsSync(this.metricsFile)) {
+      console.log("Metrics file already exists, skipping extraction");
+      return;
+    }
+
+    try {
+      const extraction = new MetricsExtraction(this.agentIdsFile, this.metricsFile);
+      return extraction.extract();
+    } catch (err) {
+      throw new Error(`Metrics extraction failed: ${err}`);
+    }
   }
 
 
@@ -184,61 +206,13 @@ class BenchmarkAnalytics {
     return results;
   }
 
-  private loadReadMetrics(): ReadMetricsFile[] {
-    const content = fs.readFileSync(this.readMetricsFile, "utf-8");
+  private loadCombinedMetrics(): CombinedMetricsFile {
+    const content = fs.readFileSync(this.metricsFile, "utf-8");
     try {
-      const data = JSON.parse(content);
-      return data.files || data || [];
+      return JSON.parse(content);
     } catch (err) {
-      throw new Error(`Failed to parse read metrics from ${this.readMetricsFile}: ${err}`);
+      throw new Error(`Failed to parse combined metrics from ${this.metricsFile}: ${err}`);
     }
-  }
-
-  private loadReasoningMetrics(): ReasoningMetricsFile[] {
-    const content = fs.readFileSync(this.reasoningMetricsFile, "utf-8");
-    try {
-      const data = JSON.parse(content);
-      return data.files || data || [];
-    } catch (err) {
-      throw new Error(`Failed to parse reasoning metrics from ${this.reasoningMetricsFile}: ${err}`);
-    }
-  }
-
-  private mergeMetrics(readMetrics: ReadMetricsFile[], reasoningMetrics: ReasoningMetricsFile[]): UserMetrics[] {
-    const merged: UserMetrics[] = [];
-
-    // Group read metrics by format+variant+recordCount
-    const readMap = new Map<string, ReadMetricsFile>();
-    for (const read of readMetrics) {
-      if (read.fileType === "data") {
-        const key = `${read.format}_${read.variant}_${read.recordCount}`;
-        readMap.set(key, read);
-      }
-    }
-
-    // Merge with reasoning metrics
-    for (const reasoning of reasoningMetrics) {
-      const key = `${reasoning.format}_${reasoning.variant}_${reasoning.recordCount}`;
-      const readData = readMap.get(key);
-
-      if (!readData) {
-        throw new Error(`No read data found for ${key}. Ensure both read and reasoning metrics cover the same test cases.`);
-      }
-
-      merged.push({
-        testCase: `${reasoning.format}_${reasoning.recordCount}_${reasoning.variant}`,
-        format: reasoning.format,
-        variant: reasoning.variant,
-        recordCount: reasoning.recordCount,
-        hasOptionalData: reasoning.variant !== "mandatory",
-        readDuration: readData.readDurationMs,
-        readTokens: readData.readTokens,
-        testDuration: reasoning.durationMs,
-        reasoningTokens: reasoning.reasoningTokens,
-      });
-    }
-
-    return merged;
   }
 
   private calculateMetrics(
@@ -334,11 +308,8 @@ class BenchmarkAnalytics {
       throw new Error("No metrics to analyze");
     }
 
-    // Extract model and thinking from metrics filename
-    const filename = path.basename(this.readMetricsFile);
-    const metricsMatch = filename.match(/metrics_([a-z]+)_([a-z]+)/);
-    const model = metricsMatch ? metricsMatch[1] : "unknown";
-    const thinking = metricsMatch ? metricsMatch[2] : "unknown";
+    const model = "unknown";
+    const thinking = "unknown";
 
     // Get unique formats and densities
     const formats = [...new Set(metrics.map((m) => m.format))];
@@ -373,8 +344,9 @@ class BenchmarkAnalytics {
     return {
       timestamp: new Date().toISOString(),
       testConfigurations: {
-        readMetricsFile: this.readMetricsFile,
-        reasoningMetricsFile: this.reasoningMetricsFile,
+        metadataFile: this.metadataFile,
+        agentIdsFile: this.agentIdsFile,
+        metricsFile: this.metricsFile,
         model,
         thinking,
         formats,
@@ -467,19 +439,15 @@ class BenchmarkAnalytics {
 // CLI entry point
 if (require.main === module) {
   const args = process.argv.slice(2);
-  let readMetricsFile: string | undefined;
-  let reasoningMetricsFile: string | undefined;
+  let agentIdsFile: string | undefined;
   let metadataFile: string | undefined;
   let validationDir: string | undefined;
-  let outputFile: string | undefined;
+  let outputDir: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
-      case "--read-metrics":
-        readMetricsFile = args[++i];
-        break;
-      case "--reasoning-metrics":
-        reasoningMetricsFile = args[++i];
+      case "--agent-ids":
+        agentIdsFile = args[++i];
         break;
       case "--metadata":
         metadataFile = args[++i];
@@ -488,18 +456,18 @@ if (require.main === module) {
         validationDir = args[++i];
         break;
       case "--output":
-        outputFile = args[++i];
+        outputDir = args[++i];
         break;
     }
   }
 
-  if (!readMetricsFile || !reasoningMetricsFile || !metadataFile || !validationDir || !outputFile) {
-    console.error("Usage: ts-node analytics.ts --read-metrics <file> --reasoning-metrics <file> --metadata <file> --validation-dir <dir> --output <file>");
+  if (!agentIdsFile || !metadataFile || !validationDir || !outputDir) {
+    console.error("Usage: ts-node analytics.ts --agent-ids <file> --metadata <file> --validation-dir <dir> --output <dir>");
     process.exit(1);
   }
 
   try {
-    const analytics = new BenchmarkAnalytics(readMetricsFile, reasoningMetricsFile, metadataFile, validationDir, outputFile);
+    const analytics = new BenchmarkAnalytics(agentIdsFile, metadataFile, validationDir, outputDir);
     analytics.analyze();
   } catch (err) {
     console.error(`Error: ${err}`);

@@ -100,10 +100,7 @@ const validator = new AnswerValidator();
 let allAccurate = true;
 
 for (const testCase of testCases) {
-  const validationKeyFile = path.join(
-    validationDir,
-    `questions_and_answers_with_${testCase.variant}_${testCase.recordCount}_records.json`
-  );
+  const validationKeyFile = path.join(validationDir, `questions_and_answers_with_${testCase.variant}_${testCase.recordCount}_records.json`);
 
   if (!fs.existsSync(validationKeyFile)) {
     console.warn(`⚠ Skipping ${testCase.format}_${testCase.variant}_${testCase.recordCount}: validation data not found`);
@@ -135,14 +132,11 @@ for (const testCase of testCases) {
   // Aggregate results from all 3 runs
   const avgCorrect = reports.reduce((sum, r) => sum + r.accuracy.correct, 0) / reports.length;
   const avgIncorrect = reports.reduce((sum, r) => sum + r.accuracy.incorrect, 0) / reports.length;
-  const avgRequiresReview = reports.reduce((sum, r) => sum + r.accuracy.requiresReview, 0) / reports.length;
   const avgAccuracy = reports.reduce((sum, r) => sum + r.accuracy.accuracyPercent, 0) / reports.length;
 
   const accuracyStr = avgAccuracy.toFixed(3);
   const statusIcon = avgAccuracy === 100 ? "✓" : avgAccuracy >= 90 ? "◐" : "✗";
-  console.log(
-    `${statusIcon} ${testCase.format.padEnd(15)} ${testCase.variant.padEnd(10)} ${String(testCase.recordCount).padEnd(4)} → ${accuracyStr}%`
-  );
+  console.log(`${statusIcon} ${testCase.format.padEnd(15)} ${testCase.variant.padEnd(10)} ${String(testCase.recordCount).padEnd(4)} → ${accuracyStr}%`);
 
   // Save aggregated results
   const outputFile = path.join(resultsDir, `${testCase.format}_${testCase.variant}_${testCase.recordCount}_validation.json`);
@@ -155,14 +149,12 @@ for (const testCase of testCases) {
     accuracy: {
       correct: Math.round(avgCorrect * 1000) / 1000,
       incorrect: Math.round(avgIncorrect * 1000) / 1000,
-      requiresReview: Math.round(avgRequiresReview * 1000) / 1000,
       accuracyPercent: Math.round(avgAccuracy * 1000) / 1000,
     },
     perRunAccuracy: reports.map((r, idx) => ({
       run: idx + 1,
       correct: r.accuracy.correct,
       incorrect: r.accuracy.incorrect,
-      requiresReview: r.accuracy.requiresReview,
       accuracyPercent: r.accuracy.accuracyPercent,
     })),
   };

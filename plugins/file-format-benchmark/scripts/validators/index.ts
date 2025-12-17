@@ -22,7 +22,6 @@ export class AnswerValidator {
     answersAndQuestions: AnswerAndQuestion[]
   ): ValidationReport {
     const results: ValidationResult[] = [];
-    const manualReviewRequired: ValidationResult[] = [];
 
     for (const answerAndQuestion of answersAndQuestions) {
       const providedAnswer = answerTemplate.answers.find((a) => a.questionId === answerAndQuestion.id);
@@ -55,10 +54,8 @@ export class AnswerValidator {
       accuracy: {
         correct: correctCount,
         incorrect: totalValidatable - correctCount,
-        requiresReview: manualReviewRequired.length,
         accuracyPercent: totalValidatable > 0 ? (correctCount / totalValidatable) * 100 : 0,
-      },
-      manualReviewRequired,
+      }
     };
   }
 

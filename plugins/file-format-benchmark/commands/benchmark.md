@@ -51,8 +51,8 @@ Extract from $ARGUMENTS:
 ├── subagent_outputs/
 ├── results/
 ├── metadata.json
-├── read_token_usage.json
-├── reasoning_token_usage.json
+├── agent_ids.json
+├── metrics.json
 └── analytics_results.json
 ```
 
@@ -196,11 +196,20 @@ For each FORMAT in selected_formats (one format at a time):
       Collect and store all 3 FULL agent IDs
       Full agent_ids_for_format.AddAll(full_ids_for_combo)
 
-  Save agent_ids_for_format (read + full) for metrics extraction
+      // IMPORTANT: Record both readonly and full test agent IDs
+      // Store in agent_ids.json for later extraction
+      WriteToAgentIdsFile({
+        format, variant, recordCount,
+        readonly_agent_id,
+        full_test_ids: [id1, id2, id3]
+      })
+
+  Save all agent_ids_for_format (read + full) to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json
   Move to next format
 
 Total execution: ~8 formats × ~16 tests per = 128 tasks total
 GUARANTEE: Each combination tested exactly once, each agent task launched exactly once
+AGENT_IDS_FILE: All IDs saved to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json for extraction
 ```
 
 ### 4a. Launch Read-Only Test (Sequential - Wait for Completion)
@@ -226,7 +235,7 @@ This launches readonly test which will:
 - **DO NOT** retry or re-launch this combination
 - WAIT for this test to complete before launching full tests
 - Cache is now warm for the data file
-- Collect returned agent ID for step 5a (read-only test metrics extraction)
+- Collect returned agent ID for Step 6 (metrics extraction)
 - **This test MUST run exactly once per data file - second launch = benchmarking corruption**
 
 ### 4b. Launch 3 Full Tests in Parallel (After Read Complete)
@@ -281,7 +290,7 @@ This launches 3 full tests in parallel which will:
 - WAIT for all 3 to complete before moving to next combination
 - Verify output files are created exactly once (check before/after)
 - **Each output file MUST be written exactly once - second write = benchmarking corruption**
-- Collect all 3 returned agent IDs for step 6b (full test metrics extraction)
+- Collect all 3 returned agent IDs for Step 6 (metrics extraction)
 - Then proceed to next combination within the same format
 
 ## Step 5: Run Validation
@@ -346,117 +355,68 @@ Status icons:
 }
 ```
 
-## Step 6: Extract Metrics from Test Transcripts
+## Step 6: Run Analytics (Automatic Metrics Extraction + Analysis)
 
-After ALL tests complete (readonly and full), extract metrics from all agent transcripts.
-
-**CRITICAL - Extract Each Transcript ONCE ONLY:**
-- Each readonly agent ID extracted exactly once
-- Each full test agent ID extracted exactly once
-- No duplicate extraction (second extraction = corrupted metrics)
-- Output files created exactly once
-
-### Step 6a: Extract Read Token Usage from ALL Readonly Tests (Extract ONCE)
-
-Combine results from data readonly tests (extract each readonly agent ONCE):
+After all tests complete and validation passes, run analytics which automatically:
+1. Extracts metrics from agent transcripts (using agent_ids.json)
+2. Generates combined metrics.json file
+3. Runs comprehensive analysis
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# GUARD: Check output file doesn't exist (prevent re-extraction)
-if [ -f ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json ]; then
-  echo "ERROR: read_token_usage.json already exists"
-  echo "This indicates metrics were already extracted - aborting to prevent data corruption"
-  exit 1
-fi
-
-# Collect ALL readonly agent IDs from step 4a (extract each ID ONCE):
-# - Data file IDs: a613419 aa7992a a44bacd abe6c4f ...
-# - Question file IDs: ae1a234 ae1a235 ...
-# - Template file IDs: ae1a236 ae1a237 ...
-
-python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.py \
-  {data_agent_1} {data_agent_2} ... \
-  {question_agent_1} {question_agent_2} ... \
-  {template_agent_1} {template_agent_2} ... \
-  --projects-dir ~/.claude/projects \
-  --json \
-  --output ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json
-
-# VERIFY: Confirm file was created (only way extraction succeeded)
-if [ ! -f ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json ]; then
-  echo "ERROR: Extraction failed - output file not created"
-  exit 1
-fi
+node dist/analytics.js \
+  --agent-ids ${BENCHMARK_OUTPUT_DIR}/agent_ids.json \
+  --metadata ${BENCHMARK_OUTPUT_DIR}/metadata.json \
+  --validation-dir ${BENCHMARK_OUTPUT_DIR}/results/ \
+  --output ${BENCHMARK_OUTPUT_DIR}
 ```
 
-**Output includes all files** with breakdown (sample):
+**Automatic Extraction During Analytics:**
+- Reads `agent_ids.json` to get all readonly and full test agent IDs
+- Searches for transcript files in `~/.claude/projects`
+- Extracts read metrics from readonly agent transcripts
+- Extracts reasoning metrics from full test agent transcripts
+- Combines both into single `metrics.json` file (same directory as agent_ids.json)
+- No duplicate extraction (checks if metrics.json exists first)
+
+**Combined Metrics Output** (auto-generated at ${BENCHMARK_OUTPUT_DIR}/metrics.json):
 ```json
 {
-  "files": [
+  "read": {
+    "files": [
       {
-          "file": "toon_with_optional_80_records.toon",
-          "fileType": "data",
-          "format": "toon",
-          "variant": "optional",
-          "recordCount": 80,
-          "readTokens": 22166,
-          "readDurationMs": 2231.0
+        "file": "csv_with_optional_100_records.csv",
+        "path": "/path/to/data/...",
+        "agentId": "agent-abc123",
+        "format": "csv",
+        "variant": "optional",
+        "recordCount": 100,
+        "readTokens": 15234,
+        "readDurationMs": 1523.0
       }
-  ],
-  "summary": {
-      "totalFiles": 3,
-      "totalReadTokens": 22166,
-      "totalReadDurationMs": 2231.0,
-      "averageReadTokens": 22166,
-      "averageDurationMs": 2231.0
-  }
-}
-```
-
-### Step 6b: Extract Full Test Metrics (Duration & Tokens) (Extract ONCE)
-
-After ALL full tests complete, extract and aggregate metrics stopping at first Write tool call. The script automatically groups the 3 test runs per format/variant/recordCount and averages their metrics:
-
-```bash
-cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
-
-# GUARD: Check output file doesn't exist (prevent re-extraction)
-if [ -f ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json ]; then
-  echo "ERROR: reasoning_token_usage.json already exists"
-  echo "This indicates metrics were already extracted - aborting to prevent data corruption"
-  exit 1
-fi
-
-# Collect ALL full test agent IDs from step 4b (all 3 runs per test case, extract each ONCE)
-python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractReasoning.py \
-  {full_test_agent_id_1} {full_test_agent_id_2} {full_test_agent_id_3} ... \
-  --projects-dir ~/.claude/projects \
-  --json \
-  --output ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json
-
-# VERIFY: Confirm file was created (only way extraction succeeded)
-if [ ! -f ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json ]; then
-  echo "ERROR: Extraction failed - output file not created"
-  exit 1
-fi
-```
-
-**Output includes aggregated metrics** (averaged across 3 test runs):
-```json
-{
-  "files": [
+    ],
+    "summary": {
+      "totalFiles": 32,
+      "totalReadTokens": 487488,
+      "totalReadDurationMs": 48748.0,
+      "averageReadTokens": 15234,
+      "averageDurationMs": 1523.4
+    }
+  },
+  "reasoning": {
+    "files": [
       {
-          "format": "toon",
-          "variant": "optional",
-          "recordCount": 100,
-          "testRuns": 3,
-          "durationMs": 49984.33,
-          "reasoningTokens": 5941.67,
-          "outputTokens": 881.33
+        "format": "csv",
+        "variant": "optional",
+        "recordCount": 100,
+        "testRuns": 3,
+        "durationMs": 49984.33,
+        "reasoningTokens": 5941.67,
+        "outputTokens": 881.33
       }
-  ],
-  "summary": {
+    ],
+    "summary": {
       "totalTestCases": 32,
       "totalDurationMs": 1599494.56,
       "totalReasoningTokens": 190133.44,
@@ -464,46 +424,12 @@ fi
       "averageDurationMs": 49984.20,
       "averageReasoningTokens": 5941.67,
       "averageOutputTokens": 881.33
+    }
   }
 }
 ```
 
-**Note:** `testRuns` shows 3 for each test case, indicating the script has averaged all 3 runs
-
-**Data Ready for Analytics:**
-Both extraction scripts now output averaged metrics ready for analytics:
-- `read_token_usage.json`: Read tokens per file (single readonly test)
-- `reasoning_token_usage.json`: Averaged reasoning tokens across 3 full test runs
-
-## Step 7: Run Analytics
-
-After both readonly and full test metrics are extracted, analytics processes the complete benchmark data:
-
-```bash
-cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
-
-node dist/analytics.js \
-  --read-metrics ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json \
-  --reasoning-metrics ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json \
-  --metadata ${BENCHMARK_OUTPUT_DIR}/metadata.json \
-  --validation-dir ${BENCHMARK_OUTPUT_DIR}/results/ \
-  --output ${BENCHMARK_OUTPUT_DIR}/analytics_results.json
-```
-
-The analytics script will:
-1. Load read token usage from `${BENCHMARK_OUTPUT_DIR}/read_token_usage.json`
-2. Load full test metrics from `${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json`
-3. Load metadata with character counts and record info
-4. Load validation results for accuracy data
-5. Calculate efficiency scores:
-   - Read efficiency: chars/token from readonly tests
-   - Full test efficiency: tokens/question, time/token
-   - Per-format comparisons
-6. Compare formats and record counts
-7. Generate insights and rankings
-8. Write comprehensive results JSON
-
-## Step 8: Display Results Summary
+## Step 7: Display Results Summary
 
 After analytics completes, read the output file and display:
 
@@ -559,10 +485,15 @@ ${BENCHMARK_OUTPUT_DIR}/
 ├── results/
 │   └── {format}_{variant}_{recordCount}_validation.json
 ├── metadata.json
-├── read_token_usage.json
-├── reasoning_token_usage.json
-└── analytics_results.json
+├── agent_ids.json (generated during Step 4)
+├── metrics.json (auto-generated by analytics.js during Step 6 from agent transcripts)
+└── analytics_results.json (final results from Step 6)
 ```
+
+**Key Files:**
+- `agent_ids.json`: Created during test execution (Steps 4a-4b), contains all readonly and full test agent IDs
+- `metrics.json`: Auto-generated by analytics.js before analysis, combines read and reasoning metrics extracted from agent transcripts
+- `analytics_results.json`: Final analysis output with rankings and insights
 
 **Example:**
 - Generated folder: `benchmark_csv_optional_haiku_on/`
@@ -597,39 +528,44 @@ This modularity allows running benchmarks for different format subsets at differ
    - This ensures CLI stability
 
 4. **Read → Cache → Full Tests Pipeline**:
-   - Step 3a: Launch 1 read test (singleton)
+   - Step 4a: Launch 1 read test (singleton)
    - Wait for completion (cache is now warm)
-   - Step 3b: Launch 3 full tests (these benefit from cache)
+   - Step 4b: Launch 3 full tests (these benefit from cache)
    - Wait for completion
    - Move to next combination
 
 ### Agent ID Collection and Tracking
 
-5. **Capture ALL Agent IDs in Order**:
-   - Format 1, Combo 1: [1 read ID, 3 full IDs]
-   - Format 1, Combo 2: [1 read ID, 3 full IDs]
+5. **Capture ALL Agent IDs in Order to agent_ids.json**:
+   - Format 1, Combo 1: [1 readonly ID, 3 full IDs]
+   - Format 1, Combo 2: [1 readonly ID, 3 full IDs]
    - ... (all combos for Format 1)
    - Format 2: (repeat)
    - etc.
-   - **Total**: ~32 read IDs + 96 full IDs = 128 IDs (if all 8 formats)
+   - **Total**: ~32 readonly IDs + 96 full IDs = 128 IDs (if all 8 formats)
+   - **File**: Stored in `${BENCHMARK_OUTPUT_DIR}/agent_ids.json`
 
-6. **Two-Stage Metric Extraction** (After All Tests Complete):
-   - **5a**: Extract all readonly tokens → `read_token_usage.json`
-   - **5b**: Extract all reasoning tokens → `reasoning_token_usage.json`
-
-7. **Both Scripts Use Same Pattern**: Search `~/.claude/projects` recursively for matching `agent-*.jsonl` files by ID
+6. **Automatic Metric Extraction** (Step 6 - Integrated into Analytics):
+   - Analytics reads `agent_ids.json` to get all agent IDs
+   - Extracts readonly and full test agent metrics
+   - Combines into single `metrics.json` file
+   - No manual ID passing required
 
 ### General Execution Notes
 
-8. **Validation Deferred**: All validation runs after test execution completes (Step 4)
+7. **Validation Deferred**: All validation runs after test execution completes (Step 5)
 
-9. **Analytics Requires Both**: Analytics step (Step 6) requires both metric files to be present
+8. **Analytics Integrated**: Step 6 (analytics) automatically:
+   - Reads agent IDs from `agent_ids.json`
+   - Extracts metrics from agent transcripts
+   - Generates combined `metrics.json` file
+   - Runs comprehensive analysis
 
-10. **Default All Formats**: If --formats not specified, test all 8 formats
+9. **Default All Formats**: If --formats not specified, test all 8 formats
 
-11. **Default Haiku**: If --model not specified, use haiku
+10. **Default Haiku**: If --model not specified, use haiku
 
-12. **Default With Thinking**: If --thinking not specified, use on
+11. **Default With Thinking**: If --thinking not specified, use on
 
 ### Guardrails Summary - Preventing Data Corruption
 
@@ -647,9 +583,9 @@ This modularity allows running benchmarks for different format subsets at differ
    - Output file checked before launch (guard against duplicate test runs)
 
 3. **Single Extraction Guarantee**:
-   - Each readonly agent transcript: extracted ONCE (Step 5a)
-   - Each full test agent transcript: extracted ONCE (Step 5b)
-   - Output files checked before extraction (prevent re-extraction)
+   - Each agent ID from `agent_ids.json`: extracted ONCE during Step 6
+   - Readonly and full test agent transcripts: extracted once → combined into `metrics.json`
+   - Output file checked before extraction (prevent re-extraction)
 
 4. **No Duplicate Launches**:
    - Track all launched combinations

@@ -303,9 +303,6 @@ node validate.js \
       "requiresManualReview": false
     }
     // ... more results
-  ],
-  "manualReviewRequired": [
-    // Deduction questions that need human validation
   ]
 }
 ```
