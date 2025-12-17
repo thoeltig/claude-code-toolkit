@@ -148,39 +148,62 @@ def extract_full_test_metrics(jsonl_path, agent_id=None):
     return results
 
 def extract_to_json(results):
-    """Convert results to JSON format with per-file breakdown and summary.
+    """Convert results to JSON format with aggregated metrics per test case.
 
+    Groups 3 test runs by format+variant+recordCount and averages their metrics.
     Only includes metrics up to the first Write tool call (when agent finishes answering).
-    Includes test metadata (format, variant, recordCount) for matching with readonly tests.
     """
     if not results:
         return {"files": [], "summary": {}}
 
-    json_results = []
+    # Group by format+variant+recordCount
+    grouped = {}
     for r in results:
+        key = (r['format'], r['variant'], r['record_count'])
+        if key not in grouped:
+            grouped[key] = []
+        grouped[key].append(r)
+
+    json_results = []
+    for (format_name, variant, record_count), group in grouped.items():
+        # Average metrics across the 3 test runs
+        avg_duration = sum(r['duration_ms'] for r in group if r['duration_ms'] is not None) / len(group) if group else 0
+        avg_input_tokens = sum(r['input_tokens'] for r in group) / len(group) if group else 0
+        avg_output_tokens = sum(r['output_tokens'] for r in group) / len(group) if group else 0
+
+        # Collect individual run data
+        runs = []
+        for r in group:
+            runs.append({
+                'durationMs': round(r['duration_ms'], 3) if r['duration_ms'] is not None else None,
+                'reasoningTokens': round(r['input_tokens'], 3),
+                'outputTokens': round(r['output_tokens'], 3)
+            })
+
         json_results.append({
-            'agentId': r['agent_id'],
-            'format': r['format'],
-            'variant': r['variant'],
-            'recordCount': r['record_count'],
-            'durationMs': r['duration_ms'] if r['duration_ms'] is not None else 0,
-            'reasoningTokens': r['input_tokens'],
-            'outputTokens': r['output_tokens']
+            'format': format_name,
+            'variant': variant,
+            'recordCount': record_count,
+            'testRuns': len(group),
+            'durationMs': round(avg_duration, 3),
+            'reasoningTokens': round(avg_input_tokens, 3),
+            'outputTokens': round(avg_output_tokens, 3),
+            'runs': runs
         })
 
     # Calculate summary statistics
-    total_duration = sum(r['durationMs'] for r in json_results if r['durationMs'] is not None)
-    total_input = sum(r['inputTokens'] for r in json_results)
+    total_duration = sum(r['durationMs'] for r in json_results)
+    total_reasoning = sum(r['reasoningTokens'] for r in json_results)
     total_output = sum(r['outputTokens'] for r in json_results)
 
     summary = {
-        'totalTests': len(json_results),
-        'totalDurationMs': total_duration,
-        'totalReasoningTokens': total_input,
-        'totalOutputTokens': total_output,
-        'averageDurationMs': total_duration / len(json_results) if json_results else 0,
-        'averageReasoningTokens': total_input / len(json_results) if json_results else 0,
-        'averageOutputTokens': total_output / len(json_results) if json_results else 0
+        'totalTestCases': len(json_results),
+        'totalDurationMs': round(total_duration, 3),
+        'totalReasoningTokens': round(total_reasoning, 3),
+        'totalOutputTokens': round(total_output, 3),
+        'averageDurationMs': round(total_duration / len(json_results), 3) if json_results else 0,
+        'averageReasoningTokens': round(total_reasoning / len(json_results), 3) if json_results else 0,
+        'averageOutputTokens': round(total_output / len(json_results), 3) if json_results else 0
     }
 
     return {
@@ -248,16 +271,24 @@ if __name__ == '__main__':
             print(output_str)
     else:
         if all_results:
-            print(f"Full test metrics across {len(files_to_process)} agents (up to Write tool call):")
-            print("-" * 135)
-            print(f"{'Agent ID':<12} {'Format':<10} {'Variant':<12} {'Records':>8} {'Duration':>12} {'Input':>10} {'Output':>10} {'Cache Creat':>12}")
-            print("-" * 135)
+            # Group and aggregate for table display
+            grouped = {}
             for r in all_results:
-                duration_str = f"{r['duration_ms']:.0f}ms" if r['duration_ms'] is not None else "N/A"
-                format_str = r['format'] if r['format'] else "N/A"
-                variant_str = r['variant'] if r['variant'] else "N/A"
-                records_str = str(r['record_count']) if r['record_count'] else "N/A"
-                print(f"{r['agent_id']:<12} {format_str:<10} {variant_str:<12} {records_str:>8} {duration_str:>12} {r['input_tokens']:>10} {r['output_tokens']:>10} {r['cache_creation_tokens']:>12}")
-            print("-" * 135)
+                key = (r['format'], r['variant'], r['record_count'])
+                if key not in grouped:
+                    grouped[key] = []
+                grouped[key].append(r)
+
+            print(f"Full test metrics aggregated across {len(files_to_process)} agents (up to Write tool call):")
+            print("-" * 100)
+            print(f"{'Format':<12} {'Variant':<12} {'Records':>8} {'Test Runs':>10} {'Avg Duration':>14} {'Avg Reasoning':>14} {'Avg Output':>12}")
+            print("-" * 100)
+            for (format_name, variant, record_count), group in sorted(grouped.items()):
+                avg_duration = sum(r['duration_ms'] for r in group if r['duration_ms'] is not None) / len(group) if group else 0
+                avg_input = sum(r['input_tokens'] for r in group) / len(group) if group else 0
+                avg_output = sum(r['output_tokens'] for r in group) / len(group) if group else 0
+                duration_str = f"{avg_duration:.0f}ms"
+                print(f"{format_name:<12} {variant:<12} {record_count:>8} {len(group):>10} {duration_str:>14} {avg_input:>14.0f} {avg_output:>12.0f}")
+            print("-" * 100)
         else:
             print("No metrics found in transcripts.")

@@ -1,100 +1,179 @@
 #!/usr/bin/env node
 /**
- * Validate answers against ground truth questionnaire
- * Usage: npm run validate -- <answers_file> <validation_key_file> [output_file]
+ * Validate all answers against ground truth questionnaires
+ * Automatically finds all test output files recursively and aggregates 3 test runs per format/variant/recordCount
+ * Usage: node validate.js --subagent-outputs <dir> --validation-dir <dir> --results-dir <dir>
  */
 
 import * as fs from "fs";
+import * as path from "path";
 import { AnswerValidator } from "./validators/index";
 import { AnswerAndQuestion, Format, QuestionnaireWithAnswers, AnswerTemplate } from "./types";
 
-const answersFile = process.argv[2];
-const validationKeyFile = process.argv[3];
-const outputFile = process.argv[4];
+// Parse command line arguments
+let subagentOutputsDir: string | undefined;
+let validationDir: string | undefined;
+let resultsDir: string | undefined;
 
-if (!answersFile || !validationKeyFile) {
+for (let i = 2; i < process.argv.length; i++) {
+  switch (process.argv[i]) {
+    case "--subagent-outputs":
+      subagentOutputsDir = process.argv[++i];
+      break;
+    case "--validation-dir":
+      validationDir = process.argv[++i];
+      break;
+    case "--results-dir":
+      resultsDir = process.argv[++i];
+      break;
+  }
+}
+
+if (!subagentOutputsDir || !validationDir || !resultsDir) {
   console.error(
-    "Usage: node validate.js <answers.json> <validation_key.json> [output.json]"
+    "Usage: node validate.js --subagent-outputs <dir> --validation-dir <dir> --results-dir <dir>"
   );
   process.exit(1);
 }
 
-// Read files
-const answersData = JSON.parse(fs.readFileSync(answersFile, "utf-8")) as AnswerTemplate;
-const validationData = JSON.parse(fs.readFileSync(validationKeyFile, "utf-8")) as QuestionnaireWithAnswers;
+// Ensure output directory exists
+if (!fs.existsSync(resultsDir)) {
+  fs.mkdirSync(resultsDir, { recursive: true });
+}
 
-// Extract ground truth questions
-const groundTruthQuestions: AnswerAndQuestion[] =
-  validationData.answersAndQuestions;
+// Find all test 1 files recursively (these define the test cases)
+interface TestCase {
+  format: string;
+  variant: string;
+  recordCount: number;
+  answerFiles: string[];
+}
 
-// Determine format from answers metadata or default
-const format = (answersData.metadata?.format || "csv") as Format;
+const testCases: TestCase[] = [];
 
-// Create AnswerTemplate object
-const answerTemplate: any = {
-  metadata: {
-    format: format,
-    questionsFilePath: validationKeyFile,
-    dataFilePath: answersData.metadata?.dataFilePath || "unknown",
-  },
-  answers: answersData.answers,
-};
+function findTestCases(dir: string): void {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
 
-// Run validation
-const validator = new AnswerValidator();
-const report = validator.validateAnswers(format, answerTemplate, groundTruthQuestions);
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
 
-// Output results to console
-console.log("\n" + "=".repeat(70));
-console.log("VALIDATION RESULTS");
-console.log("=".repeat(70) + "\n");
+    if (entry.isDirectory()) {
+      findTestCases(fullPath);
+    } else if (entry.isFile() && entry.name.match(/^answers_for_.*_records_1\.json$/)) {
+      // Extract format from parent directory
+      const format = path.basename(path.dirname(fullPath));
 
-console.log(`Format: ${report.format}`);
-console.log(`Total Questions: ${report.totalQuestions}`);
-const totalValidatable = report.totalQuestions - report.accuracy.requiresReview;
-console.log(
-  `Accuracy: ${report.accuracy.correct}/${totalValidatable} (${report.accuracy.accuracyPercent.toFixed(2)}%)`
-);
-console.log(
-  `Manual Review Required: ${report.accuracy.requiresReview} questions\n`
-);
+      // Extract variant and recordCount from filename
+      // Format: answers_for_{variant}_{recordCount}_records_1.json
+      const match = entry.name.match(/^answers_for_(.+?)_(\d+)_records_1\.json$/);
+      if (match) {
+        const variant = match[1];
+        const recordCount = parseInt(match[2]);
 
-// Show failed answers
-const failed = report.results.filter((r) => !r.correct);
-if (failed.length > 0) {
-  console.log("Failed Questions:");
-  for (const result of failed.slice(0, 10)) {
-    console.log(
-      `  Q${result.questionId} (${result.category}): ${result.question.substring(0, 60)}...`
-    );
-    console.log(`    Expected: ${String(result.expectedAnswer).substring(0, 50)}`);
-    console.log(`    Got: ${String(result.givenAnswer).substring(0, 50)}`);
-  }
-  if (failed.length > 10) {
-    console.log(`  ... and ${failed.length - 10} more`);
+        const baseDir = path.dirname(fullPath);
+        const answerFiles = [
+          path.join(baseDir, `answers_for_${variant}_${recordCount}_records_1.json`),
+          path.join(baseDir, `answers_for_${variant}_${recordCount}_records_2.json`),
+          path.join(baseDir, `answers_for_${variant}_${recordCount}_records_3.json`),
+        ];
+
+        // Verify all 3 files exist
+        if (answerFiles.every((f) => fs.existsSync(f))) {
+          testCases.push({ format, variant, recordCount, answerFiles });
+        }
+      }
+    }
   }
 }
 
-console.log("\n" + "=".repeat(70) + "\n");
+findTestCases(subagentOutputsDir);
 
-// Save results if output file specified
-if (outputFile) {
-  const result = {
-    format: report.format,
-    accuracy: report.accuracy,
-    results: report.results.map((r) => ({
-      questionId: r.questionId,
-      question: r.question,
-      category: r.category,
-      correct: r.correct,
-      givenAnswer: r.givenAnswer,
-      expectedAnswer: r.expectedAnswer,
-      method: r.method,
+if (testCases.length === 0) {
+  console.error("Error: No test cases found in", subagentOutputsDir);
+  process.exit(1);
+}
+
+console.log(`\nFound ${testCases.length} test cases to validate\n`);
+
+// Validate all test cases
+const validator = new AnswerValidator();
+let allAccurate = true;
+
+for (const testCase of testCases) {
+  const validationKeyFile = path.join(
+    validationDir,
+    `questions_and_answers_with_${testCase.variant}_${testCase.recordCount}_records.json`
+  );
+
+  if (!fs.existsSync(validationKeyFile)) {
+    console.warn(`⚠ Skipping ${testCase.format}_${testCase.variant}_${testCase.recordCount}: validation data not found`);
+    continue;
+  }
+
+  const validationData = JSON.parse(fs.readFileSync(validationKeyFile, "utf-8")) as QuestionnaireWithAnswers;
+  const groundTruthQuestions: AnswerAndQuestion[] = validationData.answersAndQuestions;
+
+  const reports = [];
+
+  for (let i = 0; i < 3; i++) {
+    const answersFile = testCase.answerFiles[i];
+    const answersData = JSON.parse(fs.readFileSync(answersFile, "utf-8")) as AnswerTemplate;
+
+    const answerTemplate: any = {
+      metadata: {
+        format: testCase.format as Format,
+        questionsFilePath: validationKeyFile,
+        dataFilePath: answersData.metadata?.dataFilePath || "unknown",
+      },
+      answers: answersData.answers,
+    };
+
+    const report = validator.validateAnswers(testCase.format as Format, answerTemplate, groundTruthQuestions);
+    reports.push(report);
+  }
+
+  // Aggregate results from all 3 runs
+  const avgCorrect = reports.reduce((sum, r) => sum + r.accuracy.correct, 0) / reports.length;
+  const avgIncorrect = reports.reduce((sum, r) => sum + r.accuracy.incorrect, 0) / reports.length;
+  const avgRequiresReview = reports.reduce((sum, r) => sum + r.accuracy.requiresReview, 0) / reports.length;
+  const avgAccuracy = reports.reduce((sum, r) => sum + r.accuracy.accuracyPercent, 0) / reports.length;
+
+  const accuracyStr = avgAccuracy.toFixed(3);
+  const statusIcon = avgAccuracy === 100 ? "✓" : avgAccuracy >= 90 ? "◐" : "✗";
+  console.log(
+    `${statusIcon} ${testCase.format.padEnd(15)} ${testCase.variant.padEnd(10)} ${String(testCase.recordCount).padEnd(4)} → ${accuracyStr}%`
+  );
+
+  // Save aggregated results
+  const outputFile = path.join(resultsDir, `${testCase.format}_${testCase.variant}_${testCase.recordCount}_validation.json`);
+  const aggregatedResult = {
+    format: testCase.format,
+    variant: testCase.variant,
+    recordCount: testCase.recordCount,
+    testRuns: 3,
+    totalQuestions: reports[0].totalQuestions,
+    accuracy: {
+      correct: Math.round(avgCorrect * 1000) / 1000,
+      incorrect: Math.round(avgIncorrect * 1000) / 1000,
+      requiresReview: Math.round(avgRequiresReview * 1000) / 1000,
+      accuracyPercent: Math.round(avgAccuracy * 1000) / 1000,
+    },
+    perRunAccuracy: reports.map((r, idx) => ({
+      run: idx + 1,
+      correct: r.accuracy.correct,
+      incorrect: r.accuracy.incorrect,
+      requiresReview: r.accuracy.requiresReview,
+      accuracyPercent: r.accuracy.accuracyPercent,
     })),
   };
 
-  fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
-  console.log(`Results saved to: ${outputFile}\n`);
+  fs.writeFileSync(outputFile, JSON.stringify(aggregatedResult));
+
+  if (avgAccuracy < 100) {
+    allAccurate = false;
+  }
 }
 
-process.exit(report.accuracy.accuracyPercent === 100 ? 0 : 1);
+console.log(`\n✓ Validation complete. Results saved to: ${resultsDir}\n`);
+
+process.exit(allAccurate ? 0 : 1);

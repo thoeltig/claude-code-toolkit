@@ -8,10 +8,14 @@ import * as path from "path";
 
 interface UserMetrics {
   testCase: string;
+  format: string;
+  variant: string;
+  recordCount: number;
+  hasOptionalData: boolean;
   readDuration: number;
   readTokens: number;
-  fullDuration: number;
-  fullTokens: number;
+  testDuration: number;
+  reasoningTokens: number;
 }
 
 interface ReadMetricsFile {
@@ -38,7 +42,7 @@ interface ReasoningMetricsFile {
 
 interface ValidationResult {
   format: string;
-  density: number;
+  recordCount: number;
   totalQuestions: number;
   accuracy: {
     correct: number;
@@ -51,46 +55,58 @@ interface ValidationResult {
 interface TestMetrics {
   testCase: string;
   format: string;
-  density: number;
+  variant: string;
+  hasOptionalData: boolean;
   recordCount: number;
-  characterCount: number;
   totalValues: number;
-  totalQuestions: number;
+  characterCount: number;
 
-  // User-provided
+  // Read-Only extraction script result
   readDuration: number;
   readTokens: number;
-  fullDuration: number;
-  fullTokens: number;
+  
+  // Full test extraction script result
+  avgTestDuration: number;
+  avgReasoningTokens: number;
 
-  // Validation data
-  correctAnswers: number;
-  accuracyPercent: number;
+  // Validation script result
+  totalQuestions: number;
+  avgNoAnswers: number;
+  avgIncorrectAnswers: number;
+  avgCorrectAnswers: number;
+  avgAccuracyPercent: number;
 
   // Calculated metrics
   charsPerToken: number;
   tokensPerValue: number;
-  reasoningTokens: number;
-  tokensPerQuestion: number;
+  tokensPerRecord: number;
+  avgReasoningTokensPerAnswer: number;
+
+  // Result
+  totalTokens: number;
   correctnessRatio: number;
-  efficiency: number;
+  efficientlyUsedTokens: number;
+  // Efficiency score = (Accuracy percentage ÷ total tokens) × 1000. Higher is better.
+  efficiencyScore: number;
 }
 
 interface AnalyticsOutput {
   timestamp: string;
   testConfigurations: {
-    metricsFile: string;
+    readMetricsFile: string;
+    reasoningMetricsFile: string;
     model: string;
     thinking: string;
     formats: string[];
-    densities: number[];
+    variants: string[];
+    recordCounts: number[];
   };
   metrics: TestMetrics[];
   rankings: {
-    mostTokenEfficient: { format: string; density: number; charsPerToken: number };
-    mostAccurate: { format: string; density: number; accuracyPercent: number };
-    bestOverall: { format: string; density: number; efficiency: number };
-    byFormat: Record<string, { avgCharsPerToken: number; avgAccuracy: number }>;
+    mostTokenEfficient: { format: string; hasOptionalData: boolean; recordCount: number; charsPerToken: number };
+    mostAccurate: { format: string; hasOptionalData: boolean; recordCount: number; accuracyPercent: number };
+    bestOverall: { format: string; hasOptionalData: boolean; recordCount: number; efficiencyScore: number };
+    byRecordCount: Record<number, { avgCharsPerToken: number; avgAccuracy: number }>;
   };
   insights: string[];
 }
@@ -211,10 +227,14 @@ class BenchmarkAnalytics {
 
       merged.push({
         testCase: `${reasoning.format}_${reasoning.recordCount}_${reasoning.variant}`,
+        format: reasoning.format,
+        variant: reasoning.variant,
+        recordCount: reasoning.recordCount,
+        hasOptionalData: reasoning.variant !== "mandatory",
         readDuration: readData.readDurationMs,
         readTokens: readData.readTokens,
-        fullDuration: reasoning.durationMs,
-        fullTokens: reasoning.reasoningTokens + reasoning.outputTokens,
+        testDuration: reasoning.durationMs,
+        reasoningTokens: reasoning.reasoningTokens,
       });
     }
 
@@ -258,8 +278,9 @@ class BenchmarkAnalytics {
       }
 
       const format = match[1];
-      const density = parseInt(match[2]);
-      const datasetKey = `${format}_${density}`;
+      const recordCount = parseInt(match[2]);
+      const datasetKey = `${format}_${recordCount}`;
+      const validationKey = `${format}_${recordCount}`;
 
       const datasetInfo = datasetMap.get(datasetKey);
       if (!datasetInfo) {
@@ -267,45 +288,41 @@ class BenchmarkAnalytics {
         continue;
       }
 
-      const validationKey = `${format}_${density}`;
       const validation = validationResults.get(validationKey);
-
-      const reasoningTokens = userMetric.fullTokens - userMetric.readTokens;
-      const charsPerToken = datasetInfo.characterCount / userMetric.readTokens;
-      const tokensPerValue = userMetric.readTokens / datasetInfo.totalValues;
-      const tokensPerQuestion = reasoningTokens / datasetInfo.questionCount;
-
-      const correctAnswers = validation?.accuracy?.correct ?? 0;
-      const correctnessRatio = validation ? correctAnswers / validation.totalQuestions : 0;
-      const accuracy = validation?.accuracy?.accuracyPercent ?? 0;
-
-      const efficiency = reasoningTokens > 0
-        ? (correctnessRatio / reasoningTokens) * 1000
-        : 0;
+      if (!validation) {
+        console.warn(`Validation info not found for: ${validationKey}`);
+        continue;
+      }
 
       metrics.push({
         testCase: userMetric.testCase,
-        format,
-        density,
-        recordCount: density, // Assuming density is record count
-        characterCount: datasetInfo.characterCount,
+        format: userMetric.format,
+        variant: userMetric.variant,
+        hasOptionalData: userMetric.hasOptionalData,
+        recordCount: userMetric.recordCount,
         totalValues: datasetInfo.totalValues,
-        totalQuestions: datasetInfo.questionCount,
-
+        characterCount: datasetInfo.characterCount,
+        
         readDuration: userMetric.readDuration,
         readTokens: userMetric.readTokens,
-        fullDuration: userMetric.fullDuration,
-        fullTokens: userMetric.fullTokens,
 
-        correctAnswers,
-        accuracyPercent: accuracy,
+        avgTestDuration: userMetric.testDuration,
+        avgReasoningTokens: userMetric.reasoningTokens,
 
-        charsPerToken,
-        tokensPerValue,
-        reasoningTokens,
-        tokensPerQuestion,
-        correctnessRatio,
-        efficiency,
+        totalQuestions: validation.totalQuestions,
+        avgNoAnswers: validation.totalQuestions - validation.accuracy.correct - validation.accuracy.incorrect,
+        avgIncorrectAnswers: validation.accuracy.incorrect,
+        avgCorrectAnswers: validation.accuracy.correct,
+        avgAccuracyPercent: validation.accuracy.accuracyPercent,
+
+        charsPerToken: parseFloat((datasetInfo.characterCount / userMetric.readTokens).toFixed(3)),
+        tokensPerValue: parseFloat((userMetric.readTokens / datasetInfo.totalValues).toFixed(3)),
+        tokensPerRecord: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
+        avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),
+        totalTokens: userMetric.readTokens + userMetric.reasoningTokens,
+        correctnessRatio: validation.accuracy.correct / validation.totalQuestions,
+        efficientlyUsedTokens: parseFloat(((userMetric.readTokens + userMetric.reasoningTokens)*(validation.accuracy.correct / validation.totalQuestions)).toFixed(3)),
+        efficiencyScore: parseFloat((validation.accuracy.accuracyPercent / (userMetric.readTokens + userMetric.reasoningTokens)*1000).toFixed(3))
       });
     }
 
@@ -318,14 +335,15 @@ class BenchmarkAnalytics {
     }
 
     // Extract model and thinking from metrics filename
-    const filename = path.basename(this.metricsFile);
+    const filename = path.basename(this.readMetricsFile);
     const metricsMatch = filename.match(/metrics_([a-z]+)_([a-z]+)/);
     const model = metricsMatch ? metricsMatch[1] : "unknown";
     const thinking = metricsMatch ? metricsMatch[2] : "unknown";
 
     // Get unique formats and densities
     const formats = [...new Set(metrics.map((m) => m.format))];
-    const densities = [...new Set(metrics.map((m) => m.density))].sort((a, b) => b - a);
+    const variants = [...new Set(metrics.map((m) => m.variant))];
+    const recordCounts = [...new Set(metrics.map((m) => m.recordCount))].sort((a, b) => b - a);
 
     // Find rankings
     const mostTokenEfficient = metrics.reduce((best, current) =>
@@ -333,117 +351,103 @@ class BenchmarkAnalytics {
     );
 
     const mostAccurate = metrics.reduce((best, current) =>
-      current.accuracyPercent > best.accuracyPercent ? current : best
+      current.avgAccuracyPercent > best.avgAccuracyPercent ? current : best
     );
 
     const bestOverall = metrics.reduce((best, current) =>
-      current.efficiency > best.efficiency ? current : best
+      current.efficiencyScore > best.efficiencyScore ? current : best
     );
 
     // Calculate format-level statistics
-    const byFormat: Record<string, { avgCharsPerToken: number; avgAccuracy: number }> = {};
-    for (const format of formats) {
-      const formatMetrics = metrics.filter((m) => m.format === format);
-      const avgCharsPerToken = formatMetrics.reduce((sum, m) => sum + m.charsPerToken, 0) / formatMetrics.length;
-      const avgAccuracy = formatMetrics.reduce((sum, m) => sum + m.accuracyPercent, 0) / formatMetrics.length;
-      byFormat[format] = { avgCharsPerToken, avgAccuracy };
+    const byRecordCount: Record<number, { avgCharsPerToken: number; avgAccuracy: number }> = {};
+    for (const recordCount of recordCounts) {
+      const formatMetrics = metrics.filter((m) => m.recordCount === recordCount);
+      const avgCharsPerToken = Math.round(formatMetrics.reduce((sum, m) => sum + m.charsPerToken, 0) / formatMetrics.length*1000)/1000;
+      const avgAccuracy = Math.round(formatMetrics.reduce((sum, m) => sum + m.avgAccuracyPercent, 0) / formatMetrics.length*1000)/1000;
+      byRecordCount[recordCount] = { avgCharsPerToken, avgAccuracy };
     }
 
     // Generate insights
-    const insights = this.generateInsights(metrics, byFormat);
+    const insights = this.generateInsights(metrics);
 
     return {
       timestamp: new Date().toISOString(),
       testConfigurations: {
-        metricsFile: this.metricsFile,
+        readMetricsFile: this.readMetricsFile,
+        reasoningMetricsFile: this.reasoningMetricsFile,
         model,
         thinking,
         formats,
-        densities,
+        variants, 
+        recordCounts,
       },
       metrics,
       rankings: {
         mostTokenEfficient: {
           format: mostTokenEfficient.format,
-          density: mostTokenEfficient.density,
-          charsPerToken: parseFloat(mostTokenEfficient.charsPerToken.toFixed(2)),
+          hasOptionalData: mostTokenEfficient.hasOptionalData,
+          recordCount: mostTokenEfficient.recordCount,
+          charsPerToken: mostTokenEfficient.charsPerToken,
         },
         mostAccurate: {
           format: mostAccurate.format,
-          density: mostAccurate.density,
-          accuracyPercent: mostAccurate.accuracyPercent,
+          hasOptionalData: mostAccurate.hasOptionalData,
+          recordCount: mostAccurate.recordCount,
+          accuracyPercent: mostAccurate.avgAccuracyPercent,
         },
         bestOverall: {
           format: bestOverall.format,
-          density: bestOverall.density,
-          efficiency: parseFloat(bestOverall.efficiency.toFixed(3)),
+          hasOptionalData: bestOverall.hasOptionalData,
+          recordCount: bestOverall.recordCount,
+          efficiencyScore: bestOverall.efficiencyScore
         },
-        byFormat,
+        byRecordCount,
       },
       insights,
     };
   }
 
-  private generateInsights(metrics: TestMetrics[], byFormat: Record<string, any>): string[] {
+  private generateInsights(metrics: TestMetrics[]): string[] {
     const insights: string[] = [];
 
-    // Token efficiency insights
-    let bestFormatEntry: [string, any] | null = null;
-    for (const [format, stats] of Object.entries(byFormat)) {
-      if (!bestFormatEntry || stats.avgCharsPerToken > bestFormatEntry[1].avgCharsPerToken) {
-        bestFormatEntry = [format, stats];
-      }
+    const bestCharsPerTokenEntries = metrics.sort((a, b) => b.charsPerToken - a.charsPerToken);
+    let tokenEfficiencyOutput = '';
+    for (let i = 0; i < bestCharsPerTokenEntries.length && i < 4; i++) {
+      const element = bestCharsPerTokenEntries[i];
+      tokenEfficiencyOutput += ` ${element.format}_${element.variant}_${element.recordCount} with ${element.charsPerToken.toFixed(3)} char/token,`;
     }
-    if (bestFormatEntry) {
-      insights.push(
-        `Format efficiency: ${bestFormatEntry[0]} most token-efficient (${bestFormatEntry[1].avgCharsPerToken.toFixed(1)} chars/token)`
-      );
+    insights.push('Format token-efficiency:'+tokenEfficiencyOutput);
+
+    const bestAccuracyEntries = metrics.sort((a, b) => b.avgAccuracyPercent - a.avgAccuracyPercent);
+    let accuracyOutput = '';
+    for (let i = 0; i < bestAccuracyEntries.length && i < 4; i++) {
+      const element = bestAccuracyEntries[i];
+      accuracyOutput += ` ${element.format}_${element.variant}_${element.recordCount} with ${element.avgAccuracyPercent.toFixed(2)}%,`;
     }
+    insights.push('Average accuracy:'+accuracyOutput);
 
-    // Accuracy insights
-    let bestAccuracyEntry: [string, any] | null = null;
-    for (const [format, stats] of Object.entries(byFormat)) {
-      if (!bestAccuracyEntry || stats.avgAccuracy > bestAccuracyEntry[1].avgAccuracy) {
-        bestAccuracyEntry = [format, stats];
-      }
+    const bestReasoningTokenEntries = metrics.sort((a, b) => b.avgReasoningTokensPerAnswer - a.avgReasoningTokensPerAnswer);
+    let reasoningTokenOutput = '';
+    for (let i = 0; i < bestReasoningTokenEntries.length && i < 4; i++) {
+      const element = bestReasoningTokenEntries[i];
+      reasoningTokenOutput += ` ${element.format}_${element.variant}_${element.recordCount} with ~${element.avgReasoningTokensPerAnswer.toFixed(2)} token/question,`;
     }
-    if (bestAccuracyEntry) {
-      insights.push(
-        `Accuracy: ${bestAccuracyEntry[0]} highest average accuracy (${bestAccuracyEntry[1].avgAccuracy.toFixed(1)}%)`
-      );
-    }
+    insights.push('Tokens per question:'+reasoningTokenOutput);
 
-    // Density impact
-    const densities = [...new Set(metrics.map((m) => m.density))].sort((a, b) => b - a);
-    if (densities.length > 1) {
-      const maxDensity = densities[0];
-      const minDensity = densities[densities.length - 1];
+    // Record count impact
+    const recordCounts = [...new Set(metrics.map((m) => m.recordCount))].sort((a, b) => b - a);
+    if (recordCounts.length > 1) {
+      const maxRecordCounts = recordCounts[0];
+      const minRecordCounts = recordCounts[recordCounts.length - 1];
 
-      const maxDensityMetrics = metrics.filter((m) => m.density === maxDensity);
-      const minDensityMetrics = metrics.filter((m) => m.density === minDensity);
+      const maxRecordCountsMetrics = metrics.filter((m) => m.recordCount === maxRecordCounts);
+      const minRecordCountsMetrics = metrics.filter((m) => m.recordCount === minRecordCounts);
 
-      const maxAvgTokens = maxDensityMetrics.reduce((sum, m) => sum + m.readTokens, 0) / maxDensityMetrics.length;
-      const minAvgTokens = minDensityMetrics.reduce((sum, m) => sum + m.readTokens, 0) / minDensityMetrics.length;
+      const maxAvgTokens = maxRecordCountsMetrics.reduce((sum, m) => sum + m.readTokens, 0) / maxRecordCountsMetrics.length;
+      const minAvgTokens = minRecordCountsMetrics.reduce((sum, m) => sum + m.readTokens, 0) / minRecordCountsMetrics.length;
 
-      const tokenReduction = ((maxAvgTokens - minAvgTokens) / maxAvgTokens * 100).toFixed(1);
-      insights.push(
-        `Density impact: ${minDensity}% density reduces tokens by ~${tokenReduction}% vs ${maxDensity}%`
-      );
-    }
-
-    // Average reasoning cost
-    const avgReasoningTokens = metrics.reduce((sum, m) => sum + m.reasoningTokens, 0) / metrics.length;
-    const avgQuestions = metrics.reduce((sum, m) => sum + m.totalQuestions, 0) / metrics.length;
-    const avgTokensPerQ = (avgReasoningTokens / avgQuestions).toFixed(1);
-    insights.push(`Answer reasoning: ~${avgTokensPerQ} tokens per question`);
-
-    // Trade-off analysis
-    const highAccuracy = metrics.filter((m) => m.accuracyPercent >= 90);
-    const tokenEfficientHighAccuracy = highAccuracy.filter((m) => m.charsPerToken > 25);
-    if (tokenEfficientHighAccuracy.length > 0) {
-      insights.push(
-        `Sweet spot: ${tokenEfficientHighAccuracy.length} format-density combinations achieve 90%+ accuracy with high token efficiency`
-      );
+      const tokenReduction = ((maxAvgTokens - minAvgTokens) / maxAvgTokens * 100).toFixed(2);
+      insights.push(`Record count difference: ${minRecordCounts} record count reduces tokens by ~${tokenReduction}% vs ${maxRecordCounts} record count`);
     }
 
     return insights;
@@ -455,17 +459,7 @@ class BenchmarkAnalytics {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    // Round numeric values for cleaner output
-    const roundedMetrics = analytics.metrics.map((m) => ({
-      ...m,
-      charsPerToken: parseFloat(m.charsPerToken.toFixed(2)),
-      tokensPerValue: parseFloat(m.tokensPerValue.toFixed(2)),
-      tokensPerQuestion: parseFloat(m.tokensPerQuestion.toFixed(2)),
-      correctnessRatio: parseFloat(m.correctnessRatio.toFixed(3)),
-      efficiency: parseFloat(m.efficiency.toFixed(3)),
-    }));
-
-    const output = { ...analytics, metrics: roundedMetrics };
+    const output = { ...analytics, metrics: analytics.metrics };
     fs.writeFileSync(this.outputFile, JSON.stringify(output));
   }
 }
