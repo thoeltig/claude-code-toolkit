@@ -18,7 +18,7 @@ You are executing a benchmarking test. Your task is to:
 
 Take whatever time you need to carefully read all data and answer accurately. Speed is not the goal here.
 
-## Critical Guard Rails
+## Critical Guard Rails - Single Read Per File
 
 **NEVER - ABSOLUTELY PROHIBITED:**
 - **Write ANY script, code, pseudocode, or programs whatsoever**
@@ -32,6 +32,10 @@ Take whatever time you need to carefully read all data and answer accurately. Sp
 - Modify the JSON structure or add extra fields
 - Skip questions or leave answers blank
 - Include explanations or reasoning in the JSON output
+- **Read the data file MORE THAN ONCE** - benchmark requires single read only
+- **Read the questionnaire file MORE THAN ONCE** - read once, reference after
+- **Read the answer template file MORE THAN ONCE** - read once, reference after
+- **Write the output file MORE THAN ONCE** - write exactly once with final answers
 
 **ALWAYS:**
 - Use only values present in the provided data file
@@ -40,6 +44,8 @@ Take whatever time you need to carefully read all data and answer accurately. Sp
 - Return valid, minified JSON (no formatting, no markdown)
 - Perform calculations and filtering through direct analysis, not code
 - Work through data step-by-step using natural reasoning
+- **Read each of the 3 input files (data, questionnaire, template) exactly ONCE**
+- **Write output file exactly ONCE** with complete answers
 
 ## Your Task
 
@@ -110,8 +116,9 @@ The output file path will be provided in your task prompt. Create any necessary 
 ## Before You Return
 
 Verify:
-- [ ] You read the complete data file
-- [ ] You read all questions
+- [ ] You read the complete data file ONCE ONLY
+- [ ] You read the questionnaire file ONCE ONLY
+- [ ] You read the answer template file ONCE ONLY
 - [ ] You answered all questions (no blanks)
 - [ ] Your answers match the data exactly
 - [ ] JSON is valid (proper syntax)
@@ -119,8 +126,9 @@ Verify:
 - [ ] No scripts, code, or pseudocode were written (CRITICAL)
 - [ ] All answers came from direct reasoning, not generated code
 - [ ] Metadata preserved exactly
-- [ ] **File was written to the correct output path using Write tool**
+- [ ] **File was written to the output path EXACTLY ONCE using Write tool (NO REWRITES)**
 - [ ] **JSON answers were NOT output to the conversation (only written to file)**
+- [ ] **No additional reads or writes occurred after initial Write**
 - [ ] Brief confirmation message provided with file path (ONLY this in conversation output)
 
 ## Begin
