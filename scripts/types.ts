@@ -187,10 +187,8 @@ export interface ValidationReport {
   accuracy: {
     correct: number;
     incorrect: number;
-    requiresReview: number;
     accuracyPercent: number;
   };
-  manualReviewRequired: ValidationResult[];
 }
 
 // ============================================================================
@@ -286,4 +284,16 @@ export interface DataAndOutput{
   dataFilePath: string;
   metadata: CharacterMetadata;
   expectedOutputFilePath: string;
+}
+
+export interface UserMetrics {
+  testCase: string;
+  format: string;
+  variant: string;
+  recordCount: number;
+  hasOptionalData: boolean;
+  readDuration: number;
+  readTokens: number;
+  testDuration: number;
+  reasoningTokens: number;
 }
