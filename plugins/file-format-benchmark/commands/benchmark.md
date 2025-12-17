@@ -73,12 +73,20 @@ If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
 
 ## Step 3: Execute Tests - Format-Sequential Approach
 
-**Key Strategy for CLI Stability:**
+**Key Strategy for CLI Stability & Single Read/Write Guarantee:**
 1. Process ONE format at a time (sequential across formats)
 2. For each format, execute all variants × record counts combinations
-3. For each combination: 1 read test → wait → 3 full tests in parallel → wait
+3. For each combination: 1 read test → wait for completion → 3 full tests in parallel → wait for all completion
 4. Maintain running task queue: max 12 tasks in parallel at any time
 5. Track all agent IDs for metrics extraction
+6. **CRITICAL: Each test launches exactly ONCE - no re-launches or retries for same combination**
+7. **CRITICAL: Wait for complete completion before moving to next combination**
+
+**Guarantees:**
+- Each data file read exactly ONCE (1 read-only test per combination)
+- Each output file written exactly ONCE (1 write per full test)
+- No parallel reads of same file
+- No task re-launches
 
 **Total Tests per Format:** 2 variants × 2 record counts × (1 read + 3 full) = 16 tests
 **Peak Parallel Tasks:** 4-12 (read + up to 3 fulls per combination)
@@ -89,27 +97,39 @@ If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
 For each FORMAT in selected_formats (one format at a time):
   Read agent_ids_for_format = []
   Full agent_ids_for_format = []
+  launched_combinations = Set()  // Track to prevent re-launches
 
   For each VARIANT in selected_variants:
     For each RECORD_COUNT in [80, 40]:
       combination_name = {format}_{variant}_{recordCount}
 
-      // Step 3a: Launch 1 Read-Only Test
+      // GUARD: Never launch same combination twice
+      IF combination_name in launched_combinations:
+        ERROR: "Attempted to re-launch test for " + combination_name
+        ABORT
+      ENDIF
+      launched_combinations.Add(combination_name)
+
+      // Step 3a: Launch 1 Read-Only Test (ONCE per combination)
       Launch: benchmark-read-only agent for data file
       Wait for completion
       Collect and store READ agent ID
 
-      // Step 3b: Launch 3 Full Tests (max 3 parallel)
+      // Step 3b: Launch 3 Full Tests (max 3 parallel, ONCE each)
+      full_ids_for_combo = []
       For test_run in [1, 2, 3]:
-        Launch: benchmark-full-test agent
+        Launch: benchmark-full-test agent (test run {test_run}/3)
+        full_ids_for_combo.Add(task_id)
 
       Wait for all 3 full tests to complete
       Collect and store all 3 FULL agent IDs
+      Full agent_ids_for_format.AddAll(full_ids_for_combo)
 
   Save agent_ids_for_format (read + full) for metrics extraction
   Move to next format
 
 Total execution: ~8 formats × ~16 tests per = 128 tasks total
+GUARANTEE: Each combination tested exactly once, each agent task launched exactly once
 ```
 
 ### 3a. Launch Read-Only Test (Sequential - Wait for Completion)
@@ -126,14 +146,17 @@ Task(
 ```
 
 This launches readonly test which will:
-1. Read the file completely
+1. Read the file completely (ONCE ONLY)
 2. Generate a transcript with cache_creation_input_tokens
 3. Return an agent ID (e.g., agent-ae4a357)
 
-**Important**:
+**CRITICAL - Single Execution Guarantee**:
+- **NEVER** launch duplicate readonly tests for the same data file
+- **DO NOT** retry or re-launch this combination
 - WAIT for this test to complete before launching full tests
 - Cache is now warm for the data file
 - Collect returned agent ID for step 5a (read-only test metrics extraction)
+- **This test MUST run exactly once per data file - second launch = benchmarking corruption**
 
 ### 3b. Launch 3 Full Tests in Parallel (After Read Complete)
 
@@ -141,7 +164,15 @@ After read-only test finishes for a combination, launch all 3 full tests in para
 
 ```bash
 # Launch 3 full tests in parallel (only for this combination)
+# GUARD: Track output files to prevent duplicate writes
 for test_number in {1..3}; do
+  output_file = "${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json"
+  IF file_exists(output_file):
+    ERROR: "Output file already exists: " + output_file
+    ERROR: "This indicates a duplicate test run - benchmarking is corrupted"
+    ABORT
+  ENDIF
+
   Task(
     description: "Full test {format}_{variant}_{recordCount} run-{test_number}/3",
     subagent_type: "benchmark-full-test",
@@ -153,26 +184,32 @@ Variant: {variant}
 Record Count: {recordCount}
 Test Run: {test_number}/3
 
-Files to process:
+Files to read ONCE each:
 - Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
 - Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
 - Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
-- Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
 
-Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path."
+Output path (write ONCE):
+- ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
+
+Read each file exactly ONCE. Answer all questions based ONLY on data in the file. Write output file exactly ONCE."
   )
 done
 ```
 
 This launches 3 full tests in parallel which will:
 1. Benefit from warm cache (data file already read in 3a)
-2. Process data file and questions
-3. Generate answer JSON to output path
+2. Read data file, questionnaire, template (EACH ONCE ONLY)
+3. Generate answer JSON to output path (WRITE ONCE)
 4. Return agent IDs (e.g., agent-ae4b456, agent-ae4b457, agent-ae4b458)
 
-**Important**:
+**CRITICAL - Single Execution & Write Guarantee**:
 - Launch all 3 tests together for this combination
+- **NEVER** launch duplicate full tests for same {format}_{variant}_{recordCount}_{test_number}
+- **DO NOT** retry or re-launch individual test runs
 - WAIT for all 3 to complete before moving to next combination
+- Verify output files are created exactly once (check before/after)
+- **Each output file MUST be written exactly once - second write = benchmarking corruption**
 - Collect all 3 returned agent IDs for step 5b (full test metrics extraction)
 - Then proceed to next combination within the same format
 
@@ -242,14 +279,27 @@ Status icons:
 
 After ALL tests complete (readonly and full), extract metrics from all agent transcripts.
 
-### Step 5a: Extract Read Token Usage from ALL Readonly Tests
+**CRITICAL - Extract Each Transcript ONCE ONLY:**
+- Each readonly agent ID extracted exactly once
+- Each full test agent ID extracted exactly once
+- No duplicate extraction (second extraction = corrupted metrics)
+- Output files created exactly once
 
-Combine results from data readonly tests:
+### Step 5a: Extract Read Token Usage from ALL Readonly Tests (Extract ONCE)
+
+Combine results from data readonly tests (extract each readonly agent ONCE):
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# Collect ALL readonly agent IDs from step 3a:
+# GUARD: Check output file doesn't exist (prevent re-extraction)
+if [ -f ./benchmarking/read_token_usage.json ]; then
+  echo "ERROR: read_token_usage.json already exists"
+  echo "This indicates metrics were already extracted - aborting to prevent data corruption"
+  exit 1
+fi
+
+# Collect ALL readonly agent IDs from step 3a (extract each ID ONCE):
 # - Data file IDs: a613419 aa7992a a44bacd abe6c4f ...
 # - Question file IDs: ae1a234 ae1a235 ...
 # - Template file IDs: ae1a236 ae1a237 ...
@@ -261,6 +311,12 @@ python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.
   --projects-dir ~/.claude/projects \
   --json \
   --output ./benchmarking/read_token_usage.json
+
+# VERIFY: Confirm file was created (only way extraction succeeded)
+if [ ! -f ./benchmarking/read_token_usage.json ]; then
+  echo "ERROR: Extraction failed - output file not created"
+  exit 1
+fi
 ```
 
 **Output includes all files** with breakdown (sample):
@@ -287,19 +343,32 @@ python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.
 }
 ```
 
-### Step 5b: Extract Full Test Metrics (Duration & Tokens)
+### Step 5b: Extract Full Test Metrics (Duration & Tokens) (Extract ONCE)
 
 After ALL full tests complete, extract and aggregate metrics stopping at first Write tool call. The script automatically groups the 3 test runs per format/variant/recordCount and averages their metrics:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# Collect ALL full test agent IDs from step 3b (all 3 runs per test case)
+# GUARD: Check output file doesn't exist (prevent re-extraction)
+if [ -f ./benchmarking/reasoning_token_usage.json ]; then
+  echo "ERROR: reasoning_token_usage.json already exists"
+  echo "This indicates metrics were already extracted - aborting to prevent data corruption"
+  exit 1
+fi
+
+# Collect ALL full test agent IDs from step 3b (all 3 runs per test case, extract each ONCE)
 python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractReasoning.py \
   {full_test_agent_id_1} {full_test_agent_id_2} {full_test_agent_id_3} ... \
   --projects-dir ~/.claude/projects \
   --json \
   --output ./benchmarking/reasoning_token_usage.json
+
+# VERIFY: Confirm file was created (only way extraction succeeded)
+if [ ! -f ./benchmarking/reasoning_token_usage.json ]; then
+  echo "ERROR: Extraction failed - output file not created"
+  exit 1
+fi
 ```
 
 **Output includes aggregated metrics** (averaged across 3 test runs):
@@ -494,3 +563,34 @@ ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
 11. **Default Haiku**: If --model not specified, use haiku
 
 12. **Default With Thinking**: If --thinking not specified, use on
+
+### Guardrails Summary - Preventing Data Corruption
+
+**These guarantees ensure benchmarking accuracy:**
+
+1. **Single Read Guarantee**:
+   - Each data file: read ONCE (benchmark-read-only agent)
+   - Each questionnaire: read ONCE (benchmark-full-test agent)
+   - Each answer template: read ONCE (benchmark-full-test agent)
+   - No re-reads, no verifications, no retries
+
+2. **Single Write Guarantee**:
+   - Each output file: written ONCE by single agent
+   - No re-writes, no overwrites, no appends
+   - Output file checked before launch (guard against duplicate test runs)
+
+3. **Single Extraction Guarantee**:
+   - Each readonly agent transcript: extracted ONCE (Step 5a)
+   - Each full test agent transcript: extracted ONCE (Step 5b)
+   - Output files checked before extraction (prevent re-extraction)
+
+4. **No Duplicate Launches**:
+   - Track all launched combinations
+   - Abort if attempting to re-launch same test
+   - Each {format}_{variant}_{recordCount} tests ONCE
+
+5. **Enforcement Points**:
+   - Algorithm tracks launched combinations
+   - Output file pre-checks guard against duplicate writes
+   - Extraction output file checks prevent re-extraction
+   - All verifications MUST pass before continuing
