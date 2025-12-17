@@ -1,6 +1,6 @@
 ---
 description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), JSONL, TOON, Markdown, YAML, Apache). Generates test data, executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
-argument-hint: [--formats csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache] [--variant optional,mandatory] [--model haiku|sonnet] [--thinking on|off]
+argument-hint: [--formats csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache] [--variant optional,mandatory] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
 allowed-tools: Bash
 ---
 
@@ -27,25 +27,96 @@ Extract from $ARGUMENTS:
 - `--variant`: Data variant with optional or mandatory values (default: both - optional,mandatory)
 - `--model`: haiku or sonnet (default: haiku)
 - `--thinking`: on or off (default: on)
+- `--output`: Output folder path for benchmark structure and test data (default: auto-generate in current directory)
 
-Example:
+### Output Folder
+
+**If `--output` is provided:**
+- Use the specified folder as benchmark working directory
+- Enables running partial benchmarks across multiple sessions (e.g., format A today, format B tomorrow)
+- Example: `--output /path/to/my/benchmark`
+
+**If `--output` is NOT provided (auto-generate):**
+- Generate folder name: `benchmark_{formats}_{variant}_{model}_{thinking}` in current working directory
+- Example: `benchmark_csv_markdown_optional_haiku_on`
+- Example: `benchmark_all_optional_mandatory_sonnet_off` (if all formats)
+
+**Resulting folder structure (in output folder):**
+```
+{OUTPUT_FOLDER}/
+├── data/
+├── questions/
+├── answers_template/
+├── answers_validation/
+├── subagent_outputs/
+├── results/
+├── metadata.json
+├── read_token_usage.json
+├── reasoning_token_usage.json
+└── analytics_results.json
+```
+
+### Argument Examples
+
 - `--formats csv,markdown` → Test only CSV and Markdown
 - `--model sonnet --thinking off` → Use Sonnet without extended thinking
-- No args → Test all formats with Haiku and thinking enabled
+- `--output /path/to/benchmark` → Use custom folder path
+- `--formats csv --output ./csv_benchmark` → CSV only in custom folder
+- No args → Test all formats with Haiku and thinking, auto-generate folder in current directory
 
-## Step 1: Generate Test Data
+## Step 1: Prepare Output Folder
 
-Build the TypeScript project and run test data generation:
+Determine the output folder and set `${BENCHMARK_OUTPUT_DIR}`:
+
+```bash
+# If --output was provided, use it
+if [ -n "$OUTPUT_PATH" ]; then
+  BENCHMARK_OUTPUT_DIR="$OUTPUT_PATH"
+  mkdir -p "$BENCHMARK_OUTPUT_DIR"
+else
+  # Auto-generate folder name from parameters
+  # Format: benchmark_{formats}_{variant}_{model}_{thinking}
+  # Use shorthand for "all" cases to keep folder names reasonable
+
+  if [ "$FORMATS" = "csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache" ]; then
+    FORMATS_PART="format_all"
+  else
+    FORMATS_PART="${FORMATS//,/_}"
+  fi
+
+  if [ "$VARIANT" = "optional,mandatory" ]; then
+    VARIANT_PART="variant_all"
+  else
+    VARIANT_PART="${VARIANT//,/_}"
+  fi
+
+  BENCHMARK_OUTPUT_DIR="benchmark_${FORMATS_PART}_${VARIANT_PART}_${MODEL}_${THINKING}"
+  mkdir -p "$BENCHMARK_OUTPUT_DIR"
+  echo "Generated benchmark folder: $BENCHMARK_OUTPUT_DIR"
+fi
+
+echo "Benchmark output folder: $BENCHMARK_OUTPUT_DIR"
+```
+
+**Example generated folder names:**
+- All defaults: `benchmark_format_all_variant_all_haiku_on`
+- Specific formats: `benchmark_csv_markdown_optional_haiku_on`
+- Specific variants: `benchmark_format_all_optional_sonnet_off`
+- Custom path: Use `--output /path/to/folder`
+
+## Step 2: Generate Test Data
+
+Build the TypeScript project and run test data generation to the output folder:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 npm run build
-npm run generate
+npm run generate --output "$BENCHMARK_OUTPUT_DIR"
 ```
 
 This:
 1. Compiles TypeScript to JavaScript (orchestrator.ts, analytics.ts, etc.)
-2. Generates test data:
+2. Generates test data to `$BENCHMARK_OUTPUT_DIR`:
    - Data files (CSV, JSON compact/pretty, JSONL, TOON, Markdown, YAML, Apache logs)
    - 2 data variants: optional, mandatory
    - Record count format: 100, 50
@@ -54,9 +125,9 @@ This:
    - metadata.json with all dataset information
    - Directory structure for test execution
 
-## Step 2: Load Test Configuration
+## Step 3: Load Test Configuration
 
-Read `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/metadata.json` to get all test cases.
+Read `${BENCHMARK_OUTPUT_DIR}/metadata.json` to get all test cases.
 
 For each format in the selected formats list:
   For each optional data variant in the selected variant list:
@@ -71,7 +142,7 @@ Example test cases:
 
 If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
 
-## Step 3: Execute Tests - Format-Sequential Approach
+## Step 4: Execute Tests - Format-Sequential Approach
 
 **Key Strategy for CLI Stability & Single Read/Write Guarantee:**
 1. Process ONE format at a time (sequential across formats)
@@ -110,12 +181,12 @@ For each FORMAT in selected_formats (one format at a time):
       ENDIF
       launched_combinations.Add(combination_name)
 
-      // Step 3a: Launch 1 Read-Only Test (ONCE per combination)
+      // Step 4a: Launch 1 Read-Only Test (ONCE per combination)
       Launch: benchmark-read-only agent for data file
       Wait for completion
       Collect and store READ agent ID
 
-      // Step 3b: Launch 3 Full Tests (max 3 parallel, ONCE each)
+      // Step 4b: Launch 3 Full Tests (max 3 parallel, ONCE each)
       full_ids_for_combo = []
       For test_run in [1, 2, 3]:
         Launch: benchmark-full-test agent (test run {test_run}/3)
@@ -132,7 +203,7 @@ Total execution: ~8 formats × ~16 tests per = 128 tasks total
 GUARANTEE: Each combination tested exactly once, each agent task launched exactly once
 ```
 
-### 3a. Launch Read-Only Test (Sequential - Wait for Completion)
+### 4a. Launch Read-Only Test (Sequential - Wait for Completion)
 
 For each format + variant + record count combination:
 
@@ -141,7 +212,7 @@ Task(
   description: "Readonly test: {format}_{variant}_{recordCount} data file read",
   subagent_type: "benchmark-read-only",
   model: "haiku",
-  prompt: "Read this file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext} . Do not process or analyze."
+  prompt: "Read this file completely: ${BENCHMARK_OUTPUT_DIR}/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext} . Do not process or analyze."
 )
 ```
 
@@ -158,7 +229,7 @@ This launches readonly test which will:
 - Collect returned agent ID for step 5a (read-only test metrics extraction)
 - **This test MUST run exactly once per data file - second launch = benchmarking corruption**
 
-### 3b. Launch 3 Full Tests in Parallel (After Read Complete)
+### 4b. Launch 3 Full Tests in Parallel (After Read Complete)
 
 After read-only test finishes for a combination, launch all 3 full tests in parallel:
 
@@ -166,7 +237,7 @@ After read-only test finishes for a combination, launch all 3 full tests in para
 # Launch 3 full tests in parallel (only for this combination)
 # GUARD: Track output files to prevent duplicate writes
 for test_number in {1..3}; do
-  output_file = "${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json"
+  output_file = "${BENCHMARK_OUTPUT_DIR}/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json"
   IF file_exists(output_file):
     ERROR: "Output file already exists: " + output_file
     ERROR: "This indicates a duplicate test run - benchmarking is corrupted"
@@ -185,12 +256,12 @@ Record Count: {recordCount}
 Test Run: {test_number}/3
 
 Files to read ONCE each:
-- Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
-- Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
-- Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
+- Data file: ${BENCHMARK_OUTPUT_DIR}/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
+- Questionnaire: ${BENCHMARK_OUTPUT_DIR}/questions/questions_for_{variant}_{recordCount}_records.json
+- Answer template: ${BENCHMARK_OUTPUT_DIR}/answers_template/answers_for_{variant}_{recordCount}_records_template.json
 
 Output path (write ONCE):
-- ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
+- ${BENCHMARK_OUTPUT_DIR}/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
 
 Read each file exactly ONCE. Answer all questions based ONLY on data in the file. Write output file exactly ONCE."
   )
@@ -198,7 +269,7 @@ done
 ```
 
 This launches 3 full tests in parallel which will:
-1. Benefit from warm cache (data file already read in 3a)
+1. Benefit from warm cache (data file already read in 4a)
 2. Read data file, questionnaire, template (EACH ONCE ONLY)
 3. Generate answer JSON to output path (WRITE ONCE)
 4. Return agent IDs (e.g., agent-ae4b456, agent-ae4b457, agent-ae4b458)
@@ -210,10 +281,10 @@ This launches 3 full tests in parallel which will:
 - WAIT for all 3 to complete before moving to next combination
 - Verify output files are created exactly once (check before/after)
 - **Each output file MUST be written exactly once - second write = benchmarking corruption**
-- Collect all 3 returned agent IDs for step 5b (full test metrics extraction)
+- Collect all 3 returned agent IDs for step 6b (full test metrics extraction)
 - Then proceed to next combination within the same format
 
-## Step 4: Run Validation
+## Step 5: Run Validation
 
 After ALL tests complete, run a single validation command that automatically finds and validates all test cases:
 
@@ -221,9 +292,9 @@ After ALL tests complete, run a single validation command that automatically fin
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 node dist/validate.js \
-  --subagent-outputs ./benchmarking/subagent_outputs \
-  --validation-dir ./benchmarking/answers_validation \
-  --results-dir ./benchmarking/results
+  --subagent-outputs ${BENCHMARK_OUTPUT_DIR}/subagent_outputs \
+  --validation-dir ${BENCHMARK_OUTPUT_DIR}/answers_validation \
+  --results-dir ${BENCHMARK_OUTPUT_DIR}/results
 ```
 
 The script:
@@ -245,7 +316,7 @@ Found 32 test cases to validate
 ✗ yaml            optional   50   → 87.42%
 ...
 
-✓ Validation complete. Results saved to: ./benchmarking/results
+✓ Validation complete. Results saved to: ${BENCHMARK_OUTPUT_DIR}/results
 ```
 
 Status icons:
@@ -275,7 +346,7 @@ Status icons:
 }
 ```
 
-## Step 5: Extract Metrics from Test Transcripts
+## Step 6: Extract Metrics from Test Transcripts
 
 After ALL tests complete (readonly and full), extract metrics from all agent transcripts.
 
@@ -285,7 +356,7 @@ After ALL tests complete (readonly and full), extract metrics from all agent tra
 - No duplicate extraction (second extraction = corrupted metrics)
 - Output files created exactly once
 
-### Step 5a: Extract Read Token Usage from ALL Readonly Tests (Extract ONCE)
+### Step 6a: Extract Read Token Usage from ALL Readonly Tests (Extract ONCE)
 
 Combine results from data readonly tests (extract each readonly agent ONCE):
 
@@ -293,13 +364,13 @@ Combine results from data readonly tests (extract each readonly agent ONCE):
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 # GUARD: Check output file doesn't exist (prevent re-extraction)
-if [ -f ./benchmarking/read_token_usage.json ]; then
+if [ -f ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json ]; then
   echo "ERROR: read_token_usage.json already exists"
   echo "This indicates metrics were already extracted - aborting to prevent data corruption"
   exit 1
 fi
 
-# Collect ALL readonly agent IDs from step 3a (extract each ID ONCE):
+# Collect ALL readonly agent IDs from step 4a (extract each ID ONCE):
 # - Data file IDs: a613419 aa7992a a44bacd abe6c4f ...
 # - Question file IDs: ae1a234 ae1a235 ...
 # - Template file IDs: ae1a236 ae1a237 ...
@@ -310,10 +381,10 @@ python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.
   {template_agent_1} {template_agent_2} ... \
   --projects-dir ~/.claude/projects \
   --json \
-  --output ./benchmarking/read_token_usage.json
+  --output ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json
 
 # VERIFY: Confirm file was created (only way extraction succeeded)
-if [ ! -f ./benchmarking/read_token_usage.json ]; then
+if [ ! -f ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json ]; then
   echo "ERROR: Extraction failed - output file not created"
   exit 1
 fi
@@ -343,7 +414,7 @@ fi
 }
 ```
 
-### Step 5b: Extract Full Test Metrics (Duration & Tokens) (Extract ONCE)
+### Step 6b: Extract Full Test Metrics (Duration & Tokens) (Extract ONCE)
 
 After ALL full tests complete, extract and aggregate metrics stopping at first Write tool call. The script automatically groups the 3 test runs per format/variant/recordCount and averages their metrics:
 
@@ -351,21 +422,21 @@ After ALL full tests complete, extract and aggregate metrics stopping at first W
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 # GUARD: Check output file doesn't exist (prevent re-extraction)
-if [ -f ./benchmarking/reasoning_token_usage.json ]; then
+if [ -f ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json ]; then
   echo "ERROR: reasoning_token_usage.json already exists"
   echo "This indicates metrics were already extracted - aborting to prevent data corruption"
   exit 1
 fi
 
-# Collect ALL full test agent IDs from step 3b (all 3 runs per test case, extract each ONCE)
+# Collect ALL full test agent IDs from step 4b (all 3 runs per test case, extract each ONCE)
 python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractReasoning.py \
   {full_test_agent_id_1} {full_test_agent_id_2} {full_test_agent_id_3} ... \
   --projects-dir ~/.claude/projects \
   --json \
-  --output ./benchmarking/reasoning_token_usage.json
+  --output ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json
 
 # VERIFY: Confirm file was created (only way extraction succeeded)
-if [ ! -f ./benchmarking/reasoning_token_usage.json ]; then
+if [ ! -f ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json ]; then
   echo "ERROR: Extraction failed - output file not created"
   exit 1
 fi
@@ -404,7 +475,7 @@ Both extraction scripts now output averaged metrics ready for analytics:
 - `read_token_usage.json`: Read tokens per file (single readonly test)
 - `reasoning_token_usage.json`: Averaged reasoning tokens across 3 full test runs
 
-## Step 6: Run Analytics
+## Step 7: Run Analytics
 
 After both readonly and full test metrics are extracted, analytics processes the complete benchmark data:
 
@@ -412,16 +483,16 @@ After both readonly and full test metrics are extracted, analytics processes the
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 node dist/analytics.js \
-  --read-metrics ./benchmarking/read_token_usage.json \
-  --reasoning-metrics ./benchmarking/reasoning_token_usage.json \
-  --metadata ./benchmarking/metadata.json \
-  --validation-dir ./benchmarking/results/ \
-  --output ./benchmarking/analytics_results.json
+  --read-metrics ${BENCHMARK_OUTPUT_DIR}/read_token_usage.json \
+  --reasoning-metrics ${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json \
+  --metadata ${BENCHMARK_OUTPUT_DIR}/metadata.json \
+  --validation-dir ${BENCHMARK_OUTPUT_DIR}/results/ \
+  --output ${BENCHMARK_OUTPUT_DIR}/analytics_results.json
 ```
 
 The analytics script will:
-1. Load read token usage from `benchmarking/read_token_usage.json`
-2. Load full test metrics from `benchmarking/reasoning_token_usage.json`
+1. Load read token usage from `${BENCHMARK_OUTPUT_DIR}/read_token_usage.json`
+2. Load full test metrics from `${BENCHMARK_OUTPUT_DIR}/reasoning_token_usage.json`
 3. Load metadata with character counts and record info
 4. Load validation results for accuracy data
 5. Calculate efficiency scores:
@@ -432,7 +503,7 @@ The analytics script will:
 7. Generate insights and rankings
 8. Write comprehensive results JSON
 
-## Step 7: Display Results Summary
+## Step 8: Display Results Summary
 
 After analytics completes, read the output file and display:
 
@@ -458,50 +529,46 @@ Insights:
 - {insight 3}
 - {insight 4}
 
-Full results saved to: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/analytics_results.json
+Full results saved to: ${BENCHMARK_OUTPUT_DIR}/analytics_results.json
 =================================================================
 ```
 
-## File Structure Reference
+## Output Folder Structure
+
+The benchmark output folder contains all generated data and test results:
 
 ```
-${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
-├── benchmarking/
-│   ├── data/
-│   │   └── {format}/
-│   │       ├── {format}_with_{variant}_100_records.{ext}
-│   │       └── {format}_with_{variant}_50_records.{ext}
-│   ├── questions/
-│   │   ├── questions_for_{variant}_100_records.json
-│   │   └── questions_for_{variant}_50_records.json
-│   ├── answers_template/
-│   │   ├── answers_for_{variant}_100_records_template.json
-│   │   └── answers_for_{variant}_50_records_template.json
-│   ├── answers_validation/
-│   │   └── questions_and_answers_for_{variant}_{recordCount}_records.json
-│   ├── subagent_outputs/
-│   │   └── {format}/
-│   │       ├── answers_for_{variant}_100_records.json
-│   │       └── answers_for_{variant}_50_records.json
-│   ├── results/
-│   │   └── {format}_{variant}_{recordCount}_validation.json
-│   ├── metadata.json
-│   ├── read_token_usage.json
-│   ├── reasoning_token_usage.json
-│   └── analytics_results.json
-├── dist/
-│   ├── orchestrator.js
-│   ├── analytics.js
-│   ├── validate.js
-│   └── validators/
-├── generators/
-├── converters/
-├── validators/
-├── orchestrator.ts
-├── analytics.ts
-├── validate.ts
-└── package.json
+${BENCHMARK_OUTPUT_DIR}/
+├── data/
+│   └── {format}/
+│       ├── {format}_with_{variant}_100_records.{ext}
+│       └── {format}_with_{variant}_50_records.{ext}
+├── questions/
+│   ├── questions_for_{variant}_100_records.json
+│   └── questions_for_{variant}_50_records.json
+├── answers_template/
+│   ├── answers_for_{variant}_100_records_template.json
+│   └── answers_for_{variant}_50_records_template.json
+├── answers_validation/
+│   └── questions_and_answers_for_{variant}_{recordCount}_records.json
+├── subagent_outputs/
+│   └── {format}/
+│       ├── answers_for_{variant}_100_records_1.json
+│       ├── answers_for_{variant}_100_records_2.json
+│       └── answers_for_{variant}_100_records_3.json
+├── results/
+│   └── {format}_{variant}_{recordCount}_validation.json
+├── metadata.json
+├── read_token_usage.json
+├── reasoning_token_usage.json
+└── analytics_results.json
 ```
+
+**Example:**
+- Generated folder: `benchmark_csv_optional_haiku_on/`
+- Custom path: `/path/to/my/benchmark/`
+
+This modularity allows running benchmarks for different format subsets at different times without conflicts.
 
 ## Format Extensions
 

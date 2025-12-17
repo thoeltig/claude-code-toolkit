@@ -57,7 +57,7 @@ export class BenchmarkingOrchestrator {
 
   private createDirectory(fullPath: string){
     if (!fs.existsSync(fullPath)) {
-            fs.mkdirSync(fullPath, { recursive: true });
+      fs.mkdirSync(fullPath, { recursive: true });
     }
   }
 
