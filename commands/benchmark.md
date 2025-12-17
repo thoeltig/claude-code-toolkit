@@ -128,30 +128,65 @@ This launches full test which will:
 
 ## Step 4: Run Validation
 
-After ALL tests complete, validate all answers using the TypeScript validator. For each format × variant × recordCount combination, validate each of the 3 test outputs:
+After ALL tests complete, run a single validation command that automatically finds and validates all test cases:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# For each format × variant × recordCount combination, validate each of the 3 test outputs
-for test_number in {1..3}; do
-  node dist/validate.js \
-    ./benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json \
-    ./benchmarking/answers_validation/questions_and_answers_for_{variant}_{recordCount}_records.json \
-    ./benchmarking/results/{format}_{variant}_{recordCount}_test{test_number}_validation.json
-done
-
-# Repeat for each format/variant/recordCount combination
+node dist/validate.js \
+  --subagent-outputs ./benchmarking/subagent_outputs \
+  --validation-dir ./benchmarking/answers_validation \
+  --results-dir ./benchmarking/results
 ```
 
-This will output validation results showing:
-- Questions answered correctly
-- Questions answered incorrectly
-- Overall accuracy percentage per test case
+The script:
+1. **Recursively finds** all `answers_for_*_records_1.json` files (these define test cases)
+2. **Extracts metadata** (format, variant, recordCount) from directory structure and filenames
+3. **Validates each test case** by:
+   - Loading all 3 answer files (test runs 1, 2, 3)
+   - Validating each against the ground truth
+   - Averaging accuracy across the 3 runs
+4. **Saves aggregated results** to `{format}_{variant}_{recordCount}_validation.json`
 
-Results will be written to `${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/results/` directory with test numbers in the filename (e.g., `{format}_{variant}_{recordCount}_test1_validation.json`).
+**Console output example:**
+```
+Found 32 test cases to validate
 
-**Note:** The `validate.ts` script (compiled to `dist/validate.js`) is the primary validation entry point. It uses the AnswerValidator class to deterministically validate answers against ground truth questionnaires.
+✓ csv             optional   100  → 98.33%
+✓ csv             optional   50   → 97.89%
+◐ json_compact    mandatory  100  → 92.15%
+✗ yaml            optional   50   → 87.42%
+...
+
+✓ Validation complete. Results saved to: ./benchmarking/results
+```
+
+Status icons:
+- `✓` = 100% accuracy
+- `◐` = 90-99% accuracy
+- `✗` = <90% accuracy
+
+**Output file structure per test case:**
+```json
+{
+  "format": "toon",
+  "variant": "optional",
+  "recordCount": 100,
+  "testRuns": 3,
+  "totalQuestions": 103,
+  "accuracy": {
+    "correct": 98.33,
+    "incorrect": 3.33,
+    "requiresReview": 1.33,
+    "accuracyPercent": 95.46
+  },
+  "perRunAccuracy": [
+    {"run": 1, "correct": 98, "incorrect": 3, "requiresReview": 2, "accuracyPercent": 95.15},
+    {"run": 2, "correct": 99, "incorrect": 4, "requiresReview": 0, "accuracyPercent": 96.12},
+    {"run": 3, "correct": 98, "incorrect": 3, "requiresReview": 2, "accuracyPercent": 95.15}
+  ]
+}
+```
 
 ## Step 5: Extract Metrics from Test Transcripts
 
@@ -204,52 +239,51 @@ python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractRead.
 
 ### Step 5b: Extract Full Test Metrics (Duration & Tokens)
 
-After ALL full tests complete, extract metrics stopping at first Write tool call:
+After ALL full tests complete, extract and aggregate metrics stopping at first Write tool call. The script automatically groups the 3 test runs per format/variant/recordCount and averages their metrics:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
-# Collect ALL full test agent IDs from step 3b
+# Collect ALL full test agent IDs from step 3b (all 3 runs per test case)
 python ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/commands/extractReasoning.py \
-  {full_test_agent_id_1} {full_test_agent_id_2} ... \
+  {full_test_agent_id_1} {full_test_agent_id_2} {full_test_agent_id_3} ... \
   --projects-dir ~/.claude/projects \
   --json \
   --output ./benchmarking/reasoning_token_usage.json
 ```
 
-**Output includes all files** with breakdown (sample):
+**Output includes aggregated metrics** (averaged across 3 test runs):
 ```json
 {
   "files": [
       {
-          "agentId": "ae1bdca",
           "format": "toon",
           "variant": "optional",
-          "recordCount": 80,
-          "durationMs": 49984.0,
-          "inputTokens": 5941,
-          "outputTokens": 881
+          "recordCount": 100,
+          "testRuns": 3,
+          "durationMs": 49984.33,
+          "reasoningTokens": 5941.67,
+          "outputTokens": 881.33
       }
   ],
   "summary": {
-      "totalTests": 1,
-      "totalDurationMs": 49984.0,
-      "totalReasoningTokens": 5941,
-      "totalOutputTokens": 881,
-      "totalCacheCreationTokens": 47345,
-      "averageDurationMs": 49984.0,
-      "averageReasoningTokens": 5941.0,
-      "averageOutputTokens": 881
+      "totalTestCases": 32,
+      "totalDurationMs": 1599494.56,
+      "totalReasoningTokens": 190133.44,
+      "totalOutputTokens": 28202.56,
+      "averageDurationMs": 49984.20,
+      "averageReasoningTokens": 5941.67,
+      "averageOutputTokens": 881.33
   }
 }
 ```
 
-**Calculate Actual Reasoning Tokens:**
-```
-For each test case:
-  readTokens = read_token_usage.json (matching format/variant/recordCount)
-  reasoningTokens = reasoning_token_usage.json (matching format/variant/recordCount)
-```
+**Note:** `testRuns` shows 3 for each test case, indicating the script has averaged all 3 runs
+
+**Data Ready for Analytics:**
+Both extraction scripts now output averaged metrics ready for analytics:
+- `read_token_usage.json`: Read tokens per file (single readonly test)
+- `reasoning_token_usage.json`: Averaged reasoning tokens across 3 full test runs
 
 ## Step 6: Run Analytics
 
