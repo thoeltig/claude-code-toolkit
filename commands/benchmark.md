@@ -71,15 +71,54 @@ Example test cases:
 
 If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
 
-## Step 3: Execute Tests
+## Step 3: Execute Tests - Format-Sequential Approach
 
-For each format + variant + record count combination in '${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/*/*.{csv,json,jsonl,toon,md,yaml,log}' run first 1 read-only test, wait till finish and then run 3 full tests in parallel. Again wait till finished before continuing with the next combination. Remember each agent id to later use in token usage extraction via script. This approach first provides the read token usage and also caches the file content which is important so the cost of the 3 full test runs are not so high. The 3 full test runs are necessary to get an average duration, reasoning token usages and information accuracy.
+**Key Strategy for CLI Stability:**
+1. Process ONE format at a time (sequential across formats)
+2. For each format, execute all variants × record counts combinations
+3. For each combination: 1 read test → wait → 3 full tests in parallel → wait
+4. Maintain running task queue: max 12 tasks in parallel at any time
+5. Track all agent IDs for metrics extraction
 
-### 3a. Launch Read-Only Test
+**Total Tests per Format:** 2 variants × 2 record counts × (1 read + 3 full) = 16 tests
+**Peak Parallel Tasks:** 4-12 (read + up to 3 fulls per combination)
 
-``` bash
+### Algorithm
+
+```
+For each FORMAT in selected_formats (one format at a time):
+  Read agent_ids_for_format = []
+  Full agent_ids_for_format = []
+
+  For each VARIANT in selected_variants:
+    For each RECORD_COUNT in [80, 40]:
+      combination_name = {format}_{variant}_{recordCount}
+
+      // Step 3a: Launch 1 Read-Only Test
+      Launch: benchmark-read-only agent for data file
+      Wait for completion
+      Collect and store READ agent ID
+
+      // Step 3b: Launch 3 Full Tests (max 3 parallel)
+      For test_run in [1, 2, 3]:
+        Launch: benchmark-full-test agent
+
+      Wait for all 3 full tests to complete
+      Collect and store all 3 FULL agent IDs
+
+  Save agent_ids_for_format (read + full) for metrics extraction
+  Move to next format
+
+Total execution: ~8 formats × ~16 tests per = 128 tasks total
+```
+
+### 3a. Launch Read-Only Test (Sequential - Wait for Completion)
+
+For each format + variant + record count combination:
+
+```bash
 Task(
-  description: "Readonly test for data: $(basename {format}_with_{variant}_{recordCount}_records.{ext})",
+  description: "Readonly test: {format}_{variant}_{recordCount} data file read",
   subagent_type: "benchmark-read-only",
   model: "haiku",
   prompt: "Read this file completely: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext} . Do not process or analyze."
@@ -91,40 +130,51 @@ This launches readonly test which will:
 2. Generate a transcript with cache_creation_input_tokens
 3. Return an agent ID (e.g., agent-ae4a357)
 
-**Important**: Collect returned agent ID for step 5a (read-only test metrics extraction).
+**Important**:
+- WAIT for this test to complete before launching full tests
+- Cache is now warm for the data file
+- Collect returned agent ID for step 5a (read-only test metrics extraction)
 
-### 3b. Launch 3 Full Tests in PARALLEL
+### 3b. Launch 3 Full Tests in Parallel (After Read Complete)
 
-``` bash
-# Data files readonly tests
+After read-only test finishes for a combination, launch all 3 full tests in parallel:
+
+```bash
+# Launch 3 full tests in parallel (only for this combination)
 for test_number in {1..3}; do
   Task(
-    description: "Full test for {format}_{variant}_{recordCount}",
+    description: "Full test {format}_{variant}_{recordCount} run-{test_number}/3",
     subagent_type: "benchmark-full-test",
     model: "{model}",
     thinking_mode: "{thinking}",
     prompt: "
-  Format: {format}
-  Variant: {variant}
-  Record Count: {recordCount}
+Format: {format}
+Variant: {variant}
+Record Count: {recordCount}
+Test Run: {test_number}/3
 
-  Files to process:
-  - Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
-  - Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
-  - Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
-  - Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
+Files to process:
+- Data file: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
+- Questionnaire: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/questions/questions_for_{variant}_{recordCount}_records.json
+- Answer template: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/answers_template/answers_for_{variant}_{recordCount}_records_template.json
+- Output path: ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/benchmarking/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
 
-  Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path."
+Read the data file, questionnaire, and answer template. Answer all questions based ONLY on data in the file. Save results to the output path."
   )
 done
 ```
 
-This launches full test which will:
-1. Process data file and questions
-2. Generate answer JSON to output path
-3. Return an agent ID (e.g., agent-ae4b456)
+This launches 3 full tests in parallel which will:
+1. Benefit from warm cache (data file already read in 3a)
+2. Process data file and questions
+3. Generate answer JSON to output path
+4. Return agent IDs (e.g., agent-ae4b456, agent-ae4b457, agent-ae4b458)
 
-**Important**: Collect all returned agent IDs for step 5b (full test metrics extraction).
+**Important**:
+- Launch all 3 tests together for this combination
+- WAIT for all 3 to complete before moving to next combination
+- Collect all 3 returned agent IDs for step 5b (full test metrics extraction)
+- Then proceed to next combination within the same format
 
 ## Step 4: Run Validation
 
@@ -397,27 +447,50 @@ ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts/
 
 ## Important Notes
 
-1. **Full Tests**: All data files in parallel Data files (8 formats × 2 variants × 2 record counts = 32 tests)
+### Execution Strategy (Critical for Stability)
 
-2. **Full Tests**: All in parallel (8 formats × 2 variants × 2 record counts = 32 tests)
+1. **Sequential Per Format** (Not All Parallel): Process formats one at a time to leverage cache locality and avoid CLI crashes from excessive parallel tasks
+   - Format 1: complete all tests (read + full for all combinations)
+   - Format 2: complete all tests
+   - etc.
 
-3. **Agent ID Collection**: Capture ALL agent IDs:
-   - From readonly tests (data)
-   - From full tests
-   - Total: ~32 agent IDs to track
+2. **Parallel Within Combination**: For each format/variant/recordCount combo, run 3 full tests in parallel AFTER the read test completes. This keeps cache warm and limits parallel tasks.
 
-4. **Two-Stage Metric Extraction**:
+3. **Max Parallel Tasks**: Never exceed 12 concurrent tasks at any time
+   - Typical peak: 4 tasks (1 read + 3 fulls for single combo)
+   - This ensures CLI stability
+
+4. **Read → Cache → Full Tests Pipeline**:
+   - Step 3a: Launch 1 read test (singleton)
+   - Wait for completion (cache is now warm)
+   - Step 3b: Launch 3 full tests (these benefit from cache)
+   - Wait for completion
+   - Move to next combination
+
+### Agent ID Collection and Tracking
+
+5. **Capture ALL Agent IDs in Order**:
+   - Format 1, Combo 1: [1 read ID, 3 full IDs]
+   - Format 1, Combo 2: [1 read ID, 3 full IDs]
+   - ... (all combos for Format 1)
+   - Format 2: (repeat)
+   - etc.
+   - **Total**: ~32 read IDs + 96 full IDs = 128 IDs (if all 8 formats)
+
+6. **Two-Stage Metric Extraction** (After All Tests Complete):
    - **5a**: Extract all readonly tokens → `read_token_usage.json`
    - **5b**: Extract all reasoning tokens → `reasoning_token_usage.json`
 
-6. **Both Scripts Use Same Pattern**: Search `~/.claude/projects` recursively for matching `agent-*.jsonl` files by ID
+7. **Both Scripts Use Same Pattern**: Search `~/.claude/projects` recursively for matching `agent-*.jsonl` files by ID
 
-7. **Validation Deferred**: All validation runs after test execution completes
+### General Execution Notes
 
-8. **Analytics Requires Both**: Analytics step requires both metric files to be present
+8. **Validation Deferred**: All validation runs after test execution completes (Step 4)
 
-9. **Default All Formats**: If --formats not specified, test all 8 formats
+9. **Analytics Requires Both**: Analytics step (Step 6) requires both metric files to be present
 
-10. **Default Haiku**: If --model not specified, use haiku
+10. **Default All Formats**: If --formats not specified, test all 8 formats
 
-11. **Default With Thinking**: If --thinking not specified, use on
+11. **Default Haiku**: If --model not specified, use haiku
+
+12. **Default With Thinking**: If --thinking not specified, use on
