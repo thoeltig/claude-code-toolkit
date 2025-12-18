@@ -189,6 +189,47 @@ export interface ValidationReport {
     incorrect: number;
     accuracyPercent: number;
   };
+  accuracyPerCategory: CategoryAnswerAccuracy[];
+}
+
+export interface MergedValidationReport {
+  format: Format;
+  variant: string;
+  recordCount: number;
+  testRuns: number;
+  totalQuestions: number;
+  accuracy: AnswerAccuracy;
+  perRunAccuracy: PerTestRunAnswerAccuracy[];
+  questionsAndProvidedAnswers: QuestionsAndProvidedAnswers[];  
+}
+
+export interface AnswerAccuracy {
+  correct: number;
+  incorrect: number;
+  accuracyPercent: number;  
+}
+
+export interface CategoryAnswerAccuracy extends AnswerAccuracy {
+  category: string;
+  unanswered: number; 
+}
+
+export interface PerTestRunAnswerAccuracy extends AnswerAccuracy {
+  run: number;
+  accuracyPerCategory: CategoryAnswerAccuracy[];
+}
+
+export interface QuestionsAndProvidedAnswers {
+  questionId: number;
+  category: QuestionCategory;
+  question: string;
+  expectedAnswer: string | number | string[] | boolean;
+  answers:ModelAnswer[];
+}
+
+export interface ModelAnswer {
+  givenAnswer: string | number | string[] | boolean;
+  correct: boolean;
 }
 
 // ============================================================================
@@ -285,6 +326,10 @@ export interface DataAndOutput{
   metadata: CharacterMetadata;
   expectedOutputFilePath: string;
 }
+
+// ============================================================================
+// Token usage extraction
+// ============================================================================
 
 export interface UserMetrics {
   testCase: string;

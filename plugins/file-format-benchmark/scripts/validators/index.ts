@@ -10,7 +10,15 @@ import {
   ProvidedAnswer,
   AnswerAndQuestion,
   Format,
+  AnswerAccuracy,
+  CategoryAnswerAccuracy,
 } from "../types";
+
+export interface AnswerCounter {
+  correct: number;
+  incorrect: number; 
+  notSet: number; 
+}
 
 export class AnswerValidator {
   /**
@@ -22,8 +30,18 @@ export class AnswerValidator {
     answersAndQuestions: AnswerAndQuestion[]
   ): ValidationReport {
     const results: ValidationResult[] = [];
+    const map: Map<string, AnswerCounter> = new Map();
 
     for (const answerAndQuestion of answersAndQuestions) {
+      let counter = map.get(answerAndQuestion.category);
+      if(!counter){
+        counter = {            
+          correct: 0,
+          incorrect: 0,
+          notSet: 0,  
+        };
+      }
+
       const providedAnswer = answerTemplate.answers.find((a) => a.questionId === answerAndQuestion.id);
 
       if (!providedAnswer) {
@@ -36,11 +54,21 @@ export class AnswerValidator {
           category: answerAndQuestion.category,
           method: answerAndQuestion.expectedAnswer.validationMethod
         });
+
+        counter.notSet++;
+        map.set(answerAndQuestion.category, counter);
         continue;
       }
 
-      const result = this.validateSingleAnswer(answerAndQuestion, providedAnswer);
+      const result = this.validateSingleAnswer(answerAndQuestion, providedAnswer);  
       results.push(result);
+
+      if(result.correct){        
+        counter.correct++;
+      }else{   
+        counter.incorrect++;
+      }
+      map.set(answerAndQuestion.category, counter);
     }
 
     // Calculate accuracy
@@ -49,13 +77,23 @@ export class AnswerValidator {
 
     return {
       format: format,
-      totalQuestions: results.length,
+      totalQuestions: totalValidatable,
       results,
       accuracy: {
         correct: correctCount,
         incorrect: totalValidatable - correctCount,
-        accuracyPercent: totalValidatable > 0 ? (correctCount / totalValidatable) * 100 : 0,
-      }
+        accuracyPercent: totalValidatable > 0 ? Math.round(((correctCount / totalValidatable) * 10000))/100 : 0,
+      },
+      accuracyPerCategory: [...map.entries()].map<CategoryAnswerAccuracy>(x => {
+        const counter = x[1];
+        return {      
+          category: x[0],    
+          correct: counter.correct,
+          incorrect: counter.incorrect,
+          unanswered: counter.notSet,
+          accuracyPercent: Math.round((counter.correct / (counter.correct+counter.incorrect+counter.notSet))*10000)/100
+        };
+      })
     };
   }
 

@@ -28,14 +28,14 @@ export class ProductRecordRandomizer{
   ];
 
   public static readonly locations: string[] = [
-    "New York, USA",
-    "Shanghai, China",
+    "New York (USA)",
+    "Shanghai (China)",
     "Singapore",
-    "Rotterdam, Netherlands",
-    "Hamburg, Germany",
+    "Rotterdam (Netherlands)",
+    "Hamburg (Germany)",
     "Hong Kong",
-    "Los Angeles, USA",
-    "Dubai, UAE",
+    "Los Angeles (USA)",
+    "Dubai (UAE)",
   ];
   
   public static readonly descriptions: string[] = [
