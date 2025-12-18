@@ -6,7 +6,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { UserMetrics } from "./types";
+import { UserMetrics } from "../types";
 
 interface AgentIdEntry {
   format: string;

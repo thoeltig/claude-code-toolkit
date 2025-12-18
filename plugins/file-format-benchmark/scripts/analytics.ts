@@ -5,65 +5,8 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import MetricsExtraction from "./metrics-extraction";
-import { UserMetrics } from "./types";
-
-interface ReadMetricsFile {
-  file: string;
-  path: string;
-  agentId: string;
-  format: string;
-  variant: string;
-  recordCount: number;
-  readTokens: number;
-  readDurationMs: number;
-}
-
-interface ReasoningMetricsFile {
-  format: string;
-  variant: string;
-  recordCount: number;
-  testRuns: number;
-  durationMs: number;
-  reasoningTokens: number;
-  outputTokens: number;
-}
-
-interface CombinedMetricsFile {
-  read: {
-    files: ReadMetricsFile[];
-    summary: {
-      totalFiles: number;
-      totalReadTokens: number;
-      totalReadDurationMs: number;
-      averageReadTokens: number;
-      averageDurationMs: number;
-    };
-  };
-  reasoning: {
-    files: ReasoningMetricsFile[];
-    summary: {
-      totalTestCases: number;
-      totalDurationMs: number;
-      totalReasoningTokens: number;
-      totalOutputTokens: number;
-      averageDurationMs: number;
-      averageReasoningTokens: number;
-      averageOutputTokens: number;
-    };
-  };
-}
-
-interface ValidationResult {
-  format: string;
-  recordCount: number;
-  totalQuestions: number;
-  accuracy: {
-    correct: number;
-    incorrect: number;
-    accuracyPercent: number;
-  };
-}
+import MetricsExtraction from "./analytics/metrics-extraction";
+import { MergedValidationReport, UserMetrics } from "./types";
 
 interface TestMetrics {
   testCase: string;
@@ -183,8 +126,8 @@ class BenchmarkAnalytics {
     return JSON.parse(content);
   }
 
-  private loadValidationResults(): Map<string, ValidationResult> {
-    const results = new Map<string, ValidationResult>();
+  private loadValidationResults(): Map<string, MergedValidationReport> {
+    const results = new Map<string, MergedValidationReport>();
 
     if (!fs.existsSync(this.validationDir)) {
       console.warn(`Validation directory not found: ${this.validationDir}`);
@@ -196,7 +139,7 @@ class BenchmarkAnalytics {
       if (file.endsWith("_validation.json")) {
         const filePath = path.join(this.validationDir, file);
         const content = fs.readFileSync(filePath, "utf-8");
-        const result = JSON.parse(content);
+        const result = JSON.parse(content) as MergedValidationReport;
 
         const key = `${result.format}_${result.recordCount}`;
         results.set(key, result);
@@ -206,19 +149,10 @@ class BenchmarkAnalytics {
     return results;
   }
 
-  private loadCombinedMetrics(): CombinedMetricsFile {
-    const content = fs.readFileSync(this.metricsFile, "utf-8");
-    try {
-      return JSON.parse(content);
-    } catch (err) {
-      throw new Error(`Failed to parse combined metrics from ${this.metricsFile}: ${err}`);
-    }
-  }
-
   private calculateMetrics(
     userMetrics: UserMetrics[],
     metadata: any,
-    validationResults: Map<string, ValidationResult>
+    validationResults: Map<string, MergedValidationReport>
   ): TestMetrics[] {
     const metrics: TestMetrics[] = [];
 
