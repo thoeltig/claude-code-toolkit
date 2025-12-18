@@ -7,6 +7,8 @@ import * as fs from "fs";
 import * as path from "path";
 import MetricsExtraction from "./analytics/metrics-extraction";
 import { MergedValidationReport, UserMetrics } from "./types";
+import ReportValidator from "./validators/reportValidator";
+import { DIRECTORY_ANSWERS_VALIDATION, FILE_ANALYTICS_RESULT, FILE_METADATA, FILE_METRICS } from "./consts";
 
 interface TestMetrics {
   testCase: string;
@@ -69,29 +71,31 @@ interface AnalyticsOutput {
 }
 
 class BenchmarkAnalytics {
-  private metadataFile: string;
+  private outputDir: string;
   private validationDir: string;
+  private metadataFile: string;
   private outputFile: string;
   private metricsFile: string;
   private agentIdsFile: string;
 
-  constructor(agentIdsFile: string, metadataFile: string, validationDir: string, outputDir: string) {
+  constructor(agentIdsFile: string, outputDir: string) {
     this.agentIdsFile = agentIdsFile;
-    this.metadataFile = metadataFile;
-    this.validationDir = validationDir;
-    this.outputFile = path.join(outputDir, "analytics_results.json");
-    this.metricsFile = path.join(outputDir, "metrics.json");
+    this.outputDir = outputDir;
+    this.validationDir = path.join(outputDir, DIRECTORY_ANSWERS_VALIDATION);
+    this.metadataFile = path.join(this.outputDir, FILE_METADATA);
+    this.outputFile = path.join(outputDir, FILE_ANALYTICS_RESULT);
+    this.metricsFile = path.join(outputDir, FILE_METRICS);
   }
 
   public analyze(): void {
     console.log("Extracting metrics from agent transcripts...");
     const userMetrics = this.extractMetrics();
+    
+    console.log("Validating results...");
+    const validationResults = this.validateResults();
 
     console.log("Loading metadata...");
     const metadata = this.loadMetadata();
-
-    console.log("Loading validation results...");
-    const validationResults = this.loadValidationResults();
 
     console.log("Calculating metrics...");
     const testMetrics = this.calculateMetrics(userMetrics, metadata, validationResults);
@@ -120,13 +124,12 @@ class BenchmarkAnalytics {
     }
   }
 
-
   private loadMetadata(): any {
     const content = fs.readFileSync(this.metadataFile, "utf-8");
     return JSON.parse(content);
   }
 
-  private loadValidationResults(): Map<string, MergedValidationReport> {
+  private validateResults(): Map<string, MergedValidationReport> {    
     const results = new Map<string, MergedValidationReport>();
 
     if (!fs.existsSync(this.validationDir)) {
@@ -134,16 +137,15 @@ class BenchmarkAnalytics {
       return results;
     }
 
-    const files = fs.readdirSync(this.validationDir);
-    for (const file of files) {
-      if (file.endsWith("_validation.json")) {
-        const filePath = path.join(this.validationDir, file);
-        const content = fs.readFileSync(filePath, "utf-8");
-        const result = JSON.parse(content) as MergedValidationReport;
-
-        const key = `${result.format}_${result.recordCount}`;
-        results.set(key, result);
-      }
+    try {
+      const validator = new ReportValidator(this.outputDir);
+      var reports = validator.validate();
+      reports.forEach(x => {
+        const key = `${x.format}_${x.recordCount}`;
+        results.set(key, x);
+      });
+    } catch (err) {
+      throw new Error(`Validation failed: ${err}`);
     }
 
     return results;
@@ -374,8 +376,6 @@ class BenchmarkAnalytics {
 if (require.main === module) {
   const args = process.argv.slice(2);
   let agentIdsFile: string | undefined;
-  let metadataFile: string | undefined;
-  let validationDir: string | undefined;
   let outputDir: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
@@ -383,25 +383,19 @@ if (require.main === module) {
       case "--agent-ids":
         agentIdsFile = args[++i];
         break;
-      case "--metadata":
-        metadataFile = args[++i];
-        break;
-      case "--validation-dir":
-        validationDir = args[++i];
-        break;
       case "--output":
         outputDir = args[++i];
         break;
     }
   }
 
-  if (!agentIdsFile || !metadataFile || !validationDir || !outputDir) {
-    console.error("Usage: ts-node analytics.ts --agent-ids <file> --metadata <file> --validation-dir <dir> --output <dir>");
+  if (!agentIdsFile || !outputDir) {
+    console.error("Usage: ts-node analytics.ts --agent-ids <file> --output <dir>");
     process.exit(1);
   }
 
   try {
-    const analytics = new BenchmarkAnalytics(agentIdsFile, metadataFile, validationDir, outputDir);
+    const analytics = new BenchmarkAnalytics(agentIdsFile, outputDir);
     analytics.analyze();
   } catch (err) {
     console.error(`Error: ${err}`);

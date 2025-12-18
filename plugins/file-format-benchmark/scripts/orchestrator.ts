@@ -19,17 +19,20 @@ import {
   GeneratedFiles,
   GeneratorResult
 } from "./types";
+import { 
+  DIRECTORIES,
+  DIRECTORY_DATA,
+  DIRECTORY_SUBAGENT_OUTPUT,
+  DIRECTORY_ANSWERS_VALIDATION,
+  DIRECTORY_QUESTIONS,
+  DIRECTORY_ANSWERS_TEMPLATE,
+  DIRECTORY_RESULTS,
+  FORMATS,
+  FILE_METADATA
+ } from "./consts";
 
 const MANDATORY_STATE: boolean[] = [true, false];
 const TARGET_SIZES: number[] = [80, 40];
-const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "jsonl", "toon", "markdown", "yaml", "apache"];
-const DATA_DIRECTORY = "data";
-const ANSWERS_VALIDATION_DIRECTORY = "answers_validation";
-const QUESTIONS_DIRECTORY = "questions";
-const ANSWERS_TEMPLATE_DIRECTORY = "answers_template";
-const SUBAGENT_OUTPUT_DIRECTORY = "subagent_outputs";
-const RESULTS_DIRECTORY = "results";
-const DIRECTORIES = [DATA_DIRECTORY, ANSWERS_VALIDATION_DIRECTORY, QUESTIONS_DIRECTORY, ANSWERS_TEMPLATE_DIRECTORY, SUBAGENT_OUTPUT_DIRECTORY, RESULTS_DIRECTORY];
 
 export class BenchmarkingOrchestrator {
   private outputDir: string;
@@ -47,10 +50,10 @@ export class BenchmarkingOrchestrator {
     }
     
     for (const format of FORMATS) {
-      fullPath = path.join(this.outputDir, DATA_DIRECTORY, format);
+      fullPath = path.join(this.outputDir, DIRECTORY_DATA, format);
       this.createDirectory(fullPath);
       
-      fullPath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format);
+      fullPath = path.join(this.outputDir, DIRECTORY_SUBAGENT_OUTPUT, format);
       this.createDirectory(fullPath);
     }
   }
@@ -80,11 +83,11 @@ export class BenchmarkingOrchestrator {
         const answersAndQuestions = generateQuestionnaire(dataToUse);
         
         const answersAndQuestionsFileName = `questions_and_answers_with_${fieldsMandatoryText}_${recordCount}_records.json`;
-        const answersAndQuestionsFilePath = path.join(this.outputDir, ANSWERS_VALIDATION_DIRECTORY, answersAndQuestionsFileName);
+        const answersAndQuestionsFilePath = path.join(this.outputDir, DIRECTORY_ANSWERS_VALIDATION, answersAndQuestionsFileName);
         const questionnaireFileName = `questions_with_${fieldsMandatoryText}_${recordCount}_records.json`;
-        const questionnaireFilePath = path.join(this.outputDir, QUESTIONS_DIRECTORY, questionnaireFileName);
+        const questionnaireFilePath = path.join(this.outputDir, DIRECTORY_QUESTIONS, questionnaireFileName);
         const answerTemplateFileName = `answers_with_${fieldsMandatoryText}_${recordCount}_records_template.json`;
-        const answerTemplateFilePath = path.join(this.outputDir, ANSWERS_TEMPLATE_DIRECTORY, answerTemplateFileName);
+        const answerTemplateFilePath = path.join(this.outputDir, DIRECTORY_ANSWERS_TEMPLATE, answerTemplateFileName);
 
         const questionaireWithAnswers: QuestionnaireWithAnswers = {
           metadata: {
@@ -147,8 +150,8 @@ export class BenchmarkingOrchestrator {
           const characterCount = fileContent.length;
           const fileExt = this.getFileExtension(format);
           const dataFileName = `${format}_with_${fieldsMandatoryText}_${recordCount}_records.${fileExt}`;
-          const dataFilePath = path.join(this.outputDir, DATA_DIRECTORY, format, dataFileName);
-          const expectedOutputFilePath = path.join(this.outputDir, SUBAGENT_OUTPUT_DIRECTORY, format,`answers_with_${fieldsMandatoryText}_${recordCount}_records.json`);
+          const dataFilePath = path.join(this.outputDir, DIRECTORY_DATA, format, dataFileName);
+          const expectedOutputFilePath = path.join(this.outputDir, DIRECTORY_SUBAGENT_OUTPUT, format,`answers_with_${fieldsMandatoryText}_${recordCount}_records.json`);
           fs.writeFileSync(dataFilePath, fileContent);
           console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} data set rows and ${fieldsMandatoryText} data)`);
 
@@ -175,7 +178,7 @@ export class BenchmarkingOrchestrator {
       generatedAt: new Date().toISOString(),
       filesPerRecordCount: filesCreated
     };    
-    const metadataPath = path.join(this.outputDir, "metadata.json");
+    const metadataPath = path.join(this.outputDir, FILE_METADATA);
     fs.writeFileSync(metadataPath, JSON.stringify(results));
     console.log(`Metadata written to ${metadataPath}`);
 
@@ -223,7 +226,7 @@ export class BenchmarkingOrchestrator {
 
     // Write validation report
     const reportFileName = `${format}_${generatedFiles.recordCount}_validation.json`;
-    const reportPath = path.join(this.outputDir, RESULTS_DIRECTORY, reportFileName);
+    const reportPath = path.join(this.outputDir, DIRECTORY_RESULTS, reportFileName);
 
     fs.writeFileSync(reportPath, JSON.stringify(report));
 
