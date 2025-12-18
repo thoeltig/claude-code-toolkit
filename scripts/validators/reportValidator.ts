@@ -156,8 +156,8 @@ class ReportValidator {
                 });
             } else if (entry.isFile()) {
                 // Extract variant and recordCount from filename
-                // Format: answers_for_{variant}_{recordCount}_records_1.json
-                const match = entry.name.match(/^answers_for_(.+?)_(\d+)_records_(\d+)\.json$/);
+                // Format: answers_with_{variant}_{recordCount}_records_1.json
+                const match = entry.name.match(/^answers_with_(.+?)_(\d+)_records_(\d+)\.json$/);
                 if (match) {
                     const format = path.basename(path.dirname(fullPath));
                     const variant = match[1];

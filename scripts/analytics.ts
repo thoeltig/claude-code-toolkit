@@ -111,9 +111,9 @@ class BenchmarkAnalytics {
   }
 
   private extractMetrics(): UserMetrics[] {
-    if (fs.existsSync(this.metricsFile)) {
-      console.log("Metrics file already exists, skipping extraction");
-      return;
+    if (!fs.existsSync(this.agentIdsFile)) {
+      console.warn(`AgentId file not found: ${this.agentIdsFile}`);
+      return [];
     }
 
     try {
