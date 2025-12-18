@@ -235,7 +235,7 @@ This launches readonly test which will:
 - **DO NOT** retry or re-launch this combination
 - WAIT for this test to complete before launching full tests
 - Cache is now warm for the data file
-- Collect returned agent ID for Step 6 (metrics extraction)
+- Collect returned agent ID for Step 5 (analytics)
 - **This test MUST run exactly once per data file - second launch = benchmarking corruption**
 
 ### 4b. Launch 3 Full Tests in Parallel (After Read Complete)
@@ -290,77 +290,16 @@ This launches 3 full tests in parallel which will:
 - WAIT for all 3 to complete before moving to next combination
 - Verify output files are created exactly once (check before/after)
 - **Each output file MUST be written exactly once - second write = benchmarking corruption**
-- Collect all 3 returned agent IDs for Step 6 (metrics extraction)
+- Collect all 3 returned agent IDs for Step 5 (analytics)
 - Then proceed to next combination within the same format
 
-## Step 5: Run Validation
+## Step 5: Run Analytics (Automatic Validation, Metrics Extraction + Analysis)
 
-After ALL tests complete, run a single validation command that automatically finds and validates all test cases:
-
-```bash
-cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
-
-node dist/validate.js \
-  --subagent-outputs ${BENCHMARK_OUTPUT_DIR}/subagent_outputs \
-  --validation-dir ${BENCHMARK_OUTPUT_DIR}/answers_validation \
-  --results-dir ${BENCHMARK_OUTPUT_DIR}/results
-```
-
-The script:
-1. **Recursively finds** all `answers_for_*_records_1.json` files (these define test cases)
-2. **Extracts metadata** (format, variant, recordCount) from directory structure and filenames
-3. **Validates each test case** by:
-   - Loading all 3 answer files (test runs 1, 2, 3)
-   - Validating each against the ground truth
-   - Averaging accuracy across the 3 runs
-4. **Saves aggregated results** to `{format}_{variant}_{recordCount}_validation.json`
-
-**Console output example:**
-```
-Found 32 test cases to validate
-
-✓ csv             optional   100  → 98.33%
-✓ csv             optional   50   → 97.89%
-◐ json_compact    mandatory  100  → 92.15%
-✗ yaml            optional   50   → 87.42%
-...
-
-✓ Validation complete. Results saved to: ${BENCHMARK_OUTPUT_DIR}/results
-```
-
-Status icons:
-- `✓` = 100% accuracy
-- `◐` = 90-99% accuracy
-- `✗` = <90% accuracy
-
-**Output file structure per test case:**
-```json
-{
-  "format": "toon",
-  "variant": "optional",
-  "recordCount": 100,
-  "testRuns": 3,
-  "totalQuestions": 103,
-  "accuracy": {
-    "correct": 98.33,
-    "incorrect": 3.33,
-    "requiresReview": 1.33,
-    "accuracyPercent": 95.46
-  },
-  "perRunAccuracy": [
-    {"run": 1, "correct": 98, "incorrect": 3, "requiresReview": 2, "accuracyPercent": 95.15},
-    {"run": 2, "correct": 99, "incorrect": 4, "requiresReview": 0, "accuracyPercent": 96.12},
-    {"run": 3, "correct": 98, "incorrect": 3, "requiresReview": 2, "accuracyPercent": 95.15}
-  ]
-}
-```
-
-## Step 6: Run Analytics (Automatic Metrics Extraction + Analysis)
-
-After all tests complete and validation passes, run analytics which automatically:
-1. Extracts metrics from agent transcripts (using agent_ids.json)
-2. Generates combined metrics.json file
-3. Runs comprehensive analysis
+After all tests complete, run analytics which automatically:
+1. Validates all test cases (using metadata and subagent outputs)
+2. Extracts metrics from agent transcripts (using agent_ids.json)
+3. Generates combined metrics.json file
+4. Runs comprehensive analysis
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
@@ -370,13 +309,17 @@ node dist/analytics.js \
   --output ${BENCHMARK_OUTPUT_DIR}
 ```
 
-**Automatic Extraction During Analytics:**
+**Automatic Processing During Analytics:**
+- Loads metadata.json to get dataset information
+- Finds and validates all test case outputs in subagent_outputs/
+- Generates validation results to results/ directory
 - Reads `agent_ids.json` to get all readonly and full test agent IDs
 - Searches for transcript files in `~/.claude/projects`
 - Extracts read metrics from readonly agent transcripts
 - Extracts reasoning metrics from full test agent transcripts
-- Combines both into single `metrics.json` file (same directory as agent_ids.json)
-- No duplicate extraction (checks if metrics.json exists first)
+- Combines metrics into single `metrics.json` file
+- Runs comprehensive efficiency analysis
+- Outputs final analytics_results.json with rankings and insights
 
 **Combined Metrics Output** (auto-generated at ${BENCHMARK_OUTPUT_DIR}/metrics.json):
 ```json
@@ -427,7 +370,7 @@ node dist/analytics.js \
 }
 ```
 
-## Step 7: Display Results Summary
+## Step 6: Display Results Summary
 
 After analytics completes, read the output file and display:
 
@@ -543,7 +486,7 @@ This modularity allows running benchmarks for different format subsets at differ
    - **Total**: ~32 readonly IDs + 96 full IDs = 128 IDs (if all 8 formats)
    - **File**: Stored in `${BENCHMARK_OUTPUT_DIR}/agent_ids.json`
 
-6. **Automatic Metric Extraction** (Step 6 - Integrated into Analytics):
+6. **Automatic Metric Extraction** (Step 5 - Integrated into Analytics):
    - Analytics reads `agent_ids.json` to get all agent IDs
    - Extracts readonly and full test agent metrics
    - Combines into single `metrics.json` file
@@ -551,9 +494,8 @@ This modularity allows running benchmarks for different format subsets at differ
 
 ### General Execution Notes
 
-7. **Validation Deferred**: All validation runs after test execution completes (Step 5)
-
-8. **Analytics Integrated**: Step 6 (analytics) automatically:
+7. **Validation & Analytics Integrated**: Step 5 (analytics) automatically:
+   - Validates all test cases using metadata and subagent outputs
    - Reads agent IDs from `agent_ids.json`
    - Extracts metrics from agent transcripts
    - Generates combined `metrics.json` file
@@ -581,7 +523,7 @@ This modularity allows running benchmarks for different format subsets at differ
    - Output file checked before launch (guard against duplicate test runs)
 
 3. **Single Extraction Guarantee**:
-   - Each agent ID from `agent_ids.json`: extracted ONCE during Step 6
+   - Each agent ID from `agent_ids.json`: extracted ONCE during Step 5
    - Readonly and full test agent transcripts: extracted once → combined into `metrics.json`
    - Output file checked before extraction (prevent re-extraction)
 
