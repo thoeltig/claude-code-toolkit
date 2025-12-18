@@ -1,1 +1,273 @@
-{"read":{"files":[{"file":"csv_with_mandatory_80_records.csv","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_80_records.csv","agentId":"a4049a8","format":"csv","variant":"mandatory","recordCount":80,"readTokens":9672,"readDurationMs":1762},{"file":"csv_with_mandatory_40_records.csv","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_40_records.csv","agentId":"aebe21b","format":"csv","variant":"mandatory","recordCount":40,"readTokens":4992,"readDurationMs":1089},{"file":"csv_with_optional_80_records.csv","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_80_records.csv","agentId":"ab5862b","format":"csv","variant":"optional","recordCount":80,"readTokens":8956,"readDurationMs":1078},{"file":"csv_with_optional_40_records.csv","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_40_records.csv","agentId":"ae35faa","format":"csv","variant":"optional","recordCount":40,"readTokens":4608,"readDurationMs":1111},{"file":"json_compact_with_mandatory_80_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_80_records.json","agentId":"ae74f44","format":"json_compact","variant":"mandatory","recordCount":80,"readTokens":15661,"readDurationMs":1294},{"file":"json_compact_with_mandatory_40_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_40_records.json","agentId":"abb2348","format":"json_compact","variant":"mandatory","recordCount":40,"readTokens":7948,"readDurationMs":2311},{"file":"json_compact_with_optional_80_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_80_records.json","agentId":"a1257a1","format":"json_compact","variant":"optional","recordCount":80,"readTokens":14285,"readDurationMs":2142},{"file":"json_compact_with_optional_40_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_40_records.json","agentId":"a321772","format":"json_compact","variant":"optional","recordCount":40,"readTokens":7250,"readDurationMs":1124},{"file":"json_pretty_with_mandatory_80_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_80_records.json","agentId":"a969df5","format":"json_pretty","variant":"mandatory","recordCount":80,"readTokens":29490,"readDurationMs":2335},{"file":"json_pretty_with_mandatory_40_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_40_records.json","agentId":"a922d3f","format":"json_pretty","variant":"mandatory","recordCount":40,"readTokens":14407,"readDurationMs":2345},{"file":"json_pretty_with_optional_80_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_80_records.json","agentId":"ae3bb22","format":"json_pretty","variant":"optional","recordCount":80,"readTokens":26925,"readDurationMs":2208},{"file":"json_pretty_with_optional_40_records.json","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_40_records.json","agentId":"a9f714c","format":"json_pretty","variant":"optional","recordCount":40,"readTokens":13202,"readDurationMs":2215},{"file":"jsonl_with_mandatory_80_records.jsonl","path":"C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_80_records.jsonl","agentId":"a768d9d","format":"jsonl","variant":"mandatory","recordCount":80,"readTokens":15974,"readDurationMs":1444}],"summary":{"totalFiles":13,"totalReadTokens":173370,"totalReadDurationMs":22458,"averageReadTokens":13336,"averageDurationMs":1727.5}},"reasoning":{"files":[{"format":"csv","variant":"mandatory","recordCount":80,"testRuns":3,"durationMs":130868.667,"reasoningTokens":3333.667,"outputTokens":422.333},{"format":"csv","variant":"mandatory","recordCount":40,"testRuns":3,"durationMs":93327,"reasoningTokens":19,"outputTokens":322},{"format":"csv","variant":"optional","recordCount":80,"testRuns":3,"durationMs":79787,"reasoningTokens":19,"outputTokens":426.333},{"format":"csv","variant":"optional","recordCount":40,"testRuns":3,"durationMs":73214,"reasoningTokens":19,"outputTokens":434.333},{"format":"json_compact","variant":"mandatory","recordCount":80,"testRuns":3,"durationMs":81459,"reasoningTokens":3333.667,"outputTokens":327.333},{"format":"json_compact","variant":"mandatory","recordCount":40,"testRuns":3,"durationMs":93741.667,"reasoningTokens":4972,"outputTokens":536},{"format":"json_compact","variant":"optional","recordCount":80,"testRuns":3,"durationMs":106616.333,"reasoningTokens":4969,"outputTokens":327},{"format":"json_compact","variant":"optional","recordCount":40,"testRuns":3,"durationMs":126127,"reasoningTokens":19,"outputTokens":432.333},{"format":"json_pretty","variant":"mandatory","recordCount":80,"testRuns":3,"durationMs":95100.333,"reasoningTokens":4991,"outputTokens":330.667},{"format":"json_pretty","variant":"mandatory","recordCount":40,"testRuns":3,"durationMs":84816.667,"reasoningTokens":4972,"outputTokens":541},{"format":"json_pretty","variant":"optional","recordCount":80,"testRuns":3,"durationMs":84667.667,"reasoningTokens":4969,"outputTokens":426.667},{"format":"json_pretty","variant":"optional","recordCount":40,"testRuns":3,"durationMs":112845,"reasoningTokens":4928,"outputTokens":430},{"format":"jsonl","variant":"mandatory","recordCount":80,"testRuns":3,"durationMs":131735.667,"reasoningTokens":4991,"outputTokens":429}],"summary":{"totalTestCases":13,"totalDurationMs":1294306.001,"totalReasoningTokens":41535.334,"totalOutputTokens":5384.999,"averageDurationMs":99562,"averageReasoningTokens":3195.026,"averageOutputTokens":414.231}}}
+{
+    "read": {
+        "files": [
+            {
+                "file": "csv_with_mandatory_80_records.csv",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_80_records.csv",
+                "agentId": "a4049a8",
+                "format": "csv",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 9672,
+                "readDurationMs": 1762
+            },
+            {
+                "file": "csv_with_mandatory_40_records.csv",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_40_records.csv",
+                "agentId": "aebe21b",
+                "format": "csv",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 4992,
+                "readDurationMs": 1089
+            },
+            {
+                "file": "csv_with_optional_80_records.csv",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_80_records.csv",
+                "agentId": "ab5862b",
+                "format": "csv",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 8956,
+                "readDurationMs": 1078
+            },
+            {
+                "file": "csv_with_optional_40_records.csv",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_40_records.csv",
+                "agentId": "ae35faa",
+                "format": "csv",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 4608,
+                "readDurationMs": 1111
+            },
+            {
+                "file": "json_compact_with_mandatory_80_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_80_records.json",
+                "agentId": "ae74f44",
+                "format": "json_compact",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 15661,
+                "readDurationMs": 1294
+            },
+            {
+                "file": "json_compact_with_mandatory_40_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_40_records.json",
+                "agentId": "abb2348",
+                "format": "json_compact",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 7948,
+                "readDurationMs": 2311
+            },
+            {
+                "file": "json_compact_with_optional_80_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_80_records.json",
+                "agentId": "a1257a1",
+                "format": "json_compact",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 14285,
+                "readDurationMs": 2142
+            },
+            {
+                "file": "json_compact_with_optional_40_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_40_records.json",
+                "agentId": "a321772",
+                "format": "json_compact",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 7250,
+                "readDurationMs": 1124
+            },
+            {
+                "file": "json_pretty_with_mandatory_80_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_80_records.json",
+                "agentId": "a969df5",
+                "format": "json_pretty",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 29490,
+                "readDurationMs": 2335
+            },
+            {
+                "file": "json_pretty_with_mandatory_40_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_40_records.json",
+                "agentId": "a922d3f",
+                "format": "json_pretty",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 14407,
+                "readDurationMs": 2345
+            },
+            {
+                "file": "json_pretty_with_optional_80_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_80_records.json",
+                "agentId": "ae3bb22",
+                "format": "json_pretty",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 26925,
+                "readDurationMs": 2208
+            },
+            {
+                "file": "json_pretty_with_optional_40_records.json",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_40_records.json",
+                "agentId": "a9f714c",
+                "format": "json_pretty",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 13202,
+                "readDurationMs": 2215
+            },
+            {
+                "file": "jsonl_with_mandatory_80_records.jsonl",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_80_records.jsonl",
+                "agentId": "a768d9d",
+                "format": "jsonl",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 15974,
+                "readDurationMs": 1444
+            }
+        ],
+        "summary": {
+            "totalFiles": 13,
+            "totalReadTokens": 173370,
+            "totalReadDurationMs": 22458,
+            "averageReadTokens": 13336,
+            "averageDurationMs": 1727.5
+        }
+    },
+    "reasoning": {
+        "files": [
+            {
+                "format": "csv",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 130868.667,
+                "reasoningTokens": 3333.667,
+                "outputTokens": 422.333
+            },
+            {
+                "format": "csv",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 93327,
+                "reasoningTokens": 19,
+                "outputTokens": 322
+            },
+            {
+                "format": "csv",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 79787,
+                "reasoningTokens": 19,
+                "outputTokens": 426.333
+            },
+            {
+                "format": "csv",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 73214,
+                "reasoningTokens": 19,
+                "outputTokens": 434.333
+            },
+            {
+                "format": "json_compact",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 81459,
+                "reasoningTokens": 3333.667,
+                "outputTokens": 327.333
+            },
+            {
+                "format": "json_compact",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 93741.667,
+                "reasoningTokens": 4972,
+                "outputTokens": 536
+            },
+            {
+                "format": "json_compact",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 106616.333,
+                "reasoningTokens": 4969,
+                "outputTokens": 327
+            },
+            {
+                "format": "json_compact",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 126127,
+                "reasoningTokens": 19,
+                "outputTokens": 432.333
+            },
+            {
+                "format": "json_pretty",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 95100.333,
+                "reasoningTokens": 4991,
+                "outputTokens": 330.667
+            },
+            {
+                "format": "json_pretty",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 84816.667,
+                "reasoningTokens": 4972,
+                "outputTokens": 541
+            },
+            {
+                "format": "json_pretty",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 84667.667,
+                "reasoningTokens": 4969,
+                "outputTokens": 426.667
+            },
+            {
+                "format": "json_pretty",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 112845,
+                "reasoningTokens": 4928,
+                "outputTokens": 430
+            },
+            {
+                "format": "jsonl",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 131735.667,
+                "reasoningTokens": 4991,
+                "outputTokens": 429
+            }
+        ],
+        "summary": {
+            "totalTestCases": 13,
+            "totalDurationMs": 1294306.001,
+            "totalReasoningTokens": 41535.334,
+            "totalOutputTokens": 5384.999,
+            "averageDurationMs": 99562,
+            "averageReasoningTokens": 3195.026,
+            "averageOutputTokens": 414.231
+        }
+    }
+}
