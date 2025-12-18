@@ -1,0 +1,424 @@
+{
+    "testConfiguration": {
+        "formats": [
+            "csv",
+            "json_compact",
+            "json_pretty",
+            "jsonl"
+        ],
+        "variants": [
+            "mandatory",
+            "optional"
+        ],
+        "model": "haiku",
+        "thinking": "off",
+        "timestamp": "2025-12-18T03:56:00Z"
+    },
+    "readOnlyTests": [
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a4049a8",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "aebe21b",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "ab5862b",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "ae35faa",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "ae74f44",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "abb2348",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a1257a1",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a321772",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a969df5",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a922d3f",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "ae3bb22",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a9f714c",
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "jsonl",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a768d9d",
+            "timestamp": "2025-12-18T03:56:00Z"
+        }
+    ],
+    "fullTests": [
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a160e71",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a2fd271",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a8d8c7f",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a1b45f3",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a355062",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a793023",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a4c28e8",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "aba06be",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a799224",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "aa5bedb",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a323f8c",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "csv",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a30ffaa",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a6ca02d",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "acaaed2",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a67c39c",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a008848",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "ad37a91",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a7789f2",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "ab3582d",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a77c226",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a5366de",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a3bcc13",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "ab3a00e",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_compact",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a84d5e5",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a6539c4",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a950109",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "aa3a8f7",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a1753bd",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "ac4b3f6",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "mandatory",
+            "recordCount": 40,
+            "agentId": "a5eaa88",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a018cd4",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "a6debc8",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 80,
+            "agentId": "aa6aac6",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "aea9c5d",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "a4f9a6c",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "json_pretty",
+            "variant": "optional",
+            "recordCount": 40,
+            "agentId": "ac9182d",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "jsonl",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "ad1f57a",
+            "testRun": 1,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "jsonl",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "aa13322",
+            "testRun": 2,
+            "timestamp": "2025-12-18T03:56:00Z"
+        },
+        {
+            "format": "jsonl",
+            "variant": "mandatory",
+            "recordCount": 80,
+            "agentId": "a441524",
+            "testRun": 3,
+            "timestamp": "2025-12-18T03:56:00Z"
+        }
+    ]
+}
