@@ -57,8 +57,8 @@ You have been provided with:
 
 **Do this:**
 1. Read and analyze the data file thoroughly
-2. Study the questionnaire to understand what each question asks
-3. For each question, find the answer in the data
+2. Study the questionnaire - **READ AND FOLLOW the "instructions" field at the top of the questionnaire JSON. These instructions specify answer formatting rules and data extraction requirements.**
+3. For each question, find the answer in the data using the format rules from the instructions
 4. Fill the answer template with your responses
 5. **WRITE the completed JSON to the specified output path (ONLY to the file, not to conversation output)**
 6. Confirm completion with a brief message confirming the file path where results were saved

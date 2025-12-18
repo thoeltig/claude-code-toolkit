@@ -104,9 +104,15 @@ export class BenchmarkingOrchestrator {
         console.log(`✓ Questions and answers: ${answersAndQuestionsFilePath} (${answersAndQuestions.length} questions)`);
 
         // Write questions
-        const questions = answersAndQuestions.map<Question>(x => ({id: x.id, question: x.question}));
-        fs.writeFileSync(questionnaireFilePath, JSON.stringify(questions));
-        console.log(`✓ Questions: ${questionnaireFileName} (${questions.length} questions)`);
+        const questionsForTest = {
+          instructions: 
+          `If you are asked for a single value like a text, number or count then set it as a string to the answer field like this: {"questionId":200,"answer":"value1"}.
+          If you are asked for multiple values at the same time then set them as comma separated string to the answer field like this: {"questionId":201,"answer":"value1,value2,value3"}.
+          IMPORTANT: When extracting dates, return them exactly as they appear in the data as plain text strings in YYYY-MM-DD format. Never convert to Date objects or perform any timezone operations.`,
+          questions: answersAndQuestions.map<Question>(x => ({id: x.id, question: x.question}))
+        }
+        fs.writeFileSync(questionnaireFilePath, JSON.stringify(questionsForTest));
+        console.log(`✓ Questions: ${questionnaireFileName} (${questionsForTest.questions.length} questions)`);
       
         // Generate empty answer template
         const answerTemplate: AnswerTemplate = {
@@ -125,7 +131,7 @@ export class BenchmarkingOrchestrator {
           recordCount: targetSize,
           fieldCount: dataToUse.metadata.fieldCount,
           totalValues: dataToUse.metadata.totalValues,
-          questionCount: questions.length,
+          questionCount: questionsForTest.questions.length,
           answersAndQuestionsForValidationFilePath: answersAndQuestionsFilePath,
           questionnaireFilePath: questionnaireFilePath, 
           answerTemplateFilePath: answerTemplateFilePath,
