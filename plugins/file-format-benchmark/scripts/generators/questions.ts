@@ -85,7 +85,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "field_retrieval",
         difficulty: "easy",
-        question: `What is the ${field} of product ${record[idField]}? Answer only like "value".`,
+        question: `What is the ${field} of product ${record[idField]}?`,
         expectedAnswer: {
           value: String(value),
           validationMethod: "exact",
@@ -105,7 +105,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "field_retrieval",
         difficulty: "medium",
-        question: `What are the ${radomFields.join(", ")} of product ${record[idField]}? Answer only like "value1,value2,value3".`,
+        question: `What are the ${radomFields.join(", ")} of product ${record[idField]}?`,
         expectedAnswer: {
           value: values,
           validationMethod: "array_set",
@@ -138,7 +138,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "field_retrieval",
         difficulty: "hard",
-        question: `What are the ${radomFields.join(", ")} of product ${record[idField]} and the ${radomFields2.join(", ")} of product ${record2[idField]}? Answer only like "value1,value2,value3".`,
+        question: `What are the ${radomFields.join(", ")} of product ${record[idField]} and the ${radomFields2.join(", ")} of product ${record2[idField]}?`,
         expectedAnswer: {
           value: [...values, ...values2],
           validationMethod: "array_set",
@@ -172,7 +172,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "aggregation",
         difficulty: "easy",
-        question: `How much is the sum of all values in ${numericField} across all products? Answer only like "number".`,
+        question: `How much is the sum of all values in ${numericField} across all products?`,
         expectedAnswer: {
           value: expectedSum,
           validationMethod: "numeric",
@@ -196,7 +196,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "aggregation",
         difficulty: "medium",
-        question: `What is the ${isMin ? 'lowest' : 'highest'} value in ${numericField} across all products? Answer only like "number".`,
+        question: `What is the ${isMin ? 'lowest' : 'highest'} value in ${numericField} across all products?`,
         expectedAnswer: {
           value: expected,
           validationMethod: "numeric",
@@ -218,7 +218,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "aggregation",
         difficulty: "hard",
-        question: `What is the average value in ${numericField} across all products? Answer only like "number".`,
+        question: `What is the average value in ${numericField} across all products?`,
         expectedAnswer: {
           value: Math.round(expectedAvg * 100) / 100,
           validationMethod: "numeric",
@@ -251,7 +251,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "filtering",
         difficulty: "easy",
-        question: `How many products have '${value}' in ${field}? Answer only like "count".`,
+        question: `How many products have '${value}' in ${field}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -278,7 +278,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "filtering",
         difficulty: "medium",
-        question: `How many products have a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}? Answer only like "count".`,
+        question: `How many products have a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -297,8 +297,8 @@ export class QuestionnaireGenerator {
       const numericField = this.rand.getRandomNumbericField(record, field);
 
       const filtered = ctx.records.filter(x => x[field] === value);
-      const avg = filtered.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / filtered.length;
-      const expectedCount = ctx.records.filter((r) => {
+      const avg = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / filtered.length;
+      const expectedCount = filtered.filter((r) => {
         const num = Number(r[numericField] || 0);
         return filterForAbove ? num > avg : num < avg;
       }).length;
@@ -308,7 +308,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "filtering",
         difficulty: "hard",
-        question: `How many products have '${value}' in ${field} and a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}? Answer only like "count".`,
+        question: `How many products have '${value}' in ${field} and a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -371,7 +371,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `How many entries are in the data in total? Answer only like "count".`,
+        question: `How many entries are in the data in total?`,
         expectedAnswer: {
           value: totalRows,
           validationMethod: "numeric",
@@ -386,7 +386,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `How many values are in the data in total? Answer only like "count".`,
+        question: `How many values are in the data in total?`,
         expectedAnswer: {
           value: totalRows * totalUniqueFieldCount,
           validationMethod: "numeric",
@@ -401,7 +401,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `How many values are set in the data in total? Answer only like "count".`,
+        question: `How many values are set in the data in total?`,
         expectedAnswer: {
           value: countOfSetValues,
           validationMethod: "numeric",
@@ -416,7 +416,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `How many values are not set in the data in total? Answer only like "count".`,
+        question: `How many values are not set in the data in total?`,
         expectedAnswer: {
           value: (totalRows * totalUniqueFieldCount) - countOfSetValues,
           validationMethod: "numeric",
@@ -431,7 +431,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `How many unique fields names are in the data in total? Answer only like "count".`,
+        question: `How many unique fields names are in the data in total?`,
         expectedAnswer: {
           value: totalUniqueFieldCount,
           validationMethod: "numeric",
@@ -446,7 +446,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `What are all the unique field names across all products? Answer only like "value1,value2,value3".`,
+        question: `What are all the unique field names across all products?`,
         expectedAnswer: {
           value: [...fieldHistogram.keys()],
           validationMethod: "array_set",
@@ -461,7 +461,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `What are all the optional field names across all products? Answer only like "value1,value2,value3".`,
+        question: `What are all the optional field names across all products?`,
         expectedAnswer: {
           value: [...optionalFields],
           validationMethod: "array_set",
@@ -476,7 +476,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "medium",
-        question: `What are all the mandatory field names across all products? Answer only like "value1,value2,value3".`,
+        question: `What are all the mandatory field names across all products?`,
         expectedAnswer: {
           value: [...mandatoryFields],
           validationMethod: "array_set",
@@ -493,7 +493,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "hard",
-        question: `What are all the unique values in ${field} across all products? Answer only like "value1,value2,value3".`,
+        question: `What are all the unique values in ${field} across all products?`,
         expectedAnswer: {
           value: expectedArray,
           validationMethod: "array_set",
@@ -508,11 +508,9 @@ export class QuestionnaireGenerator {
   private generateMultipleStepsQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
     const questions: AnswerAndQuestion[] = [];
 
-    let i = 0;
-    const map = this.rand.getUniqueFieldsAndValues(ctx.records, count);
-    map.forEach((_, field) => {
+    const fields = this.rand.getRandomItems(["productName", "category", "supplierName", "supplierLocation", "description", "hazardous", "fragile"], count);
+    fields.forEach((field, i) => {
       const filterForMost = i % 2 === 0;
-      i++;
 
       const valueHistogram = new Map<string, number>();
       ctx.records.forEach(r => {
@@ -532,7 +530,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "multiple_steps",
         difficulty: "hard",
-        question: `Which ${field} occures the ${filterForMost ? 'most' : 'least'} across all products and in how many products in total? Answer only like "field,count".`,
+        question: `Which ${field} occures the ${filterForMost ? 'most' : 'least'} across all products and in how many products in total?`,
         expectedAnswer: {
           value: expected,
           validationMethod: "array_set"
