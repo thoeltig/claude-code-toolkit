@@ -7,8 +7,8 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { AnswerValidator } from "./validators/index";
-import { AnswerAndQuestion, Format, QuestionnaireWithAnswers, AnswerTemplate, ValidationReport, MergedValidationReport, QuestionsAndProvidedAnswers } from "./types";
+import { AnswerValidator } from "./validators/answerValidator";
+import { AnswerAndQuestion, Format, QuestionnaireWithAnswers, AnswerTemplate, MergedValidationReport, QuestionsAndProvidedAnswers } from "./types";
 
 // Parse command line arguments
 let subagentOutputsDir: string | undefined;

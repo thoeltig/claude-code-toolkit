@@ -8,7 +8,7 @@ import * as path from "path";
 import { generateProductDataGenerator } from "./generators/generateProductDataGenerator";
 import { convertToFormat } from "./converters/index";
 import { generateQuestionnaire } from "./generators/questions";
-import { validateAnswers } from "./validators/index";
+import { validateAnswers } from "./validators/answerValidator";
 import {
   Format,
   AnswerTemplate,

@@ -10,11 +10,10 @@ import {
   ProvidedAnswer,
   AnswerAndQuestion,
   Format,
-  AnswerAccuracy,
   CategoryAnswerAccuracy,
 } from "../types";
 
-export interface AnswerCounter {
+interface AnswerCounter {
   correct: number;
   incorrect: number; 
   notSet: number; 
@@ -100,24 +99,20 @@ export class AnswerValidator {
   private validateSingleAnswer(question: AnswerAndQuestion, providedAnswer: ProvidedAnswer): ValidationResult {
     const expected = question.expectedAnswer;
     let correct = false;
-    let confidence = 0;
 
     switch (expected.validationMethod) {
       case "exact":
         correct = this.validateExact(String(providedAnswer.answer), String(expected.value));
-        confidence = correct ? 1 : 0;
         break;
 
       case "numeric":
         const result = this.validateNumeric(providedAnswer.answer, expected.value, expected.tolerance || 0);
         correct = result.correct;
-        confidence = result.confidence;
         break;
 
       case "array_set":
         const arrayResult = this.validateArraySet(providedAnswer.answer, expected.value as string[]);
         correct = arrayResult.correct;
-        confidence = arrayResult.confidence;
         break;
     }
 
