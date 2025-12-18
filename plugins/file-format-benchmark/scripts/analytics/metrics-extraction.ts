@@ -17,7 +17,6 @@ interface AgentIdEntry {
 }
 
 interface ReadOnlyAgentIdEntry extends AgentIdEntry {
-  testRun?: never;
 }
 
 interface FullTestAgentIdEntry extends AgentIdEntry {

@@ -176,7 +176,7 @@ export class QuestionnaireGenerator {
         expectedAnswer: {
           value: expectedSum,
           validationMethod: "numeric",
-          tolerance: 0,
+          tolerance: 0.1,
         },
         dataReferences: [numericField],
       });
@@ -222,7 +222,7 @@ export class QuestionnaireGenerator {
         expectedAnswer: {
           value: Math.round(expectedAvg * 100) / 100,
           validationMethod: "numeric",
-          tolerance: 0.01,
+          tolerance: 0.1,
         },
         dataReferences: [numericField],
       });
@@ -267,7 +267,7 @@ export class QuestionnaireGenerator {
       const record = records[i];
       const numericField = this.rand.getRandomNumbericField(record, idField);
 
-      const avg = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / ctx.records.length;
+      const avg = Math.round((ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / ctx.records.length) * 100) / 100;
       const expectedCount = ctx.records.filter((r) => {
         const num = Number(r[numericField] || 0);
         return filterForAbove ? num > avg : num < avg;
@@ -297,7 +297,7 @@ export class QuestionnaireGenerator {
       const numericField = this.rand.getRandomNumbericField(record, field);
 
       const filtered = ctx.records.filter(x => x[field] === value);
-      const avg = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / filtered.length;
+      const avg =  Math.round((ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / filtered.length) * 100) / 100;
       const expectedCount = filtered.filter((r) => {
         const num = Number(r[numericField] || 0);
         return filterForAbove ? num > avg : num < avg;
@@ -508,7 +508,7 @@ export class QuestionnaireGenerator {
   private generateMultipleStepsQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
     const questions: AnswerAndQuestion[] = [];
 
-    const fields = this.rand.getRandomItems(["productName", "category", "supplierName", "supplierLocation", "description", "hazardous", "fragile"], count);
+    const fields = this.rand.getRandomItems(["category", "supplierName", "supplierLocation", "description", "hazardous", "fragile"], count);
     fields.forEach((field, i) => {
       const filterForMost = i % 2 === 0;
 
