@@ -367,8 +367,6 @@ cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
 
 node dist/analytics.js \
   --agent-ids ${BENCHMARK_OUTPUT_DIR}/agent_ids.json \
-  --metadata ${BENCHMARK_OUTPUT_DIR}/metadata.json \
-  --validation-dir ${BENCHMARK_OUTPUT_DIR}/results/ \
   --output ${BENCHMARK_OUTPUT_DIR}
 ```
 
