@@ -3,6 +3,7 @@
  * Generates paired questions from dataset with deterministic answers
  */
 
+import { QUESTIONS_DISTRIBUTION } from "../consts";
 import { BaseDataSet, DataRecord, AnswerAndQuestion } from "../types";
 import { Randomizer } from "./randomizer";
 
@@ -25,40 +26,31 @@ export class QuestionnaireGenerator {
       records: data.records
     };
 
-    const targetQuestions = 120;
-    const distribution = {
-      field_retrieval: Math.ceil(targetQuestions * 0.35), 
-      aggregation: Math.ceil(targetQuestions * 0.275), 
-      filtering: Math.ceil(targetQuestions * 0.2),
-      structure_awareness: Math.ceil(targetQuestions * 0.125), 
-      multiple_steps: Math.ceil(targetQuestions * 0.05), 
-    };
-    
     const answersAndQuestions: AnswerAndQuestion[] = [];
     let id = 1;
 
     // Generate questions per category
-    let entries = this.generateFieldRetrievalQuestions(ctx, distribution.field_retrieval, id, productIdField);
+    let entries = this.generateFieldRetrievalQuestions(ctx, QUESTIONS_DISTRIBUTION.field_retrieval, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Retrival questions: "+ entries.length);
 
-    entries = this.generateAggregationQuestions(ctx, distribution.aggregation, id, productIdField);
+    entries = this.generateAggregationQuestions(ctx, QUESTIONS_DISTRIBUTION.aggregation, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Aggregation questions: "+ entries.length);
 
-    entries = this.generateFilteringQuestions(ctx, distribution.filtering, id, productIdField);
+    entries = this.generateFilteringQuestions(ctx, QUESTIONS_DISTRIBUTION.filtering, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Filtering questions: "+ entries.length);
 
-    entries = this.generateStructureAwarenessQuestions(ctx, distribution.structure_awareness, id);
+    entries = this.generateStructureAwarenessQuestions(ctx, QUESTIONS_DISTRIBUTION.structure_awareness, id);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Structure questions: "+ entries.length);
 
-    entries = this.generateMultipleStepsQuestions(ctx, distribution.multiple_steps, id);
+    entries = this.generateMultipleStepsQuestions(ctx, QUESTIONS_DISTRIBUTION.multiple_steps, id);
     answersAndQuestions.push(...entries);
     console.log("Multiple steps questions: "+ entries.length);
 

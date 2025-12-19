@@ -68,9 +68,10 @@ class ReportValidator {
                     testRuns: testCase.answerFiles.length,
                     totalQuestions: validationData.metadata.totalQuestions,
                     accuracy: {
-                    correct: 0,
-                    incorrect: 0,
-                    accuracyPercent: 0,
+                        correct: 0,
+                        incorrect: 0,
+                        accuracyPercent: 0,
+                        weightedAccuracyPercent: 0
                 },
                 perRunAccuracy:[],
                 questionsAndProvidedAnswers: groundTruthQuestions.map<QuestionsAndProvidedAnswers>(x => {
@@ -105,6 +106,7 @@ class ReportValidator {
                     correct: validationResult.accuracy.correct,
                     incorrect: validationResult.accuracy.incorrect,
                     accuracyPercent: validationResult.accuracy.accuracyPercent,
+                    weightedAccuracyPercent: validationResult.accuracy.weightedAccuracyPercent,
                     accuracyPerCategory: validationResult.accuracyPerCategory
                 });
 

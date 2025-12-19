@@ -1,4 +1,4 @@
-import { Directory, Format } from "./types";
+import { Directory, Format, QuestionCategory } from "./types";
 
 export const DIRECTORY_DATA:Directory = "data";
 export const DIRECTORY_ANSWERS_VALIDATION:Directory  = "answers_validation";
@@ -13,3 +13,20 @@ export const FORMATS: Format[] = ["csv", "json_pretty", "json_compact", "jsonl",
 export const FILE_METADATA:string = "metadata.json";
 export const FILE_ANALYTICS_RESULT:string  = "analytics_results.json";
 export const FILE_METRICS:string = "metrics.json";
+
+export const QUESTIONS_COUNT = 120;
+export const QUESTIONS_DISTRIBUTION = {
+    field_retrieval: Math.ceil(QUESTIONS_COUNT * 0.35), 
+    aggregation: Math.ceil(QUESTIONS_COUNT * 0.275), 
+    filtering: Math.ceil(QUESTIONS_COUNT * 0.2),
+    structure_awareness: Math.ceil(QUESTIONS_COUNT * 0.125), 
+    multiple_steps: Math.ceil(QUESTIONS_COUNT * 0.05)
+};
+
+export const QUESTIONS_WEIGHT_DISTRIBUTION = {
+    field_retrieval: 0.4, 
+    aggregation: 0.08, 
+    filtering: 0.2,
+    structure_awareness: 0.3, 
+    multiple_steps: 0.02 
+};

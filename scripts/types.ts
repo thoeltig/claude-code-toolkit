@@ -189,6 +189,7 @@ export interface ValidationReport {
     correct: number;
     incorrect: number;
     accuracyPercent: number;
+    weightedAccuracyPercent: number;  
   };
   accuracyPerCategory: CategoryAnswerAccuracy[];
 }
@@ -208,10 +209,11 @@ export interface AnswerAccuracy {
   correct: number;
   incorrect: number;
   accuracyPercent: number;  
+  weightedAccuracyPercent: number;  
 }
 
 export interface CategoryAnswerAccuracy extends AnswerAccuracy {
-  category: string;
+  category: QuestionCategory;
   unanswered: number; 
 }
 
@@ -338,8 +340,8 @@ export interface UserMetrics {
   variant: string;
   recordCount: number;
   hasOptionalData: boolean;
-  readDuration: number;
+  readDurationInMilliseconds: number;
   readTokens: number;
-  testDuration: number;
+  reasoningDurationInMilliseconds: number;
   reasoningTokens: number;
 }
