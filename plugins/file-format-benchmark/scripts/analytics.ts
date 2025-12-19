@@ -6,9 +6,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import MetricsExtraction from "./analytics/metrics-extraction";
-import { MergedValidationReport, UserMetrics } from "./types";
+import { MergedValidationReport, QuestionCategory, UserMetrics } from "./types";
 import ReportValidator from "./validators/reportValidator";
-import { DIRECTORY_ANSWERS_VALIDATION, FILE_ANALYTICS_RESULT, FILE_METADATA, FILE_METRICS } from "./consts";
+import { DIRECTORY_ANSWERS_VALIDATION, FILE_ANALYTICS_RESULT, FILE_METADATA, FILE_METRICS, QUESTIONS_DISTRIBUTION, QUESTIONS_WEIGHT_DISTRIBUTION } from "./consts";
 
 interface TestMetrics {
   testCase: string;
@@ -20,19 +20,25 @@ interface TestMetrics {
   characterCount: number;
 
   // Read-Only extraction script result
-  readDuration: number;
   readTokens: number;
+  readDurationInMilliseconds: number;
+  readTokensPerSecond: number;
   
   // Full test extraction script result
-  avgTestDuration: number;
   avgReasoningTokens: number;
+  avgReasoningDurationInMilliseconds: number;
+  avgReasoningTokensPerSecond: number;
 
   // Validation script result
   totalQuestions: number;
+  questionDistribution: Map<QuestionCategory, number>;
+  questionWeightDistribution: Map<QuestionCategory, number>;
   avgNoAnswers: number;
   avgIncorrectAnswers: number;
   avgCorrectAnswers: number;
+  correctnessRatio: number;
   avgAccuracyPercent: number;
+  avgWeightedAccuracyPercent: number;
 
   // Calculated metrics
   charsPerToken: number;
@@ -41,8 +47,7 @@ interface TestMetrics {
   avgReasoningTokensPerAnswer: number;
 
   // Result
-  totalTokens: number;
-  correctnessRatio: number;
+  totalTokensUsed: number;
   efficientlyUsedTokens: number;
   // Efficiency score = (Accuracy percentage ÷ total tokens) × 1000. Higher is better.
   efficiencyScore: number;
@@ -212,27 +217,44 @@ class BenchmarkAnalytics {
         recordCount: userMetric.recordCount,
         totalValues: datasetInfo.totalValues,
         characterCount: datasetInfo.characterCount,
-        
-        readDuration: userMetric.readDuration,
-        readTokens: userMetric.readTokens,
 
-        avgTestDuration: userMetric.testDuration,
+        readTokens: userMetric.readTokens,
+        readDurationInMilliseconds: userMetric.readDurationInMilliseconds,
+        readTokensPerSecond: parseFloat((userMetric.readTokens / userMetric.readDurationInMilliseconds / 1000).toFixed(3)),
+
         avgReasoningTokens: userMetric.reasoningTokens,
+        avgReasoningDurationInMilliseconds: userMetric.reasoningDurationInMilliseconds,
+        avgReasoningTokensPerSecond: parseFloat((userMetric.reasoningTokens / userMetric.reasoningDurationInMilliseconds / 1000).toFixed(3)),
 
         totalQuestions: validation.totalQuestions,
+        questionDistribution: new Map<QuestionCategory, number>(
+          [["field_retrieval", QUESTIONS_DISTRIBUTION["field_retrieval"]],
+          ["aggregation", QUESTIONS_DISTRIBUTION["aggregation"]],
+          ["filtering", QUESTIONS_DISTRIBUTION["filtering"]],
+          ["structure_awareness", QUESTIONS_DISTRIBUTION["structure_awareness"]],
+          ["multiple_steps", QUESTIONS_DISTRIBUTION["multiple_steps"]]]
+        ),
+        questionWeightDistribution: new Map<QuestionCategory, number>(
+          [["field_retrieval", QUESTIONS_WEIGHT_DISTRIBUTION["field_retrieval"]],
+          ["aggregation", QUESTIONS_WEIGHT_DISTRIBUTION["aggregation"]],
+          ["filtering", QUESTIONS_WEIGHT_DISTRIBUTION["filtering"]],
+          ["structure_awareness", QUESTIONS_WEIGHT_DISTRIBUTION["structure_awareness"]],
+          ["multiple_steps", QUESTIONS_WEIGHT_DISTRIBUTION["multiple_steps"]]]
+        ),
         avgNoAnswers: validation.totalQuestions - validation.accuracy.correct - validation.accuracy.incorrect,
         avgIncorrectAnswers: validation.accuracy.incorrect,
         avgCorrectAnswers: validation.accuracy.correct,
         avgAccuracyPercent: validation.accuracy.accuracyPercent,
+        avgWeightedAccuracyPercent: validation.accuracy.weightedAccuracyPercent,
 
         charsPerToken: parseFloat((datasetInfo.characterCount / userMetric.readTokens).toFixed(3)),
         tokensPerValue: parseFloat((userMetric.readTokens / datasetInfo.totalValues).toFixed(3)),
         tokensPerRecord: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
         avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),
-        totalTokens: userMetric.readTokens + userMetric.reasoningTokens,
+        totalTokensUsed: userMetric.readTokens + userMetric.reasoningTokens,
         correctnessRatio: validation.accuracy.correct / validation.totalQuestions,
-        efficientlyUsedTokens: parseFloat(((userMetric.readTokens + userMetric.reasoningTokens)*(validation.accuracy.correct / validation.totalQuestions)).toFixed(3)),
-        efficiencyScore: parseFloat((validation.accuracy.accuracyPercent / (userMetric.readTokens + userMetric.reasoningTokens)*1000).toFixed(3))
+        efficientlyUsedTokens: parseFloat(((userMetric.readTokens + userMetric.reasoningTokens) * (validation.accuracy.correct / validation.totalQuestions)).toFixed(3)),
+        efficiencyScore: parseFloat((validation.accuracy.accuracyPercent / (userMetric.readTokens + userMetric.reasoningTokens) * 1000).toFixed(3)),
       });
     }
 

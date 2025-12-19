@@ -550,9 +550,9 @@ class MetricsExtraction {
         variant: reasoning.variant,
         recordCount: reasoning.recordCount,
         hasOptionalData: reasoning.variant !== "mandatory",
-        readDuration: readData.readDurationMs,
+        readDurationInMilliseconds: readData.readDurationMs,
         readTokens: readData.readTokens,
-        testDuration: reasoning.durationMs,
+        reasoningDurationInMilliseconds: reasoning.durationMs,
         reasoningTokens: reasoning.reasoningTokens,
       });
     }

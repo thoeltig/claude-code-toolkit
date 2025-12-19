@@ -3,6 +3,7 @@
  * Validates answers deterministically with support for fuzzy matching on deductions
  */
 
+import { QUESTIONS_WEIGHT_DISTRIBUTION } from "../consts";
 import {
   AnswerTemplate,
   ValidationResult,
@@ -11,6 +12,7 @@ import {
   AnswerAndQuestion,
   Format,
   CategoryAnswerAccuracy,
+  QuestionCategory,
 } from "../types";
 
 interface AnswerCounter {
@@ -29,7 +31,7 @@ export class AnswerValidator {
     answersAndQuestions: AnswerAndQuestion[]
   ): ValidationReport {
     const results: ValidationResult[] = [];
-    const map: Map<string, AnswerCounter> = new Map();
+    const map: Map<QuestionCategory, AnswerCounter> = new Map();
 
     for (const answerAndQuestion of answersAndQuestions) {
       let counter = map.get(answerAndQuestion.category);
@@ -73,6 +75,12 @@ export class AnswerValidator {
     // Calculate accuracy
     const correctCount = results.filter((r) => r.correct).length;
     const totalValidatable = results.length;
+    const mapAsArray = [...map.entries()];
+    const weightedAccuracyPercent = mapAsArray.reduce((sum, x) => {
+      const category = x[0];
+      const counter = x[1];
+      return sum + Math.round((counter.correct / (counter.correct+counter.incorrect+counter.notSet))*10000*QUESTIONS_WEIGHT_DISTRIBUTION[category])/100;
+    }, 0);
 
     return {
       format: format,
@@ -82,15 +90,18 @@ export class AnswerValidator {
         correct: correctCount,
         incorrect: totalValidatable - correctCount,
         accuracyPercent: totalValidatable > 0 ? Math.round(((correctCount / totalValidatable) * 10000))/100 : 0,
+        weightedAccuracyPercent: weightedAccuracyPercent
       },
-      accuracyPerCategory: [...map.entries()].map<CategoryAnswerAccuracy>(x => {
+      accuracyPerCategory: mapAsArray.map<CategoryAnswerAccuracy>(x => {
+        const category = x[0];
         const counter = x[1];
         return {      
-          category: x[0],    
+          category: category,    
           correct: counter.correct,
           incorrect: counter.incorrect,
           unanswered: counter.notSet,
-          accuracyPercent: Math.round((counter.correct / (counter.correct+counter.incorrect+counter.notSet))*10000)/100
+          accuracyPercent: Math.round((counter.correct / (counter.correct+counter.incorrect+counter.notSet))*10000)/100,
+          weightedAccuracyPercent: Math.round((counter.correct / (counter.correct+counter.incorrect+counter.notSet))*10000*QUESTIONS_WEIGHT_DISTRIBUTION[category])/100,
         };
       })
     };
