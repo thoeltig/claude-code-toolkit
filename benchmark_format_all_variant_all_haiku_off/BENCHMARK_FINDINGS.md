@@ -11,13 +11,15 @@
 
 ## Executive Summary
 
-This benchmark evaluates token efficiency, accuracy, and scaling behavior across 7 file formats (CSV, JSON Compact, JSON Pretty, JSONL, TOON, Markdown, YAML) using Claude 3.5 Haiku as the inference model. Key findings reveal:
+This benchmark evaluates token efficiency, accuracy, and scaling behavior across 7 file formats (CSV, JSON Compact, JSON Pretty, JSONL, TOON, Markdown, YAML) using Claude 3.5 Haiku as the inference model. Analysis includes weighted accuracy metrics prioritizing data understanding (field retrieval + structure awareness = 60% weight). Key findings reveal:
 
-1. **TOON demonstrates superior token efficiency for mandatory structured data** (5.18 chars/token) with better accuracy than CSV while using comparable tokens
-2. **Token scaling is fundamentally linear** (48-52% reduction per halved dataset) across most formats, except Markdown (57.9% overhead component)
-3. **Reasoning tokens remain constant** (~5K average) independent of record count, indicating structure complexity drives inference cost, not data volume
-4. **40-record dataset efficiency is a false positive**: Doubling runs to cover equivalent 80-record volume increases tokens by 20%+, negating apparent savings
-5. **JSON format optimization landscape**: JSON Pretty incurs 35% overhead vs JSON Compact; JSONL adds only 5% penalty for newline delimiters
+1. **JSON Compact is the efficiency leader for balanced performance** (72.65% weighted accuracy + 73.675 efficiency score at 40 records)
+2. **YAML excels at data understanding** (76.82% weighted accuracy at 40 records) but costs 35%+ more tokens than JSON Compact
+3. **Weighted accuracy reveals format weaknesses**: Markdown drops to 22.35% weighted accuracy (below raw 24.31%), systematically failing structural questions
+4. **Token scaling is fundamentally linear** (48-52% reduction per halved dataset) across most formats, except Markdown (57.9% overhead component)
+5. **Reasoning tokens remain constant** (~5K for complex formats) independent of record count, confirming structure complexity dominates inference cost
+6. **TOON optimal for mandatory data** (5.18 chars/token, 62.77% weighted accuracy at 80 records) but degrades with optional fields
+7. **Weighted accuracy > raw accuracy**: Field retrieval and structure questions are the critical measure of data format suitability for LLM processing
 
 ---
 
@@ -53,6 +55,37 @@ This benchmark evaluates token efficiency, accuracy, and scaling behavior across
 - `tokensPerRecord`: Total tokens / record count
 - `tokensPerValue`: Total tokens / field values
 - `efficiencyScore`: Derived from token efficiency + accuracy trade-off
+
+### 1.3 Weighted Accuracy Implementation
+
+**Question Category Weighting** (reflects importance for data understanding):
+
+| Category | Questions | Weight | Rationale |
+|----------|-----------|--------|-----------|
+| Field Retrieval | 42 | 35% | Core: "What data exists?" |
+| Structure Awareness | 15 | 25% | Core: "How is it organized?" |
+| Filtering | 24 | 20% | Important: "What meets criteria?" |
+| Aggregation | 33 | 20% | Secondary: Doable via code |
+| Multi-step | 6 | 0% | Nice-to-have: Code logic |
+
+**Weighted Accuracy Formula:**
+```
+weightedAccuracy = (fieldRetrieval_correct / 42) × 0.35
+                 + (structure_correct / 15) × 0.25
+                 + (filtering_correct / 24) × 0.20
+                 + (aggregation_correct / 33) × 0.20
+```
+
+**Efficiency Score (New):**
+```
+efficiencyScore = (accuracy × 0.7) + (reversedNormalizedTokens × 0.3)
+```
+Where:
+- Accuracy weight (0.7): Prioritizes correctness of data understanding
+- Token cost weight (0.3): Incentivizes but doesn't dominate efficiency
+- Token normalization: Min-Max scaling [0,1], then reversed so lower tokens = higher score
+
+**Impact**: Weighted accuracy reveals true format capability for data comprehension, penalizing formats that excel only at simple aggregations while failing at structural understanding.
 
 ---
 
@@ -170,15 +203,58 @@ Overhead: ~493 tokens (16.2% fixed)
 | Markdown | 19.45% | 31.67% | 23.61% | 22.50% | 24.31% | 40-rec (31.67%) |
 | YAML | 66.67% | 70.28% | 63.33% | 72.50% | 68.20% | **40-rec (72.50%)** |
 
-**Patterns:**
-1. **40-record advantage**: Average +3.3% accuracy across all formats (40-rec: 62.88%, 80-rec: 59.57%)
-2. **YAML exceptional**: Best accuracy overall (72.50% at 40 records)
-3. **Markdown critical failure**: 19-31% accuracy indicates severe structure parsing issues
-4. **Stable formats**: JSON Compact, Pretty, JSONL maintain 64-69% accuracy across variants
+### 3.5 Weighted Accuracy Analysis
 
-**Hypothesis**: 40-record datasets reduce information overload, allowing clearer reasoning. However, this advantage is **negated by token cost** (see Section 3.5).
+**Weighted Accuracy by Format** (field retrieval + structure awareness prioritized):
 
-### 3.5 The 40-Record False Positive: Real Efficiency Analysis
+| Format | Mandatory 80 | Mandatory 40 | Optional 80 | Optional 40 | Avg | Best |
+|--------|------------|------------|-----------|-----------|-----|------|
+| CSV | 52.48% | 57.53% | 52.48% | 57.53% | 54.99% | Both 40-rec variants |
+| JSON Compact | 65.63% | 72.65% | 65.63% | 72.65% | 69.14% | **40-rec (72.65%)** |
+| JSON Pretty | 63.84% | 71.77% | 63.84% | 71.77% | 67.80% | 40-rec (71.77%) |
+| JSONL | 61.16% | 70.86% | 61.16% | 70.86% | 66.01% | 40-rec (70.86%) |
+| TOON | 62.77% | 64.45% | 62.77% | 64.45% | 63.61% | 40-rec optional (64.45%) |
+| Markdown | 21.84% | 22.86% | 21.84% | 22.86% | 22.35% | ⚠️ Minimal improvement |
+| YAML | 66.04% | 76.82% | 66.04% | **76.82%** | **71.18%** | ⭐ 40-rec (76.82%) |
+
+**Critical Finding - Weighted Accuracy Impact:**
+
+| Format | Raw Avg | Weighted Avg | Delta | Interpretation |
+|--------|---------|-------------|-------|-----------------|
+| YAML | 68.20% | 71.18% | +2.98% | Excels at field/structure understanding |
+| JSON Compact | 66.60% | 69.14% | +2.54% | Good structural comprehension |
+| JSON Pretty | 65.70% | 67.80% | +2.10% | Maintains structure advantage |
+| JSONL | 65.49% | 66.01% | +0.52% | Minimal structure advantage |
+| TOON | 61.74% | 63.61% | +1.87% | Moderate structure advantage |
+| CSV | 54.86% | 54.99% | +0.13% | Almost no structure advantage |
+| Markdown | 24.31% | 22.35% | **-1.96%** | ⚠️ **Fails structural questions** |
+
+**Key Insight**: Markdown's weighted accuracy **drops below raw accuracy**, revealing it fails critical structural questions despite simple field retrieval. YAML's +3% weighted gain shows it excels at understanding data organization.
+
+### 3.6 Weighted Efficiency Score Rankings
+
+**Most Efficient (Weighted Efficiency Score)** - 40-record variants:
+
+| Rank | Format | Variant | Weighted Accuracy | Weighted Eff. Score |
+|------|--------|---------|-------------------|-------------------|
+| 1 | JSON Compact | optional | 72.65% | 73.675 |
+| 2 | JSONL | optional | 70.86% | 72.136 |
+| 3 | TOON | mandatory | 64.45% | 72.065 |
+| 4 | CSV | optional | 57.53% | 68.028 |
+| 5 | YAML | optional | **76.82%** | 60.128 |
+
+**Most Efficient (Weighted Efficiency Score)** - 80-record variants:
+
+| Rank | Format | Variant | Weighted Accuracy | Weighted Eff. Score |
+|------|--------|---------|-------------------|-------------------|
+| 1 | TOON | mandatory | 62.77% | 64.731 |
+| 2 | CSV | optional | 52.48% | 63.584 |
+| 3 | JSON Compact | mandatory | 65.63% | 62.283 |
+| 4 | JSON Compact | optional | 65.63% | 62.012 |
+
+**Finding**: **JSON Compact (optional, 40 records) is the efficiency sweet spot** (72.65% weighted accuracy + 73.675 efficiency score), balancing accuracy with token cost. YAML sacrifices efficiency for accuracy (76.82% accuracy but lower efficiency score due to high token usage).
+
+### 3.7 The 40-Record False Positive: Real Efficiency Analysis
 
 **Common Assumption (INCORRECT):**
 - 40 records consume 49% tokens of 80 records
@@ -535,21 +611,22 @@ Cost-benefit: Negative for simple use cases, positive for data integrity
 
 ## 9. Conclusions and Recommendations
 
-### 9.1 Format Selection Decision Matrix
+### 9.1 Format Selection Decision Matrix (Weighted Accuracy Priority)
 
-**For Token Efficiency (LLM API Cost):**
-1. **TOON** (mandatory data): 5.18 chars/token
-2. **JSON Compact**: 3.16 chars/token
-3. **JSONL**: 3.0 chars/token
+**For Data Understanding Accuracy (Weighted - Field Retrieval + Structure):**
+1. **YAML** (40-rec optional): 76.82% weighted accuracy
+2. **JSON Compact** (40-rec optional): 72.65% weighted accuracy
+3. **JSON Pretty** (40-rec optional): 71.77% weighted accuracy
 
-**For Accuracy (Data Understanding):**
-1. **YAML**: 68.2% average (72.5% at 40 records)
-2. **JSON Compact**: 66.6% average
-3. **JSONL**: 65.5% average
+**For Balanced Efficiency & Accuracy:**
+- **JSON Compact** (optional, 40 records): 72.65% weighted accuracy + 73.675 efficiency score ⭐ **RECOMMENDED**
+- **JSONL** (optional, 40 records): 70.86% weighted accuracy + 72.136 efficiency score
+- **TOON** (mandatory, 40 records): 64.45% weighted accuracy + 72.065 efficiency score
 
-**For Balanced Performance:**
-- **JSON Compact**: 66.6% accuracy at 3.16 chars/token (optimal)
-- **TOON (mandatory only)**: 61.7% accuracy at 5.18 chars/token
+**For Maximum Token Efficiency (Structure Optimization):**
+1. **TOON** (mandatory 80 records): 5.18 chars/token, 62.77% weighted accuracy
+2. **JSON Compact** (optional 80 records): 3.334 chars/token, 65.63% weighted accuracy
+3. **CSV** (optional 80 records): 2.717 chars/token, 52.48% weighted accuracy (poor accuracy)
 
 ### 9.2 Scaling Recommendations
 
@@ -562,25 +639,41 @@ Cost-benefit: Negative for simple use cases, positive for data integrity
 
 ### 9.3 Format Elimination
 
-**Markdown: Not Recommended**
-- Accuracy: 24.31% (60% worse than JSON formats)
+**Markdown: Critical Failure - NOT RECOMMENDED**
+- Raw accuracy: 24.31% (60% worse than JSON formats)
+- Weighted accuracy: 22.35% (DROPS BELOW RAW due to structural question failures)
 - Overhead: 400-500 tokens fixed cost
-- No efficiency advantage despite compact character representation
-- Recommendation: **Do not use for LLM data exchange**
+- **Unique finding**: Weighted accuracy metric **decreases** (-1.96%), indicating systematic failure on field retrieval and structure questions
+- Recommendation: **Do not use for LLM data exchange under any circumstances**
 
 **JSON Pretty: Not Recommended for LLM Processing**
 - Token cost: 35% higher than JSON Compact
-- Accuracy: 1-2% lower than Compact
+- Weighted accuracy: 67.80% (only +2.1% vs raw 65.70%)
 - Usefulness: Human readability only
 - Recommendation: **Use JSON Compact; pretty-print only for human review**
 
-### 9.4 Future Research Directions
+**CSV: Limited Use Case**
+- Weighted accuracy: 54.99% (minimal +0.13% vs raw)
+- Shows no structural comprehension advantage
+- Efficient for simple tabular data but poor for complex data understanding
+- Recommendation: **Use only for simple field extraction; avoid for structured data analysis**
 
-1. **Weighted Accuracy Analysis**: Implement per-question-category weighting (field retrieval, structure = 40-60%, aggregation = 10-20%)
-2. **Extended Thinking Impact**: Repeat tests with extended thinking enabled to measure reasoning overhead
-3. **Additional Record Counts**: Test 20, 160 records to validate linearity extremes
-4. **Model Variation**: Test with Claude 3.5 Sonnet to compare efficiency across model sizes
-5. **Domain-Specific Data**: Test with real-world datasets (e.g., financial, medical) vs synthetic
+### 9.4 Key Weighted Accuracy Findings
+
+1. **YAML Excels at Data Understanding**: +2.98% weighted accuracy gain shows strength in structural comprehension
+2. **Markdown Structural Failure**: Unique -1.96% weighted accuracy drop reveals systematic failure on critical questions
+3. **JSON Formats Show Strength**: JSON Compact (+2.54%) and JSON Pretty (+2.10%) maintain accuracy edge on structured data
+4. **CSV Lacks Structure Recognition**: Only +0.13% weighted gain indicates poor comprehension of data organization
+5. **Efficiency vs Accuracy Trade-off**: JSON Compact offers best balance; YAML leads on accuracy but costs 35% more tokens
+
+### 9.5 Future Research Directions
+
+1. **Extended Thinking Impact**: Repeat tests with extended thinking enabled to measure reasoning overhead (expected: 2-5x cost increase)
+2. **Additional Record Counts**: Test 20, 160 records to validate linearity extremes and identify optimal dataset sizing
+3. **Model Variation**: Test with Claude 3.5 Sonnet to compare efficiency/accuracy across model sizes and capabilities
+4. **Domain-Specific Data**: Test with real-world datasets (e.g., financial, medical, log files) vs synthetic to validate generalizability
+5. **Extended Metadata**: Test with additional optional fields (50% sparse) to understand metadata overhead impact
+6. **Format Combinations**: Test hybrid formats (JSON arrays within YAML, etc.) for nested structure optimization
 
 ---
 
