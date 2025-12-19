@@ -202,6 +202,19 @@ class BenchmarkAnalytics {
         }
       }
     }
+    
+    const minMaxRecordCount:Map<number, {min:number, max:number}> = new Map();
+    for (const userMetric of userMetrics) {
+      const tokens = userMetric.readTokens + userMetric.reasoningTokens;
+      const entry = minMaxRecordCount.get(userMetric.recordCount);
+      if(!entry){
+        minMaxRecordCount.set(userMetric.recordCount, {min: tokens, max: tokens});
+      }else{
+        entry.max = entry.max < tokens ? tokens : entry.max;
+        entry.min = entry.min > tokens ? tokens : entry.min;
+        minMaxRecordCount.set(userMetric.recordCount, entry);
+      }
+    }
 
     // Process each test case
     for (const userMetric of userMetrics) {
@@ -229,7 +242,9 @@ class BenchmarkAnalytics {
         continue;
       }
 
+      const entry = minMaxRecordCount.get(userMetric.recordCount);
       const totalTokensUsed = userMetric.readTokens + userMetric.reasoningTokens;
+      const normalizedAmountScore = this.normalizedAmountScore(entry.min-100, entry.max+100, totalTokensUsed);
       metrics.push({
         testCase: userMetric.testCase,
         format: userMetric.format,
@@ -261,12 +276,16 @@ class BenchmarkAnalytics {
         totalTokensUsed: totalTokensUsed,
         efficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.accuracyPercent / 100)).toFixed(3)),
         weightedEfficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.weightedAccuracyPercent / 100)).toFixed(3)),
-        efficiencyScore: parseFloat((validation.accuracy.accuracyPercent / totalTokensUsed * 1000).toFixed(3)),
-        weightedEfficiencyScore: parseFloat((validation.accuracy.weightedAccuracyPercent / totalTokensUsed * 1000).toFixed(3)),
+        efficiencyScore: parseFloat(((validation.accuracy.accuracyPercent*0.7) + (normalizedAmountScore*0.3)).toFixed(3)),
+        weightedEfficiencyScore: parseFloat(((validation.accuracy.weightedAccuracyPercent*0.7) + (normalizedAmountScore*0.3)).toFixed(3)),
       });
     }
 
     return metrics;
+  }
+
+  private normalizedAmountScore(min: number, max: number, value: number): number{
+    return ((max-value)/(max-min))*100;
   }
 
   private generateAnalytics(metrics: TestMetrics[]): AnalyticsOutput {
