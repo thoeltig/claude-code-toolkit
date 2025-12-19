@@ -24,9 +24,9 @@ export const QUESTIONS_DISTRIBUTION = {
 };
 
 export const QUESTIONS_WEIGHT_DISTRIBUTION = {
-    field_retrieval: 0.4, 
-    aggregation: 0.08, 
+    field_retrieval: 0.35, 
+    aggregation: 0.2, 
     filtering: 0.2,
-    structure_awareness: 0.3, 
-    multiple_steps: 0.02 
+    structure_awareness: 0.25, 
+    multiple_steps: 0
 };

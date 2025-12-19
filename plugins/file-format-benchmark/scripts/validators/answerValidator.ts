@@ -76,11 +76,7 @@ export class AnswerValidator {
     const correctCount = results.filter((r) => r.correct).length;
     const totalValidatable = results.length;
     const mapAsArray = [...map.entries()];
-    const weightedAccuracyPercent = mapAsArray.reduce((sum, x) => {
-      const category = x[0];
-      const counter = x[1];
-      return sum + Math.round((counter.correct / (counter.correct+counter.incorrect+counter.notSet))*10000*QUESTIONS_WEIGHT_DISTRIBUTION[category])/100;
-    }, 0);
+    const weightedAccuracyPercent = mapAsArray.reduce((sum, x) => sum + Math.round((x[1].correct / (x[1].correct+x[1].incorrect+x[1].notSet))*10000*QUESTIONS_WEIGHT_DISTRIBUTION[x[0]])/100, 0);
 
     return {
       format: format,

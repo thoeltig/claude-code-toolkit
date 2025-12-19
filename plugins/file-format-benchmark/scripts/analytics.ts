@@ -22,21 +22,18 @@ interface TestMetrics {
   // Read-Only extraction script result
   readTokens: number;
   readDurationInMilliseconds: number;
-  readTokensPerSecond: number;
+  readTokensPerMillisecond: number;
   
   // Full test extraction script result
   avgReasoningTokens: number;
   avgReasoningDurationInMilliseconds: number;
-  avgReasoningTokensPerSecond: number;
+  avgReasoningTokensPerMillisecond: number;
 
   // Validation script result
   totalQuestions: number;
-  questionDistribution: Map<QuestionCategory, number>;
-  questionWeightDistribution: Map<QuestionCategory, number>;
   avgNoAnswers: number;
   avgIncorrectAnswers: number;
   avgCorrectAnswers: number;
-  correctnessRatio: number;
   avgAccuracyPercent: number;
   avgWeightedAccuracyPercent: number;
 
@@ -49,8 +46,10 @@ interface TestMetrics {
   // Result
   totalTokensUsed: number;
   efficientlyUsedTokens: number;
+  weightedEfficientlyUsedTokens: number;
   // Efficiency score = (Accuracy percentage ÷ total tokens) × 1000. Higher is better.
   efficiencyScore: number;
+  weightedEfficiencyScore: number;
 }
 
 interface AnalyticsOutput {
@@ -64,6 +63,8 @@ interface AnalyticsOutput {
     formats: string[];
     variants: string[];
     recordCounts: number[];
+    questionDistribution: [QuestionCategory, number][];
+    questionWeightDistribution: [QuestionCategory, number][];
   };
   metrics: TestMetrics[];
   rankings: {
@@ -209,6 +210,7 @@ class BenchmarkAnalytics {
         continue;
       }
 
+      const totalTokensUsed = userMetric.readTokens + userMetric.reasoningTokens;
       metrics.push({
         testCase: userMetric.testCase,
         format: userMetric.format,
@@ -220,27 +222,13 @@ class BenchmarkAnalytics {
 
         readTokens: userMetric.readTokens,
         readDurationInMilliseconds: userMetric.readDurationInMilliseconds,
-        readTokensPerSecond: parseFloat((userMetric.readTokens / userMetric.readDurationInMilliseconds / 1000).toFixed(3)),
+        readTokensPerMillisecond: parseFloat((userMetric.readTokens / userMetric.readDurationInMilliseconds).toFixed(3)),
 
         avgReasoningTokens: userMetric.reasoningTokens,
         avgReasoningDurationInMilliseconds: userMetric.reasoningDurationInMilliseconds,
-        avgReasoningTokensPerSecond: parseFloat((userMetric.reasoningTokens / userMetric.reasoningDurationInMilliseconds / 1000).toFixed(3)),
+        avgReasoningTokensPerMillisecond: parseFloat((userMetric.reasoningTokens / userMetric.reasoningDurationInMilliseconds).toFixed(3)),
 
         totalQuestions: validation.totalQuestions,
-        questionDistribution: new Map<QuestionCategory, number>(
-          [["field_retrieval", QUESTIONS_DISTRIBUTION["field_retrieval"]],
-          ["aggregation", QUESTIONS_DISTRIBUTION["aggregation"]],
-          ["filtering", QUESTIONS_DISTRIBUTION["filtering"]],
-          ["structure_awareness", QUESTIONS_DISTRIBUTION["structure_awareness"]],
-          ["multiple_steps", QUESTIONS_DISTRIBUTION["multiple_steps"]]]
-        ),
-        questionWeightDistribution: new Map<QuestionCategory, number>(
-          [["field_retrieval", QUESTIONS_WEIGHT_DISTRIBUTION["field_retrieval"]],
-          ["aggregation", QUESTIONS_WEIGHT_DISTRIBUTION["aggregation"]],
-          ["filtering", QUESTIONS_WEIGHT_DISTRIBUTION["filtering"]],
-          ["structure_awareness", QUESTIONS_WEIGHT_DISTRIBUTION["structure_awareness"]],
-          ["multiple_steps", QUESTIONS_WEIGHT_DISTRIBUTION["multiple_steps"]]]
-        ),
         avgNoAnswers: validation.totalQuestions - validation.accuracy.correct - validation.accuracy.incorrect,
         avgIncorrectAnswers: validation.accuracy.incorrect,
         avgCorrectAnswers: validation.accuracy.correct,
@@ -251,10 +239,11 @@ class BenchmarkAnalytics {
         tokensPerValue: parseFloat((userMetric.readTokens / datasetInfo.totalValues).toFixed(3)),
         tokensPerRecord: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
         avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),
-        totalTokensUsed: userMetric.readTokens + userMetric.reasoningTokens,
-        correctnessRatio: validation.accuracy.correct / validation.totalQuestions,
-        efficientlyUsedTokens: parseFloat(((userMetric.readTokens + userMetric.reasoningTokens) * (validation.accuracy.correct / validation.totalQuestions)).toFixed(3)),
-        efficiencyScore: parseFloat((validation.accuracy.accuracyPercent / (userMetric.readTokens + userMetric.reasoningTokens) * 1000).toFixed(3)),
+        totalTokensUsed: totalTokensUsed,
+        efficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.accuracyPercent / 100)).toFixed(3)),
+        weightedEfficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.weightedAccuracyPercent / 100)).toFixed(3)),
+        efficiencyScore: parseFloat((validation.accuracy.accuracyPercent / totalTokensUsed * 1000).toFixed(3)),
+        weightedEfficiencyScore: parseFloat((validation.accuracy.weightedAccuracyPercent / totalTokensUsed * 1000).toFixed(3)),
       });
     }
 
@@ -265,9 +254,6 @@ class BenchmarkAnalytics {
     if (metrics.length === 0) {
       throw new Error("No metrics to analyze");
     }
-
-    const model = "unknown";
-    const thinking = "unknown";
 
     // Get unique formats and densities
     const formats = [...new Set(metrics.map((m) => m.format))];
@@ -305,11 +291,25 @@ class BenchmarkAnalytics {
         metadataFile: this.metadataFile,
         agentIdsFile: this.agentIdsFile,
         metricsFile: this.metricsFile,
-        model,
-        thinking,
+        model: "Entered by user",
+        thinking: "Entered by user",
         formats,
         variants, 
         recordCounts,
+        questionDistribution: [
+          ["field_retrieval", QUESTIONS_DISTRIBUTION["field_retrieval"]],
+          ["aggregation", QUESTIONS_DISTRIBUTION["aggregation"]],
+          ["filtering", QUESTIONS_DISTRIBUTION["filtering"]],
+          ["structure_awareness", QUESTIONS_DISTRIBUTION["structure_awareness"]],
+          ["multiple_steps", QUESTIONS_DISTRIBUTION["multiple_steps"]]
+        ],
+        questionWeightDistribution: [
+          ["field_retrieval", QUESTIONS_WEIGHT_DISTRIBUTION["field_retrieval"]],
+          ["aggregation", QUESTIONS_WEIGHT_DISTRIBUTION["aggregation"]],
+          ["filtering", QUESTIONS_WEIGHT_DISTRIBUTION["filtering"]],
+          ["structure_awareness", QUESTIONS_WEIGHT_DISTRIBUTION["structure_awareness"]],
+          ["multiple_steps", QUESTIONS_WEIGHT_DISTRIBUTION["multiple_steps"]]
+        ],
       },
       metrics,
       rankings: {
