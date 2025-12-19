@@ -4,7 +4,7 @@
         "metadataFile": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\metadata.json",
         "agentIdsFile": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\agent_ids.json",
         "metricsFile": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\metrics.json",
-        "model": "haiku",
+        "model": "Haiku 4.5",
         "thinking": "off",
         "formats": [
             "csv",
