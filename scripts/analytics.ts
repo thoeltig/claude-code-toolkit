@@ -67,13 +67,17 @@ interface AnalyticsOutput {
     questionWeightDistribution: [QuestionCategory, number][];
   };
   metrics: TestMetrics[];
-  rankings: {
-    mostTokenEfficient: { format: string; hasOptionalData: boolean; recordCount: number; charsPerToken: number };
-    mostAccurate: { format: string; hasOptionalData: boolean; recordCount: number; accuracyPercent: number };
-    bestOverall: { format: string; hasOptionalData: boolean; recordCount: number; efficiencyScore: number };
-    byRecordCount: Record<number, { avgCharsPerToken: number; avgAccuracy: number }>;
-  };
   insights: string[];
+  rankings: Record<number, Ranking>;
+}
+
+interface Ranking { 
+  avgCharsPerToken: number; 
+  avgAccuracy: number;
+  mostTokenEfficient: { format: string; hasOptionalData: boolean; recordCount: number; charsPerToken: number; tokensUsed: number; }[];
+  smallestTokenUsage: { format: string; hasOptionalData: boolean; recordCount: number; tokensUsed: number; }[];
+  mostAccurate: { format: string; hasOptionalData: boolean; recordCount: number; accuracyPercent: number; efficientlyUsedTokens: number; efficiencyScore: number; }[];
+  mostAccurateWeighted: { format: string; hasOptionalData: boolean; recordCount: number; weightedAccuracyPercent: number; weightedEfficientlyUsedTokens: number; weightedEfficiencyScore: number; }[];
 }
 
 class BenchmarkAnalytics {
@@ -255,32 +259,10 @@ class BenchmarkAnalytics {
       throw new Error("No metrics to analyze");
     }
 
-    // Get unique formats and densities
+    const rankings = this.generateRanking(metrics);
     const formats = [...new Set(metrics.map((m) => m.format))];
     const variants = [...new Set(metrics.map((m) => m.variant))];
     const recordCounts = [...new Set(metrics.map((m) => m.recordCount))].sort((a, b) => b - a);
-
-    // Find rankings
-    const mostTokenEfficient = metrics.reduce((best, current) =>
-      current.charsPerToken > best.charsPerToken ? current : best
-    );
-
-    const mostAccurate = metrics.reduce((best, current) =>
-      current.avgAccuracyPercent > best.avgAccuracyPercent ? current : best
-    );
-
-    const bestOverall = metrics.reduce((best, current) =>
-      current.efficiencyScore > best.efficiencyScore ? current : best
-    );
-
-    // Calculate format-level statistics
-    const byRecordCount: Record<number, { avgCharsPerToken: number; avgAccuracy: number }> = {};
-    for (const recordCount of recordCounts) {
-      const formatMetrics = metrics.filter((m) => m.recordCount === recordCount);
-      const avgCharsPerToken = Math.round(formatMetrics.reduce((sum, m) => sum + m.charsPerToken, 0) / formatMetrics.length*1000)/1000;
-      const avgAccuracy = Math.round(formatMetrics.reduce((sum, m) => sum + m.avgAccuracyPercent, 0) / formatMetrics.length*1000)/1000;
-      byRecordCount[recordCount] = { avgCharsPerToken, avgAccuracy };
-    }
 
     // Generate insights
     const insights = this.generateInsights(metrics);
@@ -311,30 +293,91 @@ class BenchmarkAnalytics {
           ["multiple_steps", QUESTIONS_WEIGHT_DISTRIBUTION["multiple_steps"]]
         ],
       },
-      metrics,
-      rankings: {
-        mostTokenEfficient: {
-          format: mostTokenEfficient.format,
-          hasOptionalData: mostTokenEfficient.hasOptionalData,
-          recordCount: mostTokenEfficient.recordCount,
-          charsPerToken: mostTokenEfficient.charsPerToken,
-        },
-        mostAccurate: {
-          format: mostAccurate.format,
-          hasOptionalData: mostAccurate.hasOptionalData,
-          recordCount: mostAccurate.recordCount,
-          accuracyPercent: mostAccurate.avgAccuracyPercent,
-        },
-        bestOverall: {
-          format: bestOverall.format,
-          hasOptionalData: bestOverall.hasOptionalData,
-          recordCount: bestOverall.recordCount,
-          efficiencyScore: bestOverall.efficiencyScore
-        },
-        byRecordCount,
-      },
       insights,
+      rankings,
+      metrics
     };
+  }
+  
+  private generateRanking(metrics: TestMetrics[]): Record<number, Ranking> {
+    const recordCounts = [...new Set(metrics.map((m) => m.recordCount))].sort((a, b) => b - a);    
+    const byRecordCount: Record<number, Ranking> = {};
+
+    const rankingCount = 3;
+
+    for (const recordCount of recordCounts) {
+      const formatMetrics = metrics.filter((m) => m.recordCount === recordCount);
+      const avgCharsPerToken = Math.round(formatMetrics.reduce((sum, m) => sum + m.charsPerToken, 0) / formatMetrics.length*1000)/1000;
+      const avgAccuracy = Math.round(formatMetrics.reduce((sum, m) => sum + m.avgAccuracyPercent, 0) / formatMetrics.length*1000)/1000;
+
+      const mostTokenEfficient =[];
+      const sortedByCharsPerToken = formatMetrics.sort((a, b) => b.charsPerToken - a.charsPerToken);
+      
+      for (let i = 0; i < sortedByCharsPerToken.length && i < rankingCount; i++) {
+        const metric = sortedByCharsPerToken[i];
+        mostTokenEfficient[i] =  { 
+          format: metric.format,
+          hasOptionalData: metric.hasOptionalData,
+          recordCount: metric.recordCount,
+          charsPerToken: metric.charsPerToken, 
+          tokensUsed: metric.totalTokensUsed 
+        };
+      }
+
+      const smallestTokenUsage = [];
+      const sortedByTokenUsage = formatMetrics.sort((a, b) => a.totalTokensUsed - b.totalTokensUsed);
+      
+      for (let i = 0; i < sortedByTokenUsage.length && i < rankingCount; i++) {
+        const metric = sortedByTokenUsage[i];
+        smallestTokenUsage[i] =  { 
+          format: metric.format,
+          hasOptionalData: metric.hasOptionalData,
+          recordCount: metric.recordCount,
+          tokensUsed: metric.totalTokensUsed 
+        };
+      }
+
+      const mostAccurate = [];
+      const sortedByAccurate = formatMetrics.sort((a, b) => b.avgAccuracyPercent - a.avgAccuracyPercent);
+      
+      for (let i = 0; i < sortedByAccurate.length && i < rankingCount; i++) {
+        const metric = sortedByAccurate[i];
+        mostAccurate[i] =  { 
+          format: metric.format,
+          hasOptionalData: metric.hasOptionalData,
+          recordCount: metric.recordCount,
+          accuracyPercent: metric.avgAccuracyPercent,
+          efficientlyUsedTokens: metric.efficientlyUsedTokens,
+          efficiencyScore: metric.efficiencyScore
+        };
+      }
+      
+      const mostWeightedAccuracy = [];
+      const sortedByWeightedAccuracyPercent = formatMetrics.sort((a, b) => b.avgWeightedAccuracyPercent - a.avgWeightedAccuracyPercent);
+      
+      for (let i = 0; i < sortedByWeightedAccuracyPercent.length && i < rankingCount; i++) {
+        const metric = sortedByWeightedAccuracyPercent[i];
+        mostWeightedAccuracy[i] =  { 
+          format: metric.format,
+          hasOptionalData: metric.hasOptionalData,
+          recordCount: metric.recordCount,
+          weightedAccuracyPercent: metric.avgWeightedAccuracyPercent,
+          weightedEfficientlyUsedTokens: metric.weightedEfficientlyUsedTokens,
+          weightedEfficiencyScore: metric.weightedEfficiencyScore
+        };
+      }
+
+      byRecordCount[recordCount] = { 
+        avgCharsPerToken, 
+        avgAccuracy,
+        mostTokenEfficient: mostTokenEfficient,
+        smallestTokenUsage: smallestTokenUsage,
+        mostAccurate: mostAccurate,
+        mostAccurateWeighted: mostWeightedAccuracy
+      };
+    }
+
+    return byRecordCount;
   }
 
   private generateInsights(metrics: TestMetrics[]): string[] {
