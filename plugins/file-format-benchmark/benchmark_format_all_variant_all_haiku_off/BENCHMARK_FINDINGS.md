@@ -2,7 +2,7 @@
 
 **Test Case**: `benchmark_format_all_variant_all_haiku_off`
 **Date**: 2025-12-18
-**Model**: Claude 3.5 Haiku
+**Model**: Haiku 4.5
 **Extended Thinking**: Off
 **Total Test Cases**: 28 (7 formats × 2 variants × 2 record counts)
 **Total Agents Executed**: 112 (28 readonly + 84 full benchmark tests)
