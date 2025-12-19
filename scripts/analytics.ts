@@ -67,7 +67,6 @@ interface AnalyticsOutput {
     questionWeightDistribution: [QuestionCategory, number][];
   };
   metrics: TestMetrics[];
-  insights: string[];
   rankings: Record<number, Ranking>;
 }
 
@@ -264,9 +263,6 @@ class BenchmarkAnalytics {
     const variants = [...new Set(metrics.map((m) => m.variant))];
     const recordCounts = [...new Set(metrics.map((m) => m.recordCount))].sort((a, b) => b - a);
 
-    // Generate insights
-    const insights = this.generateInsights(metrics);
-
     return {
       timestamp: new Date().toISOString(),
       testConfigurations: {
@@ -293,7 +289,6 @@ class BenchmarkAnalytics {
           ["multiple_steps", QUESTIONS_WEIGHT_DISTRIBUTION["multiple_steps"]]
         ],
       },
-      insights,
       rankings,
       metrics
     };
@@ -378,52 +373,6 @@ class BenchmarkAnalytics {
     }
 
     return byRecordCount;
-  }
-
-  private generateInsights(metrics: TestMetrics[]): string[] {
-    const insights: string[] = [];
-
-    const bestCharsPerTokenEntries = metrics.sort((a, b) => b.charsPerToken - a.charsPerToken);
-    let tokenEfficiencyOutput = '';
-    for (let i = 0; i < bestCharsPerTokenEntries.length && i < 4; i++) {
-      const element = bestCharsPerTokenEntries[i];
-      tokenEfficiencyOutput += ` ${element.format}_${element.variant}_${element.recordCount} with ${element.charsPerToken.toFixed(3)} char/token,`;
-    }
-    insights.push('Format token-efficiency:'+tokenEfficiencyOutput);
-
-    const bestAccuracyEntries = metrics.sort((a, b) => b.avgAccuracyPercent - a.avgAccuracyPercent);
-    let accuracyOutput = '';
-    for (let i = 0; i < bestAccuracyEntries.length && i < 4; i++) {
-      const element = bestAccuracyEntries[i];
-      accuracyOutput += ` ${element.format}_${element.variant}_${element.recordCount} with ${element.avgAccuracyPercent.toFixed(2)}%,`;
-    }
-    insights.push('Average accuracy:'+accuracyOutput);
-
-    const bestReasoningTokenEntries = metrics.sort((a, b) => b.avgReasoningTokensPerAnswer - a.avgReasoningTokensPerAnswer);
-    let reasoningTokenOutput = '';
-    for (let i = 0; i < bestReasoningTokenEntries.length && i < 4; i++) {
-      const element = bestReasoningTokenEntries[i];
-      reasoningTokenOutput += ` ${element.format}_${element.variant}_${element.recordCount} with ~${element.avgReasoningTokensPerAnswer.toFixed(2)} token/question,`;
-    }
-    insights.push('Tokens per question:'+reasoningTokenOutput);
-
-    // Record count impact
-    const recordCounts = [...new Set(metrics.map((m) => m.recordCount))].sort((a, b) => b - a);
-    if (recordCounts.length > 1) {
-      const maxRecordCounts = recordCounts[0];
-      const minRecordCounts = recordCounts[recordCounts.length - 1];
-
-      const maxRecordCountsMetrics = metrics.filter((m) => m.recordCount === maxRecordCounts);
-      const minRecordCountsMetrics = metrics.filter((m) => m.recordCount === minRecordCounts);
-
-      const maxAvgTokens = maxRecordCountsMetrics.reduce((sum, m) => sum + m.readTokens, 0) / maxRecordCountsMetrics.length;
-      const minAvgTokens = minRecordCountsMetrics.reduce((sum, m) => sum + m.readTokens, 0) / minRecordCountsMetrics.length;
-
-      const tokenReduction = ((maxAvgTokens - minAvgTokens) / maxAvgTokens * 100).toFixed(2);
-      insights.push(`Record count difference: ${minRecordCounts} record count reduces tokens by ~${tokenReduction}% vs ${maxRecordCounts} record count`);
-    }
-
-    return insights;
   }
 
   private writeOutput(analytics: AnalyticsOutput): void {
