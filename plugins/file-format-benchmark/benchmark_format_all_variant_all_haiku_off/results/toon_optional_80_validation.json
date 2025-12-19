@@ -7,7 +7,8 @@
     "accuracy": {
         "correct": 74,
         "incorrect": 46,
-        "accuracyPercent": 61.67
+        "accuracyPercent": 61.67,
+        "weightedAccuracyPercent": 62.77
     },
     "perRunAccuracy": [
         {
@@ -15,41 +16,47 @@
             "correct": 72,
             "incorrect": 48,
             "accuracyPercent": 60,
+            "weightedAccuracyPercent": 61.42999999999999,
             "accuracyPerCategory": [
                 {
                     "category": "field_retrieval",
                     "correct": 31,
                     "incorrect": 11,
                     "unanswered": 0,
-                    "accuracyPercent": 73.81
+                    "accuracyPercent": 73.81,
+                    "weightedAccuracyPercent": 25.83
                 },
                 {
                     "category": "aggregation",
                     "correct": 23,
                     "incorrect": 10,
                     "unanswered": 0,
-                    "accuracyPercent": 69.7
+                    "accuracyPercent": 69.7,
+                    "weightedAccuracyPercent": 13.94
                 },
                 {
                     "category": "filtering",
                     "correct": 10,
                     "incorrect": 14,
                     "unanswered": 0,
-                    "accuracyPercent": 41.67
+                    "accuracyPercent": 41.67,
+                    "weightedAccuracyPercent": 8.33
                 },
                 {
                     "category": "structure_awareness",
                     "correct": 8,
                     "incorrect": 7,
                     "unanswered": 0,
-                    "accuracyPercent": 53.33
+                    "accuracyPercent": 53.33,
+                    "weightedAccuracyPercent": 13.33
                 },
                 {
                     "category": "multiple_steps",
                     "correct": 0,
                     "incorrect": 6,
                     "unanswered": 0,
-                    "accuracyPercent": 0
+                    "accuracyPercent": 0,
+                    "weightedAccuracyPercent": 0
                 }
             ]
         },
@@ -58,41 +65,47 @@
             "correct": 86,
             "incorrect": 34,
             "accuracyPercent": 71.67,
+            "weightedAccuracyPercent": 73.1,
             "accuracyPerCategory": [
                 {
                     "category": "field_retrieval",
                     "correct": 42,
                     "incorrect": 0,
                     "unanswered": 0,
-                    "accuracyPercent": 100
+                    "accuracyPercent": 100,
+                    "weightedAccuracyPercent": 35
                 },
                 {
                     "category": "aggregation",
                     "correct": 23,
                     "incorrect": 10,
                     "unanswered": 0,
-                    "accuracyPercent": 69.7
+                    "accuracyPercent": 69.7,
+                    "weightedAccuracyPercent": 13.94
                 },
                 {
                     "category": "filtering",
                     "correct": 13,
                     "incorrect": 11,
                     "unanswered": 0,
-                    "accuracyPercent": 54.17
+                    "accuracyPercent": 54.17,
+                    "weightedAccuracyPercent": 10.83
                 },
                 {
                     "category": "structure_awareness",
                     "correct": 8,
                     "incorrect": 7,
                     "unanswered": 0,
-                    "accuracyPercent": 53.33
+                    "accuracyPercent": 53.33,
+                    "weightedAccuracyPercent": 13.33
                 },
                 {
                     "category": "multiple_steps",
                     "correct": 0,
                     "incorrect": 6,
                     "unanswered": 0,
-                    "accuracyPercent": 0
+                    "accuracyPercent": 0,
+                    "weightedAccuracyPercent": 0
                 }
             ]
         },
@@ -101,41 +114,47 @@
             "correct": 64,
             "incorrect": 56,
             "accuracyPercent": 53.33,
+            "weightedAccuracyPercent": 53.779999999999994,
             "accuracyPerCategory": [
                 {
                     "category": "field_retrieval",
                     "correct": 31,
                     "incorrect": 11,
                     "unanswered": 0,
-                    "accuracyPercent": 73.81
+                    "accuracyPercent": 73.81,
+                    "weightedAccuracyPercent": 25.83
                 },
                 {
                     "category": "aggregation",
                     "correct": 20,
                     "incorrect": 13,
                     "unanswered": 0,
-                    "accuracyPercent": 60.61
+                    "accuracyPercent": 60.61,
+                    "weightedAccuracyPercent": 12.12
                 },
                 {
                     "category": "filtering",
                     "correct": 7,
                     "incorrect": 17,
                     "unanswered": 0,
-                    "accuracyPercent": 29.17
+                    "accuracyPercent": 29.17,
+                    "weightedAccuracyPercent": 5.83
                 },
                 {
                     "category": "structure_awareness",
                     "correct": 6,
                     "incorrect": 9,
                     "unanswered": 0,
-                    "accuracyPercent": 40
+                    "accuracyPercent": 40,
+                    "weightedAccuracyPercent": 10
                 },
                 {
                     "category": "multiple_steps",
                     "correct": 0,
                     "incorrect": 6,
                     "unanswered": 0,
-                    "accuracyPercent": 0
+                    "accuracyPercent": 0,
+                    "weightedAccuracyPercent": 0
                 }
             ]
         }
