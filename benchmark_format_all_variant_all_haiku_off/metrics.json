@@ -130,14 +130,164 @@
                 "recordCount": 80,
                 "readTokens": 15974,
                 "readDurationMs": 1444
+            },
+            {
+                "file": "jsonl_with_mandatory_40_records.jsonl",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_40_records.jsonl",
+                "agentId": "a02bcfd",
+                "format": "jsonl",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 8109,
+                "readDurationMs": 1394
+            },
+            {
+                "file": "jsonl_with_optional_80_records.jsonl",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_optional_80_records.jsonl",
+                "agentId": "a6ea410",
+                "format": "jsonl",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 14590,
+                "readDurationMs": 2180
+            },
+            {
+                "file": "jsonl_with_optional_40_records.jsonl",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_optional_40_records.jsonl",
+                "agentId": "accd6e0",
+                "format": "jsonl",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 7403,
+                "readDurationMs": 1087
+            },
+            {
+                "file": "toon_with_mandatory_80_records.toon",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_mandatory_80_records.toon",
+                "agentId": "a657b4a",
+                "format": "toon",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 9760,
+                "readDurationMs": 1328
+            },
+            {
+                "file": "toon_with_mandatory_40_records.toon",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_mandatory_40_records.toon",
+                "agentId": "af99611",
+                "format": "toon",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 5040,
+                "readDurationMs": 1240
+            },
+            {
+                "file": "toon_with_optional_80_records.toon",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_optional_80_records.toon",
+                "agentId": "a511aaf",
+                "format": "toon",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 22119,
+                "readDurationMs": 1495
+            },
+            {
+                "file": "toon_with_optional_40_records.toon",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_optional_40_records.toon",
+                "agentId": "a680fef",
+                "format": "toon",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 10882,
+                "readDurationMs": 2234
+            },
+            {
+                "file": "markdown_with_mandatory_80_records.md",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_mandatory_80_records.md",
+                "agentId": "a05df7a",
+                "format": "markdown",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 6059,
+                "readDurationMs": 1168
+            },
+            {
+                "file": "markdown_with_mandatory_40_records.md",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_mandatory_40_records.md",
+                "agentId": "a73a085",
+                "format": "markdown",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 3515,
+                "readDurationMs": 1555
+            },
+            {
+                "file": "markdown_with_optional_80_records.md",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_optional_80_records.md",
+                "agentId": "a4cdbd4",
+                "format": "markdown",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 6050,
+                "readDurationMs": 1173
+            },
+            {
+                "file": "markdown_with_optional_40_records.md",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_optional_40_records.md",
+                "agentId": "a99d528",
+                "format": "markdown",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 3508,
+                "readDurationMs": 1532
+            },
+            {
+                "file": "yaml_with_mandatory_80_records.yaml",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_mandatory_80_records.yaml",
+                "agentId": "a214264",
+                "format": "yaml",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "readTokens": 24971,
+                "readDurationMs": 1666
+            },
+            {
+                "file": "yaml_with_mandatory_40_records.yaml",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_mandatory_40_records.yaml",
+                "agentId": "adee940",
+                "format": "yaml",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "readTokens": 12184,
+                "readDurationMs": 2536
+            },
+            {
+                "file": "yaml_with_optional_80_records.yaml",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_optional_80_records.yaml",
+                "agentId": "a8407b2",
+                "format": "yaml",
+                "variant": "optional",
+                "recordCount": 80,
+                "readTokens": 22763,
+                "readDurationMs": 2210
+            },
+            {
+                "file": "yaml_with_optional_40_records.yaml",
+                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_optional_40_records.yaml",
+                "agentId": "a26a916",
+                "format": "yaml",
+                "variant": "optional",
+                "recordCount": 40,
+                "readTokens": 11151,
+                "readDurationMs": 1415
             }
         ],
         "summary": {
-            "totalFiles": 13,
-            "totalReadTokens": 173370,
-            "totalReadDurationMs": 22458,
-            "averageReadTokens": 13336,
-            "averageDurationMs": 1727.5
+            "totalFiles": 28,
+            "totalReadTokens": 341474,
+            "totalReadDurationMs": 46671,
+            "averageReadTokens": 12196,
+            "averageDurationMs": 1666.8
         }
     },
     "reasoning": {
@@ -258,16 +408,151 @@
                 "durationMs": 131735.667,
                 "reasoningTokens": 4991,
                 "outputTokens": 429
+            },
+            {
+                "format": "jsonl",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 104862,
+                "reasoningTokens": 4972,
+                "outputTokens": 438.667
+            },
+            {
+                "format": "jsonl",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 80706.667,
+                "reasoningTokens": 4969,
+                "outputTokens": 330.333
+            },
+            {
+                "format": "jsonl",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 87785.667,
+                "reasoningTokens": 19,
+                "outputTokens": 330.333
+            },
+            {
+                "format": "toon",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 94043.333,
+                "reasoningTokens": 4991,
+                "outputTokens": 332
+            },
+            {
+                "format": "toon",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 76236,
+                "reasoningTokens": 19,
+                "outputTokens": 331.333
+            },
+            {
+                "format": "toon",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 87918.667,
+                "reasoningTokens": 4969,
+                "outputTokens": 329.667
+            },
+            {
+                "format": "toon",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 74487.667,
+                "reasoningTokens": 4928,
+                "outputTokens": 330.333
+            },
+            {
+                "format": "markdown",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 61922,
+                "reasoningTokens": 23,
+                "outputTokens": 583.333
+            },
+            {
+                "format": "markdown",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 67062.667,
+                "reasoningTokens": 19,
+                "outputTokens": 641
+            },
+            {
+                "format": "markdown",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 56827,
+                "reasoningTokens": 19,
+                "outputTokens": 425.333
+            },
+            {
+                "format": "markdown",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 53044,
+                "reasoningTokens": 19,
+                "outputTokens": 541.333
+            },
+            {
+                "format": "yaml",
+                "variant": "mandatory",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 102580,
+                "reasoningTokens": 4991,
+                "outputTokens": 318
+            },
+            {
+                "format": "yaml",
+                "variant": "mandatory",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 96988,
+                "reasoningTokens": 4972,
+                "outputTokens": 325.333
+            },
+            {
+                "format": "yaml",
+                "variant": "optional",
+                "recordCount": 80,
+                "testRuns": 3,
+                "durationMs": 86837.667,
+                "reasoningTokens": 4969,
+                "outputTokens": 528
+            },
+            {
+                "format": "yaml",
+                "variant": "optional",
+                "recordCount": 40,
+                "testRuns": 3,
+                "durationMs": 110771.667,
+                "reasoningTokens": 4928,
+                "outputTokens": 329.333
             }
         ],
         "summary": {
-            "totalTestCases": 13,
-            "totalDurationMs": 1294306.001,
-            "totalReasoningTokens": 41535.334,
-            "totalOutputTokens": 5384.999,
-            "averageDurationMs": 99562,
-            "averageReasoningTokens": 3195.026,
-            "averageOutputTokens": 414.231
+            "totalTestCases": 28,
+            "totalDurationMs": 2536379.003,
+            "totalReasoningTokens": 86342.334,
+            "totalOutputTokens": 11499.33,
+            "averageDurationMs": 90584.964,
+            "averageReasoningTokens": 3083.655,
+            "averageOutputTokens": 410.69
         }
     }
 }
