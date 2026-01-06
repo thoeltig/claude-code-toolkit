@@ -20,7 +20,7 @@ Parse arguments:
 
 Execute:
 ```bash
-python ~/.claude/commands/download_full_content.py --folder <folder_name> <url1> <url2> ...
+python ~/.claude/commands/fetch_full_content.py --folder <folder_name> <url1> <url2> ...
 ```
 
 The script will:
@@ -42,11 +42,11 @@ output/jamoin-de_index.md
 
 ```bash
 # Single URL
-/fetch-full --folder docs https://angular.dev/essentials/signals
+/fetch-full-content --folder docs https://angular.dev/essentials/signals
 
 # Multiple URLs
-/fetch-full --folder docs https://angular.dev/essentials/signals https://www.example.com/guide
+/fetch-full-content --folder docs https://angular.dev/essentials/signals https://www.example.com/guide
 
 # From file (create urls.txt with one URL per line)
-/fetch-full --folder docs $(cat urls.txt)
+/fetch-full-content --folder docs $(cat urls.txt)
 ```

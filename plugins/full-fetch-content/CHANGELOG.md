@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the full-fetch plugin documented here.
+All notable changes to the fetch-full-content plugin documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
@@ -41,5 +41,5 @@ _First release._
 - Efficient handling of both static and JS-rendered pages
 - Cached files enable building agent skills from complete documentation
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/full-fetch-v1.0.0.0...HEAD
-[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/full-fetch-v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/fetch-full-content-v1.0.0.0...HEAD
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/fetch-full-content-v1.0.0.0

@@ -188,9 +188,9 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python download_full_content.py https://example.com/page
-  python download_full_content.py -f output https://example.com/page1 https://example.com/page2
-  python download_full_content.py -f docs --url-file urls.txt
+  python fetch_full_content.py https://example.com/page
+  python fetch_full_content.py -f output https://example.com/page1 https://example.com/page2
+  python fetch_full_content.py -f docs --url-file urls.txt
         """
     )
 

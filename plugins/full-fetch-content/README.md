@@ -1,17 +1,17 @@
-# Full-Fetch Plugin
+# Fetch-Full-Content Plugin
 
 Download and cache full page content from URLs for complete information retrieval without summarization loss.
 
-## Built-in Fetch vs Full-Fetch
+## Built-in Fetch vs Fetch-Full-Content
 
-| Feature | Built-in WebFetch | Full-Fetch |
+| Feature | Built-in WebFetch | Fetch-Full-Content |
 |---------|------------------|------------|
 | **Information Retrieved** | 30-80% (summarized by subagent) | 100% (full content) |
 | **Caching** | No (refetch with 5min request caching) | Yes (filesystem cached) |
 | **Format** | Markdown | Markdown |
 | **Best For** | Quick lookups, general questions | Building agent skills, comprehensive analysis |
 
-**When to use Full-Fetch:**
+**When to use Fetch-Full-Content:**
 - Writing agent skills based on documentation (need 100% accuracy)
 - Analyzing complete API references or specifications
 - Caching official docs for repeated analysis
@@ -26,7 +26,7 @@ Download and cache full page content from URLs for complete information retrieva
 
 **NO prompt injection detection or guards implemented.**
 
-Full-Fetch retrieves and caches raw web content without security filtering. Malicious websites can embed instructions that manipulate Claude's behavior.
+Fetch-Full-Content retrieves and caches raw web content without security filtering. Malicious websites can embed instructions that manipulate Claude's behavior.
 
 **ONLY use on:**
 - ✅ Official documentation sites (docs.anthropic.com, angular.dev, etc.)
@@ -43,7 +43,7 @@ Full-Fetch retrieves and caches raw web content without security filtering. Mali
 ## Installation
 
 ```bash
-/plugin install full-fetch@claude-code-toolkit
+/plugin install fetch-full-content@claude-code-toolkit
 ```
 
 ## Usage
@@ -52,13 +52,13 @@ Full-Fetch retrieves and caches raw web content without security filtering. Mali
 
 ```bash
 # Single URL
-/fetch-full --folder docs https://angular.dev/essentials/signals
+/fetch-full-content --folder docs https://angular.dev/essentials/signals
 
 # Multiple URLs
-/fetch-full --folder docs https://angular.dev/essentials/signals https://angular.dev/guide/directives
+/fetch-full-content --folder docs https://angular.dev/essentials/signals https://angular.dev/guide/directives
 
 # Batch from file
-/fetch-full --folder docs $(cat urls.txt)
+/fetch-full-content --folder docs $(cat urls.txt)
 ```
 
 ### Use Cases
@@ -66,7 +66,7 @@ Full-Fetch retrieves and caches raw web content without security filtering. Mali
 **Build comprehensive agent skills:**
 ```bash
 # Download complete Angular documentation for skill development
-/fetch-full --folder angular-docs \
+/fetch-full-content --folder angular-docs \
   https://angular.dev/guide/signals \
   https://angular.dev/guide/directives \
   https://angular.dev/guide/dependency-injection
@@ -75,7 +75,7 @@ Full-Fetch retrieves and caches raw web content without security filtering. Mali
 **Analyze complex topics:**
 ```bash
 # Get all pricing and feature documentation
-/fetch-full --folder product-info \
+/fetch-full-content --folder product-info \
   https://service.com/pricing \
   https://service.com/features \
   https://service.com/billing
@@ -84,7 +84,7 @@ Full-Fetch retrieves and caches raw web content without security filtering. Mali
 **Cache official documentation:**
 ```bash
 # Cache official docs for repeated analysis
-/fetch-full --folder claude-docs \
+/fetch-full-content --folder claude-docs \
   https://docs.anthropic.com/en/docs/about-claude/models-overview \
   https://docs.anthropic.com/en/docs/build-with-claude/tool-use
 ```
@@ -93,7 +93,7 @@ Full-Fetch retrieves and caches raw web content without security filtering. Mali
 
 ### Slash Command
 
-**`/fetch-full`**
+**`/fetch-full-content`**
 - Downloads full page content from URLs
 - Converts to clean markdown
 - Caches to filesystem for reuse
@@ -178,7 +178,7 @@ URL → Subagent summarization → 30-80% of content → Claude
 Problem: Content loss, incomplete information, not cacheable
 ```
 
-### Full-Fetch Flow
+### Fetch-Full-Content Flow
 ```
 URL → Download + clean HTML → Markdown → Filesystem cache → Claude
 Benefit: 100% content, reusable, better for skill development
