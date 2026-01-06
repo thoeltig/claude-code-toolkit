@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.1.0] - 2026-01-06
+
+### Fixed
+
+- The fetch-full-content slash command failed to find the script because of a wrong filepath.
+
 ## [1.0.0.0] - 2025-01-06
 
 _First release._
@@ -41,5 +47,6 @@ _First release._
 - Efficient handling of both static and JS-rendered pages
 - Cached files enable building agent skills from complete documentation
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.1.0...HEAD
+[1.0.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.0.1.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.0.0.0
