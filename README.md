@@ -76,12 +76,10 @@ This project adheres to a [Code of Conduct](./CODE_OF_CONDUCT.md). By participat
 
 See [LICENSE](./LICENSE) for details.
 
-## 🔗 Links
+## Version History
 
-- **Repository**: https://github.com/thoeltig/claude-code-toolkit
-- **Issues**: https://github.com/thoeltig/claude-code-toolkit/issues
-- **Claude Code Documentation**: https://claude.ai/code
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ---
 
-**Maintained by**: [Thore Höltig](https://github.com/thoeltig)
+**Author**: [Thore Höltig](https://github.com/thoeltig)

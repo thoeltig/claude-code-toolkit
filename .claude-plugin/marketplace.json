@@ -23,7 +23,7 @@
       "name": "session-protocol",
       "source": "./plugins/session-protocol",
       "description": "Session continuity management across Claude conversations",
-      "version": "1.0.0",
+      "version": "1.0.0.0",
       "author": {
         "name": "Thore Höltig"
       },
