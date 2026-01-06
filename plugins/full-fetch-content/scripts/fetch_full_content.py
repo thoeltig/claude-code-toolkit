@@ -57,13 +57,13 @@ class HTMLDownloader:
                 # Block resource types to speed up loading
                 def handle_route(route):
                     resource_type = route.request.resource_type
-                    if resource_type in ['image', 'stylesheet', 'media', 'font', 'xhr', 'fetch']:
+                    if resource_type in ['image', 'imageset', 'stylesheet', 'media', 'font']:
                         route.abort()
                     else:
                         route.continue_()
 
                 page.route('**/*', handle_route)
-                page.goto(url, wait_until='networkidle', timeout=self.timeout * 1000)
+                page.goto(url, wait_until='load', timeout=self.timeout * 1000)
                 html = page.content()
                 browser.close()
                 return html
