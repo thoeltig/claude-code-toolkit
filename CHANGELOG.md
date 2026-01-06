@@ -9,6 +9,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.8.1.0] - 2026-01-06
+
+### Fixed
+
+- The fetch-full-content slash command failed to find the script because of a wrong filepath.
+
+---
+
 ## [1.8.0.0] - 2026-01-06
 
 _Marketplace release with fetch-full-content plugin for complete web content retrieval._
@@ -177,7 +185,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.8.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.8.1.0...HEAD
+[1.8.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.1.0
 [1.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.0.0
 [1.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.7.0.0
 [1.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.6.0.0
