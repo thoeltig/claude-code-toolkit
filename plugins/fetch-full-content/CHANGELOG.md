@@ -41,5 +41,5 @@ _First release._
 - Efficient handling of both static and JS-rendered pages
 - Cached files enable building agent skills from complete documentation
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/fetch-full-content-v1.0.0.0...HEAD
-[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/fetch-full-content-v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.0.0...HEAD
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.0.0.0

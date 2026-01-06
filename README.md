@@ -21,9 +21,9 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0 |
-| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0 |
-| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.7.0 |
+| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
+| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0.0 |
+| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.7.0.0 |
 
 ## 🎯 Plugin Highlights
 
