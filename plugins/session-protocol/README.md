@@ -333,19 +333,11 @@ All hooks use the official Claude Code response schema with:
 **Cause**: Not a git repository (no `.git` folder)
 **Fix**: Normal behavior, git integration is optional
 
+---
+
 ## Version History
 
-See [CHANGELOG.md](CHANGELOG.md) for plugin version history.
-
-## Contributing
-
-See root [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
-
-**Accepted contributions**:
-- Bug fixes
-- Performance improvements
-- Documentation enhancements
-- Token optimization suggestions
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ## License
 
@@ -353,5 +345,9 @@ See root [LICENSE](../../LICENSE) for details.
 
 ## Support
 
-- Issues: https://github.com/thoeltig/claude-code-toolkit/issues
-- Documentation: https://github.com/thoeltig/claude-code-toolkit
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
+
+---
+
+**Author**: [Thore Höltig](https://github.com/thoeltig)

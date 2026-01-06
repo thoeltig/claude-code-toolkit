@@ -21,9 +21,10 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0 |
-| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0 |
-| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.7.0 |
+| **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
+| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0.0 |
+| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.7.0.0 |
+| **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.0.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -49,6 +50,13 @@ The most comprehensive toolkit for working with Claude Code's extensibility feat
 - **managing-mcps skill** (v1.6.0): Create, analyze, and manage Model Context Protocol servers with Messages API integration, enterprise configuration
 
 **Install:** `/plugin install claude-code-capabilities@claude-code-toolkit`
+
+### Fetch-Full-Content
+Download complete page content as markdown to filesystem for repeated analysis and 100% information retrieval. Built-in WebFetch tool uses AI summarization which will return 30-80% of the information depending on the content size.
+
+⚠️ **Security**: No prompt injection guards - only use on trusted sources like official documentation. Use built-in WebFetch tool for untrusted sources.
+
+**Install:** `/plugin install fetch-full-content@claude-code-toolkit`
 
 ## 📚 Documentation
 
@@ -76,12 +84,10 @@ This project adheres to a [Code of Conduct](./CODE_OF_CONDUCT.md). By participat
 
 See [LICENSE](./LICENSE) for details.
 
-## 🔗 Links
+## Version History
 
-- **Repository**: https://github.com/thoeltig/claude-code-toolkit
-- **Issues**: https://github.com/thoeltig/claude-code-toolkit/issues
-- **Claude Code Documentation**: https://claude.ai/code
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ---
 
-**Maintained by**: [Thore Höltig](https://github.com/thoeltig)
+**Author**: [Thore Höltig](https://github.com/thoeltig)

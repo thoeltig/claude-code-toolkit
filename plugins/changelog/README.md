@@ -172,16 +172,21 @@ The skill uses the following Claude Code tools:
 - ❌ Copy commit messages verbatim
 - ❌ Use past tense (Added, Fixed)
 
+---
+
+## Version History
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
+
+## License
+
+See root [LICENSE](../../LICENSE) for details.
+
 ## Support
 
 - **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
 - **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
 
-## License
-
-See [LICENSE](../../LICENSE) for details.
-
 ---
 
-**Version**: 1.0.0
 **Author**: [Thore Höltig](https://github.com/thoeltig)

@@ -1,0 +1,53 @@
+{
+  "name": "claude-code-toolkit",
+  "owner": {
+    "name": "Thore Höltig",
+    "email": "[email protected]"
+  },
+  "metadata": {
+    "description": "Custom Claude Code capabilities and tools",
+    "version": "1.8.0.0"
+  },
+  "plugins": [
+    {
+      "name": "changelog",
+      "source": "./plugins/changelog",
+      "description": "CHANGELOG.md management following Keep a Changelog format",
+      "version": "1.1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "session-protocol",
+      "source": "./plugins/session-protocol",
+      "description": "Session continuity management across Claude conversations",
+      "version": "1.0.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "claude-code-capabilities",
+      "source": "./plugins/claude-code-capabilities",
+      "description": "Comprehensive management of Claude Code features including skills, commands, hooks, MCPs, prompts, and subagents",
+      "version": "1.7.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "fetch-full-content",
+      "source": "./plugins/fetch-full-content",
+      "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations.",
+      "version": "1.0.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    }
+  ]
+}
