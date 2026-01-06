@@ -20,7 +20,7 @@ Parse arguments:
 
 Execute:
 ```bash
-python ~/.claude/commands/fetch_full_content.py --folder <folder_name> <url1> <url2> ...
+python ${CLAUDE_PLUGIN_ROOT}/scripts/fetch_full_content.py --folder <folder_name> <url1> <url2> ...
 ```
 
 The script will:
