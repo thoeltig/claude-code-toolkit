@@ -9,6 +9,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.8.0.0] - 2026-01-06
+
+_Marketplace release with fetch-full-content plugin for complete web content retrieval._
+
+### Added
+
+- **fetch-full-content plugin** ([v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.0.0.0)): Added `/fetch-full-content` command for complete web content retrieval
+  - 100% content retrieval vs built-in WebFetch's 30-80% summarized content
+  - Filesystem caching to avoid redundant fetches on repeated analysis
+  - HTML to markdown conversion
+  - Support for multiple URLs and batch processing via URL files
+  - ⚠️ **Security**: NO prompt injection detection - only use on trusted sources (official docs, controlled content)
+  - Recommendation: Use built-in WebFetch for untrusted sources
+
+---
+
 ## [1.7.0.0] - 2025-12-06
 
 _Marketplace release with skill discovery command and marketplace configuration fix._
@@ -161,7 +177,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.7.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.8.0.0...HEAD
+[1.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.0.0
 [1.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.7.0.0
 [1.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.6.0.0
 [1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.5.0.0
