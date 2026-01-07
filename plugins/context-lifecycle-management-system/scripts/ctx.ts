@@ -116,7 +116,8 @@ async function handleQuery() {
   const topic = positional[0] || '';
   const rootDir = args.root || process.cwd();
   const contextDir = path.join(rootDir, '.context');
-  const summariesPath = path.join(contextDir, '.summaries.json');
+  const scope = args.scope || '';
+  const maxResults = parseInt(args.max || '100', 10);
 
   if (!fs.existsSync(contextDir)) {
     console.log(JSON.stringify({ error: 'No context found. Run: ctx scan first.' }));
@@ -124,13 +125,53 @@ async function handleQuery() {
   }
 
   try {
-    const results = querySummaries(contextDir, topic);
+    const keywords = topic.toLowerCase().split(/\s+/).filter(k => k.length > 0);
+
+    // Load summaries directly
+    const summaries = getSummaries(contextDir);
+    const scoredResults: any[] = [];
+
+    // Score directories
+    Object.entries(summaries.directories).forEach(([dirPath, summary]: any) => {
+      if (scope && !dirPath.startsWith(scope)) return;
+      const score = calculateConfidence(keywords, dirPath, summary);
+      if (score > 0) {
+        scoredResults.push({
+          type: 'directory',
+          path: dirPath,
+          score,
+          ...summary
+        });
+      }
+    });
+
+    // Score files
+    Object.entries(summaries.files).forEach(([filePath, summary]: any) => {
+      if (scope && !filePath.startsWith(scope)) return;
+      const score = calculateConfidence(keywords, filePath, summary);
+      if (score > 0) {
+        scoredResults.push({
+          type: 'file',
+          path: filePath,
+          score,
+          ...summary
+        });
+      }
+    });
+
+    // Sort by confidence descending
+    scoredResults.sort((a, b) => b.score - a.score);
+
+    // Limit results
+    const limited = scoredResults.slice(0, maxResults);
+
     const output = {
       source: 'summaries',
       query: topic,
-      total: results.directories.length + results.files.length,
-      directories: results.directories.map(([path, summary]) => ({ path, ...summary })),
-      files: results.files.map(([path, summary]) => ({ path, ...summary }))
+      keywords: keywords,
+      scope: scope || 'all',
+      total: limited.length,
+      results: limited
     };
     console.log(JSON.stringify(output));
     process.exit(0);
@@ -138,6 +179,36 @@ async function handleQuery() {
     console.log(JSON.stringify({ error: e.message }));
     process.exit(1);
   }
+}
+
+function calculateConfidence(keywords: string[], itemPath: string, summary: any): number {
+  let score = 0;
+  const pathLower = itemPath.toLowerCase();
+  const summaryLower = (summary.summary || '').toLowerCase();
+  const purposeLower = (summary.purpose || '').toLowerCase();
+
+  keywords.forEach(keyword => {
+    // Path matches (highest priority)
+    if (pathLower.includes(keyword)) score += 10;
+
+    // Summary matches
+    if (summaryLower.includes(keyword)) score += 5;
+
+    // Purpose matches
+    if (purposeLower.includes(keyword)) score += 3;
+
+    // Technology matches (for directories)
+    if (summary.technologies?.some((t: string) => t.toLowerCase().includes(keyword))) score += 3;
+
+    // Exports/imports matches (for files)
+    if (summary.exports?.some((e: string) => e.toLowerCase().includes(keyword))) score += 2;
+    if (summary.imports?.some((i: string) => i.toLowerCase().includes(keyword))) score += 2;
+
+    // Role matches (for files)
+    if (summary.role?.toLowerCase().includes(keyword)) score += 2;
+  });
+
+  return score;
 }
 
 
@@ -150,17 +221,20 @@ Usage: ctx <command> [options]
 Commands:
   scan               Scan project directory and save structure
   merge              Merge Haiku-generated summaries into .context/.summaries.json
-  query <topic>      Search project summaries by topic (fuzzy search)
+  query <topic>      Search project summaries by keywords (scored results)
 
 Options:
   --root=<path>       Project root directory (default: cwd)
   --output=<path>     Output path for scan.json (for scan)
   --summaries=<path>  Path to summaries JSON file (for merge)
+  --scope=<path>      Limit search to specific directory/file (for query)
+  --max=<number>      Maximum results to return (for query, default: 100)
 
 Examples:
   ctx scan --root=../my-project
   ctx merge --summaries=/tmp/summaries.json --root=../my-project
   ctx query "authentication" --root=../my-project
+  ctx query "auth user setup" --scope=src/auth --max=10 --root=../my-project
 `);
 }
 
