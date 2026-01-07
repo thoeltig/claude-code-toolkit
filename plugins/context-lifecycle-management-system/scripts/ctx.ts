@@ -7,7 +7,9 @@ import { createContextStructure } from './lib/writers/context-writer';
 import { queryIndex } from './lib/query/searcher';
 import { loadFullFile, loadNode } from './lib/query/loader';
 import { captureDecision } from './lib/writers/capture-writer';
+import { mergeSummaries, querySummaries, getSummaries } from './lib/writers/summary-merger';
 import type { ProjectAnalysis } from './types';
+import type { PartialSummaries } from './lib/writers/summary-merger';
 
 function parseArgs(argv: string[]): { command: string; args: Record<string, string>; positional: string[] } {
   const args: Record<string, string> = {};
@@ -44,11 +46,20 @@ async function main() {
       case 'query':
         await handleQuery();
         break;
+      case 'query-context':
+        await handleQueryContext();
+        break;
       case 'load':
         await handleLoad();
         break;
       case 'capture':
         await handleCapture();
+        break;
+      case 'scan-and-analyze':
+        await handleScanAndAnalyze();
+        break;
+      case 'merge-summaries':
+        await handleMergeSummaries();
         break;
       case 'sync':
         await handleSync();
@@ -182,6 +193,107 @@ async function handleCapture() {
   process.exit(0);
 }
 
+async function handleScanAndAnalyze() {
+  const root = args.root || process.cwd();
+  const output = args.output || path.join(root, '.context', 'scan.json');
+
+  const contextDir = path.join(root, '.context');
+  if (!fs.existsSync(contextDir)) {
+    fs.mkdirSync(contextDir, { recursive: true });
+  }
+
+  const scanData = await scanProject(root);
+  fs.writeFileSync(output, JSON.stringify(scanData));
+
+  const result = {
+    status: 'success',
+    action: 'scan',
+    output: output,
+    stats: scanData.projectStats
+  };
+  console.log(JSON.stringify(result));
+
+  process.exit(0);
+}
+
+async function handleMergeSummaries() {
+  const summariesPath = args.summaries;
+  if (!summariesPath) {
+    console.log(JSON.stringify({ error: '--summaries=<path> required' }));
+    process.exit(1);
+  }
+
+  const rootDir = args.root || process.cwd();
+  const contextDir = path.join(rootDir, '.context');
+
+  try {
+    const partialData: PartialSummaries = JSON.parse(fs.readFileSync(summariesPath, 'utf8'));
+
+    if (!fs.existsSync(contextDir)) {
+      fs.mkdirSync(contextDir, { recursive: true });
+    }
+
+    mergeSummaries(contextDir, partialData);
+
+    const current = getSummaries(contextDir);
+    const result = {
+      status: 'success',
+      action: 'merge',
+      summaries: {
+        directoriesCount: Object.keys(current.directories).length,
+        filesCount: Object.keys(current.files).length,
+        location: path.join(contextDir, '.summaries.json')
+      }
+    };
+    console.log(JSON.stringify(result));
+
+    process.exit(0);
+  } catch (e: any) {
+    console.log(JSON.stringify({ error: e.message }));
+    process.exit(1);
+  }
+}
+
+async function handleQueryContext() {
+  const topic = positional[0] || '';
+  const rootDir = args.root || process.cwd();
+  const contextDir = path.join(rootDir, '.context');
+  const summariesPath = path.join(contextDir, '.summaries.json');
+
+  if (!fs.existsSync(contextDir)) {
+    console.log(JSON.stringify({ error: 'No context found. Run: ctx scan-and-analyze first.' }));
+    process.exit(1);
+  }
+
+  try {
+    if (fs.existsSync(summariesPath)) {
+      const results = querySummaries(contextDir, topic);
+      const output = {
+        source: 'summaries',
+        query: topic,
+        total: results.directories.length + results.files.length,
+        directories: results.directories.map(([path, summary]) => ({ path, ...summary })),
+        files: results.files.map(([path, summary]) => ({ path, ...summary }))
+      };
+      console.log(JSON.stringify(output));
+    } else {
+      const layer = (args.layer || 'all') as any;
+      const indexResults = queryIndex(rootDir, topic, layer);
+      const output = {
+        source: 'index',
+        query: topic,
+        total: indexResults.length,
+        results: indexResults
+      };
+      console.log(JSON.stringify(output));
+    }
+    process.exit(0);
+  } catch (e: any) {
+    console.error(JSON.stringify({ error: e.message }));
+    process.exit(1);
+  }
+}
+
 async function handleSync() {
   console.error('Sync not yet implemented in Phase 2');
   process.exit(1);
@@ -220,12 +332,16 @@ Commands:
   query <topic>     Search context index by keyword
   load <file>       Load context file or specific node
   capture           Capture architectural decision
+  scan-and-analyze  Scan project and guide Haiku analysis (Phase 3)
+  query-context     Search summaries or index (Phase 3)
+  merge-summaries   Merge Haiku summaries into .summaries.json (Phase 3)
   sync              Sync with team (not yet implemented)
 
 Options:
   --root=<path>       Project root directory (default: cwd)
-  --output=<path>     Output file path (for scan)
+  --output=<path>     Output file path (for scan/scan-and-analyze)
   --analysis=<path>   Analysis input file (for init)
+  --summaries=<path>  Summaries JSON file (for merge-summaries)
   --format=<type>     Output format: summary|json (for query)
   --layer=<layer>     Filter by layer: domain|foundation|active|all (for query)
   --node=<name>       Load specific node from file (for load)
@@ -240,6 +356,9 @@ Examples:
   ctx query "validation" --layer=domain
   ctx load domain/fda-standards.json --node=process_validation
   ctx capture --title="Auth design" --context="Using JWT because..."
+  ctx scan-and-analyze --root=../my-project
+  ctx query-context "authentication" --root=../my-project
+  ctx merge-summaries --summaries=/tmp/summaries.json --root=../my-project
 `);
 }
 
