@@ -122,24 +122,35 @@ export interface NodeContent {
   tokens: number;
 }
 
+export interface DirectoryInfo {
+  type: 'directory';
+  fullPath: string;
+  subdirs: string[];
+  files: string[];
+  fileCount: number;
+  depth: number;
+}
+
+export interface FileInfo {
+  path: string;
+  ext: string;
+  size: number;
+  depth: number;
+}
+
 export interface RawProjectData {
-  files: {
-    packageManagers: string[];
-    configs: string[];
-    docs: string[];
-    source: string[];
-  };
   structure: {
-    directories: string[];
-    depth: number;
+    [dirPath: string]: DirectoryInfo;
   };
-  dependencies: {
-    [manager: string]: Record<string, string>;
+  files: {
+    [filePath: string]: FileInfo;
   };
-  readme: {
-    content: string;
-    length: number;
-  } | null;
+  projectStats: {
+    totalFiles: number;
+    totalDirs: number;
+    maxDepth: number;
+    fileTypes: string[];
+  };
 }
 
 export interface ProjectAnalysis {

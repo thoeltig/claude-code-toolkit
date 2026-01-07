@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs';
+import * as path from 'path';
 import { scanProject, formatForHaikuAnalysis } from './lib/collectors/project-scanner';
 import { createContextStructure } from './lib/writers/context-writer';
 import { queryIndex } from './lib/query/searcher';
@@ -72,9 +73,10 @@ async function handleScan() {
   fs.writeFileSync(output, JSON.stringify(data, null, 2));
 
   console.log(`✓ Project scan complete: ${output}`);
-  console.log(`  Package managers: ${data.files.packageManagers.join(', ') || 'none'}`);
-  console.log(`  Directories: ${data.structure.directories.length}`);
-  console.log(`  Documentation files: ${data.files.docs.length}`);
+  console.log(`  Total files: ${data.projectStats.totalFiles}`);
+  console.log(`  Total directories: ${data.projectStats.totalDirs}`);
+  console.log(`  Max depth: ${data.projectStats.maxDepth}`);
+  console.log(`  File types: ${data.projectStats.fileTypes.join(', ') || 'none'}`);
   process.exit(0);
 }
 

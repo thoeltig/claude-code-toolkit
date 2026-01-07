@@ -1,195 +1,276 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { RawProjectData } from '../../types';
+import type { RawProjectData, DirectoryInfo, FileInfo } from '../../types';
 
-const IGNORED_DIRS = new Set(['node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj', '.git', '.svn']);
+const IGNORED_DIRS = new Set([
+  'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj',
+  '.git', '.svn', 'coverage', '.pytest_cache', '.venv', 'venv', '.env', '.idea',
+  '.vscode', 'vendor', 'tmp', '.cache'
+]);
 
-function walkDir(dir: string, maxDepth: number = 2, currentDepth: number = 0): string[] {
-  if (currentDepth >= maxDepth) return [];
-  const files: string[] = [];
-  try {
-    const entries = fs.readdirSync(dir);
-    for (const entry of entries) {
-      if (IGNORED_DIRS.has(entry)) continue;
-      const fullPath = path.join(dir, entry);
-      const stat = fs.statSync(fullPath);
-      if (stat.isFile()) {
-        files.push(entry);
-      } else if (stat.isDirectory()) {
-        const subFiles = walkDir(fullPath, maxDepth, currentDepth + 1);
-        files.push(...subFiles.map(f => path.join(entry, f)));
-      }
-    }
-  } catch (e) {}
-  return files;
+function shouldIgnore(name: string): boolean {
+  return IGNORED_DIRS.has(name) || name.startsWith('.');
 }
 
-function findFilesByPattern(rootDir: string, patterns: string[], maxDepth: number = 2): string[] {
-  const results: string[] = [];
-  const allFiles = walkDir(rootDir, maxDepth);
-  for (const file of allFiles) {
-    for (const pattern of patterns) {
-      const regex = pattern.replace(/\*/g, '.*').replace(/\?/g, '.');
-      if (new RegExp(`^${regex}$`, 'i').test(path.basename(file)) || new RegExp(`^${regex}$`, 'i').test(file.replace(/\\/g, '/'))) {
-        results.push(file);
-        break;
-      }
-    }
-  }
-  return Array.from(new Set(results));
+interface TreeNode {
+  dirs: Map<string, TreeNode>;
+  files: string[];
+  fullPath: string;
+  depth: number;
 }
 
-function findFilesRecursive(rootDir: string, extensions: string[]): string[] {
-  const results: string[] = [];
-  function recurse(dir: string) {
+function buildFileTree(rootDir: string): TreeNode {
+  const root: TreeNode = {
+    dirs: new Map(),
+    files: [],
+    fullPath: rootDir,
+    depth: 0
+  };
+
+  function recurse(dir: string, node: TreeNode, depth: number = 0) {
+    if (depth > 20) return; // Safety limit
+
     try {
       const entries = fs.readdirSync(dir);
+
       for (const entry of entries) {
-        if (IGNORED_DIRS.has(entry)) continue;
+        if (shouldIgnore(entry)) continue;
+
         const fullPath = path.join(dir, entry);
         const stat = fs.statSync(fullPath);
-        if (stat.isFile()) {
-          const ext = path.extname(entry).toLowerCase();
-          if (extensions.includes(ext)) {
-            const relPath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
-            results.push(relPath);
-          }
-        } else if (stat.isDirectory()) {
-          recurse(fullPath);
+
+        if (stat.isDirectory()) {
+          const childNode: TreeNode = {
+            dirs: new Map(),
+            files: [],
+            fullPath,
+            depth: depth + 1
+          };
+          node.dirs.set(entry, childNode);
+          recurse(fullPath, childNode, depth + 1);
+        } else if (stat.isFile()) {
+          node.files.push(entry);
         }
       }
     } catch (e) {}
   }
-  recurse(rootDir);
-  return results;
+
+  recurse(rootDir, root, 0);
+  return root;
+}
+
+function flattenTreeToStructure(
+  node: TreeNode,
+  rootDir: string,
+  structure: { [key: string]: DirectoryInfo } = {},
+  files: { [key: string]: FileInfo } = {},
+  filesByType: { [ext: string]: string[] } = {}
+): { structure: typeof structure; files: typeof files; filesByType: typeof filesByType } {
+  const relPath = path.relative(rootDir, node.fullPath).replace(/\\/g, '/') || '.';
+
+  // Add directory info
+  const subdirs = Array.from(node.dirs.keys());
+  structure[relPath] = {
+    type: 'directory',
+    fullPath: node.fullPath,
+    subdirs,
+    files: node.files,
+    fileCount: node.files.length,
+    depth: node.depth
+  };
+
+  // Add file info
+  for (const file of node.files) {
+    const filePath = path.join(node.fullPath, file);
+    const fileRelPath = path.relative(rootDir, filePath).replace(/\\/g, '/');
+    const ext = path.extname(file).toLowerCase() || 'none';
+    const stat = fs.statSync(filePath);
+
+    files[fileRelPath] = {
+      path: fileRelPath,
+      ext,
+      size: stat.size,
+      depth: node.depth
+    };
+
+    if (!filesByType[ext]) {
+      filesByType[ext] = [];
+    }
+    filesByType[ext].push(fileRelPath);
+  }
+
+  // Recurse into subdirectories
+  for (const [_, childNode] of node.dirs) {
+    flattenTreeToStructure(childNode, rootDir, structure, files, filesByType);
+  }
+
+  return { structure, files, filesByType };
+}
+
+function parsePackageManager(rootDir: string, filename: string): Record<string, string> {
+  try {
+    const filepath = path.join(rootDir, filename);
+
+    if (filename === 'package.json') {
+      const pkg = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+      return {
+        ...pkg.dependencies,
+        ...pkg.devDependencies
+      };
+    } else if (filename === 'requirements.txt') {
+      const content = fs.readFileSync(filepath, 'utf8');
+      const deps: Record<string, string> = {};
+      content.split('\n').forEach(line => {
+        const match = line.trim().match(/^([a-zA-Z0-9\-_.]+)([>=<~!]+.*)?$/);
+        if (match && match[1]) {
+          deps[match[1]] = match[2]?.trim() || '*';
+        }
+      });
+      return deps;
+    } else if (filename === 'go.mod') {
+      const content = fs.readFileSync(filepath, 'utf8');
+      const deps: Record<string, string> = {};
+      const requireMatch = content.match(/require\s*\(([\\s\\S]*?)\)/);
+      if (requireMatch) {
+        requireMatch[1].split('\n').forEach(line => {
+          const match = line.trim().match(/^([^\s]+)\s+(.+)$/);
+          if (match && match[1]) {
+            deps[match[1]] = match[2];
+          }
+        });
+      }
+      return deps;
+    } else if (filename === 'Cargo.toml') {
+      const content = fs.readFileSync(filepath, 'utf8');
+      const deps: Record<string, string> = {};
+      const depsMatch = content.match(/\[dependencies\]([\s\S]*?)(\[|$)/);
+      if (depsMatch) {
+        depsMatch[1].split('\n').forEach(line => {
+          const match = line.trim().match(/^([a-zA-Z0-9\-_.]+)\s*=\s*["{]([^"}]+)/);
+          if (match && match[1]) {
+            deps[match[1]] = match[2];
+          }
+        });
+      }
+      return deps;
+    } else if (filename === 'composer.json') {
+      const pkg = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+      return {
+        ...pkg.require,
+        ...pkg['require-dev']
+      };
+    } else if (filename === 'Gemfile') {
+      const content = fs.readFileSync(filepath, 'utf8');
+      const deps: Record<string, string> = {};
+      const gemMatches = content.matchAll(/gem\s+['"]([^'"]+)['"](?:\s*,\s*['"]([^'"]+)['"])?/g);
+      for (const match of gemMatches) {
+        deps[match[1]] = match[2] || '*';
+      }
+      return deps;
+    } else if (filename === 'pom.xml' || filename === 'build.gradle') {
+      // XML/Gradle parsing is complex, return empty for now
+      return {};
+    } else if (filename.endsWith('.csproj')) {
+      const content = fs.readFileSync(filepath, 'utf8');
+      const deps: Record<string, string> = {};
+      const matches = content.matchAll(/<PackageReference\s+Include="([^"]+)"\s+Version="([^"]+)"/g);
+      for (const match of matches) {
+        deps[match[1]] = match[2];
+      }
+      return deps;
+    }
+  } catch (e) {}
+
+  return {};
 }
 
 export async function scanProject(rootDir: string): Promise<RawProjectData> {
-  const data: RawProjectData = {
-    files: {
-      packageManagers: [],
-      configs: [],
-      docs: [],
-      source: []
-    },
-    structure: {
-      directories: [],
-      depth: 0
-    },
-    dependencies: {},
-    readme: null
-  };
+  // Build complete file tree
+  const tree = buildFileTree(rootDir);
 
-  const packagePatterns = ['package.json', 'requirements.txt', 'Pipfile', 'go.mod', 'Cargo.toml', 'composer.json', 'Gemfile', 'pom.xml', 'build.gradle'];
-  const pkgFiles = findFilesByPattern(rootDir, packagePatterns, 2);
+  // Flatten to structure + files + filesByType
+  const { structure, files, filesByType } = flattenTreeToStructure(tree, rootDir);
 
-  for (const file of pkgFiles) {
-    data.files.packageManagers.push(file);
-    try {
-      const filepath = path.join(rootDir, file);
-      if (file === 'package.json') {
-        const pkg = JSON.parse(fs.readFileSync(filepath, 'utf8'));
-        data.dependencies['npm'] = {
-          ...pkg.dependencies,
-          ...pkg.devDependencies
-        };
-      } else if (file === 'requirements.txt') {
-        const content = fs.readFileSync(filepath, 'utf8');
-        const deps: Record<string, string> = {};
-        content.split('\n').forEach(line => {
-          const match = line.trim().match(/^([a-zA-Z0-9\-_]+)([>=<]+.*)?$/);
-          if (match) {
-            deps[match[1]] = match[2]?.trim() || '*';
-          }
-        });
-        data.dependencies['pip'] = deps;
-      } else if (file === 'go.mod') {
-        const content = fs.readFileSync(filepath, 'utf8');
-        const deps: Record<string, string> = {};
-        const requireMatch = content.match(/require\s*\(([\\s\\S]*?)\)/);
-        if (requireMatch) {
-          requireMatch[1].split('\n').forEach(line => {
-            const match = line.trim().match(/^([^\s]+)\s+(.+)$/);
-            if (match) {
-              deps[match[1]] = match[2];
-            }
-          });
-        }
-        data.dependencies['go'] = deps;
-      } else if (file === 'Cargo.toml') {
-        const content = fs.readFileSync(filepath, 'utf8');
-        const deps: Record<string, string> = {};
-        const depsMatch = content.match(/\[dependencies\]([\s\S]*?)(\[|$)/);
-        if (depsMatch) {
-          depsMatch[1].split('\n').forEach(line => {
-            const match = line.trim().match(/^([a-zA-Z0-9\-_]+)\s*=\s*"([^"]+)"/);
-            if (match) {
-              deps[match[1]] = match[2];
-            }
-          });
-        }
-        data.dependencies['cargo'] = deps;
-      } else if (file.endsWith('.csproj')) {
-        const content = fs.readFileSync(filepath, 'utf8');
-        const deps: Record<string, string> = {};
-        const matches = content.matchAll(/<PackageReference\s+Include="([^"]+)"\s+Version="([^"]+)"/g);
-        for (const match of matches) {
-          deps[match[1]] = match[2];
-        }
-        data.dependencies['nuget'] = deps;
-      }
-    } catch (e) {
-      console.error(`Warning: Could not parse ${file}`);
-    }
-  }
+  // Find and parse package managers
+  const packageManagers: string[] = [];
+  const dependencies: Record<string, Record<string, string>> = {};
 
-  const configPatterns = ['tsconfig.json', 'angular.json', 'next.config.js', 'next.config.ts', 'vite.config.ts', 'vite.config.js', 'appsettings.json', 'appsettings.Development.json', 'Web.config', '.env.example', 'docker-compose.yml', 'Dockerfile'];
-  data.files.configs = findFilesByPattern(rootDir, configPatterns, 2);
+  const packageFiles = [
+    'package.json',
+    'requirements.txt',
+    'Pipfile',
+    'go.mod',
+    'Cargo.toml',
+    'composer.json',
+    'Gemfile',
+    'pom.xml',
+    'build.gradle'
+  ];
 
-  data.files.docs = findFilesRecursive(rootDir, ['.md']);
+  // Search for package files in root and subdirectories (max depth 2)
+  function findPackageFiles(dir: string, depth: number = 0): string[] {
+    if (depth > 2) return [];
+    const found: string[] = [];
 
-  const srcExtensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.go', '.rs', '.cs', '.fs'];
-  let allSource = findFilesRecursive(rootDir, srcExtensions);
-  const step = Math.max(1, Math.floor(allSource.length / 20));
-  data.files.source = allSource.filter((_, idx) => idx % step === 0).slice(0, 20);
-
-  const dirs = fs.readdirSync(rootDir).filter(f => {
-    if (IGNORED_DIRS.has(f)) return false;
-    try {
-      return fs.statSync(path.join(rootDir, f)).isDirectory();
-    } catch (e) {
-      return false;
-    }
-  });
-  data.structure.directories = dirs;
-
-  function getDepth(dir: string, d: number = 0): number {
-    if (d > 10) return d;
     try {
       const entries = fs.readdirSync(dir);
-      let maxD = d;
       for (const entry of entries) {
-        if (IGNORED_DIRS.has(entry)) continue;
-        try {
-          const stat = fs.statSync(path.join(dir, entry));
+        if (packageFiles.includes(entry)) {
+          found.push(path.join(dir, entry));
+        } else if (!shouldIgnore(entry)) {
+          const fullPath = path.join(dir, entry);
+          const stat = fs.statSync(fullPath);
           if (stat.isDirectory()) {
-            maxD = Math.max(maxD, getDepth(path.join(dir, entry), d + 1));
+            found.push(...findPackageFiles(fullPath, depth + 1));
           }
-        } catch (e) {}
+        }
       }
-      return maxD;
-    } catch (e) {
-      return d;
+    } catch (e) {}
+
+    return found;
+  }
+
+  const foundPkgFiles = findPackageFiles(rootDir);
+  for (const pkgPath of foundPkgFiles) {
+    const filename = path.basename(pkgPath);
+    packageManagers.push(pkgPath);
+
+    // Map filename to manager type
+    let manager = 'npm';
+    if (filename === 'requirements.txt' || filename === 'Pipfile') manager = 'pip';
+    else if (filename === 'go.mod') manager = 'go';
+    else if (filename === 'Cargo.toml') manager = 'cargo';
+    else if (filename === 'composer.json') manager = 'composer';
+    else if (filename === 'Gemfile') manager = 'bundler';
+    else if (filename === 'pom.xml') manager = 'maven';
+    else if (filename === 'build.gradle') manager = 'gradle';
+    else if (filename.endsWith('.csproj')) manager = 'nuget';
+
+    const deps = parsePackageManager(rootDir, filename);
+    if (Object.keys(deps).length > 0) {
+      dependencies[manager] = deps;
     }
   }
-  data.structure.depth = getDepth(rootDir);
 
+  // Search for .csproj files anywhere
+  if (filesByType['.csproj']) {
+    for (const csprojPath of filesByType['.csproj']) {
+      const fullPath = path.join(rootDir, csprojPath);
+      const deps = parsePackageManager(fullPath, path.basename(csprojPath));
+      if (Object.keys(deps).length > 0) {
+        dependencies['nuget'] = { ...dependencies['nuget'], ...deps };
+      }
+    }
+  }
+
+  // Find README
+  let readme: { content: string; length: number } | null = null;
   const readmeFiles = ['README.md', 'readme.md', 'README.MD', 'Readme.md'];
   for (const readmeFile of readmeFiles) {
     const readmePath = path.join(rootDir, readmeFile);
     if (fs.existsSync(readmePath)) {
       const content = fs.readFileSync(readmePath, 'utf8');
-      data.readme = {
+      readme = {
         content: content.slice(0, 5000),
         length: content.length
       };
@@ -197,20 +278,35 @@ export async function scanProject(rootDir: string): Promise<RawProjectData> {
     }
   }
 
-  return data;
+  // Calculate stats
+  const maxDepth = Math.max(...Object.values(structure).map(d => d.depth), 0);
+  const fileTypes = Object.keys(filesByType).sort();
+
+  return {
+    structure,
+    files,
+    projectStats: {
+      totalFiles: Object.keys(files).length,
+      totalDirs: Object.keys(structure).length,
+      maxDepth,
+      fileTypes
+    }
+  };
 }
 
 export function formatForHaikuAnalysis(data: RawProjectData): string {
+  // Compact summary for Haiku analysis
+  const topDirs = Object.entries(data.structure)
+    .filter(([_, d]) => d.depth <= 2)
+    .slice(0, 15)
+    .map(([dirPath, dir]) => `${dirPath} (${dir.fileCount} files)`);
+
   return JSON.stringify({
-    package_managers: data.files.packageManagers,
-    key_dependencies: Object.entries(data.dependencies).flatMap(([manager, deps]) =>
-      Object.keys(deps).slice(0, 15).map(name => `${manager}:${name}`)
-    ),
-    directories: data.structure.directories,
-    config_files: data.files.configs,
-    doc_count: data.files.docs.length,
-    sample_docs: data.files.docs.slice(0, 5),
-    readme_preview: data.readme?.content.slice(0, 1000) || 'No README found',
-    source_file_sample: data.files.source.slice(0, 5)
+    totalFiles: data.projectStats.totalFiles,
+    totalDirs: data.projectStats.totalDirs,
+    maxDepth: data.projectStats.maxDepth,
+    fileTypes: data.projectStats.fileTypes,
+    topDirectories: topDirs,
+    instructions: 'Analyze this directory structure and generate summaries for each directory and file. Output as JSON with directories and files keys.'
   }, null, 2);
 }
