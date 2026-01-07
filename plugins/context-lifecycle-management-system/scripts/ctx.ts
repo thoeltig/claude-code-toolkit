@@ -85,13 +85,32 @@ async function handleMerge() {
   const contextDir = path.join(rootDir, '.context');
 
   try {
-    const partialData: PartialSummaries = JSON.parse(fs.readFileSync(summariesPath, 'utf8'));
+    // Support glob patterns and single files
+    const filesToMerge = expandGlob(summariesPath);
+
+    if (filesToMerge.length === 0) {
+      console.log(JSON.stringify({ error: `No files found matching: ${summariesPath}` }));
+      process.exit(1);
+    }
+
+    // Merge all files in order
+    const merged: any = { directories: {}, files: {} };
+
+    filesToMerge.forEach(filePath => {
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      if (content.directories && typeof content.directories === 'object') {
+        Object.assign(merged.directories, content.directories);
+      }
+      if (content.files && typeof content.files === 'object') {
+        Object.assign(merged.files, content.files);
+      }
+    });
 
     if (!fs.existsSync(contextDir)) {
       fs.mkdirSync(contextDir, { recursive: true });
     }
 
-    mergeSummaries(contextDir, partialData);
+    mergeSummaries(contextDir, merged as PartialSummaries);
 
     const current = getSummaries(contextDir);
     const result = {
@@ -100,7 +119,8 @@ async function handleMerge() {
       summaries: {
         directoriesCount: Object.keys(current.directories).length,
         filesCount: Object.keys(current.files).length,
-        location: path.join(contextDir, '.summaries.json')
+        location: path.join(contextDir, '.summaries.json'),
+        filesProcessed: filesToMerge.length
       }
     };
     console.log(JSON.stringify(result));
@@ -110,6 +130,32 @@ async function handleMerge() {
     console.log(JSON.stringify({ error: e.message }));
     process.exit(1);
   }
+}
+
+function expandGlob(pattern: string): string[] {
+  // Handle glob patterns like /tmp/haiku-batch-*.json
+  if (pattern.includes('*')) {
+    const dir = path.dirname(pattern);
+    const globPattern = path.basename(pattern);
+
+    // Convert glob pattern to regex: batch-*.json -> batch-.*\.json
+    const regexPattern = '^' + globPattern
+      .replace(/\./g, '\\.')
+      .replace(/\*/g, '.*') + '$';
+    const regex = new RegExp(regexPattern);
+
+    if (!fs.existsSync(dir)) return [];
+
+    const files = fs.readdirSync(dir)
+      .filter(f => regex.test(f))
+      .map(f => path.join(dir, f))
+      .sort();
+
+    return files;
+  }
+
+  // Single file
+  return fs.existsSync(pattern) ? [pattern] : [];
 }
 
 async function handleQuery() {

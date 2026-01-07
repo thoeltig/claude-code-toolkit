@@ -8,32 +8,46 @@ Scan project and generate summaries via Haiku analysis.
 **Parameters:**
 - `--root`: Project root directory (default: current directory)
 
-**Workflow:**
+**Implementation:**
 
-1. Execute scan:
-   ```bash
-   ctx scan --root={{args.root}}
-   ```
-   Output (minified JSON):
-   ```json
-   {"status":"success","action":"scan","output":"path/to/.context/scan.json","stats":{"totalFiles":N,"totalDirs":N,"maxDepth":N,"fileTypes":[...]}}
-   ```
+1. **Execute scan command**
+   - Run: `ctx scan --root={{args.root}}`
+   - Parse JSON output to get stats and scan.json path
+   - Report progress: "Scanned X files in Y directories"
 
-2. Invoke Haiku agents in parallel (using Task tool):
-   - Split scan.json into batches (3-5 directories per batch)
-   - Run multiple Haiku tasks concurrently with HAIKU_ANALYSIS_PROMPT.md
-   - Each Haiku returns summaries JSON: `{"directories":{...},"files":{...}}`
-   - Merge all batch results together
+2. **Load and batch scan results**
+   - Read scan.json from output path
+   - Extract directories for analysis
+   - Split into batches (3-5 dirs per batch)
+   - Display: "Preparing analysis for X batches"
 
-3. Merge summaries into context:
-   ```bash
-   ctx merge --summaries=<merged-json-path> --root={{args.root}}
-   ```
-   Output (minified JSON):
-   ```json
-   {"status":"success","action":"merge","summaries":{"directoriesCount":N,"filesCount":N,"location":"path/to/.context/.summaries.json"}}
-   ```
+3. **Invoke Haiku agents in parallel**
+   - For each batch, create Task with subagent_type='haiku':
+     - Use HAIKU_ANALYSIS_PROMPT.md as template
+     - Pass scan batch data to Haiku
+     - Instruct: Write output to `/tmp/haiku-batch-N.json`
+     - Format: `{"directories":{...},"files":{...}}`
+   - Run all batches concurrently using Task tool
+   - Wait for all batches to finish
 
-4. Confirm completion and guide next steps
+4. **Execute merge command**
+   - Run: `ctx merge --summaries=/tmp/haiku-batch-*.json --root={{args.root}}`
+   - Merge script handles reading and combining all batch files
+   - Parse JSON output to confirm merge success
+   - Extract directoriesCount and filesCount
 
-**Next:** User can run `/query "topic"` to search summaries
+6. **Report completion**
+   - Display summary:
+     ```
+     ✓ Analysis complete
+       Directories: N
+       Files: N
+       Summaries stored in: .context/.summaries.json
+     ```
+   - Guide next step: "Use `/query "topic"` to search"
+
+**Error Handling:**
+- If scan fails: Report error and stop
+- If Haiku batch fails: Continue with other batches (partial results)
+- If merge fails: Report error with suggestions
+- All errors returned as JSON for consistency
