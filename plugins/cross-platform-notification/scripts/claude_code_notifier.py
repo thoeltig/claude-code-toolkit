@@ -4,69 +4,14 @@
 This module reads JSON input from stdin containing Claude Code hook events
 and displays platform-specific system notifications. Supports Windows, macOS,
 and Linux with appropriate fallback mechanisms.
-
-Environment Variables:
-    CLAUDE_NOTIFIER_CUSTOM_MESSAGES: Path to JSON file with custom message overrides
-        Example format: {"SessionStart": "Let's go!", "SessionEnd": "Done!"}
 """
 import json
-import os
 import platform
 import subprocess
 import sys
-from pathlib import Path
-from typing import Any, Optional
-
-
-# Default event messages (with emojis)
-DEFAULT_EVENT_MESSAGES = {
-    'SessionStart': 'Session started 🚀',
-    'SessionEnd': 'Session completed ✅',
-    'Stop': 'Response finished 🏁',
-    'Notification': 'Claude Code notification 🔔'
-}
+from typing import Any
 
 NOTIFICATION_TITLE = 'Claude Code'
-
-
-def load_custom_messages() -> dict[str, str]:
-    """Load custom message overrides from environment variable or config file.
-
-    Returns:
-        Dictionary mapping event names to custom messages, empty if none configured
-
-    Note:
-        Silently returns empty dict if file doesn't exist or has invalid JSON
-    """
-    custom_messages_path = os.environ.get('CLAUDE_NOTIFIER_CUSTOM_MESSAGES', '')
-
-    if not custom_messages_path:
-        return {}
-
-    try:
-        path = Path(custom_messages_path).expanduser()
-        if not path.exists():
-            return {}
-
-        with open(path, 'r', encoding='utf-8') as f:
-            custom = json.load(f)
-
-        # Validate that loaded data is a dictionary
-        if not isinstance(custom, dict):
-            print(
-                f"Warning: Custom messages file contains invalid format (expected dict)",
-                file=sys.stderr
-            )
-            return {}
-
-        return custom
-    except json.JSONDecodeError as e:
-        print(f"Warning: Failed to parse custom messages JSON: {e}", file=sys.stderr)
-        return {}
-    except Exception as e:
-        print(f"Warning: Failed to load custom messages: {e}", file=sys.stderr)
-        return {}
-
 
 def read_hook_input() -> dict[str, Any]:
     """Read and parse JSON input from stdin.
@@ -94,31 +39,14 @@ def read_hook_input() -> dict[str, Any]:
 
 
 def get_notification_message(
-    event_data: dict[str, Any],
-    custom_messages: dict[str, str]
+    event_data: dict[str, Any]
 ) -> str:
-    """Generate notification message based on event type.
-
-    Args:
-        event_data: Dictionary containing 'hook_event_name' and optional 'message'
-        custom_messages: Dictionary of custom message overrides by event name
-
-    Returns:
-        Formatted notification message (defaults included emojis unless overridden)
-    """
-    event_name = event_data.get('hook_event_name', 'Notification')
     original_message = event_data.get('message', '')
 
-    # Priority: custom override > original message from hook > default for event type
-    if event_name in custom_messages:
-        return custom_messages[event_name]
-    elif original_message:
+    if original_message:
         return original_message
     else:
-        return DEFAULT_EVENT_MESSAGES.get(
-            event_name,
-            DEFAULT_EVENT_MESSAGES['Notification']
-        )
+        return 'Claude Code notification 🔔'
 
 
 def notify_macos(message: str) -> bool:
@@ -251,12 +179,9 @@ def main() -> int:
         Exit code: 0 for success, 1 for error
     """
     try:
-        # Load custom message overrides if configured
-        custom_messages = load_custom_messages()
-
         # Read and process hook input
         event_data = read_hook_input()
-        message = get_notification_message(event_data, custom_messages)
+        message = get_notification_message(event_data)
 
         # Send notification
         send_notification(message)

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Custom Claude Code capabilities and tools",
-    "version": "1.8.1.0"
+    "version": "1.9.0.0"
   },
   "plugins": [
     {
@@ -23,7 +23,7 @@
       "name": "session-protocol",
       "source": "./plugins/session-protocol",
       "description": "Session continuity management across Claude conversations",
-      "version": "1.0.0.0",
+      "version": "1.1.0.0",
       "author": {
         "name": "Thore Höltig"
       },
@@ -33,7 +33,7 @@
       "name": "claude-code-capabilities",
       "source": "./plugins/claude-code-capabilities",
       "description": "Comprehensive management of Claude Code features including skills, commands, hooks, MCPs, prompts, and subagents",
-      "version": "1.7.0.0",
+      "version": "1.8.0.0",
       "author": {
         "name": "Thore Höltig"
       },
@@ -44,6 +44,16 @@
       "source": "./plugins/fetch-full-content",
       "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations.",
       "version": "1.0.1.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "cross-platform-notification",
+      "source": "./plugins/cross-platform-notification",
+      "description": "A Claude Code plugin with a hook that sends native system notifications for Claude Code notifications.",
+      "version": "1.0.0.0",
       "author": {
         "name": "Thore Höltig"
       },
