@@ -9,6 +9,34 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.9.0.0] - 2026-01-08
+
+_Marketplace release with new cross-platform notification plugin and session-protocol refactoring._
+
+### Added
+
+- **cross-platform-notification plugin** ([v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/CrossPlatformNotification_v1.0.0)): New plugin for native system notifications
+  - Support for Windows, macOS, and Linux with platform-specific notification systems
+  - Windows toast notifications via PowerShell
+  - macOS notifications via terminal-notifier
+  - Linux notifications via notify-send
+  - Automatic fallback to console output when native notifications unavailable
+  - Hooks into Claude Code events for automated notifications
+
+### Changed
+
+- **session-protocol plugin** ([v1.1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.1.0.0)):
+  - **Breaking:** Removed notification hook and related notification infrastructure
+  - Notification functionality separated into dedicated cross-platform-notification plugin for cleaner feature separation
+  - Simplified to focus on session continuity management
+  - Removed PreCompact hook
+  - SessionStart hook remains for auto-detection of existing session protocols
+
+- **claude-code-capabilities plugin** ([v1.8.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.8.0.0)):
+  - Removed `/list-skills` slash command - Claude Code v2.1.0 added a built-in `/skills` command, making the custom command obsolete
+
+---
+
 ## [1.8.1.0] - 2026-01-06
 
 ### Fixed
@@ -185,7 +213,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.8.1.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.9.0.0...HEAD
+[1.9.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.9.0.0
 [1.8.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.1.0
 [1.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.0.0
 [1.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.7.0.0
