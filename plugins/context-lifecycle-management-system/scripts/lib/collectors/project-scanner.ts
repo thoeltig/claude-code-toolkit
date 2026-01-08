@@ -1,6 +1,36 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { RawProjectData, DirectoryInfo, FileInfo } from '../../types';
+
+export interface DirectoryInfo {
+  type: 'directory';
+  fullPath: string;
+  subdirs: string[];
+  files: string[];
+  fileCount: number;
+  depth: number;
+}
+
+export interface FileInfo {
+  path: string;
+  ext: string;
+  size: number;
+  depth: number;
+}
+
+export interface RawProjectData {
+  structure: {
+    [dirPath: string]: DirectoryInfo;
+  };
+  files: {
+    [filePath: string]: FileInfo;
+  };
+  projectStats: {
+    totalFiles: number;
+    totalDirs: number;
+    maxDepth: number;
+    fileTypes: string[];
+  };
+}
 
 const IGNORED_DIRS = new Set([
   'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj',

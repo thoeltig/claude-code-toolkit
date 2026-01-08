@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { scanProject } from './lib/collectors/project-scanner';
-import { mergeSummaries, querySummaries, getSummaries } from './lib/writers/summary-merger';
+import { mergeSummaries, getSummaries } from './lib/writers/summary-merger';
 import type { PartialSummaries } from './lib/writers/summary-merger';
 
 function parseArgs(argv: string[]): { command: string; args: Record<string, string>; positional: string[] } {

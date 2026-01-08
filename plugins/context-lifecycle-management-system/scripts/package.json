@@ -1,7 +1,7 @@
 {
-    "name": "context-lifecycle-manager",
+    "name": "project-knowledge-base",
     "version": "1.0.0",
-    "description": "Context lifecycle management for Claude Code",
+    "description": "Create a persistent knowledge layer for your project. Scan, generate summaries, and store understanding that persists across sessions. Incrementally build and share project knowledge with your team. Query-first workflow avoids expensive re-exploration each session.",
     "main": "dist/ctx.js",
     "bin": {
         "ctx": "./dist/ctx.js"
@@ -13,8 +13,10 @@
     },
     "keywords": [
         "claude",
-        "context",
-        "lifecycle",
+        "knowledge",
+        "scan",
+        "project",
+        "files",
         "ai"
     ],
     "author": "Thore Höltig",
