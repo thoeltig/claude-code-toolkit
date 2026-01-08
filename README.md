@@ -22,9 +22,10 @@ Then install any plugin:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
-| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.0.0.0 |
-| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.7.0.0 |
+| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.1.0.0 |
+| **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.0.1.0 |
+| **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -41,13 +42,13 @@ Never lose context again. Save your work state, git status, and active tasks bet
 ### Claude Code Capabilities
 The most comprehensive toolkit for working with Claude Code's extensibility features. Includes 7 specialized skills for managing every aspect of your Claude Code setup.
 
-- **managing-agent-skills skill** (v1.0.0): Create, analyze, and improve agent skills with validation frameworks and progressive disclosure
-- **managing-hooks skill** (v1.1.0): Configure event-driven automation with all 10 hook types, prompt-based hooks, and plugin composition
-- **managing-plugins skill** (v1.2.0): Bundle components into distributable plugins with marketplace support and team workflows
-- **managing-prompts skill** (v1.3.0): Master prompt engineering with Claude best practices, extended thinking, caching strategies, and Structured Outputs
-- **managing-slash-commands skill** (v1.4.0): Create and manage custom slash commands with extended thinking support, SlashCommand tool, and ecosystem integration
-- **managing-subagents skill** (v1.5.0): Analyze, evaluate, create, and improve subagents with resumable workflows, decision scoring, and permission modes
-- **managing-mcps skill** (v1.6.0): Create, analyze, and manage Model Context Protocol servers with Messages API integration, enterprise configuration
+- **managing-agent-skills skill**: Create, analyze, and improve agent skills with validation frameworks and progressive disclosure
+- **managing-hooks skill**: Configure event-driven automation with all 10 hook types, prompt-based hooks, and plugin composition
+- **managing-plugins skill**: Bundle components into distributable plugins with marketplace support and team workflows
+- **managing-prompts skill**: Master prompt engineering with Claude best practices, extended thinking, caching strategies, and Structured Outputs
+- **managing-slash-commands skill**: Create and manage custom slash commands with extended thinking support, SlashCommand tool, and ecosystem integration
+- **managing-subagents skill**: Analyze, evaluate, create, and improve subagents with resumable workflows, decision scoring, and permission modes
+- **managing-mcps skill**: Create, analyze, and manage Model Context Protocol servers with Messages API integration, enterprise configuration
 
 **Install:** `/plugin install claude-code-capabilities@claude-code-toolkit`
 
@@ -57,6 +58,11 @@ Download complete page content as markdown to filesystem for repeated analysis a
 ⚠️ **Security**: No prompt injection guards - only use on trusted sources like official documentation. Use built-in WebFetch tool for untrusted sources.
 
 **Install:** `/plugin install fetch-full-content@claude-code-toolkit`
+
+### Cross-Platform Notification
+Get alerted when Claude Code tasks complete or hook events occur with native system notifications. Works seamlessly on Windows, macOS, and Linux with automatic fallback to console output.
+
+**Install:** `/plugin install cross-platform-notification@claude-code-toolkit`
 
 ## 📚 Documentation
 

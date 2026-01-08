@@ -7,7 +7,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-## [1.0.0] - 2025-11-27
+## [1.1.0.0] - 2026-01-08
+
+### Changed
+
+- **Breaking:** Removed notification hook and related notification infrastructure from session-protocol plugin
+- Notification functionality moved to separate cross-platform-notification plugin for cleaner feature separation
+
+### Removed
+
+- Notification hook integration from hooks.json (moved to cross-platform-notification plugin)
+- PreCompact hook integration from hooks.json
+- `hook-wrapper-with-notification.py`: Unified notification wrapper script
+- `precompact-session-protocol-reminder.py`: PreCompact hook script for save reminders
+- `claude_code_notifier.py`: Cross-platform notification helper script
+
+## [1.0.0.0] - 2025-11-27
 
 _First release of session continuity plugin._
 
@@ -70,5 +85,6 @@ _First release of session continuity plugin._
 - Decision matrix format for consolidation criteria
 - Workflow structure with numbered steps vs prose paragraphs
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.0.0.0...HEAD
-[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.1.0.0...HEAD
+[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.0.0.0...SessionProtocol_v1.1.0.0
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.0.0.0

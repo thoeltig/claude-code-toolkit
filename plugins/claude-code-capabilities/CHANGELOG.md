@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.0] - 2025-12-06
+## [1.8.0.0] - 2026-01-08
+
+### Removed
+
+- Removed `/list-skills` slash command - Claude Code v2.1.0 added a built-in `/skills` command, making the custom slash command obsolete
+
+---
+
+## [1.7.0.0] - 2025-12-06
 
 _Skill discovery: List all available skills with comprehensive output formats._
 
@@ -28,7 +36,7 @@ _Skill discovery: List all available skills with comprehensive output formats._
 
 ---
 
-## [1.6.0] - 2025-12-05
+## [1.6.0.0] - 2025-12-05
 
 _MCP mastery: Comprehensive Model Context Protocol management with advanced API, enterprise, and plugin integration._
 
@@ -72,7 +80,7 @@ _MCP mastery: Comprehensive Model Context Protocol management with advanced API,
 
 ---
 
-## [1.5.0] - 2025-12-03
+## [1.5.0.0] - 2025-12-03
 
 _Subagent mastery: Comprehensive management of subagent delegation, creation, analysis, and optimization._
 
@@ -126,7 +134,7 @@ _Subagent mastery: Comprehensive management of subagent delegation, creation, an
 
 ---
 
-## [1.4.0] - 2025-12-03
+## [1.4.0.0] - 2025-12-03
 
 _Slash command mastery: Comprehensive management of custom slash commands with ecosystem integration._
 
@@ -167,7 +175,7 @@ _Slash command mastery: Comprehensive management of custom slash commands with e
 
 ---
 
-## [1.3.0] - 2025-11-29
+## [1.3.0.0] - 2025-11-29
 
 _Prompt engineering mastery: Complete managing-prompts skill with advanced techniques._
 
@@ -202,7 +210,7 @@ _Prompt engineering mastery: Complete managing-prompts skill with advanced techn
 
 ---
 
-## [1.2.0] - 2025-11-29
+## [1.2.0.0] - 2025-11-29
 
 _Plugin expansion: Comprehensive Claude Code plugin management._
 
@@ -237,7 +245,7 @@ _Plugin expansion: Comprehensive Claude Code plugin management._
 - 1 skill (managing-plugins)
 - 5 supporting files with complete specifications
 
-## [1.1.0] - 2025-11-29
+## [1.1.0.0] - 2025-11-29
 
 _Plugin expansion: Comprehensive Claude Code hook management with prompt-based and plugin hook support._
 
@@ -284,7 +292,7 @@ _Plugin expansion: Comprehensive Claude Code hook management with prompt-based a
 
 ---
 
-## [1.0.0] - 2025-11-28
+## [1.0.0.0] - 2025-11-28
 
 _Initial release with managing-agent-skills skill._
 
@@ -315,12 +323,13 @@ _Initial release with managing-agent-skills skill._
 
 **Future Releases**: Additional capability management skills will be added in subsequent releases (managing-slash-commands, managing-hooks, managing-plugins, managing-prompts, managing-subagents, managing-mcps)
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.7.0...HEAD
-[1.7.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.6.0...v1.7.0
-[1.6.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...v1.1.0
-[1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.8.0.0...HEAD
+[1.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.7.0.0...ClaudeCodeCapabilities_v1.8.0.0
+[1.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.6.0.0...ClaudeCodeCapabilities_v1.7.0.0
+[1.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.5.0.0...ClaudeCodeCapabilities_v1.6.0.0
+[1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.4.0.0...ClaudeCodeCapabilities_v1.5.0.0
+[1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.3.0.0...ClaudeCodeCapabilities_v1.4.0.0
+[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.2.0.0...ClaudeCodeCapabilities_v1.3.0.0
+[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.1.0.0...ClaudeCodeCapabilities_v1.2.0.0
+[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeCapabilities_v1.0.0.0...ClaudeCodeCapabilities_v1.1.0.0
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeCapabilities_v1.0.0.0
