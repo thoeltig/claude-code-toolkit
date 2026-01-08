@@ -1,442 +1,459 @@
-# Context Lifecycle Management System
+# Project Knowledge Base
 
-**Purpose:** Organize and query project context efficiently with minimal token usage.
+**Purpose:** Create a persistent knowledge layer of your project. Scan once, query forever across sessions. Avoid expensive re-exploration and re-reading of files by building shared, incrementally-updated understanding of your project.
 
-**Status:** Phase 2 Complete (Scanner + Core Scripts), Phase 3 In Progress (Commands)
+---
+
+## The Problem
+
+Every session, you re-explore the same project:
+- **Haiku searches**: 1000+ tokens per exploration (one-time, lost after session)
+- **File re-reading**: Reading files again to remember their purpose (wasted tokens)
+- **Context loss**: No accumulated knowledge across sessions
+- **Team silos**: Each developer explores independently
+
+## The Solution
+
+Build a persistent knowledge layer once, reuse forever:
+1. **Scan** the project (pure I/O, 0 tokens)
+2. **Analyze** with Haiku in parallel (1200 tokens per batch, one-time cost)
+3. **Store** summaries in `.context/.summaries.json` (git-tracked, team-shared)
+4. **Query** across sessions (100 tokens, no re-reading)
+5. **Extend** incrementally as project evolves (selective re-scanning)
+
+---
+
+## Query-First Workflow
+
+**Before**: Expensive per-session exploration
+```
+Session 1: User asks "Show me auth system"
+  → Invoke Haiku to search project (1000+ tokens)
+  → Results lost at session end
+
+Session 2: User asks same question
+  → Repeat Haiku search (1000+ tokens again)
+  → Same knowledge recreated
+```
+
+**After**: Query persistent knowledge base
+```
+Session 1: /scan --root=../project
+  → Generate summaries (1200 tokens, stored forever)
+
+Session N: User asks "Show me auth system"
+  → /query "authentication"
+  → Get overview instantly (100 tokens)
+  → Explore only relevant files (minimal additional cost)
+
+Session N+1: User asks different question
+  → /query "database"
+  → Reuse stored knowledge (100 tokens)
+  → No re-exploration needed
+```
 
 ---
 
 ## Quick Start
 
+### 1. Build the CLI
 ```bash
 cd plugins/context-lifecycle-management-system/scripts
-npm install        # Already done
-npm run build      # Compiles TypeScript → dist/
-
-# Test it
-node dist/ctx.js scan --root=../../../plugins/claude-code-capabilities --output=/tmp/scan.json
-# Should show: "Total files: 85, Total directories: 15, Max depth: 3"
+npm install
+npm run build
 ```
 
----
+### 2. Scan Your Project (One-time)
+```bash
+/scan --root=../path/to/project
+```
 
-## The Problem This Solves
+This generates `.context/.summaries.json` with intelligent summaries of every directory and file.
 
-**Context is expensive:**
-- Loading full codebase = 50K+ tokens wasted
-- Searching requires reading all files = repeated parsing
-- Querying requires reloading = O(n) token cost per query
+**Wave-based processing:**
+- Small projects: All batches complete quickly
+- Large projects (20+ batches): Shows estimated time, requires confirmation, processes in waves of 10-15 agents
 
-**This system:**
-- Scans once (full directory tree)
-- Analyzes once (Haiku generates summaries)
-- Stores forever (.summaries.json in .context/)
-- Queries cheap (100 tokens vs 3000+)
+Output:
+```
+✓ Analysis complete
+  Directories: 45
+  Files: 230
+  Summaries stored in: .context/.summaries.json
+
+Commit to git to share with team!
+```
+
+### 3. Query (Every Session, Fast)
+```bash
+/query "authentication"
+/query "database" --scope=src --max=10
+/query "typescript setup" --max=5
+```
+
+Get instant overview of relevant directories and files **without re-reading them**.
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ 1. SCAN PHASE                                                │
-│                                                              │
-│   User: /scan-and-analyze --root=../my-project              │
-│      ↓                                                       │
-│   Script: Walk filesystem recursively                        │
-│      ↓                                                       │
-│   Output: structure.json (directories + files + metadata)   │
-│      ↓                                                       │
-│   Display: "85 files in 15 directories, max depth 3"        │
-└──────────────────────────────────────────────────────────────┘
-                            ↓
-┌──────────────────────────────────────────────────────────────┐
-│ 2. HAIKU ANALYSIS PHASE (Parallel)                           │
-│                                                              │
-│   User: Copy prompt from HAIKU_ANALYSIS_PROMPT.md            │
-│      ↓                                                       │
-│   Batch 1 (Haiku):  Analyze directories 1-5                 │
-│   Batch 2 (Haiku):  Analyze directories 6-10                │
-│   Batch 3 (Haiku):  Analyze files 1-10                      │
-│   Batch 4 (Haiku):  Analyze files 11-20                     │
-│      ↓ (all parallel)                                       │
-│   Haiku returns: JSON with summaries                         │
-│      ↓                                                       │
-│   User: Copy JSON output back to command                     │
-└──────────────────────────────────────────────────────────────┘
-                            ↓
-┌──────────────────────────────────────────────────────────────┐
-│ 3. MERGE PHASE                                               │
-│                                                              │
-│   Script: mergeSummaries(.context/, haiku_json)             │
-│      ↓                                                       │
-│   Output: .context/.summaries.json created                   │
-│      ↓                                                       │
-│   Display: "✓ 15 directories, 85 files indexed"             │
-└──────────────────────────────────────────────────────────────┘
-                            ↓
-┌──────────────────────────────────────────────────────────────┐
-│ 4. QUERY PHASE (Efficient)                                   │
-│                                                              │
-│   User: /query-context "validation"                          │
-│      ↓                                                       │
-│   Script: Search .summaries.json (fast, in-memory)           │
-│      ↓                                                       │
-│   Output: Summaries for matching dirs/files (100 tokens)    │
-│      ↓                                                       │
-│   User: /load-context src/validation (if full content needed)│
-│      ↓                                                       │
-│   Output: Full directory structure or file content           │
-└──────────────────────────────────────────────────────────────┘
+Initial Setup (One-time):
+  User: /scan --root=../project
+    ↓
+  Scan Phase (0 tokens):
+    - Walk filesystem
+    - Extract structure
+    - Save to scan.json
+
+  ↓
+  Batch Phase:
+    - Group directories 3-5 per batch
+    - Prepare batch context
+
+  ↓
+  Haiku Analysis Phase (Wave-based Parallel, 1200 tokens per batch):
+    - Wave 1: Batches 1-15 analyze in parallel
+    - Wave 2: Batches 16-30 analyze in parallel
+    - Results written to /tmp/haiku-batch-*.json
+
+  ↓
+  Merge Phase (0 tokens):
+    - Combine all batch results
+    - Save to .context/.summaries.json
+    - ✅ STORED FOREVER
+
+
+Across Sessions (100 tokens per query):
+  User: /query "keywords"
+    ↓
+  Query Phase:
+    - Search .summaries.json
+    - Score results by confidence
+    - Display relevant dirs/files
+    - User examines only what matters
 ```
 
 ---
 
-## File Structure
+## Slash Commands
+
+### `/scan [--root=<path>]`
+**Generate persistent summaries of your project.**
+
+Parameters:
+- `--root`: Project root directory (default: current directory)
+
+Creates/updates `.context/.summaries.json` with analyzed summaries.
+
+**Large Project Handling:**
+- If 20+ batches needed: Shows warning with estimated time
+- Requires user confirmation before analysis
+- Processes in waves (10-15 concurrent agents max)
+- Shows progress as waves complete
+
+Example:
+```bash
+/scan --root=../claude-code-capabilities
+# Generates .context/.summaries.json
+# Ready to share with team via git
+```
+
+### `/query "<keywords>" [--root=<path>] [--scope=<path>] [--max=N]`
+**Query persistent knowledge base by keywords.**
+
+Parameters:
+- `<keywords>`: Search terms (e.g., "authentication", "user setup")
+- `--root`: Project root directory (default: current directory)
+- `--scope`: Limit search to specific path (optional)
+- `--max`: Maximum results (default: 100)
+
+Returns overview of relevant directories and files **without reading them**.
+
+Example:
+```bash
+/query "authentication"
+/query "auth" --scope=src/auth --max=5
+/query "database connection" --max=10
+```
+
+---
+
+## Persistent Knowledge Layer
+
+### What Gets Stored
+
+`.context/.summaries.json` contains analyzed summaries:
+
+**Directory Summary:**
+```json
+{
+  "src/auth": {
+    "summary": "Authentication system implementation",
+    "purpose": "User login, token management, session handling",
+    "technologies": ["TypeScript", "JWT", "bcrypt"],
+    "fileCount": 12,
+    "subdirCount": 3,
+    "lastUpdated": "2026-01-08T00:00:00Z"
+  }
+}
+```
+
+**File Summary:**
+```json
+{
+  "src/auth/index.ts": {
+    "summary": "Main authentication module entry point",
+    "purpose": "Export auth functions and middleware",
+    "role": "implementation",
+    "exports": ["authenticate", "logout", "middleware"],
+    "imports": ["jwt", "bcrypt", "express"],
+    "lastUpdated": "2026-01-08T00:00:00Z"
+  }
+}
+```
+
+### Incremental Updates
+
+When code changes, selectively re-scan:
+```bash
+# Re-scan entire project
+/scan --root=../project
+
+# Updates existing summaries, preserves unchanged
+# Merges new and modified entries
+```
+
+No need to re-analyze unchanged code - only changes get updated.
+
+### Team Sharing
+
+Commit to git:
+```bash
+git add .context/.summaries.json
+git commit -m "docs: update project knowledge base"
+git push
+```
+
+Team members clone once, query forever - no per-developer re-analysis needed.
+
+---
+
+## Confidence Scoring
+
+Query results ranked by relevance:
+- **Path match**: +10 per keyword (highest priority)
+- **Summary match**: +5 per keyword
+- **Purpose match**: +3 per keyword
+- **Technologies/Role match**: +2-3 per keyword
+- **Exports/Imports match**: +2 per keyword
+
+Results sorted descending by confidence score.
+
+---
+
+## Token & Performance Comparison
+
+### Before (Per-session exploration)
+| Task | Tokens | Time | Notes |
+|------|--------|------|-------|
+| Haiku search for "auth" | 1000+ | 10s | Lost after session ends |
+| Re-reading files | 500+ | varies | Redundant across sessions |
+| **Per-session cost** | **1500+** | **varies** | **One-time per exploration** |
+
+### After (Query-first workflow)
+| Task | Tokens | Time | Notes |
+|------|--------|------|-------|
+| Initial scan | 1200/batch | 3-5m | One-time setup |
+| Query "auth" | 100 | <1s | Reused across sessions |
+| Read 1 specific file | 200-500 | <1s | Only when actually needed |
+| **Per-session cost** | **100-600** | **<1s** | **Query + selective reading** |
+
+**Result**: 90% fewer tokens across multiple sessions, instant queries.
+
+---
+
+## Directory Structure
 
 ```
 plugins/context-lifecycle-management-system/
-│
-├── scripts/                              # TypeScript CLI
-│   ├── package.json                      # No npm dependencies
-│   ├── tsconfig.json                     # ES2020, strict
-│   ├── ctx.ts                            # Main CLI entry point
-│   ├── dist/                             # Compiled JavaScript
-│   │   ├── ctx.js                        # Binary (npm bin: ctx)
-│   │   └── lib/                          # All compiled modules
-│   │
-│   ├── lib/
-│   │   ├── collectors/
-│   │   │   └── project-scanner.ts        # Scan filesystem → structure.json
-│   │   ├── writers/
-│   │   │   ├── context-writer.ts         # Create .context/ + .index.json
-│   │   │   ├── capture-writer.ts         # Capture decisions
-│   │   │   └── summary-merger.ts         # Merge Haiku results → .summaries.json
-│   │   ├── query/
-│   │   │   ├── searcher.ts               # Search .index.json
-│   │   │   └── loader.ts                 # Load files by path or node
-│   │   └── (all compiled to dist/)
-│   │
-│   ├── types/
-│   │   └── index.ts                      # 16 TypeScript interfaces
-│   │
-│   └── utils/
-│       ├── sanitizer.ts                  # Remove API keys, passwords
-│       ├── token-counter.ts              # Estimate token count
-│       ├── keywords.ts                   # Extract keywords
-│       └── json-path.ts                  # (future) JSON navigation
-│
 ├── .claude/
+│   ├── agents/
+│   │   └── haiku-batch-analysis.md      # Haiku analysis agent
 │   └── commands/
-│       ├── scan-and-analyze.md           # Scan + guide Haiku analysis
-│       └── query-context.md              # Search summaries or index
+│       ├── scan.md                       # /scan command
+│       └── query.md                      # /query command
 │
-├── HAIKU_ANALYSIS_PROMPT.md              # Prompts for parallel Haiku batches
-├── IMPLEMENTATION_STATUS.md              # This session's progress + next steps
-└── README.md                             # (this file)
+├── .claude-plugin/
+│   └── plugin.json                       # Plugin metadata
+│
+├── scripts/
+│   ├── ctx.ts                            # CLI implementation
+│   ├── dist/ctx.js                       # Compiled binary
+│   ├── lib/
+│   │   ├── collectors/project-scanner.ts
+│   │   └── writers/summary-merger.ts
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── commands/
+│   ├── scan.md                           # Command documentation
+│   └── query.md                          # Command documentation
+│
+├── HAIKU_ANALYSIS_PROMPT.md              # Analysis template
+└── README.md                             # This file
 ```
 
 ---
 
-## Core Concepts
+## Workflow Example
 
-### 1. Directory Structure
+### Session 1: Build Knowledge Base
 
-Scanner recursively walks filesystem and groups files by parent directory:
-
-```json
-{
-  "structure": {
-    ".": {
-      "type": "directory",
-      "subdirs": ["src", "tests", "docs"],
-      "files": ["package.json", "README.md"],
-      "fileCount": 2,
-      "depth": 0
-    },
-    "src": {
-      "type": "directory",
-      "subdirs": ["components", "utils"],
-      "files": ["index.ts", "main.ts"],
-      "fileCount": 2,
-      "depth": 1
-    }
-  },
-  "files": {
-    "package.json": { "path": "package.json", "ext": ".json", "size": 2048, "depth": 0 },
-    "src/index.ts": { "path": "src/index.ts", "ext": ".ts", "size": 1500, "depth": 1 }
-  },
-  "projectStats": {
-    "totalFiles": 85,
-    "totalDirs": 15,
-    "maxDepth": 3,
-    "fileTypes": [".json", ".md", ".py", ".sh"]
-  }
-}
+```bash
+/scan --root=../my-project
 ```
 
-### 2. Summaries
-
-Haiku analysis produces one JSON per batch with directory and file summaries:
-
-```json
-{
-  "directories": {
-    "src": {
-      "summary": "Main application source code",
-      "purpose": "Core TypeScript implementation",
-      "technologies": ["TypeScript", "React"],
-      "fileCount": 42,
-      "subdirCount": 5,
-      "lastUpdated": "2026-01-07T17:30:00Z"
-    }
-  },
-  "files": {
-    "src/index.ts": {
-      "summary": "Application entry point",
-      "purpose": "Initialize app",
-      "role": "implementation",
-      "exports": ["main"],
-      "imports": ["React"],
-      "lastUpdated": "2026-01-07T17:30:00Z"
-    }
-  }
-}
+Output:
+```
+✓ Analysis complete
+  Directories: 45
+  Files: 230
+  Summaries stored in: .context/.summaries.json
 ```
 
-### 3. Context Index
-
-Captured decisions stored separately from summaries:
-
-```json
-{
-  "version": "1.0",
-  "created": "2026-01-07T17:30:00Z",
-  "updated": "2026-01-07T17:30:00Z",
-  "project": {
-    "type": "web_app",
-    "domain": "my_application",
-    "tech_stack": {
-      "frontend": ["React", "TypeScript"],
-      "backend": ["Node.js", "Express"]
-    }
-  },
-  "files": {
-    "foundation/abc123-use-react.json": {
-      "layer": "foundation",
-      "title": "Use React for UI",
-      "summary": "Chose React for component reusability...",
-      "tokens": 150,
-      "type": "decision",
-      "keywords": ["react", "frontend", "components"],
-      "updated": "2026-01-07T17:30:00Z"
-    }
-  }
-}
+Commit to git:
+```bash
+git add .context/.summaries.json
+git commit -m "docs: add project knowledge base"
 ```
+
+### Session 2: Query Knowledge Base
+
+User asks: "Show me the authentication system"
+
+```bash
+/query "authentication" --max=10
+```
+
+Output:
+```
+Found 8 matches for "authentication" (scope: all)
+Searching: [authentication]
+
+DIRECTORIES:
+1. [DIRECTORY] src/auth
+   Score: 25
+   Summary: Authentication system implementation
+   Purpose: User login, token management, session handling
+   Tech: [TypeScript, JWT, bcrypt]
+
+2. [DIRECTORY] src/middleware
+   Score: 15
+   Summary: Express middleware implementations
+   Purpose: Request processing and validation
+   Tech: [Express, TypeScript]
+
+FILES:
+3. [FILE] src/auth/index.ts
+   Score: 20
+   Summary: Main authentication module entry point
+   Purpose: Export auth functions and middleware
+   Role: implementation
+   Exports: [authenticate, logout, middleware]
+```
+
+Based on results, user decides to read specific files instead of exploring blindly.
+
+### Session 3: Incremental Update
+
+Code changed, some files updated:
+
+```bash
+/scan --root=../my-project
+```
+
+Updates summaries - only re-analyzes changed code, preserves unchanged summaries.
 
 ---
 
-## Commands Available
+## Key Benefits
 
-### Phase 2 (Working)
-
-```bash
-node dist/ctx.js scan --root=../project --output=/tmp/scan.json
-# Output: structure.json with all directories and files
-
-node dist/ctx.js init --analysis=/tmp/analysis.json --root=../project
-# Output: .context/ directory with domain/, foundation/, active/ layers
-
-node dist/ctx.js capture --title="..." --context="..." --category=foundation
-# Output: .context/foundation/<id>-<title>.json + updated .index.json
-
-node dist/ctx.js query "topic" --layer=foundation
-# Output: Matching decisions from .index.json
-
-node dist/ctx.js load <filepath> [--node=<name>]
-# Output: Full JSON content of file or specific node
-```
-
-### Phase 3 (Commands in progress)
-
-```bash
-/scan-and-analyze --root=../project
-# Orchestrate: scan → show results → guide Haiku → merge summaries
-
-/query-context "validation" [--layer=all] [--type=all] [--load]
-# Search .summaries.json (if exists) or .index.json (fallback)
-# Return relevant directories and files with summaries
-```
-
----
-
-## Testing Checklist
-
-### Verify Compilation
-```bash
-cd scripts
-npm run build
-# Should complete without errors, create dist/ directory
-```
-
-### Test Scanner
-```bash
-node dist/ctx.js scan --root=../../../plugins/claude-code-capabilities --output=/tmp/scan.json
-# Should show:
-# ✓ Project scan complete
-#   Total files: 85
-#   Total directories: 15
-#   Max depth: 3
-#   File types: .json, .md, .py, .sh
-```
-
-### Test Context Creation
-```bash
-# Create simple analysis
-cat > /tmp/analysis.json << 'EOF'
-{"type":"web_app","domain":"test","tech_stack":{},"confidence":{"type":0.9,"domain":0.8},"keywords":[],"initial_categories":{"domain":[],"foundation":[]}}
-EOF
-
-node dist/ctx.js init --analysis=/tmp/analysis.json --root=../../../plugins/claude-code-capabilities
-# Should create .context/ with subdirectories
-# Check: ls .context/
-```
-
-### Test Capture
-```bash
-cd ../../../plugins/claude-code-capabilities
-node ../../context-lifecycle-management-system/scripts/dist/ctx.js capture \
-  --title="Test Decision" \
-  --context="This is a test" \
-  --category=foundation
-# Should create .context/foundation/<id>-test-decision.json
-# Check: ls .context/foundation/
-```
-
-### Test Query
-```bash
-node ../../context-lifecycle-management-system/scripts/dist/ctx.js query "Test"
-# Should return: 1 match from foundation layer
-```
-
----
-
-## Next Steps (Phase 3)
-
-### 1. Implement scan-and-analyze Command
-- **File:** `.claude/commands/scan-and-analyze.md` ✅ CREATED
-- **What it does:**
-  1. Run scanner → structure.json
-  2. Show results to user
-  3. Guide user to Haiku with prompt
-  4. Accept summary JSON from user
-  5. Call mergeSummaries() to store
-  6. Confirm success
-
-### 2. Implement query-context Command
-- **File:** `.claude/commands/query-context.md` ✅ CREATED
-- **What it does:**
-  1. Check for .summaries.json (preferred) or .index.json (fallback)
-  2. Search based on topic
-  3. Return summaries with relevance scores
-  4. Show how to load full content
-  5. Suggest next actions
-
-### 3. (Future) Haiku Integration
-- Automate batch sending to Haiku
-- Receive results automatically
-- Merge in background
-- Progress feedback
-
----
-
-## Key Design Decisions
-
-### Why Vanilla TypeScript?
-- No npm dependencies to manage
-- Simpler deployment (single dist/ folder)
-- Easy to audit security
-
-### Why Scanner Groups by Directory?
-- Humans think in folders
-- Haiku analysis works better with context (parent/children)
-- Enables directory-level summaries
-
-### Why Parallel Haikus?
-- 20 Haikus analyzing 20 directories ≈ same time as 1 Haiku
-- Each Haiku focuses narrowly (better quality analysis)
-- Results merge atomically (no conflicts)
-- Scales with number of parallel requests
-
-### Why Separate Index and Summaries?
-- Index = captured decisions (explicit, reviewed)
-- Summaries = automated analysis (derived, regenerable)
-- Both searchable, serve different purposes
-- Can regenerate summaries without losing decisions
-
----
-
-## Performance Characteristics
-
-| Operation | Time | Tokens |
-|-----------|------|--------|
-| Scan project (100 files) | <1s | 0 (pure I/O) |
-| Haiku batch analysis (3-5 dirs) | ~3s | ~1200 per batch |
-| Merge summaries (100 entries) | <100ms | 0 (pure I/O) |
-| Query search | <50ms | 100 + result summaries |
-| Load single file | <10ms | 0 + file content |
+✅ **Persistent**: Knowledge saved in `.context/.summaries.json`, available forever
+✅ **Cross-session**: Query instantly in any session, no re-exploration
+✅ **Team-shareable**: Commit to git, entire team reuses knowledge
+✅ **Incremental**: Re-scan updates summaries, doesn't start from scratch
+✅ **Token-efficient**: Query costs 100 tokens (vs 1000+ for re-exploration)
+✅ **Guided exploration**: Overview first, read selectively
+✅ **Wave-safe**: Large projects process in controlled waves, shows progress
 
 ---
 
 ## Troubleshooting
 
-### "ctx.js not found"
-- Current: `plugins/context-lifecycle-management-system/scripts/`
-- Check: `ls dist/ctx.js` exists
+### "No context found"
+Run `/scan` first to generate `.context/.summaries.json`
 
-### "Cannot find module"
-- Run: `npm run build` in scripts directory
+### "CLI not found"
+Build the scripts: `cd scripts && npm run build`
 
-### ".context doesn't exist"
-- Run: `/scan-and-analyze` or `ctx init` first
+### "No matches found"
+Try broader keywords, or check if `/scan` has completed
 
-### Haiku output won't merge
-- Check: Valid JSON (use validator)
-- Check: Has `directories` and/or `files` keys
-- Check: Directory/file names match scan output exactly
+### Large project warnings
+Projects with 20+ batches show estimated time. Confirm to proceed.
+Processing happens in waves of 10-15 concurrent agents.
+
+### How often should I re-scan?
+- Initial setup: Once per project
+- Maintenance: When significant code changes occur
+- Team sync: When pulling major updates from teammates
+
+---
+
+## Design Decisions
+
+**Why Persistent Storage?**
+- Knowledge carries across sessions automatically
+- No re-exploration overhead
+- Team can share project understanding via git
+
+**Why Wave-based Parallel?**
+- 10-15 concurrent agents balances speed and stability
+- Still 10-15x faster than sequential
+- Large projects don't overwhelm the system
+- Progress visible as waves complete
+
+**Why Incremental Scanning?**
+- Re-scanning entire project updates summaries efficiently
+- Changed files re-analyzed, unchanged files preserved
+- Knowledge accumulates over time as project evolves
+
+**Why Query-First Workflow?**
+- Overview before deep-diving (minimal tokens)
+- Guided exploration using knowledge base
+- Avoids expensive one-time Haiku searches
+- Team reuses previous session's discoveries
 
 ---
 
-## Future Enhancements
-
-1. **Automated Haiku Integration** - Auto-invoke and merge
-2. **Incremental Updates** - Only re-scan changed files
-3. **File Content Caching** - Store file previews in summaries
-4. **Semantic Search** - Vector embeddings for better matching
-5. **Diff Tracking** - See what changed between scans
-6. **Team Sync** - Git-based merge strategies for team context
-7. **IDE Integration** - Sidebar showing context tree
+Built with vanilla TypeScript, no external dependencies.
 
 ---
+
+## Version History
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
+
+## License
+
+See root [LICENSE](../../LICENSE) for details.
 
 ## Support
 
-**For issues in next session:**
-
-1. Check IMPLEMENTATION_STATUS.md (what's done, what's TODO)
-2. Read the command files (.claude/commands/*.md)
-3. Run test checklist above to verify setup
-4. Review HAIKU_ANALYSIS_PROMPT.md for Haiku usage
-
-**Files to read:**
-- `IMPLEMENTATION_STATUS.md` - Current state + next steps
-- `HAIKU_ANALYSIS_PROMPT.md` - How to run Haiku analysis
-- `.claude/commands/scan-and-analyze.md` - Scan workflow
-- `.claude/commands/query-context.md` - Query workflow
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
 
 ---
 
-**Built with vanilla TypeScript, no external dependencies.**
-
-**Ready to scan, analyze, and query your projects efficiently.**
+**Author**: [Thore Höltig](https://github.com/thoeltig)
