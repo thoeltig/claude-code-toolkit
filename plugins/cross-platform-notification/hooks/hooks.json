@@ -1,11 +1,11 @@
 {
   "hooks": {
-    "SessionStart": [
+    "Notification": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/sessionstart-session-protocol-check.py\""
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/claude_code_notifier.py\""
           }
         ]
       }
