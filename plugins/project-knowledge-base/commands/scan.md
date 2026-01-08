@@ -1,9 +1,9 @@
 ---
-description: Build persistent knowledge base of your project. Run once to generate intelligent summaries of all directories and files, stored in .context/. Enable fast cross-session queries without expensive re-exploration. Use for first-time project understanding, mapping project structure, setting up team knowledge base. Update knowledge base by running it again.
+description: Build persistent knowledge base of your project. Run once to generate intelligent summaries of all directories and files, stored in .knowledge/. Enable fast cross-session queries without expensive re-exploration. Use for first-time project understanding, mapping project structure, setting up team knowledge base. Update knowledge base by running it again.
 argument-hint: [--root=<path>]
 ---
 
-# Scan Project and Generate Context Summaries
+# Scan Project and Generate Summaries
 
 Orchestrate a complete project scan followed by parallel Haiku analysis to generate searchable summaries.
 
@@ -11,15 +11,15 @@ Orchestrate a complete project scan followed by parallel Haiku analysis to gener
 1. Scan project directory structure
 2. Batch directories for parallel analysis
 3. Invoke Haiku agents in parallel (each batch analyzed concurrently)
-4. Merge results into .context/.summaries.json
+4. Merge results into .knowledge/summaries.json
 5. Report completion
 
 **Parameters:**
 - `--root`: Project root directory (default: current directory)
 
 **Output:**
-- Creates `.context/scan.json` with directory structure
-- Creates `.context/.summaries.json` with analyzed summaries
+- Creates `.knowledge/scan.json` with directory structure
+- Creates `.knowledge/summaries.json` with analyzed summaries
 - Reports: directories count, files count, storage location
 
 **Usage Examples:**
@@ -40,8 +40,7 @@ I will execute the following workflow:
 Execute the scanner to analyze project structure and save to scan.json.
 
 ```bash
-cd "C:\Users\ThoreHöltig\Documents\ClaudeCodeToolkit\plugins\context-lifecycle-management-system\scripts"
-node dist/ctx.js scan --root="$ROOT_DIR" --output="$ROOT_DIR/.context/scan.json"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --root="$ROOT_DIR" --output="$ROOT_DIR/.knowledge/scan.json"
 ```
 
 Parse the JSON output to extract:
@@ -57,7 +56,7 @@ For each batch:
   - `batchNumber`: Sequential batch ID
   - `type`: "directories"
   - `items`: Array of directory paths
-  - `structure`: File structure context from scan.json
+  - `structure`: File structure from scan.json
 
 Calculate total number of batches needed.
 
@@ -104,17 +103,16 @@ Processing batches: 16-30 of 45
 Wait for current wave to complete before launching next wave.
 
 ### Step 4: Execute merge command
-Combine all batch results into project context:
+Combine all batch results into project knowledge:
 
 ```bash
-cd "C:\Users\ThoreHöltig\Documents\ClaudeCodeToolkit\plugins\context-lifecycle-management-system\scripts"
-node dist/ctx.js merge --summaries="/tmp/haiku-batch-*.json" --root="$ROOT_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="/tmp/haiku-batch-*.json" --root="$ROOT_DIR"
 ```
 
 Parse the JSON response to extract:
 - Number of directories analyzed
 - Number of files analyzed
-- Location of .summaries.json
+- Location of summaries.json
 
 ### Step 5: Report completion
 Display summary to user:
@@ -122,7 +120,7 @@ Display summary to user:
 ✓ Analysis complete
   Directories: N
   Files: N
-  Summaries stored in: .context/.summaries.json
+  Summaries stored in: .knowledge/summaries.json
 
 Next step: Use /query "keyword" to search summaries
 ```
@@ -141,7 +139,7 @@ Next step: Use /query "keyword" to search summaries
 ## Technical Details
 
 **CLI Command Location:**
-`C:\Users\ThoreHöltig\Documents\ClaudeCodeToolkit\plugins\context-lifecycle-management-system\scripts\dist\ctx.js`
+`${CLAUDE_PLUGIN_ROOT}\scripts\dist\ctx.js`
 
 **Agent Used:**
 - Agent: haiku-batch-analysis
@@ -171,7 +169,7 @@ Next step: Use /query "keyword" to search summaries
   "summaries": {
     "directoriesCount": N,
     "filesCount": N,
-    "location": ".context/.summaries.json",
+    "location": ".knowledge/summaries.json",
     "filesProcessed": N
   }
 }

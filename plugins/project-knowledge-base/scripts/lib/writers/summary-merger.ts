@@ -39,14 +39,14 @@ export interface PartialSummaries {
   };
 }
 
-function getOrCreateSummaries(contextDir: string): SummariesData {
-  const summariesPath = path.join(contextDir, '.summaries.json');
+function getOrCreateSummaries(knowledgeDir: string): SummariesData {
+  const summariesPath = path.join(knowledgeDir, 'summaries.json');
 
   if (fs.existsSync(summariesPath)) {
     try {
       return JSON.parse(fs.readFileSync(summariesPath, 'utf8'));
     } catch (e) {
-      console.error('Error reading .summaries.json, creating new:', e);
+      console.error('Error reading summaries.json, creating new:', e);
     }
   }
 
@@ -58,8 +58,8 @@ function getOrCreateSummaries(contextDir: string): SummariesData {
   };
 }
 
-function writeSummaries(contextDir: string, data: SummariesData): void {
-  const summariesPath = path.join(contextDir, '.summaries.json');
+function writeSummaries(knowledgeDir: string, data: SummariesData): void {
+  const summariesPath = path.join(knowledgeDir, 'summaries.json');
   const tempPath = summariesPath + '.tmp';
 
   // Update generated timestamp
@@ -70,8 +70,8 @@ function writeSummaries(contextDir: string, data: SummariesData): void {
   fs.renameSync(tempPath, summariesPath);
 }
 
-export function mergeSummaries(contextDir: string, partialSummaries: PartialSummaries): void {
-  const summaries = getOrCreateSummaries(contextDir);
+export function mergeSummaries(knowledgeDir: string, partialSummaries: PartialSummaries): void {
+  const summaries = getOrCreateSummaries(knowledgeDir);
 
   // Merge directories
   if (partialSummaries.directories) {
@@ -93,38 +93,38 @@ export function mergeSummaries(contextDir: string, partialSummaries: PartialSumm
     }
   }
 
-  writeSummaries(contextDir, summaries);
+  writeSummaries(knowledgeDir, summaries);
 }
 
-export function deleteDirectorySummary(contextDir: string, dirPath: string): void {
-  const summaries = getOrCreateSummaries(contextDir);
+export function deleteDirectorySummary(knowledgeDir: string, dirPath: string): void {
+  const summaries = getOrCreateSummaries(knowledgeDir);
   delete summaries.directories[dirPath];
-  writeSummaries(contextDir, summaries);
+  writeSummaries(knowledgeDir, summaries);
 }
 
-export function deleteFileSummary(contextDir: string, filePath: string): void {
-  const summaries = getOrCreateSummaries(contextDir);
+export function deleteFileSummary(knowledgeDir: string, filePath: string): void {
+  const summaries = getOrCreateSummaries(knowledgeDir);
   delete summaries.files[filePath];
-  writeSummaries(contextDir, summaries);
+  writeSummaries(knowledgeDir, summaries);
 }
 
-export function getSummaries(contextDir: string): SummariesData {
-  return getOrCreateSummaries(contextDir);
+export function getSummaries(knowledgeDir: string): SummariesData {
+  return getOrCreateSummaries(knowledgeDir);
 }
 
 export function getSummariesByType(
-  contextDir: string,
+  knowledgeDir: string,
   type: 'directories' | 'files'
 ): Record<string, DirectorySummary | FileSummary> {
-  const summaries = getOrCreateSummaries(contextDir);
+  const summaries = getOrCreateSummaries(knowledgeDir);
   return summaries[type] || {};
 }
 
 export function querySummaries(
-  contextDir: string,
+  knowledgeDir: string,
   query: string
 ): { directories: Array<[string, DirectorySummary]>; files: Array<[string, FileSummary]> } {
-  const summaries = getOrCreateSummaries(contextDir);
+  const summaries = getOrCreateSummaries(knowledgeDir);
   const queryLower = query.toLowerCase();
 
   const dirMatches = Object.entries(summaries.directories)

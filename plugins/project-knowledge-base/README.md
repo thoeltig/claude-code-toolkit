@@ -17,7 +17,7 @@ Every session, you re-explore the same project:
 Build a persistent knowledge layer once, reuse forever:
 1. **Scan** the project (pure I/O, 0 tokens)
 2. **Analyze** with Haiku in parallel (1200 tokens per batch, one-time cost)
-3. **Store** summaries in `.context/.summaries.json` (git-tracked, team-shared)
+3. **Store** summaries in `.knowledge/summaries.json` (git-tracked, team-shared)
 4. **Query** across sessions (100 tokens, no re-reading)
 5. **Extend** incrementally as project evolves (selective re-scanning)
 
@@ -58,7 +58,7 @@ Session N+1: User asks different question
 
 ### 1. Build the CLI
 ```bash
-cd plugins/context-lifecycle-management-system/scripts
+cd plugins/project-knowledge-base/scripts
 npm install
 npm run build
 ```
@@ -68,7 +68,7 @@ npm run build
 /scan --root=../path/to/project
 ```
 
-This generates `.context/.summaries.json` with intelligent summaries of every directory and file.
+This generates `.knowledge/summaries.json` with intelligent summaries of every directory and file.
 
 **Wave-based processing:**
 - Small projects: All batches complete quickly
@@ -79,7 +79,7 @@ Output:
 ✓ Analysis complete
   Directories: 45
   Files: 230
-  Summaries stored in: .context/.summaries.json
+  Summaries stored in: .knowledge/summaries.json
 
 Commit to git to share with team!
 ```
@@ -120,7 +120,7 @@ Initial Setup (One-time):
   ↓
   Merge Phase (0 tokens):
     - Combine all batch results
-    - Save to .context/.summaries.json
+    - Save to .knowledge/summaries.json
     - ✅ STORED FOREVER
 
 
@@ -128,7 +128,7 @@ Across Sessions (100 tokens per query):
   User: /query "keywords"
     ↓
   Query Phase:
-    - Search .summaries.json
+    - Search summaries.json
     - Score results by confidence
     - Display relevant dirs/files
     - User examines only what matters
@@ -144,7 +144,7 @@ Across Sessions (100 tokens per query):
 Parameters:
 - `--root`: Project root directory (default: current directory)
 
-Creates/updates `.context/.summaries.json` with analyzed summaries.
+Creates/updates `.knowledge/summaries.json` with analyzed summaries.
 
 **Large Project Handling:**
 - If 20+ batches needed: Shows warning with estimated time
@@ -155,7 +155,7 @@ Creates/updates `.context/.summaries.json` with analyzed summaries.
 Example:
 ```bash
 /scan --root=../claude-code-capabilities
-# Generates .context/.summaries.json
+# Generates .knowledge/summaries.json
 # Ready to share with team via git
 ```
 
@@ -183,7 +183,7 @@ Example:
 
 ### What Gets Stored
 
-`.context/.summaries.json` contains analyzed summaries:
+`.knowledge/summaries.json` contains analyzed summaries:
 
 **Directory Summary:**
 ```json
@@ -230,7 +230,7 @@ No need to re-analyze unchanged code - only changes get updated.
 
 Commit to git:
 ```bash
-git add .context/.summaries.json
+git add .knowledge/summaries.json
 git commit -m "docs: update project knowledge base"
 git push
 ```
@@ -276,14 +276,7 @@ Results sorted descending by confidence score.
 ## Directory Structure
 
 ```
-plugins/context-lifecycle-management-system/
-├── .claude/
-│   ├── agents/
-│   │   └── haiku-batch-analysis.md      # Haiku analysis agent
-│   └── commands/
-│       ├── scan.md                       # /scan command
-│       └── query.md                      # /query command
-│
+plugins/project-knowledge-base/
 ├── .claude-plugin/
 │   └── plugin.json                       # Plugin metadata
 │
@@ -296,12 +289,14 @@ plugins/context-lifecycle-management-system/
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── commands/
-│   ├── scan.md                           # Command documentation
-│   └── query.md                          # Command documentation
+│── agents/
+│   └── haiku-batch-analysis.md           # Haiku analysis agent
+│── commands/
+│   ├── scan.md                           # /scan command
+│   └── query.md                          # /query command
 │
-├── HAIKU_ANALYSIS_PROMPT.md              # Analysis template
 └── README.md                             # This file
+└── CHANGELOG.md                          # Version history
 ```
 
 ---
@@ -319,12 +314,12 @@ Output:
 ✓ Analysis complete
   Directories: 45
   Files: 230
-  Summaries stored in: .context/.summaries.json
+  Summaries stored in: .knowledge/summaries.json
 ```
 
 Commit to git:
 ```bash
-git add .context/.summaries.json
+git add .knowledge/summaries.json
 git commit -m "docs: add project knowledge base"
 ```
 
@@ -379,7 +374,7 @@ Updates summaries - only re-analyzes changed code, preserves unchanged summaries
 
 ## Key Benefits
 
-✅ **Persistent**: Knowledge saved in `.context/.summaries.json`, available forever
+✅ **Persistent**: Knowledge saved in `.knowledge/summaries.json`, available forever
 ✅ **Cross-session**: Query instantly in any session, no re-exploration
 ✅ **Team-shareable**: Commit to git, entire team reuses knowledge
 ✅ **Incremental**: Re-scan updates summaries, doesn't start from scratch
@@ -391,8 +386,8 @@ Updates summaries - only re-analyzes changed code, preserves unchanged summaries
 
 ## Troubleshooting
 
-### "No context found"
-Run `/scan` first to generate `.context/.summaries.json`
+### "No knowledge found"
+Run `/scan` first to generate `.knowledge/summaries.json`
 
 ### "CLI not found"
 Build the scripts: `cd scripts && npm run build`

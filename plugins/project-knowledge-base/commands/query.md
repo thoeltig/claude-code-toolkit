@@ -1,5 +1,5 @@
 ---
-description: Search project knowledge base by keywords. Fast way to find relevant context, directories and files without reading them or expensive per-session re-exploration. Use this first to get a quick overview before exploring specific code. Find files, understand structure, locate features.
+description: Search project knowledge base by keywords. Fast way to find relevant information, context, directories and files without reading them or expensive per-session re-exploration. Use this first to get a quick overview before exploring specific code. Find files, understand structure, locate features.
 argument-hint: "<keywords>" [--root=<path>] [--scope=<path>] [--max=N]
 ---
 
@@ -36,20 +36,19 @@ Search project summaries by keywords with confidence-based scoring and result ra
 
 I will execute the following workflow:
 
-### Step 1: Validate context exists
-Check if `.context/.summaries.json` exists in the project root.
+### Step 1: Validate knowledge exists
+Check if `.knowledge/summaries.json` exists in the project root.
 
 If missing, display error:
 ```
-Error: No context found. Run: /scan first
+Error: No knowledge found. Run: /scan first
 ```
 
 ### Step 2: Execute query command
-Run the context query CLI with user parameters:
+Run the knowledge query CLI with user parameters:
 
 ```bash
-cd "C:\Users\ThoreHöltig\Documents\ClaudeCodeToolkit\plugins\context-lifecycle-management-system\scripts"
-node dist/ctx.js query "$KEYWORDS" --root="$ROOT_DIR" --scope="$SCOPE" --max="$MAX"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js query "$KEYWORDS" --root="$ROOT_DIR" --scope="$SCOPE" --max="$MAX"
 ```
 
 Parse JSON response structure:
@@ -128,7 +127,7 @@ Next steps:
 
 ## Error Handling
 
-- **Context missing**: Show friendly error with `/scan` suggestion
+- **Knowledge missing**: Show friendly error with `/scan` suggestion
 - **Query fails**: Display error message from CLI
 - **Parse error**: Report JSON parsing issue
 - **No results**: Show "no matches" guidance
@@ -139,7 +138,7 @@ Next steps:
 ## Technical Details
 
 **CLI Command Location:**
-`C:\Users\ThoreHöltig\Documents\ClaudeCodeToolkit\plugins\context-lifecycle-management-system\scripts\dist\ctx.js`
+`${CLAUDE_PLUGIN_ROOT}\scripts\dist\ctx.js`
 
 **Output Format:**
 JSON structure with scored results, pre-sorted by confidence descending.

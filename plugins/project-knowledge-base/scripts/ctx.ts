@@ -53,11 +53,11 @@ async function main() {
 
 async function handleScan() {
   const root = args.root || process.cwd();
-  const output = args.output || path.join(root, '.context', 'scan.json');
+  const output = args.output || path.join(root, '.knowledge', 'scan.json');
 
-  const contextDir = path.join(root, '.context');
-  if (!fs.existsSync(contextDir)) {
-    fs.mkdirSync(contextDir, { recursive: true });
+  const knowledgeDir = path.join(root, '.knowledge');
+  if (!fs.existsSync(knowledgeDir)) {
+    fs.mkdirSync(knowledgeDir, { recursive: true });
   }
 
   const scanData = await scanProject(root);
@@ -82,7 +82,7 @@ async function handleMerge() {
   }
 
   const rootDir = args.root || process.cwd();
-  const contextDir = path.join(rootDir, '.context');
+  const knowledgeDir = path.join(rootDir, '.knowledge');
 
   try {
     // Support glob patterns and single files
@@ -106,20 +106,20 @@ async function handleMerge() {
       }
     });
 
-    if (!fs.existsSync(contextDir)) {
-      fs.mkdirSync(contextDir, { recursive: true });
+    if (!fs.existsSync(knowledgeDir)) {
+      fs.mkdirSync(knowledgeDir, { recursive: true });
     }
 
-    mergeSummaries(contextDir, merged as PartialSummaries);
+    mergeSummaries(knowledgeDir, merged as PartialSummaries);
 
-    const current = getSummaries(contextDir);
+    const current = getSummaries(knowledgeDir);
     const result = {
       status: 'success',
       action: 'merge',
       summaries: {
         directoriesCount: Object.keys(current.directories).length,
         filesCount: Object.keys(current.files).length,
-        location: path.join(contextDir, '.summaries.json'),
+        location: path.join(knowledgeDir, 'summaries.json'),
         filesProcessed: filesToMerge.length
       }
     };
@@ -161,12 +161,12 @@ function expandGlob(pattern: string): string[] {
 async function handleQuery() {
   const topic = positional[0] || '';
   const rootDir = args.root || process.cwd();
-  const contextDir = path.join(rootDir, '.context');
+  const knowledgeDir = path.join(rootDir, '.knowledge');
   const scope = args.scope || '';
   const maxResults = parseInt(args.max || '100', 10);
 
-  if (!fs.existsSync(contextDir)) {
-    console.log(JSON.stringify({ error: 'No context found. Run: ctx scan first.' }));
+  if (!fs.existsSync(knowledgeDir)) {
+    console.log(JSON.stringify({ error: 'No .knowledge found. Run: ctx scan first.' }));
     process.exit(1);
   }
 
@@ -174,7 +174,7 @@ async function handleQuery() {
     const keywords = topic.toLowerCase().split(/\s+/).filter(k => k.length > 0);
 
     // Load summaries directly
-    const summaries = getSummaries(contextDir);
+    const summaries = getSummaries(knowledgeDir);
     const scoredResults: any[] = [];
 
     // Score directories
@@ -260,13 +260,13 @@ function calculateConfidence(keywords: string[], itemPath: string, summary: any)
 
 function printHelp() {
   console.log(`
-Context Lifecycle Manager
+Project Knowledge
 
 Usage: ctx <command> [options]
 
 Commands:
   scan               Scan project directory and save structure
-  merge              Merge Haiku-generated summaries into .context/.summaries.json
+  merge              Merge Haiku-generated summaries into .knowledge/summaries.json
   query <topic>      Search project summaries by keywords (scored results)
 
 Options:
