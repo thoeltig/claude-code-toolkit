@@ -164,6 +164,7 @@ async function handleQuery() {
   const knowledgeDir = path.join(rootDir, '.knowledge');
   const scope = args.scope || '';
   const maxResults = parseInt(args.max || '100', 10);
+  const format = args.format || 'json'; // 'json' for flat, 'hierarchy' for tree
 
   if (!fs.existsSync(knowledgeDir)) {
     console.log(JSON.stringify({ error: 'No .knowledge found. Run: ctx scan first.' }));
@@ -211,14 +212,42 @@ async function handleQuery() {
     // Limit results
     const limited = scoredResults.slice(0, maxResults);
 
-    const output = {
-      source: 'summaries',
-      query: topic,
-      keywords: keywords,
-      scope: scope || 'all',
-      total: limited.length,
-      results: limited
-    };
+    let output: any;
+
+    if (format === 'hierarchy') {
+      // Hierarchical grouping by folder
+      const grouped: any = {};
+      limited.forEach(item => {
+        const parts = item.path.split('/');
+        const fileName = parts.pop();
+        const folderPath = parts.join('/') || '.';
+
+        if (!grouped[folderPath]) {
+          grouped[folderPath] = [];
+        }
+        grouped[folderPath].push({ ...item, fileName });
+      });
+
+      output = {
+        source: 'summaries',
+        query: topic,
+        keywords: keywords,
+        scope: scope || 'all',
+        total: limited.length,
+        grouped: grouped
+      };
+    } else {
+      // Standard flat JSON output
+      output = {
+        source: 'summaries',
+        query: topic,
+        keywords: keywords,
+        scope: scope || 'all',
+        total: limited.length,
+        results: limited
+      };
+    }
+
     console.log(JSON.stringify(output));
     process.exit(0);
   } catch (e: any) {
@@ -234,24 +263,26 @@ function calculateConfidence(keywords: string[], itemPath: string, summary: any)
   const purposeLower = (summary.purpose || '').toLowerCase();
 
   keywords.forEach(keyword => {
-    // Path matches (highest priority)
-    if (pathLower.includes(keyword)) score += 10;
+    // SEMANTIC-FIRST SCORING: Intent/functionality > actual code > documentation > structure
 
-    // Summary matches
+    // Purpose matches (highest priority: semantic intent)
+    if (purposeLower.includes(keyword)) score += 8;
+
+    // Exports/imports matches (concrete functionality/dependencies)
+    if (summary.exports?.some((e: string) => e.toLowerCase().includes(keyword))) score += 7;
+    if (summary.imports?.some((i: string) => i.toLowerCase().includes(keyword))) score += 7;
+
+    // Summary matches (topic relevance)
     if (summaryLower.includes(keyword)) score += 5;
 
-    // Purpose matches
-    if (purposeLower.includes(keyword)) score += 3;
-
-    // Technology matches (for directories)
+    // Technology matches (context clues for directories)
     if (summary.technologies?.some((t: string) => t.toLowerCase().includes(keyword))) score += 3;
 
-    // Exports/imports matches (for files)
-    if (summary.exports?.some((e: string) => e.toLowerCase().includes(keyword))) score += 2;
-    if (summary.imports?.some((i: string) => i.toLowerCase().includes(keyword))) score += 2;
+    // Role matches (for files: context)
+    if (summary.role?.toLowerCase().includes(keyword)) score += 3;
 
-    // Role matches (for files)
-    if (summary.role?.toLowerCase().includes(keyword)) score += 2;
+    // Path matches (lowest priority: directory structure is secondary)
+    if (pathLower.includes(keyword)) score += 1;
   });
 
   return score;
@@ -275,12 +306,15 @@ Options:
   --summaries=<path>  Path to summaries JSON file (for merge)
   --scope=<path>      Limit search to specific directory/file (for query)
   --max=<number>      Maximum results to return (for query, default: 100)
+  --format=<type>     Output format: json (flat), hierarchy (grouped)
+                      (for query, default: json)
 
 Examples:
   ctx scan --root=../my-project
   ctx merge --summaries=/tmp/summaries.json --root=../my-project
   ctx query "authentication" --root=../my-project
   ctx query "auth user setup" --scope=src/auth --max=10 --root=../my-project
+  ctx query "hook" --format=hierarchy --max=20 --root=../my-project
 `);
 }
 

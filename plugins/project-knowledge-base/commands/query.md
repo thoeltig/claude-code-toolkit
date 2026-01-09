@@ -13,12 +13,14 @@ Search project summaries by keywords with confidence-based scoring and result ra
 - `--scope`: Limit search to specific directory/file path (optional)
 - `--max`: Maximum results to return (default: 100)
 
-**Confidence Scoring:**
-- Path match: +10 per keyword (highest priority)
-- Summary match: +5 per keyword
-- Purpose match: +3 per keyword
-- Technologies/Role match: +2-3 per keyword
-- Exports/Imports match: +2 per keyword
+**Confidence Scoring (Semantic-First):**
+- Purpose match: +8 per keyword (highest - semantic intent)
+- Exports/Imports match: +7 per keyword (concrete functionality)
+- Summary match: +5 per keyword (topic relevance)
+- Technologies/Role match: +3 per keyword (context)
+- Path match: +1 per keyword (lowest - directory structure is secondary)
+
+*Note: Scoring prioritizes semantic relevance and actual functionality over directory structure.*
 
 **Usage Examples:**
 - `/query "authentication"` - Search all summaries
@@ -75,35 +77,45 @@ Parse JSON response structure:
 }
 ```
 
-### Step 3: Format and display results
-Organize results by type (directories first, then files) with visual formatting.
+**Default Output Option:** To get JSON output sorted by score:
+```bash
+/query "authentication"
+```
 
-**Header:**
+**Grouped Output Option:** Add `--format=hierarchy` to get JSON output grouped by folder and sorted by score:
+```bash
+/query "authentication" --format=hierarchy
+```
+
+### Step 3: Format and display results
+
+Group results by parent directory to visualize project structure:
+
 ```
 Found N matches for "keywords" (scope: all|<path>)
-Searching: [keyword1, keyword2, ...]
-```
 
-**Directory Results:**
-```
-DIRECTORIES:
-1. [DIRECTORY] path/to/dir
-   Score: N
-   Summary: One sentence summary
-   Purpose: What role this plays
-   Tech: [technology1, technology2, ...]
-```
+plugins/fetch-full-content/
+├─ commands/
+│  └─ [FILE] fetch-full-content.md (Score: 48)
+│     Summary: Slash command for downloading full URL content
+│     Purpose: Command syntax, arguments, examples
+│     Role: documentation
+│     Exports: [Format, Execution, Output, Examples]
+│
+├─ scripts/
+│  └─ [FILE] fetch_full_content.py (Score: 20)
+│     Summary: Downloads HTML, converts to Markdown
+│     Purpose: Core implementation with Playwright support
+│     Role: script
+│     Exports: [HTMLDownloader, URLProcessor, main]
 
-**File Results:**
-```
-FILES:
-2. [FILE] path/to/file.ts
-   Score: N
-   Summary: One sentence summary
-   Purpose: What role this plays
-   Role: implementation|documentation|configuration|test|build|script
-   Exports: [export1, export2, ...]
-   Imports: [dependency1, dependency2, ...]
+plugins/project-knowledge-base/
+├─ [DIR] scripts/ (Score: 18)
+│  Tech: [TypeScript, Node.js]
+│
+├─ commands/
+│  └─ [FILE] query.md (Score: 26)
+│     Purpose: Knowledge base search interface
 ```
 
 ### Step 4: Suggest next actions
@@ -143,10 +155,20 @@ Next steps:
 **Output Format:**
 JSON structure with scored results, pre-sorted by confidence descending.
 
-**Scoring Algorithm:**
-- Per keyword scoring across path, summary, purpose, technologies, exports, imports, role
+**Scoring Algorithm (Semantic-First):**
+- Purpose match: +8 (intent/functionality description)
+- Exports/Imports match: +7 (concrete APIs/dependencies)
+- Summary match: +5 (overall topic relevance)
+- Technologies/Role match: +3 (context/context clues)
+- Path match: +1 (directory structure - lowest weight)
+- Per keyword: Individual keyword scores summed
 - Results sorted by total score descending
 - Limited to --max parameter (default 100)
+
+**Why semantic-first?**
+- Finding authentication by searching purpose/exports is better than finding it by path alone
+- A file with "authentication" in purpose/exports is more relevant than one with "auth" in directory name
+- Developers need semantic relevance, not directory structure matching
 
 **Scope Filtering:**
 - Empty scope: Search all items
