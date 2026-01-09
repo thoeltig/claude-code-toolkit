@@ -1,16 +1,16 @@
 ---
-description: Build persistent knowledge base of your project. Run once to generate intelligent summaries of all directories and files, stored in .knowledge/. Enable fast cross-session queries without expensive re-exploration. Use for first-time project understanding, mapping project structure, setting up team knowledge base. Update knowledge base by running it again.
+description: Build persistent knowledge base of your project by analyzing all files. Run once to generate intelligent summaries of files stored in .knowledge/. Enable fast cross-session queries without expensive re-exploration. Use for first-time project understanding and file-level navigation.
 argument-hint: [--root=<path>]
 ---
 
-# Scan Project and Generate Summaries
+# Scan Project and Analyze Files
 
-Orchestrate a complete project scan followed by parallel Haiku analysis to generate searchable summaries.
+Orchestrate a complete project scan followed by parallel Haiku file analysis to generate searchable summaries.
 
 **Process:**
-1. Scan project directory structure
-2. Batch directories for parallel analysis
-3. Invoke Haiku agents in parallel (each batch analyzed concurrently)
+1. Scan project directory structure (metadata only)
+2. Extract and batch files for parallel analysis
+3. Invoke Haiku agents in parallel (each batch of files analyzed concurrently)
 4. Merge results into .knowledge/summaries.json
 5. Report completion
 
@@ -18,9 +18,9 @@ Orchestrate a complete project scan followed by parallel Haiku analysis to gener
 - `--root`: Project root directory (default: current directory)
 
 **Output:**
-- Creates `.knowledge/scan.json` with directory structure
-- Creates `.knowledge/summaries.json` with analyzed summaries
-- Reports: directories count, files count, storage location
+- Creates `.knowledge/scan.json` with file/directory metadata
+- Creates `.knowledge/summaries.json` with file summaries
+- Reports: files count, batches processed, storage location
 
 **Usage Examples:**
 - `/scan` - Scan current project
@@ -47,82 +47,69 @@ Parse the JSON output to extract:
 - Project statistics (files, directories, depth)
 - Path to scan.json output file
 
-### Step 2: Load and batch scan results
-Read the scan.json file and organize directories into batches (3-5 per batch) for parallel analysis.
+### Step 2: Load scan.json and extract files
+Read the scan.json file and extract all files linearly.
 
-For each batch:
-- Extract directory paths and file structure
-- Create batch object with:
-  - `batchNumber`: Sequential batch ID
-  - `type`: "directories"
-  - `items`: Array of directory paths
-  - `structure`: File structure from scan.json
-
-Calculate total number of batches needed.
-
-### Step 2b: Check batch count and warn if large
-If total batches ≥ 20, display warning:
+### Step 3b: Warn if many batches
+If total batches ≥ 20, display warning about processing time:
 ```
-⚠️  This project will require N batches for analysis
+⚠️  This project requires N batches for analysis
     (Estimated: ~N minutes with 10 parallel agents)
 
 Continue? This may take a while for large projects.
 [yes/no]
 ```
 
-If user declines, stop and exit.
-
-### Step 3: Invoke Haiku agents with concurrency limit
-Process batches in waves of 10-15 concurrent agents (max 10-15 parallel):
+### Step 4: Invoke Haiku agents in waves
+Process batches in waves of max 10 concurrent agents:
 
 **Wave-based invocation:**
-1. Launch agents for first 10-15 batches (or all if fewer)
-2. Wait for all agents in wave to complete
-3. Log batch results as they finish
-4. Launch next wave of agents
-5. Repeat until all batches processed
+1. Prepare first 10 batches (or all if fewer)
+2. Invoke project-knowledge-base:haiku-batch-analysis agent for each batch using Task tool with `subagent_type='haiku'`
+3. Each agent receives batch with file paths and contents
+4. Each agent writes results to `$ROOT_DIR/.knowledge/tmp/haiku-batch-<N>.json`
+5. Wait for wave to complete
+6. Launch next wave of agents
+7. Repeat until all batches processed
 
-Display progress:
+**Progress Display:**
 ```
-Processing batches: 1-15 of 45
-  ✓ Batch 1 complete (25 dirs)
-  ✓ Batch 2 complete (30 dirs)
-  ✓ Batch 3 complete (28 dirs)
+Created 15 batches for 122 files
+Processing wave: batches 1-10 of 15
+  ✓ Batch 1 complete (8 files)
+  ✓ Batch 2 complete (8 files)
   ...
-
-Processing batches: 16-30 of 45
+Processing wave: batches 11-15 of 15
+  ✓ Batch 11 complete (8 files)
   ...
 ```
 
-**Per-batch invocation** (for each batch in current wave):
-- Invoke haiku-batch-analysis agent using Task tool with `subagent_type='haiku'`
-- Agent receives batch data and analysis instructions
-- Agent writes results to `/tmp/haiku-batch-<N>.json`
-- Format: Minified JSON `{"directories":{...}}` or `{"files":{...}}`
+**Per-batch invocation:**
+- Agent: haiku-batch-analysis (from plugins/project-knowledge-base/agents/haiku-batch-analysis.md)
+- Input: Batch object with file paths and contents
+- Output: `$ROOT_DIR/.knowledge/tmp/haiku-batch-<N>.json` containing file summaries
+- Format: Minified JSON `{"files":{"path":{"summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}}}`
 
-Wait for current wave to complete before launching next wave.
-
-### Step 4: Execute merge command
+### Step 5: Execute merge command
 Combine all batch results into project knowledge:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="/tmp/haiku-batch-*.json" --root="$ROOT_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="$ROOT_DIR/.knowledge/tmp/haiku-batch-*.json" --root="$ROOT_DIR"
 ```
 
 Parse the JSON response to extract:
-- Number of directories analyzed
 - Number of files analyzed
 - Location of summaries.json
 
-### Step 5: Report completion
+### Step 6: Report completion
 Display summary to user:
 ```
 ✓ Analysis complete
-  Directories: N
-  Files: N
+  Files analyzed: N
+  Batches processed: N
   Summaries stored in: .knowledge/summaries.json
 
-Next step: Use /query "keyword" to search summaries
+Next step: Use /query "keyword" to search file summaries
 ```
 
 ---
@@ -130,6 +117,7 @@ Next step: Use /query "keyword" to search summaries
 ## Error Handling
 
 - **Scan fails**: Report error message and stop
+- **File read fails**: Log error, continue with next file ("[Error reading file]" placeholder)
 - **Haiku batch fails**: Log failure but continue with other batches (partial results acceptable)
 - **Merge fails**: Report error with suggestion to re-run scan
 - **All errors**: Return as JSON for consistency
@@ -146,16 +134,16 @@ Next step: Use /query "keyword" to search summaries
 - Model: Haiku (default)
 - Output: /tmp/haiku-batch-*.json files
 
-**Output Structure:**
+**File Output Structure:**
 ```json
 {
-  "directories": {
-    "src": {
-      "summary": "...",
-      "purpose": "...",
-      "technologies": [...],
-      "fileCount": N,
-      "subdirCount": N
+  "files": {
+    "path/to/file.ts": {
+      "summary": "One sentence describing file",
+      "purpose": "1-2 sentences explaining role",
+      "role": "implementation|documentation|configuration|test|build|script",
+      "exports": ["export1", "export2"],
+      "imports": ["dep1", "dep2"]
     }
   }
 }
