@@ -95,6 +95,31 @@ Get instant overview of relevant directories and files **without re-reading them
 
 ---
 
+## Scope & Applicability
+
+**Target:** Mid to seasoned projects with 100+ files (ideal for 200-5000 files)
+
+**Best fit:**
+- Legacy codebases (understanding complex structure without rereading everything)
+- Large monorepos (navigating multiple integrated systems)
+- Team projects (shared knowledge base across developers)
+- Long-lived code (context preservation across sessions)
+- Project evolution (track understanding as code changes)
+
+**Not ideal for:**
+- Small projects (<50 files): Scanning overhead not worth the savings
+- Single-session work: No benefit from persistence
+- Minimal exploration: One or two lookups don't justify setup time
+- Rapid prototyping: Changing structure makes knowledge base stale quickly
+
+**Cost-Benefit Analysis:**
+- Initial scan: ~2-5 minutes (200-800 files), ~1200 tokens per batch
+- Queries: ~5-10 seconds each, ~100 tokens per query
+- **Breakeven:** After ~12-15 queries, initial cost is repaid in time/tokens saved
+- **Long-term:** Massive savings on projects with frequent context lookups
+
+---
+
 ## Architecture
 
 ```
