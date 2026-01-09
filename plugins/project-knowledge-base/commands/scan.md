@@ -22,13 +22,74 @@ Orchestrate a complete project scan followed by parallel Haiku file analysis to 
 - Creates `.knowledge/summaries.json` with file summaries
 - Reports: files count, batches processed, storage location
 
+**Parameters (Full List):**
+- `--root`: Project root directory (default: current directory)
+- `--incremental`: Enable incremental updates (optional)
+  - Values: `git`, `modified`, `paths`
+  - See "Incremental Scanning" section below
+- `--since`: Git commit/date for `--incremental=git` (optional)
+- `--paths`: Comma-separated file/folder paths for `--incremental=paths` (optional)
+
 **Usage Examples:**
-- `/scan` - Scan current project
-- `/scan --root=../my-project` - Scan specific project
+- `/scan` - Full scan of current project
+- `/scan --root=../my-project` - Full scan of specific project
 - `/scan --root=/absolute/path/to/project` - Use absolute path
+- `/scan --incremental=modified` - Rescan only files modified since last scan
+- `/scan --incremental=git --since=HEAD~5` - Rescan files changed in last 5 commits
+- `/scan --incremental=paths --paths="src/auth,plugins/fetch"` - Rescan only specific folders
+- `/scan --incremental=modified --root=../legacy-project` - Incremental scan of external project
 
 **Next Step:**
-After scanning completes, use `/query "keyword"` to search summaries.
+After scanning completes, use `/query "keyword"` to search file summaries.
+
+---
+
+## Incremental Scanning (Optional)
+
+For active development, full rescans are expensive. Use `--incremental` to process only changed files:
+
+### Approach 1: Modified Files (`--incremental=modified`)
+Compares current file timestamps/content against last scan metadata stored in `.knowledge/scan.json`. Only files newer than the last scan are re-analyzed.
+
+**When to use:** Frequent development, small change sets, fast feedback loop
+**Pros:** Simple, no dependencies (no git required), fast
+**Cons:** Relies on file timestamps (can be unreliable after git operations)
+
+```bash
+/scan --incremental=modified
+```
+
+### Approach 2: Git History (`--incremental=git`)
+Checks git history since last scan commit or specified `--since` parameter. Only files changed in that commit range are re-analyzed.
+
+**When to use:** Committed work, full git history available, reliable source of truth
+**Pros:** Reliable, captures only intentional changes, ignore untracked files
+**Cons:** Requires git repo, slower (git log needed)
+
+```bash
+/scan --incremental=git
+/scan --incremental=git --since=HEAD~10  # Last 10 commits
+/scan --incremental=git --since="2024-01-01"  # Since date
+```
+
+### Approach 3: Path Filter (`--incremental=paths`)
+Rescans only specified file paths or directories. Useful for targeted analysis of specific areas (e.g., after plugin updates, new module development).
+
+**When to use:** Focused refactoring, plugin development, team collaboration on specific areas
+**Pros:** Precise control, fast, ideal for code reviews
+**Cons:** Manual path selection needed, requires knowing what changed
+
+```bash
+/scan --incremental=paths --paths="src/auth"
+/scan --incremental=paths --paths="src/auth,plugins/fetch,lib/utils"
+/scan --incremental=paths --paths="." --root=./new-module  # New module analysis
+```
+
+**Merge Behavior:** All incremental approaches merge results with existing `.knowledge/summaries.json`:
+- Updated files: Summaries replaced with new analysis
+- Deleted files: Entries removed from summaries
+- New files: Summaries added to knowledge base
+- Unchanged files: Retained from previous scan
 
 ---
 
