@@ -52,15 +52,18 @@ async function main() {
 }
 
 async function handleScan() {
-  const root = args.root || process.cwd();
-  const output = args.output || path.join(root, '.knowledge', 'scan.json');
+  const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
+  const output = path.join(knowledgeDir, 'scan.json');
+  const pathsArg = args.paths || process.cwd();
 
-  const knowledgeDir = path.join(root, '.knowledge');
+  // Parse comma-separated paths
+  const paths = pathsArg.split(',').map(p => p.trim());
+
   if (!fs.existsSync(knowledgeDir)) {
     fs.mkdirSync(knowledgeDir, { recursive: true });
   }
 
-  const scanData = await scanProject(root);
+  const scanData = await scanProject(paths);
   fs.writeFileSync(output, JSON.stringify(scanData));
 
   const result = {
@@ -81,8 +84,7 @@ async function handleMerge() {
     process.exit(1);
   }
 
-  const rootDir = args.root || process.cwd();
-  const knowledgeDir = path.join(rootDir, '.knowledge');
+  const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
 
   try {
     // Support glob patterns and single files
@@ -300,21 +302,23 @@ Commands:
   query <topic>      Search project summaries by keywords (scored results)
 
 Options:
-  --root=<path>       Project root directory (default: cwd)
-  --output=<path>     Output path for scan.json (for scan)
-  --summaries=<path>  Path to summaries JSON file (for merge)
-  --scope=<path>      Limit search to specific directory/file (for query)
-  --max=<number>      Maximum results to return (for query, default: 100)
-  --format=<type>     Output format: json (flat), hierarchy (grouped)
-                      (for query, default: json)
+  --paths=<path>                Comma-separated paths to scan (files or directories, default: cwd)
+  --summaries=<path>            Path to summaries JSON file (for merge)
+  --scope=<path>                Limit search to specific directory/file (for query)
+  --max=<number>                Maximum results to return (for query, default: 100)
+  --format=<type>               Output format: json (flat), hierarchy (grouped) 
+                                (for query, default: json)
   --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
 
 Examples:
-  ctx scan --root=../my-project
-  ctx merge --summaries=/tmp/summaries.json --root=../my-project
-  ctx query "authentication" --root=../my-project
-  ctx query "auth user setup" --scope=src/auth --max=10 --root=../my-project
-  ctx query "hook" --format=hierarchy --max=20 --root=../my-project
+  ctx scan
+  ctx scan --paths=../my-project
+  ctx scan --paths=src,lib,config
+  ctx scan --paths=/path/to/file.ts
+  ctx merge --summaries=/tmp/summaries.json
+  ctx query "authentication"
+  ctx query "auth user setup" --scope=src/auth --max=10
+  ctx query "hook" --format=hierarchy --max=20
 `);
 }
 

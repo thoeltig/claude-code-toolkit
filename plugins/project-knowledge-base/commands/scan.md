@@ -1,43 +1,46 @@
 ---
 description: Build persistent knowledge base of your project by analyzing all files. Run once to generate intelligent summaries of files stored in .knowledge/. Enable fast cross-session queries without expensive re-exploration. Use for first-time project understanding and file-level navigation.
-argument-hint: [--root=<path>]
+argument-hint: [--paths=<paths>] [--incremental=git|modified|paths] [--since=<commitOrDate>] [--knowledgeDir=<knowledgeDir>]
+allowed-tools: Read, Bash(node:*)
 ---
 
 # Scan Project and Analyze Files
 
 Orchestrate a complete project scan followed by parallel Haiku file analysis to generate searchable summaries.
 
+**Parameters:**
+- `--paths`: Comma-separated file/folder paths to scan (default: current project directory)
+- `--incremental`: Enable automatic change detection (optional)
+  - Values: `git`, `modified`
+  - See "Incremental Scanning" section below
+- `--since`: Git commit/date for `--incremental=git` (optional)
+- `--knowledgeDir`: Project knowledge directory (default: .knowledge in current directory)
+
+**Usage Examples:**
+- `/scan` - Full scan of current project
+- `/scan --paths=../my-project` - Full scan of specific project
+- `/scan --paths=/absolute/path/to/project` - Use absolute path
+- `/scan --paths="src/auth,plugins/fetch"` - Scan only specific folders
+- `/scan --paths=file1.ts,file2.ts` - Scan only specific files
+- `/scan --incremental=modified` - Rescan only files modified since last scan (timestamp-based)
+- `/scan --incremental=git` - Rescan files changed in git since last scan
+- `/scan --incremental=git --since=HEAD~5` - Rescan files changed in last 5 commits
+- `/scan --paths="src/auth" --incremental=modified` - Scan src/auth folder with timestamp-based change detection
+- `/scan --knowledgeDir=../project/.knowledge` - Full scan and output to specific knowledge directory
+
 **Process:**
-1. Scan project directory structure (metadata only)
+1. Scan provided folder paths structure (metadata only)
 2. Extract and batch files for parallel analysis
 3. Invoke Haiku agents in parallel (each batch of files analyzed concurrently)
 4. Merge results into .knowledge/summaries.json
 5. Report completion
 
 **Parameters:**
-- `--root`: Project root directory (default: current directory)
 
 **Output:**
-- Creates `.knowledge/scan.json` with file/directory metadata
+- Creates `.knowledge/scan.json` with file list and project stats
 - Creates `.knowledge/summaries.json` with file summaries
 - Reports: files count, batches processed, storage location
-
-**Parameters (Full List):**
-- `--root`: Project root directory (default: current directory)
-- `--incremental`: Enable incremental updates (optional)
-  - Values: `git`, `modified`, `paths`
-  - See "Incremental Scanning" section below
-- `--since`: Git commit/date for `--incremental=git` (optional)
-- `--paths`: Comma-separated file/folder paths for `--incremental=paths` (optional)
-
-**Usage Examples:**
-- `/scan` - Full scan of current project
-- `/scan --root=../my-project` - Full scan of specific project
-- `/scan --root=/absolute/path/to/project` - Use absolute path
-- `/scan --incremental=modified` - Rescan only files modified since last scan
-- `/scan --incremental=git --since=HEAD~5` - Rescan files changed in last 5 commits
-- `/scan --incremental=paths --paths="src/auth,plugins/fetch"` - Rescan only specific folders
-- `/scan --incremental=modified --root=../legacy-project` - Incremental scan of external project
 
 **Next Step:**
 After scanning completes, use `/query "keyword"` to search file summaries.
@@ -49,7 +52,7 @@ After scanning completes, use `/query "keyword"` to search file summaries.
 For active development, full rescans are expensive. Use `--incremental` to process only changed files:
 
 ### Approach 1: Modified Files (`--incremental=modified`)
-Compares current file timestamps/content against last scan metadata stored in `.knowledge/scan.json`. Only files newer than the last scan are re-analyzed.
+The scanner compares file timestamps against previous scan.json. Only files modified since the last scan are included in the new scan.json for analysis.
 
 **When to use:** Frequent development, small change sets, fast feedback loop
 **Pros:** Simple, no dependencies (no git required), fast
@@ -60,10 +63,10 @@ Compares current file timestamps/content against last scan metadata stored in `.
 ```
 
 ### Approach 2: Git History (`--incremental=git`)
-Checks git history since last scan commit or specified `--since` parameter. Only files changed in that commit range are re-analyzed.
+The scanner checks git history since the last scan or specified `--since` parameter. Only files changed in that commit range are included in scan.json for analysis.
 
 **When to use:** Committed work, full git history available, reliable source of truth
-**Pros:** Reliable, captures only intentional changes, ignore untracked files
+**Pros:** Reliable, captures only intentional changes, ignores untracked files
 **Cons:** Requires git repo, slower (git log needed)
 
 ```bash
@@ -72,20 +75,21 @@ Checks git history since last scan commit or specified `--since` parameter. Only
 /scan --incremental=git --since="2024-01-01"  # Since date
 ```
 
-### Approach 3: Path Filter (`--incremental=paths`)
-Rescans only specified file paths or directories. Useful for targeted analysis of specific areas (e.g., after plugin updates, new module development).
+---
 
-**When to use:** Focused refactoring, plugin development, team collaboration on specific areas
-**Pros:** Precise control, fast, ideal for code reviews
-**Cons:** Manual path selection needed, requires knowing what changed
+## Direct Path Selection vs Incremental Detection
 
-```bash
-/scan --incremental=paths --paths="src/auth"
-/scan --incremental=paths --paths="src/auth,plugins/fetch,lib/utils"
-/scan --incremental=paths --paths="." --root=./new-module  # New module analysis
-```
+Use `--paths` for **direct control** over what to scan:
+- Fastest for targeted analysis (specify exactly what you need)
+- No change detection overhead
+- Example: `/scan --paths="src/auth,plugins/fetch"`
 
-**Merge Behavior:** All incremental approaches merge results with existing `.knowledge/summaries.json`:
+Use `--incremental` for **automatic change detection**:
+- Processes only changed/modified files automatically
+- Combines with `--paths` to limit scope: `/scan --paths="src" --incremental=modified`
+- Example: `/scan --incremental=git --since=HEAD~10` scans your whole project but only changed files
+
+**Merge Behavior:** All scan approaches merge results with existing `.knowledge/summaries.json`:
 - Updated files: Summaries replaced with new analysis
 - Deleted files: Entries removed from summaries
 - New files: Summaries added to knowledge base
@@ -101,7 +105,7 @@ I will execute the following workflow:
 Execute the scanner to analyze project structure and save to scan.json.
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --root="$ROOT_DIR" --output="$ROOT_DIR/.knowledge/scan.json"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --paths="$PATHS" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
 Parse the JSON output to extract:
@@ -109,7 +113,7 @@ Parse the JSON output to extract:
 - Path to scan.json output file
 
 ### Step 2: Load scan.json and extract files
-Read the scan.json file and extract all files linearly.
+Read the scan.json file. Extract the `files` array (flat list of file objects with `path` and `size` properties).
 
 ### Step 3b: Warn if many batches
 If total batches ≥ 20, display warning about processing time:
@@ -128,7 +132,7 @@ Process batches in waves of max 10 concurrent agents:
 1. Prepare first 10 batches (or all if fewer)
 2. Invoke project-knowledge-base:haiku-batch-analysis agent for each batch using Task tool with `subagent_type='haiku'`
 3. Each agent receives batch with file paths and contents
-4. Each agent writes results to `$ROOT_DIR/.knowledge/tmp/haiku-batch-<N>.json`
+4. Each agent writes results to `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json`
 5. Wait for wave to complete
 6. Launch next wave of agents
 7. Repeat until all batches processed
@@ -148,14 +152,14 @@ Processing wave: batches 11-15 of 15
 **Per-batch invocation:**
 - Agent: haiku-batch-analysis (from plugins/project-knowledge-base/agents/haiku-batch-analysis.md)
 - Input: Batch object with file paths and contents
-- Output: `$ROOT_DIR/.knowledge/tmp/haiku-batch-<N>.json` containing file summaries
+- Output: `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json` containing file summaries
 - Format: Minified JSON `{"files":{"path":{"summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}}}`
 
 ### Step 5: Execute merge command
 Combine all batch results into project knowledge:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="$ROOT_DIR/.knowledge/tmp/haiku-batch-*.json" --root="$ROOT_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="$KNOWLEDGE_DIR/summaries/haiku-batch-*.json" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
 Parse the JSON response to extract:
@@ -193,9 +197,26 @@ Next step: Use /query "keyword" to search file summaries
 **Agent Used:**
 - Agent: haiku-batch-analysis
 - Model: Haiku (default)
-- Output: /tmp/haiku-batch-*.json files
+- Output: /summaries/haiku-batch-*.json files
 
-**File Output Structure:**
+**Scan.json Structure:**
+```json
+{
+  "files": [
+    {
+      "path": "C:\\path\\to\\file.ts",
+      "size": 1234,
+      "modified": 1704067200000
+    }
+  ],
+  "projectStats": {
+    "totalFiles": 123,
+    "fileTypes": [".json", ".md", ".py", ".ts"]
+  }
+}
+```
+
+**File Analysis Output Structure:**
 ```json
 {
   "files": {
