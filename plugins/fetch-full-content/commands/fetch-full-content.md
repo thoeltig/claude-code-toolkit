@@ -1,7 +1,7 @@
 ---
 description: Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations. 
-argument-hint: --folder <name> <url1> [url2...]
-allowed-tools: Bash, Read, Glob
+argument-hint: <url1> [url2...] [--folder=<folderpath>]
+allowed-tools: Bash(python:*)
 ---
 
 Download full page content from URLs, converting to markdown for efficient content analysis.
@@ -15,12 +15,12 @@ Downloads each URL, removes navigation/scripts/ads, and converts to clean markdo
 ## Execution
 
 Parse arguments:
-- `--folder <name>`: Output folder (required)
+- `--folder <folderpath>`: Output folderpath (default: .webfetch-cache in current directory)
 - `<url1> [url2...]`: URLs to download (required, space-separated)
 
 Execute:
 ```bash
-python ${CLAUDE_PLUGIN_ROOT}/scripts/fetch_full_content.py --folder <folder_name> <url1> <url2> ...
+python ${CLAUDE_PLUGIN_ROOT}/scripts/fetch_full_content.py --folder <folderpath> <url1> <url2> ...
 ```
 
 The script will:
