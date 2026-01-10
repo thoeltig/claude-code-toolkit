@@ -1,6 +1,7 @@
 ---
 description: Search project knowledge base by keywords. Fast way to find relevant information, context, directories and files without reading them or expensive per-session re-exploration. Use this first to get a quick overview before exploring specific code. Find files, understand structure, locate features.
-argument-hint: "<keywords>" [--root=<path>] [--scope=<path>] [--max=N]
+argument-hint: <keywords> [--max=N] [--scope=<path>][--knowledgeDir=<knowledgeDir>] [--format=json|hierarchy] 
+allowed-tools: Bash(node:*)
 ---
 
 # Query Project Summaries
@@ -9,48 +10,28 @@ Search project summaries by keywords with confidence-based scoring and result ra
 
 **Parameters:**
 - `<keywords>`: Search terms (e.g., "authentication", "user setup", "auth user")
-- `--root`: Project root directory (default: current directory)
+- `--max`: Maximum results to return (default: 25)
 - `--scope`: Limit search to specific directory/file path (optional)
-- `--max`: Maximum results to return (default: 100)
-
-**Confidence Scoring (Semantic-First):**
-- Purpose match: +8 per keyword (highest - semantic intent)
-- Exports/Imports match: +7 per keyword (concrete functionality)
-- Summary match: +5 per keyword (topic relevance)
-- Technologies/Role match: +3 per keyword (context)
-- Path match: +1 per keyword (lowest - directory structure is secondary)
-
-*Note: Scoring prioritizes semantic relevance and actual functionality over directory structure.*
+- `--knowledgeDir`: Project knowledge directory (default: .knowledge in current directory)
+- `--format`: Use 'json' for flat output and 'hierarchy' for grouped by directory output (default: json)
 
 **Usage Examples:**
-- `/query "authentication"` - Search all summaries
-- `/query "user setup"` - Multiple keywords
-- `/query "auth" --scope=src/auth` - Search specific directory
-- `/query "database" --max=5` - Limit to 5 results
-- `/query "typescript" --scope=src --max=10` - Combine options
-
-**Prerequisites:**
-- Run `/scan` first to generate summaries
+- `/query authentication` - Search all summaries
+- `/query user setup` - Multiple keywords
+- `/query auth --scope=src/auth` - Search specific directory
+- `/query database --max=5` - Limit to 5 results
+- `/query typescript --max=10 --scope=src` - Combine options
+- `/query --knowledgeDir=../project/.knowledge` - Search all summaries in a specific knowledge directory
 
 ---
 
 ## Implementation
 
-I will execute the following workflow:
-
-### Step 1: Validate knowledge exists
-Check if `.knowledge/summaries.json` exists in the project root.
-
-If missing, display error:
-```
-Error: No knowledge found. Run: /scan first
-```
-
-### Step 2: Execute query command
+### Step 1: Execute query command
 Run the knowledge query CLI with user parameters:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js query "$KEYWORDS" --root="$ROOT_DIR" --scope="$SCOPE" --max="$MAX"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js query "$KEYWORDS" --scope="$SCOPE" --max="$MAX" --knowledgeDir="$KNOWLEDGE_DIR" --format="$FORMAT"
 ```
 
 Parse JSON response structure:
@@ -77,17 +58,7 @@ Parse JSON response structure:
 }
 ```
 
-**Default Output Option:** To get JSON output sorted by score:
-```bash
-/query "authentication"
-```
-
-**Grouped Output Option:** Add `--format=hierarchy` to get JSON output grouped by folder and sorted by score:
-```bash
-/query "authentication" --format=hierarchy
-```
-
-### Step 3: Format and display results
+### Step 2: Format and display results
 
 Group results by parent directory to visualize project structure:
 
@@ -118,7 +89,7 @@ plugins/project-knowledge-base/
 │     Purpose: Knowledge base search interface
 ```
 
-### Step 4: Suggest next actions
+### Step 3: Suggest next actions
 Based on results:
 
 **If no results:**
@@ -131,8 +102,7 @@ Try broader keywords or different scope.
 ```
 Next steps:
 - Refine search: /query "more-specific-keywords" --scope=<path>
-- Read file details: Use /load to examine specific files
-- Adjust scope: /query "keywords" --scope=<path>
+- Read file details: Use read tool to examine specific files
 ```
 
 ---
@@ -163,7 +133,7 @@ JSON structure with scored results, pre-sorted by confidence descending.
 - Path match: +1 (directory structure - lowest weight)
 - Per keyword: Individual keyword scores summed
 - Results sorted by total score descending
-- Limited to --max parameter (default 100)
+- Limited to --max parameter (default 25)
 
 **Why semantic-first?**
 - Finding authentication by searching purpose/exports is better than finding it by path alone

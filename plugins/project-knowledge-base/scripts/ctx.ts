@@ -160,10 +160,9 @@ function expandGlob(pattern: string): string[] {
 
 async function handleQuery() {
   const topic = positional[0] || '';
-  const rootDir = args.root || process.cwd();
-  const knowledgeDir = path.join(rootDir, '.knowledge');
+  const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
   const scope = args.scope || '';
-  const maxResults = parseInt(args.max || '100', 10);
+  const maxResults = parseInt(args.max || '25', 10);
   const format = args.format || 'json'; // 'json' for flat, 'hierarchy' for tree
 
   if (!fs.existsSync(knowledgeDir)) {
@@ -308,6 +307,7 @@ Options:
   --max=<number>      Maximum results to return (for query, default: 100)
   --format=<type>     Output format: json (flat), hierarchy (grouped)
                       (for query, default: json)
+  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
 
 Examples:
   ctx scan --root=../my-project

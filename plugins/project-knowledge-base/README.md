@@ -298,34 +298,6 @@ Results sorted descending by confidence score.
 
 ---
 
-## Directory Structure
-
-```
-plugins/project-knowledge-base/
-├── .claude-plugin/
-│   └── plugin.json                       # Plugin metadata
-│
-├── scripts/
-│   ├── ctx.ts                            # CLI implementation
-│   ├── dist/ctx.js                       # Compiled binary
-│   ├── lib/
-│   │   ├── collectors/project-scanner.ts
-│   │   └── writers/summary-merger.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
-│── agents/
-│   └── haiku-batch-analysis.md           # Haiku analysis agent
-│── commands/
-│   ├── scan.md                           # /scan command
-│   └── query.md                          # /query command
-│
-└── README.md                             # This file
-└── CHANGELOG.md                          # Version history
-```
-
----
-
 ## Workflow Example
 
 ### Session 1: Build Knowledge Base
