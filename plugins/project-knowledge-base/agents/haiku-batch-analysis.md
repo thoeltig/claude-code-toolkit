@@ -1,7 +1,7 @@
 ---
 name: haiku-batch-analysis
-description: Analyze project files and generate structured JSON summaries. Invoked by /scan command in parallel batches. Analyzes 5-10 files per batch with full content, outputs minified JSON to /summaries/haiku-batch-*.json with file metadata.
-tools: Read, Write
+description: Analyze project files and generate structured JSON summaries. Invoked by /scan command in parallel batches. Analyzes 5-10 files per batch with full content, outputs minified JSON to .knowledge/haiku-batch-*.json with file metadata.
+allowed-tools: Read, Write
 model: haiku
 ---
 
@@ -70,7 +70,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 5. **Extract imports** - Identify 2-5 key dependencies from content
 6. **Generate summaries** - Create specific, focused summaries for each file
 7. **Format as minified JSON** - No whitespace, single line
-8. **Write to file** - Use path `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json` (N from batchNumber)
+8. **Write to file** - Use path `$KNOWLEDGE_DIR/haiku-batch-<N>.json` (N from batchNumber)
 
 ## Output Requirements
 
@@ -78,7 +78,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 **Structure**: `{"files":{"path":{"summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}}}`
 
-**File Location**: Write to `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json` where N is the batchNumber
+**File Location**: Write to `$KNOWLEDGE_DIR/haiku-batch-<N>.json` where N is the batchNumber
 
 **Validation**: JSON must be valid and parseable
 
@@ -140,7 +140,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 ✓ All files from batch included in output
 ✓ File roles accurately classified based on content
 ✓ Exports/imports extracted from actual file content
-✓ Results written to correct `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json` path
+✓ Results written to correct `$KNOWLEDGE_DIR/haiku-batch-<N>.json` path
 ✓ No parsing errors in output
 ✓ JSON structure is complete with matching braces/quotes
 ✓ Output is verified as valid BEFORE submission

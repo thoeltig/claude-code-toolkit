@@ -132,7 +132,7 @@ Process batches in waves of max 10 concurrent agents:
 1. Prepare first 10 batches (or all if fewer)
 2. Invoke project-knowledge-base:haiku-batch-analysis agent for each batch using Task tool with `subagent_type='haiku'`
 3. Each agent receives batch with file paths and contents
-4. Each agent writes results to `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json`
+4. Each agent writes results to `$KNOWLEDGE_DIR/haiku-batch-<N>.json`
 5. Wait for wave to complete
 6. Launch next wave of agents
 7. Repeat until all batches processed
@@ -152,14 +152,14 @@ Processing wave: batches 11-15 of 15
 **Per-batch invocation:**
 - Agent: haiku-batch-analysis (from plugins/project-knowledge-base/agents/haiku-batch-analysis.md)
 - Input: Batch object with file paths and contents
-- Output: `$KNOWLEDGE_DIR/summaries/haiku-batch-<N>.json` containing file summaries
+- Output: `$KNOWLEDGE_DIR/haiku-batch-<N>.json` containing file summaries
 - Format: Minified JSON `{"files":{"path":{"summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}}}`
 
 ### Step 5: Execute merge command
 Combine all batch results into project knowledge:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="$KNOWLEDGE_DIR/summaries/haiku-batch-*.json" --knowledgeDir="$KNOWLEDGE_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --summaries="$KNOWLEDGE_DIR/haiku-batch-*.json" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
 Parse the JSON response to extract:
@@ -197,7 +197,7 @@ Next step: Use /query "keyword" to search file summaries
 **Agent Used:**
 - Agent: haiku-batch-analysis
 - Model: Haiku (default)
-- Output: /summaries/haiku-batch-*.json files
+- Output: $KNOWLEDGE_DIR/haiku-batch-*.json files
 
 **Scan.json Structure:**
 ```json
