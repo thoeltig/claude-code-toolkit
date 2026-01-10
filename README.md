@@ -24,7 +24,7 @@ Then install any plugin:
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.1.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
-| **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.0.1.0 |
+| **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.1.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
 
 ## 🎯 Plugin Highlights
