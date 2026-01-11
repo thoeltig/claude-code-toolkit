@@ -1,7 +1,7 @@
 ---
 name: haiku-batch-analysis
 description: Analyze project files and generate structured JSON summaries. Invoked by /scan command in parallel batches. Analyzes 5-10 files per batch with full content, outputs minified JSON to .knowledge/haiku-batch-*.json with file metadata.
-allowed-tools: Read, Write
+tools: Read, Write
 model: haiku
 ---
 
