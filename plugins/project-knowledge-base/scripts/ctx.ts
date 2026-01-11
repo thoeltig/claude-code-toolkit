@@ -2,9 +2,25 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { mergeSummaries, getSummaries } from './lib/writers/summary-merger';
-import type { PartialSummaries } from './lib/writers/summary-merger';
 import { scanProject } from './lib/project-scanner';
+import { mergeSummaries, getSummaries } from './lib/summary-merger';
+import type { PartialSummaries, FileSummary } from './lib/summary-merger';
+
+interface HierarchicalGrouping {
+  folderPath: string; 
+  folderScore: number;
+  summary: string;
+  purpose?: string;
+  technologies?: string[];
+  fileCount: number;
+  subdirCount: number;
+  files: FileSummary[]
+}
+
+interface ScoredFileSummary extends FileSummary {
+  filePath: string; 
+  fileScore: number;
+}
 
 function parseArgs(argv: string[]): { command: string; args: Record<string, string>; positional: string[] } {
   const args: Record<string, string> = {};
@@ -74,14 +90,10 @@ async function handleScan() {
   process.exit(0);
 }
 
-async function handleMerge() {
-  const summariesPath = args.summaries;
-  if (!summariesPath) {
-    console.log(JSON.stringify({ error: '--summaries=<path> required' }));
-    process.exit(1);
-  }
-
+async function handleMerge() { 
+  const scanDir = args.scanDir || process.cwd(); 
   const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
+  const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
 
   try {
     // Support glob patterns and single files
@@ -109,9 +121,8 @@ async function handleMerge() {
       fs.mkdirSync(knowledgeDir, { recursive: true });
     }
 
-    mergeSummaries(knowledgeDir, merged as PartialSummaries);
+    const current = mergeSummaries(scanDir, knowledgeDir, merged as PartialSummaries);
 
-    const current = getSummaries(knowledgeDir);
     const result = {
       status: 'success',
       action: 'merge',
@@ -132,7 +143,7 @@ async function handleMerge() {
 }
 
 function expandGlob(pattern: string): string[] {
-  // Handle glob patterns like /tmp/haiku-batch-*.json
+  // Handle glob patterns like /haiku-batch-*.json
   if (pattern.includes('*')) {
     const dir = path.dirname(pattern);
     const globPattern = path.basename(pattern);
@@ -174,38 +185,23 @@ async function handleQuery() {
 
     // Load summaries directly
     const summaries = getSummaries(knowledgeDir);
-    const scoredResults: any[] = [];
-
-    // Score directories
-    Object.entries(summaries.directories).forEach(([dirPath, summary]: any) => {
-      if (scope && !dirPath.startsWith(scope)) return;
-      const score = calculateConfidence(keywords, dirPath, summary);
-      if (score > 0) {
-        scoredResults.push({
-          type: 'directory',
-          path: dirPath,
-          score,
-          ...summary
-        });
-      }
-    });
+    const scoredResults: ScoredFileSummary[] = [];
 
     // Score files
     Object.entries(summaries.files).forEach(([filePath, summary]: any) => {
       if (scope && !filePath.startsWith(scope)) return;
-      const score = calculateConfidence(keywords, filePath, summary);
-      if (score > 0) {
+      const fileScore = calculateConfidence(keywords, filePath, summary);
+      if (fileScore > 0) {
         scoredResults.push({
-          type: 'file',
-          path: filePath,
-          score,
+          filePath,
+          fileScore,
           ...summary
         });
       }
     });
 
     // Sort by confidence descending
-    scoredResults.sort((a, b) => b.score - a.score);
+    scoredResults.sort((a, b) => b.fileScore - a.fileScore);
 
     // Limit results
     const limited = scoredResults.slice(0, maxResults);
@@ -214,30 +210,39 @@ async function handleQuery() {
 
     if (format === 'hierarchy') {
       // Hierarchical grouping by folder
-      const grouped: any = {};
+      const grouped: Record<string, HierarchicalGrouping> = {};
       limited.forEach(item => {
-        const parts = item.path.split('/');
-        const fileName = parts.pop();
-        const folderPath = parts.join('/') || '.';
+        const folderPath = path.dirname(item.filePath) || '.';
 
         if (!grouped[folderPath]) {
-          grouped[folderPath] = [];
+          const directory = summaries.directories[folderPath];
+          grouped[folderPath] = { 
+            folderPath: folderPath, 
+            folderScore: 0, 
+            summary: directory?.summary,
+            purpose: directory?.purpose,
+            technologies: directory?.technologies,
+            fileCount: directory?.fileCount,
+            subdirCount: directory?.subdirCount,
+            files: []
+          };
         }
-        grouped[folderPath].push({ ...item, fileName });
+
+        const folder = grouped[folderPath];
+        folder.folderScore += item.fileScore;
+        folder.files.push(item);
       });
 
       output = {
-        source: 'summaries',
         query: topic,
         keywords: keywords,
         scope: scope || 'all',
         total: limited.length,
-        grouped: grouped
+        grouped: [...Object.values(grouped)].sort((a, b) => b.folderScore - a.folderScore)
       };
     } else {
       // Standard flat JSON output
       output = {
-        source: 'summaries',
         query: topic,
         keywords: keywords,
         scope: scope || 'all',
@@ -288,27 +293,28 @@ function printHelp() {
   console.log(`
 Project Knowledge
 
-Usage: ctx <command> [options]
-
 Commands:
-  scan               Scan project directory and save structure
-  merge              Merge Haiku-generated summaries into .knowledge/summaries.json
-  query <topic>      Search project summaries by keywords (scored results)
+  scan                          Scan project directory and save structure
 
-Options:
-  --paths=<path>                Comma-separated paths to scan (files or directories, default: cwd)
-  --summaries=<path>            Path to summaries JSON file (for merge)
+  --scanDir=<path>              The directory to scan (default: cwd)
+  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+
+  merge                         Merge Haiku-generated summaries into .knowledge/summaries.json
+  
+  --scanDir=<path>              The directory that was scanned scan (default: cwd)
+  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+
+  query <topic>                 Search project summaries by keywords (scored results)
+
   --scope=<path>                Limit search to specific directory/file (for query)
-  --max=<number>                Maximum results to return (for query, default: 100)
+  --max=<number>                Maximum results to return (for query, default: 25)
   --format=<type>               Output format: json (flat), hierarchy (grouped) 
                                 (for query, default: json)
   --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
 
 Examples:
   ctx scan
-  ctx scan --paths=../my-project
-  ctx scan --paths=src,lib,config
-  ctx scan --paths=/path/to/file.ts
+  ctx scan --scanDir=../my-project
   ctx merge --summaries=/tmp/summaries.json
   ctx query "authentication"
   ctx query "auth user setup" --scope=src/auth --max=10

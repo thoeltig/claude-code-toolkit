@@ -19,8 +19,7 @@ export interface FileSummary {
   lastUpdated: string;
 }
 
-export interface SummariesData {
-  version: string;
+interface SummariesData {
   generated: string;
   directories: {
     [dirPath: string]: DirectorySummary;
@@ -51,7 +50,6 @@ function getOrCreateSummaries(knowledgeDir: string): SummariesData {
   }
 
   return {
-    version: '1.0',
     generated: new Date().toISOString(),
     directories: {},
     files: {}
@@ -66,86 +64,61 @@ function writeSummaries(knowledgeDir: string, data: SummariesData): void {
   data.generated = new Date().toISOString();
 
   // Write to temp file, then rename (atomic operation)
-  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+  fs.writeFileSync(tempPath, JSON.stringify(data));
   fs.renameSync(tempPath, summariesPath);
 }
 
-export function mergeSummaries(knowledgeDir: string, partialSummaries: PartialSummaries): void {
+export function mergeSummaries(scanDir: string, knowledgeDir: string, partialSummaries: PartialSummaries): SummariesData {
   const summaries = getOrCreateSummaries(knowledgeDir);
+  const normalizedScanDir = path.normalize(scanDir);
+  const knowledgeDirScanDir = path.normalize(knowledgeDir);
+  const baseDir = knowledgeDirScanDir.slice(0, knowledgeDirScanDir.indexOf('.knowledge'));
 
   // Merge directories
   if (partialSummaries.directories) {
     for (const [dirPath, dirSummary] of Object.entries(partialSummaries.directories)) {
+      if(dirSummary.technologies && dirSummary.technologies.length == 0) dirSummary.technologies = undefined;
+
       summaries.directories[dirPath] = {
         ...dirSummary,
         lastUpdated: new Date().toISOString()
       };
+    }
+      
+    const scannedDirectoryPaths: Set<string> = new Set(Object.keys(partialSummaries.directories).map(x => path.join(baseDir, x)));
+    for (const dirPath of Object.keys(summaries.directories)) {
+      const absPath = path.join(baseDir, dirPath);
+      if (absPath.startsWith(normalizedScanDir) && !scannedDirectoryPaths.has(absPath)) {
+        delete summaries.directories[dirPath];
+      }
     }
   }
 
   // Merge files
   if (partialSummaries.files) {
     for (const [filePath, fileSummary] of Object.entries(partialSummaries.files)) {
+      if(fileSummary.exports && fileSummary.exports.length == 0) fileSummary.exports = undefined;
+      if(fileSummary.imports && fileSummary.imports.length == 0) fileSummary.imports = undefined;
+
       summaries.files[filePath] = {
         ...fileSummary,
         lastUpdated: new Date().toISOString()
       };
     }
+
+    const scannedFilePaths: Set<string> = new Set(Object.keys(partialSummaries.files).map(x => path.join(baseDir, x)));
+    for (const filePath of Object.keys(summaries.files)) {
+      const absPath = path.join(baseDir, filePath);
+      if (absPath.startsWith(normalizedScanDir) && !scannedFilePaths.has(absPath)) {
+        delete summaries.files[filePath];
+      }
+    }    
   }
 
   writeSummaries(knowledgeDir, summaries);
-}
-
-export function deleteDirectorySummary(knowledgeDir: string, dirPath: string): void {
-  const summaries = getOrCreateSummaries(knowledgeDir);
-  delete summaries.directories[dirPath];
-  writeSummaries(knowledgeDir, summaries);
-}
-
-export function deleteFileSummary(knowledgeDir: string, filePath: string): void {
-  const summaries = getOrCreateSummaries(knowledgeDir);
-  delete summaries.files[filePath];
-  writeSummaries(knowledgeDir, summaries);
+  return summaries;
 }
 
 export function getSummaries(knowledgeDir: string): SummariesData {
   return getOrCreateSummaries(knowledgeDir);
-}
-
-export function getSummariesByType(
-  knowledgeDir: string,
-  type: 'directories' | 'files'
-): Record<string, DirectorySummary | FileSummary> {
-  const summaries = getOrCreateSummaries(knowledgeDir);
-  return summaries[type] || {};
-}
-
-export function querySummaries(
-  knowledgeDir: string,
-  query: string
-): { directories: Array<[string, DirectorySummary]>; files: Array<[string, FileSummary]> } {
-  const summaries = getOrCreateSummaries(knowledgeDir);
-  const queryLower = query.toLowerCase();
-
-  const dirMatches = Object.entries(summaries.directories)
-    .filter(([path, summary]) =>
-      path.toLowerCase().includes(queryLower) ||
-      summary.summary.toLowerCase().includes(queryLower) ||
-      summary.purpose?.toLowerCase().includes(queryLower) ||
-      summary.technologies?.some(t => t.toLowerCase().includes(queryLower))
-    );
-
-  const fileMatches = Object.entries(summaries.files)
-    .filter(([path, summary]) =>
-      path.toLowerCase().includes(queryLower) ||
-      summary.summary.toLowerCase().includes(queryLower) ||
-      summary.purpose?.toLowerCase().includes(queryLower) ||
-      summary.exports?.some(e => e.toLowerCase().includes(queryLower)) ||
-      summary.imports?.some(i => i.toLowerCase().includes(queryLower))
-    );
-
-  return {
-    directories: dirMatches,
-    files: fileMatches
-  };
 }
