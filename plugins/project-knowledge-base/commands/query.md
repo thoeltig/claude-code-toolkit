@@ -126,11 +126,11 @@ Next steps:
 JSON structure with scored results, pre-sorted by confidence descending.
 
 **Scoring Algorithm (Semantic-First):**
-- Purpose match: +8 (intent/functionality description)
-- Exports/Imports match: +7 (concrete APIs/dependencies)
-- Summary match: +5 (overall topic relevance)
-- Technologies/Role match: +3 (context/context clues)
-- Path match: +1 (directory structure - lowest weight)
+- Purpose match: +6 (intent/functionality description)
+- Summary match: +6 (overall topic relevance)
+- Exports/Imports match: +4 (concrete APIs/dependencies)
+- Technologies/Role match: +4 (context/context clues)
+- Path/Technology/Role match: +2
 - Per keyword: Individual keyword scores summed
 - Results sorted by total score descending
 - Limited to --max parameter (default 25)

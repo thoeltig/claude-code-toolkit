@@ -2,9 +2,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { scanProject } from './lib/collectors/project-scanner';
 import { mergeSummaries, getSummaries } from './lib/writers/summary-merger';
 import type { PartialSummaries } from './lib/writers/summary-merger';
+import { scanProject } from './lib/project-scanner';
 
 function parseArgs(argv: string[]): { command: string; args: Record<string, string>; positional: string[] } {
   const args: Record<string, string> = {};
@@ -261,31 +261,28 @@ function calculateConfidence(keywords: string[], itemPath: string, summary: any)
   const purposeLower = (summary.purpose || '').toLowerCase();
 
   keywords.forEach(keyword => {
-    // SEMANTIC-FIRST SCORING: Intent/functionality > actual code > documentation > structure
-
     // Purpose matches (highest priority: semantic intent)
-    if (purposeLower.includes(keyword)) score += 8;
-
-    // Exports/imports matches (concrete functionality/dependencies)
-    if (summary.exports?.some((e: string) => e.toLowerCase().includes(keyword))) score += 7;
-    if (summary.imports?.some((i: string) => i.toLowerCase().includes(keyword))) score += 7;
+    if (purposeLower.includes(keyword)) score += 6;
 
     // Summary matches (topic relevance)
-    if (summaryLower.includes(keyword)) score += 5;
+    if (summaryLower.includes(keyword)) score += 6;
+
+    // Exports/imports matches (concrete functionality/dependencies)
+    if (summary.exports?.some((e: string) => e.toLowerCase().includes(keyword))) score += 4;
+    if (summary.imports?.some((i: string) => i.toLowerCase().includes(keyword))) score += 4;
+    
+    // Path matches
+    if (pathLower.includes(keyword)) score += 4;
 
     // Technology matches (context clues for directories)
-    if (summary.technologies?.some((t: string) => t.toLowerCase().includes(keyword))) score += 3;
+    if (summary.technologies?.some((t: string) => t.toLowerCase().includes(keyword))) score += 2;
 
     // Role matches (for files: context)
-    if (summary.role?.toLowerCase().includes(keyword)) score += 3;
-
-    // Path matches (lowest priority: directory structure is secondary)
-    if (pathLower.includes(keyword)) score += 1;
+    if (summary.role?.toLowerCase().includes(keyword)) score += 2;
   });
 
   return score;
 }
-
 
 function printHelp() {
   console.log(`
