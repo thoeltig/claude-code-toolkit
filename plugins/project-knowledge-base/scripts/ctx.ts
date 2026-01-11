@@ -54,16 +54,13 @@ async function main() {
 async function handleScan() {
   const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
   const output = path.join(knowledgeDir, 'scan.json');
-  const pathsArg = args.paths || process.cwd();
-
-  // Parse comma-separated paths
-  const paths = pathsArg.split(',').map(p => p.trim());
+  const scanDir = args.scanDir || process.cwd();
 
   if (!fs.existsSync(knowledgeDir)) {
     fs.mkdirSync(knowledgeDir, { recursive: true });
   }
 
-  const scanData = await scanProject(paths);
+  const scanData = await scanProject(scanDir);
   fs.writeFileSync(output, JSON.stringify(scanData));
 
   const result = {
