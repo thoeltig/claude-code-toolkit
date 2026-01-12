@@ -9,6 +9,40 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.10.0.0] - 2026-01-12
+
+_Marketplace release with documentation plugin and full-fetch-content enhancement._
+
+### Added
+
+- **documentation plugin** ([v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/Documentation_v1.0.0.0)): New plugin for creating and maintaining high-quality project documentation
+  - **managing-documentation skill** with 4 core workflows (WF1-WF4) for documentation lifecycle management
+  - WF1: Creating New Documentation - define purpose, plan structure, write for global audience, ensure inclusivity, validate quality
+  - WF2: Updating Existing Documentation - assess state, prioritize improvements, update content, verify changes
+  - WF3: Validating Documentation Quality - check content quality, clarity, inclusivity, completeness
+  - WF4: Applying Agile/Lean Principles - document late, update constantly, with purpose, choose best medium
+  - Support for multiple documentation types: guides, API docs, README files, architecture documentation
+  - ARID principles: Accept Repetition, Skimmable, Exemplary, Consistent, Current
+  - Global audience support: simple language, defined abbreviations, concrete examples, no idioms
+  - Inclusive language standards: no ableist, gendered, violent, or culturally specific language
+  - Quality checklists by document type (Guides, API Docs, README, Architecture)
+  - Validation patterns for problematic terms: ableist, gendered, violent language, time-based references, excessive claims, overused politeness
+  - Writing style principles: tone, voice, techniques, things to avoid
+  - Tool usage patterns: finding docs, validating content, understanding context, large-scale operations
+  - Common issues and fixes table with diagnosis and solutions
+  - Implementation approach with 6-step methodology
+  - Anti-patterns guide including outdated information, too much detail, unclear jargon, inconsistent terminology, cultural insensitivity
+  - Comprehensive documentation standards for clarity, accessibility, and inclusivity
+  - Support for Read, Write, Edit, Glob, Grep and Task tools
+
+### Changed
+
+- **fetch-full-content plugin** ([v1.1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.1.0.0)): Enhanced configuration flexibility
+  - Made folder argument optional with default cache directory
+  - Restricted allowed-tools to Python only (removed other tool types)
+
+---
+
 ## [1.9.0.0] - 2026-01-08
 
 _Marketplace release with new cross-platform notification plugin and session-protocol refactoring._
@@ -213,7 +247,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.9.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.10.0.0...HEAD
+[1.10.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.10.0.0
 [1.9.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.9.0.0
 [1.8.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.1.0
 [1.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.8.0.0
