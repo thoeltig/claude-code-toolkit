@@ -31,17 +31,6 @@ _First release._
 - Anti-patterns guide including outdated information, too much detail, unclear jargon, inconsistent terminology, cultural insensitivity
 - Comprehensive documentation standards for clarity, accessibility, and inclusivity
 - Support for Read, Write, Edit, Glob, Grep and Task tools
-- Plugin README with usage examples and feature overview
-- Plugin manifest (plugin.json) for marketplace distribution
-
-### Documentation
-
-- Best practices for creating documentation for global audiences
-- Standards for avoiding future features and unverifiable claims
-- Guidelines for simple language: no overused politeness, clear instructions
-- Patterns for checking inclusive language in existing documentation
-- Procedures for automated documentation generation validation
-- Alternatives for documentation review when no technical writer available
 
 [unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Documentation_v1.0.0.0...HEAD
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Documentation_v1.0.0.0
