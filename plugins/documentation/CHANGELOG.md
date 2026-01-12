@@ -43,5 +43,5 @@ _First release._
 - Procedures for automated documentation generation validation
 - Alternatives for documentation review when no technical writer available
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Documentation-v1.0.0.0...HEAD
-[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Documentation-v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/Documentation_v1.0.0.0...HEAD
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/Documentation_v1.0.0.0
