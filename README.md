@@ -22,6 +22,7 @@ Then install any plugin:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
+| **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.1.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.1.0.0 |
@@ -33,6 +34,15 @@ Then install any plugin:
 Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
 
 **Install:** `/plugin install changelog@claude-code-toolkit`
+
+### Documentation
+Create and maintain high-quality project documentation with comprehensive validation and style guidance. Ensure clarity, accessibility, and inclusive language across all documentation types.
+  - Support for guides, API docs, README files, and architecture documentation
+  - Global audience support with simple language and concrete examples
+  - Inclusive language standards and quality validation
+  - Common issues diagnosis and anti-patterns guide
+
+**Install:** `/plugin install documentation@claude-code-toolkit`
 
 ### Session Protocol
 Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
