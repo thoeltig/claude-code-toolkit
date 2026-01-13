@@ -1,9 +1,0 @@
-{
-  "name": "project-knowledge-base",
-  "description": "Create a persistent knowledge layer for your project. Scan, generate summaries, and store understanding that persists across sessions. Incrementally build and share project knowledge with your team. Query-first workflow avoids expensive re-exploration each session.",
-  "version": "1.0.0",
-  "author": {
-    "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
-  }
-}

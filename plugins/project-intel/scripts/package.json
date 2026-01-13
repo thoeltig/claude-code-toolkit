@@ -1,7 +1,7 @@
 {
-    "name": "project-knowledge-base",
+    "name": "project-intel",
     "version": "1.0.0",
-    "description": "Create a persistent knowledge layer for your project. Scan, generate summaries, and store understanding that persists across sessions. Incrementally build and share project knowledge with your team. Query-first workflow avoids expensive re-exploration each session.",
+    "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
     "main": "dist/ctx.js",
     "bin": {
         "ctx": "./dist/ctx.js"

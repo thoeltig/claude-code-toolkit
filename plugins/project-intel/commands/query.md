@@ -80,7 +80,7 @@ plugins/fetch-full-content/
 │     Role: script
 │     Exports: [HTMLDownloader, URLProcessor, main]
 
-plugins/project-knowledge-base/
+plugins/project-intel/
 ├─ [DIR] scripts/ (Score: 18)
 │  Tech: [TypeScript, Node.js]
 │

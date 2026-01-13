@@ -65,7 +65,7 @@ Process batches in waves of max 10 concurrent agents:
 
 **Wave-based invocation:**
 1. Prepare first 10 batches (or all if fewer)
-2. Invoke project-knowledge-base:haiku-batch-analysis agent for each batch using Task tool with `subagent_type='haiku'`
+2. Invoke project-intel:haiku-batch-analysis agent for each batch using Task tool with `subagent_type='haiku'`
 3. Each agent receives batch with file paths and contents
 4. Each agent writes results to `$KNOWLEDGE_DIR/haiku-batch-<N>.json`
 5. Wait for wave to complete
@@ -89,7 +89,7 @@ Processing wave: batches 11-15 of 15
 for batch in fileBatches; do
 Task(
   description: "Batch ${N}: Analyze files and generate structured JSON summaries.",
-  subagent_type: "project-knowledge-base:haiku-batch-analysis",
+  subagent_type: "project-intel:haiku-batch-analysis",
   model: "haiku",
   tools: "Read, Write"
   prompt: "Read these files completely and summarize them. Write the output to `$KNOWLEDGE_DIR/haiku-batch-<N>.json` in a minified JSON format `{"files":{"path":{"summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}}}`. Verify: The JSON has to be valid.
@@ -142,7 +142,7 @@ Next step: Use /query "keyword" to search file summaries
 `${CLAUDE_PLUGIN_ROOT}\scripts\dist\ctx.js`
 
 **Agent Used:**
-- Agent: project-knowledge-base:haiku-batch-analysis
+- Agent: project-intel:haiku-batch-analysis
 - Model: Haiku (default)
 - Output: $KNOWLEDGE_DIR/haiku-batch-*.json files
 
@@ -151,7 +151,7 @@ Next step: Use /query "keyword" to search file summaries
 {
   "files": [
     {
-        "path": "plugins\\project-knowledge-base\\README.md",
+        "path": "plugins\\project-intel\\README.md",
         "size": 12403
     }
   ],

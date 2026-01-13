@@ -86,13 +86,13 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 **Input File:**
 ```typescript
-// plugins/project-knowledge-base/scripts/lib/collectors/project-scanner.ts
+// plugins/project-intel/scripts/lib/collectors/project-scanner.ts
 // ... file content with scanProject function, FileInfo interface, etc ...
 ```
 
 **Output:**
 ```json
-{"files":{"plugins/project-knowledge-base/scripts/lib/collectors/project-scanner.ts":{"summary":"Walks filesystem to extract directory structure and file metadata for project analysis","purpose":"Collects raw project data including file paths, extensions, sizes, and directory structure needed for batching and analysis","role":"implementation","exports":["scanProject","ProjectData","FileInfo"],"imports":["fs","path"]}}}
+{"files":{"plugins/project-intel/scripts/lib/collectors/project-scanner.ts":{"summary":"Walks filesystem to extract directory structure and file metadata for project analysis","purpose":"Collects raw project data including file paths, extensions, sizes, and directory structure needed for batching and analysis","role":"implementation","exports":["scanProject","ProjectData","FileInfo"],"imports":["fs","path"]}}}
 ```
 
 ## Quality Guidelines
