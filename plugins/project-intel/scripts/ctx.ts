@@ -9,11 +9,9 @@ import type { PartialSummaries, FileSummary } from './lib/summary-merger';
 interface HierarchicalGrouping {
   folderPath: string; 
   folderScore: number;
-  summary: string;
+  summary?: string;
   purpose?: string;
   technologies?: string[];
-  fileCount: number;
-  subdirCount: number;
   files: FileSummary[]
 }
 
@@ -115,16 +113,22 @@ async function handleMerge() {
       fs.mkdirSync(knowledgeDir, { recursive: true });
     }
 
+    const analysedFilesCount = merged.files.length;
+    const analysedDirectoriesCount = merged.directories.length;
+
     const current = mergeSummaries(location, knowledgeDir, merged);
 
     const result = {
       status: 'success',
-      action: 'merge',
-      summaries: {
-        directoriesCount: Object.keys(current.directories).length,
-        filesCount: Object.keys(current.files).length,
+      summary: {
         location: path.join(knowledgeDir, 'summaries.json'),
-        filesProcessed: filesToMerge.length
+        directoryEntryCount: Object.keys(current.directories).length,
+        fileEntryCount: Object.keys(current.files).length,
+      },
+      merge: {
+        processedPartialSummaryFiles: filesToMerge.length,
+        analysedDirectoriesCount,
+        analysedFilesCount
       }
     };
     console.log(JSON.stringify(result));
@@ -216,8 +220,6 @@ async function handleQuery() {
             summary: directory?.summary,
             purpose: directory?.purpose,
             technologies: directory?.technologies,
-            fileCount: directory?.fileCount,
-            subdirCount: directory?.subdirCount,
             files: []
           };
         }

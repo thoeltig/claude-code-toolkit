@@ -2,16 +2,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export interface DirectorySummary {
-  summary: string;
+  summary?: string;
   purpose?: string;
   technologies?: string[];
-  fileCount: number;
-  subdirCount: number;
   lastUpdated: string;
 }
 
 export interface FileSummary {
-  summary: string;
+  summary?: string;
   purpose?: string;
   role?: string;
   exports?: string[];
@@ -68,7 +66,7 @@ function writeSummaries(knowledgeDir: string, data: SummariesData): void {
   data.generated = new Date().toISOString();
 
   // Write to temp file, then rename (atomic operation)
-  fs.writeFileSync(tempPath, JSON.stringify(data));
+  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
   fs.renameSync(tempPath, summariesPath);
 }
 
