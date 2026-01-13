@@ -1,13 +1,11 @@
 export interface DirectorySummary {
-    summary: string;
+    summary?: string;
     purpose?: string;
     technologies?: string[];
-    fileCount: number;
-    subdirCount: number;
     lastUpdated: string;
 }
 export interface FileSummary {
-    summary: string;
+    summary?: string;
     purpose?: string;
     role?: string;
     exports?: string[];

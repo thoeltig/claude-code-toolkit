@@ -59,7 +59,7 @@ function writeSummaries(knowledgeDir, data) {
     // Update generated timestamp
     data.generated = new Date().toISOString();
     // Write to temp file, then rename (atomic operation)
-    fs.writeFileSync(tempPath, JSON.stringify(data));
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
     fs.renameSync(tempPath, summariesPath);
 }
 function mergeSummaries(location, knowledgeDir, partialSummaries) {

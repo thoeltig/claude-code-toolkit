@@ -117,15 +117,20 @@ async function handleMerge() {
         if (!fs.existsSync(knowledgeDir)) {
             fs.mkdirSync(knowledgeDir, { recursive: true });
         }
+        const analysedFilesCount = merged.files.length;
+        const analysedDirectoriesCount = merged.directories.length;
         const current = (0, summary_merger_1.mergeSummaries)(location, knowledgeDir, merged);
         const result = {
             status: 'success',
-            action: 'merge',
-            summaries: {
-                directoriesCount: Object.keys(current.directories).length,
-                filesCount: Object.keys(current.files).length,
+            summary: {
                 location: path.join(knowledgeDir, 'summaries.json'),
-                filesProcessed: filesToMerge.length
+                directoryEntryCount: Object.keys(current.directories).length,
+                fileEntryCount: Object.keys(current.files).length,
+            },
+            merge: {
+                processedPartialSummaryFiles: filesToMerge.length,
+                analysedDirectoriesCount,
+                analysedFilesCount
             }
         };
         console.log(JSON.stringify(result));
@@ -203,8 +208,6 @@ async function handleQuery() {
                         summary: directory?.summary,
                         purpose: directory?.purpose,
                         technologies: directory?.technologies,
-                        fileCount: directory?.fileCount,
-                        subdirCount: directory?.subdirCount,
                         files: []
                     };
                 }

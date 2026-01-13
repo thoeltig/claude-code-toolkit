@@ -39,7 +39,7 @@ const path = __importStar(require("path"));
 const IGNORED_DIRS = new Set([
     'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj',
     '.git', '.svn', 'coverage', '.pytest_cache', '.venv', 'venv', '.env', '.idea',
-    '.vscode', 'vendor', 'tmp', '.cache'
+    '.vscode', 'vendor', 'tmp', '.cache', '.knowledge', '.claude',
 ]);
 function shouldIgnore(name) {
     return IGNORED_DIRS.has(name) || name.startsWith('.');
