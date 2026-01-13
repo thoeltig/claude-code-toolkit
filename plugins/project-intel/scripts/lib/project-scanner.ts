@@ -51,9 +51,9 @@ function getFiles(dir: string, rootDir: string, files: FileInfo[]): void {
   } catch (e) {}
 }
 
-export async function scanProject(scanDir: string): Promise<RawProjectData> {
+export async function scanProject(location: string): Promise<RawProjectData> {
   const files: FileInfo[] = [];
-  getFiles(scanDir, scanDir, files);
+  getFiles(location, location, files);
   
   const extensionCount = files.reduce(
     (acc, file) => {

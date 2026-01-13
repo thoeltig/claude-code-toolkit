@@ -70,13 +70,13 @@ async function main() {
 async function handleScan() {
   const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
   const output = path.join(knowledgeDir, 'scan.json');
-  const scanDir = args.scanDir || process.cwd();
+  const location = args.location || process.cwd();
 
   if (!fs.existsSync(knowledgeDir)) {
     fs.mkdirSync(knowledgeDir, { recursive: true });
   }
 
-  const scanData = await scanProject(scanDir);
+  const scanData = await scanProject(location);
   fs.writeFileSync(output, JSON.stringify(scanData));
 
   console.log(JSON.stringify(scanData));
@@ -85,7 +85,7 @@ async function handleScan() {
 }
 
 async function handleMerge() { 
-  const scanDir = args.scanDir || process.cwd(); 
+  const location = args.location || process.cwd(); 
   const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
   const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
 
@@ -115,7 +115,7 @@ async function handleMerge() {
       fs.mkdirSync(knowledgeDir, { recursive: true });
     }
 
-    const current = mergeSummaries(scanDir, knowledgeDir, merged);
+    const current = mergeSummaries(location, knowledgeDir, merged);
 
     const result = {
       status: 'success',
@@ -285,18 +285,18 @@ function calculateConfidence(keywords: string[], itemPath: string, summary: any)
 
 function printHelp() {
   console.log(`
-Project Knowledge
+Project Intel
 
 Commands:
   scan                          Scan project directory and save structure
 
-  --scanDir=<path>              The directory to scan (default: cwd)
-  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+  --location=<path>             The directory to scan (default: cwd)
+  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
   merge                         Merge Haiku-generated summaries into .knowledge/summaries.json
   
-  --scanDir=<path>              The directory that was scanned scan (default: cwd)
-  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+  --location=<path>             The directory that was scanned scan (default: cwd)
+  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
   query <topic>                 Search project summaries by keywords (scored results)
 
@@ -304,11 +304,11 @@ Commands:
   --max=<number>                Maximum results to return (for query, default: 25)
   --format=<type>               Output format: json (flat), hierarchy (grouped) 
                                 (for query, default: json)
-  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
 Examples:
   ctx scan
-  ctx scan --scanDir=../my-project
+  ctx scan --location=../my-project
   ctx merge --summaries=/tmp/summaries.json
   ctx query "authentication"
   ctx query "auth user setup" --scope=src/auth --max=10

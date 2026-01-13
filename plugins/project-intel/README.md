@@ -48,7 +48,7 @@ Install [Node.js](https://nodejs.org/) 16.9+
 
 ### 2. Scan Your Project (full or partial)
 ```bash
-/scan --scanDir=../path/to/project --knowledgeDir=.knowledge
+/scan --location=../path/to/project --knowledgeDir=.knowledge
 ```
 
 Generates `.knowledge/summaries.json` with semantic summaries of every directory and file.
@@ -98,11 +98,11 @@ Returns ranked list of relevant files/directories **without reading them** - pro
 
 ## Commands
 
-### `/scan --scanDir=<path> --knowledgeDir=<path>`
+### `/scan --location=<path> --knowledgeDir=<path>`
 Generate or update semantic summaries.
 
 **Parameters:**
-- `--scanDir`: Directory to analyze (default: current directory)
+- `--location`: Directory to analyze (default: current directory)
 - `--knowledgeDir`: Output location for summaries (default: .knowledge in current directory)
 
 **What it does:**
@@ -119,10 +119,10 @@ Generate or update semantic summaries.
 **Example:**
 ```bash
 # Initial scan
-/scan --scanDir=../my-project --knowledgeDir=../my-project/.knowledge
+/scan --location=../my-project --knowledgeDir=../my-project/.knowledge
 
 # Update after changes
-/scan --scanDir=../my-project --knowledgeDir=../my-project/.knowledge
+/scan --location=../my-project --knowledgeDir=../my-project/.knowledge
 ```
 
 ### `/query "<keywords>" [--scope=<path>] [--max=N] --knowledgeDir=<path>`
@@ -261,10 +261,10 @@ Across Sessions:
 **Re-scan strategy:**
 ```bash
 # Full project re-scan (if everything is stale)
-/scan --scanDir=../project --knowledgeDir=../project/.knowledge
+/scan --location=../project --knowledgeDir=../project/.knowledge
 
 # Targeted re-scan (subset only)
-/scan --scanDir=../project/src/auth --knowledgeDir=../project/.knowledge
+/scan --location=../project/src/auth --knowledgeDir=../project/.knowledge
 ```
 
 ### Query Strategies

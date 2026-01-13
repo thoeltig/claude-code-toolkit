@@ -1,6 +1,6 @@
 ---
 description: Build persistent knowledge of your project by analyzing all files or a specific area. Generates intelligent summaries of files, directories, purpose and structure for fast cross-session queries without expensive re-exploration.
-argument-hint: <scanDir> [--knowledgeDir=<knowledgeDir>]
+argument-hint: <location> [--knowledgeDir=<knowledgeDir>]
 allowed-tools: Read, Bash(node:*)
 ---
 
@@ -9,14 +9,14 @@ allowed-tools: Read, Bash(node:*)
 Orchestrate a complete project scan followed by parallel Haiku file analysis to generate searchable summaries.
 
 **Parameters:**
-- `--scanDir`: Folder paths to scan (default: current project directory)
+- `--location`: Folder paths to scan (default: current project directory)
 - `--knowledgeDir`: Project knowledge directory (default: .knowledge in current directory)
 
 **Usage Examples:**
 - `/scan` - Full scan of current project
-- `/scan --scanDir=../my-project` - Full scan of specific project
-- `/scan --scanDir=/absolute/path/to/project` - Use absolute path
-- `/scan --knowledgeDir=../project/.knowledge` - Full scan and output to specific knowledge directory
+- `/scan --location=../my-project` - Full scan of specific project
+- `/scan --location=/absolute/path/to/project` - Use absolute path
+- `/scan --knowledgeDir=../.knowledge` - Full scan and output to specific knowledge directory
 
 **Process:**
 1. Scan provided folder path (metadata only) by script
@@ -41,7 +41,7 @@ After scanning completes, use `/query "keyword"` to search file summaries.
 Execute the scanner to analyze project structure and save to scan.json.
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --scanDir="$SCAN_DIR" --knowledgeDir="$KNOWLEDGE_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --location="$LOCATION" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
 Parse the JSON response to extract `path` and `size` properties.
@@ -105,7 +105,7 @@ done
 Combine all batch results into project knowledge:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --scanDir="$SCAN_DIR" --knowledgeDir="$KNOWLEDGE_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --location="$LOCATION" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
 Parse the JSON response to extract:
