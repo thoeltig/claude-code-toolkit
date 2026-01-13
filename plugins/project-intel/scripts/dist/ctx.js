@@ -83,23 +83,17 @@ async function main() {
 async function handleScan() {
     const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
     const output = path.join(knowledgeDir, 'scan.json');
-    const scanDir = args.scanDir || process.cwd();
+    const location = args.location || process.cwd();
     if (!fs.existsSync(knowledgeDir)) {
         fs.mkdirSync(knowledgeDir, { recursive: true });
     }
-    const scanData = await (0, project_scanner_1.scanProject)(scanDir);
+    const scanData = await (0, project_scanner_1.scanProject)(location);
     fs.writeFileSync(output, JSON.stringify(scanData));
-    const result = {
-        status: 'success',
-        action: 'scan',
-        output: output,
-        stats: scanData.projectStats
-    };
-    console.log(JSON.stringify(result));
+    console.log(JSON.stringify(scanData));
     process.exit(0);
 }
 async function handleMerge() {
-    const scanDir = args.scanDir || process.cwd();
+    const location = args.location || process.cwd();
     const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
     const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
     try {
@@ -123,7 +117,7 @@ async function handleMerge() {
         if (!fs.existsSync(knowledgeDir)) {
             fs.mkdirSync(knowledgeDir, { recursive: true });
         }
-        const current = (0, summary_merger_1.mergeSummaries)(scanDir, knowledgeDir, merged);
+        const current = (0, summary_merger_1.mergeSummaries)(location, knowledgeDir, merged);
         const result = {
             status: 'success',
             action: 'merge',
@@ -275,18 +269,18 @@ function calculateConfidence(keywords, itemPath, summary) {
 }
 function printHelp() {
     console.log(`
-Project Knowledge
+Project Intel
 
 Commands:
   scan                          Scan project directory and save structure
 
-  --scanDir=<path>              The directory to scan (default: cwd)
-  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+  --location=<path>             The directory to scan (default: cwd)
+  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
   merge                         Merge Haiku-generated summaries into .knowledge/summaries.json
   
-  --scanDir=<path>              The directory that was scanned scan (default: cwd)
-  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+  --location=<path>             The directory that was scanned scan (default: cwd)
+  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
   query <topic>                 Search project summaries by keywords (scored results)
 
@@ -294,11 +288,11 @@ Commands:
   --max=<number>                Maximum results to return (for query, default: 25)
   --format=<type>               Output format: json (flat), hierarchy (grouped) 
                                 (for query, default: json)
-  --knowledgeDir=<knowledgeDir> Project knowledge directory (default: .knowledge in current directory)
+  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
 Examples:
   ctx scan
-  ctx scan --scanDir=../my-project
+  ctx scan --location=../my-project
   ctx merge --summaries=/tmp/summaries.json
   ctx query "authentication"
   ctx query "auth user setup" --scope=src/auth --max=10

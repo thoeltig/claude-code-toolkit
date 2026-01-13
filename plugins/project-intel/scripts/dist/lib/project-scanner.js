@@ -69,9 +69,9 @@ function getFiles(dir, rootDir, files) {
     }
     catch (e) { }
 }
-async function scanProject(scanDir) {
+async function scanProject(location) {
     const files = [];
-    getFiles(scanDir, scanDir, files);
+    getFiles(location, location, files);
     const extensionCount = files.reduce((acc, file) => {
         const ext = path.extname(file.path).toLowerCase() || 'none';
         acc[ext] = (acc[ext] || 0) + 1;

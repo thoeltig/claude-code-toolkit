@@ -62,11 +62,11 @@ function writeSummaries(knowledgeDir, data) {
     fs.writeFileSync(tempPath, JSON.stringify(data));
     fs.renameSync(tempPath, summariesPath);
 }
-function mergeSummaries(scanDir, knowledgeDir, partialSummaries) {
+function mergeSummaries(location, knowledgeDir, partialSummaries) {
     const summaries = getOrCreateSummaries(knowledgeDir);
-    const normalizedScanDir = path.normalize(scanDir);
-    const knowledgeDirScanDir = path.normalize(knowledgeDir);
-    const baseDir = knowledgeDirScanDir.slice(0, knowledgeDirScanDir.indexOf('.knowledge'));
+    const normalizedLocation = path.normalize(location);
+    const normalizedKnowledgeDir = path.normalize(knowledgeDir);
+    const baseDir = normalizedKnowledgeDir.slice(0, normalizedKnowledgeDir.indexOf('.knowledge'));
     // Merge directories
     if (partialSummaries.directories) {
         for (const dirSummary of partialSummaries.directories) {
@@ -80,7 +80,7 @@ function mergeSummaries(scanDir, knowledgeDir, partialSummaries) {
         const scannedDirectoryPaths = new Set(partialSummaries.directories.map(x => path.join(baseDir, x.path)));
         for (const dirPath of Object.keys(summaries.directories)) {
             const absPath = path.join(baseDir, dirPath);
-            if (absPath.startsWith(normalizedScanDir) && !scannedDirectoryPaths.has(absPath)) {
+            if (absPath.startsWith(normalizedLocation) && !scannedDirectoryPaths.has(absPath)) {
                 delete summaries.directories[dirPath];
             }
         }
@@ -100,7 +100,7 @@ function mergeSummaries(scanDir, knowledgeDir, partialSummaries) {
         const scannedFilePaths = new Set(partialSummaries.files.map(x => path.join(baseDir, x.path)));
         for (const filePath of Object.keys(summaries.files)) {
             const absPath = path.join(baseDir, filePath);
-            if (absPath.startsWith(normalizedScanDir) && !scannedFilePaths.has(absPath)) {
+            if (absPath.startsWith(normalizedLocation) && !scannedFilePaths.has(absPath)) {
                 delete summaries.files[filePath];
             }
         }
