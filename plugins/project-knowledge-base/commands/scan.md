@@ -1,6 +1,6 @@
 ---
-description: Build persistent knowledge base of your project by analyzing all files. Run once to generate intelligent summaries of files stored in .knowledge/. Enable fast cross-session queries without expensive re-exploration. Use for first-time project understanding and file-level navigation.
-argument-hint: [--scanDir=<scanDir>] [--knowledgeDir=<knowledgeDir>]
+description: Build persistent knowledge of your project by analyzing all files or a specific area. Generates intelligent summaries of files, directories, purpose and structure for fast cross-session queries without expensive re-exploration.
+argument-hint: <scanDir> [--knowledgeDir=<knowledgeDir>]
 allowed-tools: Read, Bash(node:*)
 ---
 

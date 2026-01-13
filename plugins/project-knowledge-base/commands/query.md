@@ -1,5 +1,5 @@
 ---
-description: Search project knowledge base by keywords. Fast way to find relevant information, context, directories and files without reading them or expensive per-session re-exploration. Use this first to get a quick overview before exploring specific code. Find files, understand structure, locate features.
+description: Search project knowledge by keywords. Run proactively when user asks about project structure, context, purpose, technologies, directories, files or similar information topics. Fast and cheap way to find ranked relevant information for files/directories without reading them or expensive exploration. Use this first to get a quick overview before exploring specific code. Skip if user provides explicit file paths or exact names to find.
 argument-hint: <keywords> [--max=N] [--scope=<path>][--knowledgeDir=<knowledgeDir>] [--format=hierarchy|json] 
 allowed-tools: Bash(node:*)
 ---
