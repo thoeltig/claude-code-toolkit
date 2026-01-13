@@ -79,13 +79,7 @@ async function handleScan() {
   const scanData = await scanProject(scanDir);
   fs.writeFileSync(output, JSON.stringify(scanData));
 
-  const result = {
-    status: 'success',
-    action: 'scan',
-    output: output,
-    stats: scanData.projectStats
-  };
-  console.log(JSON.stringify(result));
+  console.log(JSON.stringify(scanData));
 
   process.exit(0);
 }
