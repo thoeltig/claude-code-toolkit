@@ -56,12 +56,8 @@ Session N+1: User asks different question
 
 ## Quick Start
 
-### 1. Build the CLI
-```bash
-cd plugins/project-knowledge-base/scripts
-npm install
-npm run build
-```
+### 1. Requirements
+Install [Node.js](https://nodejs.org/) 16.9+
 
 ### 2. Scan Your Project (One-time)
 ```bash
