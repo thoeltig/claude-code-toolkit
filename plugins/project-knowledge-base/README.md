@@ -1,56 +1,43 @@
-# Project Knowledge Base
+# Project Intelligence (project-intel)
 
-**Purpose:** Create a persistent knowledge layer of your project. Scan once, query forever across sessions. Avoid expensive re-exploration and re-reading of files by building shared, incrementally-updated understanding of your project.
+Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.
+
+---
+
+## The Value Proposition
+
+**Asymmetric Payoff:**
+```
+Query cost:        ~1k tokens (minimal risk)
+Failed query:      Small loss, move on
+Successful query:  Saves 10k-20k tokens of blind exploration
+                   Eliminates context pollution
+                   Provides immediate direction
+
+Risk/Reward: Query aggressively - downside is negligible, upside is enormous
+```
 
 ---
 
 ## The Problem
 
-Every session, you re-explore the same project:
-- **Haiku searches**: 1000+ tokens per exploration (one-time, lost after session)
-- **File re-reading**: Reading files again to remember their purpose (wasted tokens)
-- **Context loss**: No accumulated knowledge across sessions
-- **Team silos**: Each developer explores independently
+Every new question triggers expensive exploration:
+- Spawn Explore agent or read 15-20 files blindly
+- 80% of content is irrelevant (context pollution)
+- 10k-20k tokens wasted per exploration
+- No persistent knowledge across sessions
+- Vague prompts ("improve the API") require figuring out where to look first
 
 ## The Solution
 
-Build a persistent knowledge layer once, reuse forever:
-1. **Scan** the project (pure I/O, 0 tokens)
-2. **Analyze** with Haiku in parallel (1200 tokens per batch, one-time cost)
-3. **Store** summaries in `.knowledge/summaries.json` (git-tracked, team-shared)
-4. **Query** across sessions (100 tokens, no re-reading)
-5. **Extend** incrementally as project evolves (selective re-scanning)
+Build a semantic map once, query before exploring:
 
----
+1. **Scan** full project once or incrementally scan project areas → Generate file/directory summaries (one-time cost)
+2. **Query** before reading → Get relevant file list (cheap reconnaissance)
+3. **Read** only relevant files → Directed exploration vs blind searching
+4. **Maintain** alongside development → Re-scan changed areas as needed
 
-## Query-First Workflow
-
-**Before**: Expensive per-session exploration
-```
-Session 1: User asks "Show me auth system"
-  → Invoke Haiku to search project (1000+ tokens)
-  → Results lost at session end
-
-Session 2: User asks same question
-  → Repeat Haiku search (1000+ tokens again)
-  → Same knowledge recreated
-```
-
-**After**: Query persistent knowledge base
-```
-Session 1: /scan --root=../project
-  → Generate summaries (1200 tokens, stored forever)
-
-Session N: User asks "Show me auth system"
-  → /query "authentication"
-  → Get overview instantly (100 tokens)
-  → Explore only relevant files (minimal additional cost)
-
-Session N+1: User asks different question
-  → /query "database"
-  → Reuse stored knowledge (100 tokens)
-  → No re-exploration needed
-```
+**Result:** Cheap orientation that saves expensive exploration when successful.
 
 ---
 
@@ -59,321 +46,322 @@ Session N+1: User asks different question
 ### 1. Requirements
 Install [Node.js](https://nodejs.org/) 16.9+
 
-### 2. Scan Your Project (One-time)
+### 2. Scan Your Project (full or partial)
 ```bash
-/scan --root=../path/to/project
+/scan --scanDir=../path/to/project --knowledgeDir=.knowledge
 ```
 
-This generates `.knowledge/summaries.json` with intelligent summaries of every directory and file.
+Generates `.knowledge/summaries.json` with semantic summaries of every directory and file.
 
 **Wave-based processing:**
-- Small projects: All batches complete quickly
-- Large projects (20+ batches): Shows estimated time, requires confirmation, processes in waves of 10-15 agents
+- Small projects: Completes quickly in parallel
+- Large projects (20+ batches): Shows estimated time, processes in waves of max 10 concurrent agents
 
 Output:
 ```
 ✓ Analysis complete
-  Directories: 45
-  Files: 230
+  Files analyzed: 230
+  Batches processed: 29
   Summaries stored in: .knowledge/summaries.json
-
-Commit to git to share with team!
 ```
 
-### 3. Query (Every Session, Fast)
+### 3. Query Before Exploring
 ```bash
 /query "authentication"
+/query "api endpoints rate limiting"
 /query "database" --scope=src --max=10
-/query "typescript setup" --max=5
 ```
 
-Get instant overview of relevant directories and files **without re-reading them**.
+Returns ranked list of relevant files/directories **without reading them** - providing direction for what to read next.
+
+---
+
+## When to Use
+
+**Query first when:**
+- ✅ Answering vague prompts ("improve the API" → query "api" first)
+- ✅ Broad questions about structure ("how does auth work?")
+- ✅ Before spawning Explore agents (cheap reconnaissance first)
+- ✅ Multi-session work (persistent knowledge)
+- ✅ Large codebases (500+ files where exploration is expensive)
+- ✅ Team onboarding (shared semantic map)
+
+**Skip querying when:**
+- ❌ Very specific needle query ("find class UserController") → use Grep/Glob directly
+- ❌ Small projects (<100 files) → setup cost > benefit
+- ❌ Single-file bug fix → no direction needed
+- ❌ Already know exact location → just read the file
+
+**Default strategy:** Query first - the cost is minimal and successful queries save massive exploration effort.
+
+---
+
+## Commands
+
+### `/scan --scanDir=<path> --knowledgeDir=<path>`
+Generate or update semantic summaries.
+
+**Parameters:**
+- `--scanDir`: Directory to analyze (default: current directory)
+- `--knowledgeDir`: Output location for summaries (default: .knowledge in current directory)
+
+**What it does:**
+1. Walks filesystem (metadata only, 0 tokens)
+2. Batches files for analysis (~8 files per batch)
+3. Launches Haiku agents in parallel waves (max 10 concurrent)
+4. Each agent summarizes files: purpose, role, exports, imports
+5. Merges results into `summaries.json`
+
+**Cost:** ~1200 tokens + the files read tokens per batch (similiar to internal explore tool)
+
+**Incremental updates:** Re-running scan merges new summaries with existing ones. Only changed files need re-analysis.
+
+**Example:**
+```bash
+# Initial scan
+/scan --scanDir=../my-project --knowledgeDir=../my-project/.knowledge
+
+# Update after changes
+/scan --scanDir=../my-project --knowledgeDir=../my-project/.knowledge
+```
+
+### `/query "<keywords>" [--scope=<path>] [--max=N] --knowledgeDir=<path>`
+Search summaries by semantic relevance.
+
+**Parameters:**
+- `<keywords>`: Search terms (e.g., "authentication", "api rate limiting")
+- `--scope`: Limit to specific directory (optional)
+- `--max`: Maximum results (default: 25)
+- `--knowledgeDir`: Location of summaries.json (default: .knowledge in current directory)
+
+**What it does:**
+1. Semantic scoring across summary, purpose, exports, imports, technologies, role
+2. Returns ranked results (higher score = more relevant)
+3. Grouped by directory for structure visibility
+
+**Cost:** ~1k tokens (orchestration + CLI execution)
+
+**Examples:**
+```bash
+# Broad exploration
+/query "authentication user login"
+
+# Focused search
+/query "database connection" --scope=src/backend
+
+# Conceptual search (not just keywords)
+/query "use purpose how what script when"
+```
+
+---
+
+## How It Works
+
+### Semantic Scoring
+
+The query performs **semantic matching**, not just keyword pattern matching:
+
+- **Purpose match**: +6 (intent/functionality description)
+- **Summary match**: +6 (overall topic relevance)
+- **Exports/Imports match**: +4 (concrete APIs/dependencies)
+- **Technologies/Role match**: +4 (technical context)
+- **Path match**: +2 (directory structure)
+
+Results sorted by total score, showing most relevant files first.
+
+**Example:** Query `"use purpose how what script when"` finds files discussing:
+- Purpose statements ("this script's purpose is...")
+- Usage instructions ("how to use this...")
+- Trigger conditions ("when to execute...")
+
+Even if those exact keywords don't appear, files covering these concepts score higher.
+
+### Architecture
+
+```
+Initial Setup (One-time):
+  /scan
+    ↓
+  Filesystem walk (0 tokens)
+    ↓
+  Batch creation (~8 files per batch)
+    ↓
+  Parallel Haiku analysis in waves
+    - Wave 1: Batches 1-10 analyze concurrently
+    - Wave 2: Batches 11-20 analyze concurrently
+    - Each batch: subagent invocation ~1200 tokens + the files read tokens (similiar to internal explore tool)
+    ↓
+  Merge to summaries.json
+    ✅ Stored persistently
+
+
+Across Sessions:
+  /query "keywords"
+    ↓
+  Semantic search summaries.json (~1k tokens)
+    ↓
+  Display ranked results
+    ↓
+  User reads only relevant files (directed exploration)
+```
+
+### What Gets Stored
+
+`.knowledge/summaries.json` structure:
+
+**Directory summary:**
+```json
+{
+  "directories": {
+    "src/auth": {
+      "summary": "Authentication system implementation",
+      "purpose": "User login, token management, session handling",
+      "technologies": ["TypeScript", "JWT", "bcrypt"],
+      "fileCount": 12,
+      "subdirCount": 3
+    }
+  }
+}
+```
+
+**File summary:**
+```json
+{
+  "files": {
+    "src/auth/index.ts": {
+      "summary": "Main authentication module entry point",
+      "purpose": "Export auth functions and middleware",
+      "role": "implementation",
+      "exports": ["authenticate", "logout", "middleware"],
+      "imports": ["jwt", "bcrypt", "express"],
+      "lastUpdated": "2026-01-08T00:00:00Z"
+    }
+  }
+}
+```
+
+---
+
+## Best Practices
+
+### Maintenance Strategy
+
+**Summaries are like documentation** - maintain alongside code or pay re-scan cost:
+
+1. **Initial setup**: Scan entire project once
+2. **During development**: Re-scan areas you're actively changing
+3. **After major updates**: Re-scan affected directories
+4. **Team sync**: Pull teammate scans from git
+
+**Staleness signals:**
+- Query returns files with old `lastUpdated` dates
+- You know you've changed an area significantly
+- Summaries don't match your current understanding
+
+**Re-scan strategy:**
+```bash
+# Full project re-scan (if everything is stale)
+/scan --scanDir=../project --knowledgeDir=../project/.knowledge
+
+# Targeted re-scan (subset only)
+/scan --scanDir=../project/src/auth --knowledgeDir=../project/.knowledge
+```
+
+### Query Strategies
+
+**Start broad, then narrow:**
+```bash
+# 1. Broad orientation
+/query "api endpoints"
+
+# 2. Based on results, narrow scope
+/query "rate limiting" --scope=src/api
+```
+
+**Use conceptual terms:**
+```bash
+# Good: semantic concepts
+/query "authentication session management"
+/query "database connection pooling"
+
+# Also works: technical specifics
+/query "jwt token validation"
+/query "postgres migrations"
+```
+
+**Multiple keywords improve accuracy:**
+```bash
+# Single keyword: broad results
+/query "user"
+
+# Multiple keywords: more focused
+/query "user authentication login"
+```
+
+---
+
+## Comparison to Alternatives
+
+### vs. Explore Agent
+- **project-intel**: Cheap reconnaissance, provides file list for you to read
+- **Explore agent**: Deep exploration, reads files and analyzes code
+- **Use project-intel first**: If results are good, read files directly. If not, spawn Explore agent.
+
+### vs. Grep/Glob
+- **Grep/Glob**: Pattern matching (exact strings, file names)
+- **project-intel**: Semantic matching (concepts, purpose, functionality)
+- **Grep/Glob wins**: When you know exact class/function/filename
+- **project-intel wins**: When you know what you're looking for conceptually but not literally
+
+### vs. Reading Files Directly
+- **Reading directly**: High token cost if you read wrong files (context pollution)
+- **project-intel**: Low cost reconnaissance first, read only relevant files
+- **Strategy**: Query → read top results → explore deeper if needed
+
+---
+
+## Performance Characteristics
+
+### Initial Scan Cost
+| Project Size | Files | Batches | Time | Token Cost |
+|--------------|-------|---------|------|------------|
+| Small | 50-100 | 6-12 | 1-2m | ~8k tokens + read file cost |
+| Medium | 200-500 | 25-60 | 3-6m | ~35k tokens + read file cost |
+| Large | 1000+ | 125+ | 10-15m | ~150k+ tokens + read file cost |
+
+**One-time investment** - results persist forever until re-scan.
+
+### Query Cost
+Single query (~1k tokens, <1s): 
+- Failed query (no results): Minimal overhead + exploration
+- Successful query: No exploration
+
+**Comparison:**
+- Explore agent: 5k-25k tokens per exploration
+- Reading 15 files blindly: 10k-20k tokens + context pollution
+- Query + read 3 relevant files: 1k + 3k = 4k tokens (75% savings)
 
 ---
 
 ## Scope & Applicability
 
-**Target:** Mid to seasoned projects with 100+ files (ideal for 200-5000 files)
-
 **Best fit:**
-- Legacy codebases (understanding complex structure without rereading everything)
-- Large monorepos (navigating multiple integrated systems)
-- Team projects (shared knowledge base across developers)
-- Long-lived code (context preservation across sessions)
-- Project evolution (track understanding as code changes)
-
-**Not ideal for:**
-- Small projects (<50 files): Scanning overhead not worth the savings
-- Single-session work: No benefit from persistence
-- Minimal exploration: One or two lookups don't justify setup time
-- Rapid prototyping: Changing structure makes knowledge base stale quickly
-
-**Cost-Benefit Analysis:**
-- Initial scan: ~2-5 minutes (200-800 files), ~1200 tokens per batch
-- Queries: ~5-10 seconds each, ~100 tokens per query
-- **Breakeven:** After ~12-15 queries, initial cost is repaid in time/tokens saved
-- **Long-term:** Massive savings on projects with frequent context lookups
-
----
-
-## Architecture
-
-```
-Initial Setup (One-time):
-  User: /scan --root=../project
-    ↓
-  Scan Phase (0 tokens):
-    - Walk filesystem
-    - Extract structure
-    - Save to scan.json
-
-  ↓
-  Batch Phase:
-    - Group directories 3-5 per batch
-    - Prepare batch context
-
-  ↓
-  Haiku Analysis Phase (Wave-based Parallel, 1200 tokens per batch):
-    - Wave 1: Batches 1-15 analyze in parallel
-    - Wave 2: Batches 16-30 analyze in parallel
-    - Results written to /tmp/haiku-batch-*.json
-
-  ↓
-  Merge Phase (0 tokens):
-    - Combine all batch results
-    - Save to .knowledge/summaries.json
-    - ✅ STORED FOREVER
-
-
-Across Sessions (100 tokens per query):
-  User: /query "keywords"
-    ↓
-  Query Phase:
-    - Search summaries.json
-    - Score results by confidence
-    - Display relevant dirs/files
-    - User examines only what matters
-```
-
----
-
-## Slash Commands
-
-### `/scan [--root=<path>]`
-**Generate persistent summaries of your project.**
-
-Parameters:
-- `--root`: Project root directory (default: current directory)
-
-Creates/updates `.knowledge/summaries.json` with analyzed summaries.
-
-**Large Project Handling:**
-- If 20+ batches needed: Shows warning with estimated time
-- Requires user confirmation before analysis
-- Processes in waves (10-15 concurrent agents max)
-- Shows progress as waves complete
-
-Example:
-```bash
-/scan --root=../claude-code-capabilities
-# Generates .knowledge/summaries.json
-# Ready to share with team via git
-```
-
-### `/query "<keywords>" [--root=<path>] [--scope=<path>] [--max=N]`
-**Query persistent knowledge base by keywords.**
-
-Parameters:
-- `<keywords>`: Search terms (e.g., "authentication", "user setup")
-- `--root`: Project root directory (default: current directory)
-- `--scope`: Limit search to specific path (optional)
-- `--max`: Maximum results (default: 100)
-
-Returns overview of relevant directories and files **without reading them**.
-
-Example:
-```bash
-/query "authentication"
-/query "auth" --scope=src/auth --max=5
-/query "database connection" --max=10
-```
-
----
-
-## Persistent Knowledge Layer
-
-### What Gets Stored
-
-`.knowledge/summaries.json` contains analyzed summaries:
-
-**Directory Summary:**
-```json
-{
-  "src/auth": {
-    "summary": "Authentication system implementation",
-    "purpose": "User login, token management, session handling",
-    "technologies": ["TypeScript", "JWT", "bcrypt"],
-    "fileCount": 12,
-    "subdirCount": 3,
-    "lastUpdated": "2026-01-08T00:00:00Z"
-  }
-}
-```
-
-**File Summary:**
-```json
-{
-  "src/auth/index.ts": {
-    "summary": "Main authentication module entry point",
-    "purpose": "Export auth functions and middleware",
-    "role": "implementation",
-    "exports": ["authenticate", "logout", "middleware"],
-    "imports": ["jwt", "bcrypt", "express"],
-    "lastUpdated": "2026-01-08T00:00:00Z"
-  }
-}
-```
-
-### Incremental Updates
-
-When code changes, selectively re-scan:
-```bash
-# Re-scan entire project
-/scan --root=../project
-
-# Updates existing summaries, preserves unchanged
-# Merges new and modified entries
-```
-
-No need to re-analyze unchanged code - only changes get updated.
-
-### Team Sharing
-
-Commit to git:
-```bash
-git add .knowledge/summaries.json
-git commit -m "docs: update project knowledge base"
-git push
-```
-
-Team members clone once, query forever - no per-developer re-analysis needed.
-
----
-
-## Confidence Scoring
-
-Query results ranked by relevance:
-- **Path match**: +10 per keyword (highest priority)
-- **Summary match**: +5 per keyword
-- **Purpose match**: +3 per keyword
-- **Technologies/Role match**: +2-3 per keyword
-- **Exports/Imports match**: +2 per keyword
-
-Results sorted descending by confidence score.
-
----
-
-## Token & Performance Comparison
-
-### Before (Per-session exploration)
-| Task | Tokens | Time | Notes |
-|------|--------|------|-------|
-| Haiku search for "auth" | 1000+ | 10s | Lost after session ends |
-| Re-reading files | 500+ | varies | Redundant across sessions |
-| **Per-session cost** | **1500+** | **varies** | **One-time per exploration** |
-
-### After (Query-first workflow)
-| Task | Tokens | Time | Notes |
-|------|--------|------|-------|
-| Initial scan | 1200/batch | 3-5m | One-time setup |
-| Query "auth" | 100 | <1s | Reused across sessions |
-| Read 1 specific file | 200-500 | <1s | Only when actually needed |
-| **Per-session cost** | **100-600** | **<1s** | **Query + selective reading** |
-
-**Result**: 90% fewer tokens across multiple sessions, instant queries.
-
----
-
-## Workflow Example
-
-### Session 1: Build Knowledge Base
-
-```bash
-/scan --root=../my-project
-```
-
-Output:
-```
-✓ Analysis complete
-  Directories: 45
-  Files: 230
-  Summaries stored in: .knowledge/summaries.json
-```
-
-Commit to git:
-```bash
-git add .knowledge/summaries.json
-git commit -m "docs: add project knowledge base"
-```
-
-### Session 2: Query Knowledge Base
-
-User asks: "Show me the authentication system"
-
-```bash
-/query "authentication" --max=10
-```
-
-Output:
-```
-Found 8 matches for "authentication" (scope: all)
-Searching: [authentication]
-
-DIRECTORIES:
-1. [DIRECTORY] src/auth
-   Score: 25
-   Summary: Authentication system implementation
-   Purpose: User login, token management, session handling
-   Tech: [TypeScript, JWT, bcrypt]
-
-2. [DIRECTORY] src/middleware
-   Score: 15
-   Summary: Express middleware implementations
-   Purpose: Request processing and validation
-   Tech: [Express, TypeScript]
-
-FILES:
-3. [FILE] src/auth/index.ts
-   Score: 20
-   Summary: Main authentication module entry point
-   Purpose: Export auth functions and middleware
-   Role: implementation
-   Exports: [authenticate, logout, middleware]
-```
-
-Based on results, user decides to read specific files instead of exploring blindly.
-
-### Session 3: Incremental Update
-
-Code changed, some files updated:
-
-```bash
-/scan --root=../my-project
-```
-
-Updates summaries - only re-analyzes changed code, preserves unchanged summaries.
-
----
-
-## Key Benefits
-
-✅ **Persistent**: Knowledge saved in `.knowledge/summaries.json`, available forever
-✅ **Cross-session**: Query instantly in any session, no re-exploration
-✅ **Team-shareable**: Commit to git, entire team reuses knowledge
-✅ **Incremental**: Re-scan updates summaries, doesn't start from scratch
-✅ **Token-efficient**: Query costs 100 tokens (vs 1000+ for re-exploration)
-✅ **Guided exploration**: Overview first, read selectively
-✅ **Wave-safe**: Large projects process in controlled waves, shows progress
+- Mid to larger projects (> 25 files)
+- Stable or legacy codebases (understanding complex structure)
+- Monorepos (navigating multiple systems)
+- Team projects (shared knowledge)
+- Multi-session work (persistent context)
+
+**It depends for:**
+- Small projects (<25 files): If most files are loaded each session the scan cost might not be worth it
+- Known locations: Just read the file directly
+- Change scope/frequency: Partial / full rewrites each session is to fast changing to create persistent knowledge
+
+**Breakeven analysis:**
+- Initial scan: 35k tokens (medium project)
+- Each successful query saves: 10k-15k tokens
+- **Breakeven**: After 3-4 successful queries
+- **Long-term**: Massive savings on recurring questions
 
 ---
 
@@ -382,50 +370,64 @@ Updates summaries - only re-analyzes changed code, preserves unchanged summaries
 ### "No knowledge found"
 Run `/scan` first to generate `.knowledge/summaries.json`
 
-### "CLI not found"
-Build the scripts: `cd scripts && npm run build`
+### "CLI not found" or "Module not found"
+Build the scripts:
+```bash
+cd scripts
+npm install
+npm run build
+```
 
 ### "No matches found"
-Try broader keywords, or check if `/scan` has completed
+- Try broader keywords
+- Check if scan completed successfully
+- Verify you're searching the right knowledge directory
 
-### Large project warnings
-Projects with 20+ batches show estimated time. Confirm to proceed.
-Processing happens in waves of 10-15 concurrent agents.
+### Query returns irrelevant results
+- Add more specific keywords
+- Use `--scope` to narrow to specific directory
+- Re-scan if summaries are outdated
 
-### How often should I re-scan?
-- Initial setup: Once per project
-- Maintenance: When significant code changes occur
-- Team sync: When pulling major updates from teammates
+### Large project taking too long
+- Scan only specific areas to incrementally build persistent knowledge
+
+### When should I re-scan?
+- After major code changes (new features, refactoring)
+- When query results show old `lastUpdated` dates
+- After pulling significant teammate updates
+- When summaries don't match your understanding
 
 ---
 
 ## Design Decisions
 
-**Why Persistent Storage?**
-- Knowledge carries across sessions automatically
-- No re-exploration overhead
-- Team can share project understanding via git
+**Why persistent storage?**
+- Knowledge persists across sessions automatically
+- No per-session re-exploration overhead
+- Team shares knowledge via git
 
-**Why Wave-based Parallel?**
-- 10-15 concurrent agents balances speed and stability
-- Still 10-15x faster than sequential
+**Why wave-based parallel processing?**
+- Max 10 concurrent agents balances speed and stability
+- Still 10x faster than sequential
 - Large projects don't overwhelm the system
-- Progress visible as waves complete
+- Progress tracking as waves complete
 
-**Why Incremental Scanning?**
-- Re-scanning entire project updates summaries efficiently
-- Changed files re-analyzed, unchanged files preserved
-- Knowledge accumulates over time as project evolves
+**Why semantic scoring?**
+- Finding files by purpose/functionality is more valuable than path matching
+- "Authentication logic" found even if directory isn't named "auth"
+- Developers think conceptually, not in exact keywords
 
-**Why Query-First Workflow?**
-- Overview before deep-diving (minimal tokens)
-- Guided exploration using knowledge base
-- Avoids expensive one-time Haiku searches
-- Team reuses previous session's discoveries
+**Why query-first workflow?**
+- Low-risk reconnaissance with massive upside
+- Failed queries cost little, successful queries save huge exploration effort
+- Guided exploration reduces context pollution
+- Team reuses discoveries from previous sessions
 
----
-
-Built with vanilla TypeScript, no external dependencies.
+**Why user-managed staleness?**
+- Developers know when their work area changed
+- Automatic staleness detection is complex and error-prone
+- Treats summaries like documentation - maintain or pay re-scan cost
+- Modification dates provide clear staleness signals
 
 ---
 
