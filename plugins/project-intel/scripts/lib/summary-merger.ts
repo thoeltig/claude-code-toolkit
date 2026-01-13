@@ -30,12 +30,16 @@ interface SummariesData {
 }
 
 export interface PartialSummaries {
-  directories?: {
-    [dirPath: string]: DirectorySummary;
-  };
-  files?: {
-    [filePath: string]: FileSummary;
-  };
+  directories: PartialDirectorySummary[];
+  files: PartialFileSummary[];
+}
+
+export interface PartialDirectorySummary extends DirectorySummary {
+  path: string; 
+}
+
+export interface PartialFileSummary extends FileSummary {
+  path: string; 
 }
 
 function getOrCreateSummaries(knowledgeDir: string): SummariesData {
@@ -76,16 +80,16 @@ export function mergeSummaries(scanDir: string, knowledgeDir: string, partialSum
 
   // Merge directories
   if (partialSummaries.directories) {
-    for (const [dirPath, dirSummary] of Object.entries(partialSummaries.directories)) {
+    for (const dirSummary of partialSummaries.directories) {
       if(dirSummary.technologies && dirSummary.technologies.length == 0) dirSummary.technologies = undefined;
 
-      summaries.directories[dirPath] = {
+      summaries.directories[dirSummary.path] = {
         ...dirSummary,
         lastUpdated: new Date().toISOString()
       };
     }
       
-    const scannedDirectoryPaths: Set<string> = new Set(Object.keys(partialSummaries.directories).map(x => path.join(baseDir, x)));
+    const scannedDirectoryPaths: Set<string> = new Set(partialSummaries.directories.map(x => path.join(baseDir, x.path)));
     for (const dirPath of Object.keys(summaries.directories)) {
       const absPath = path.join(baseDir, dirPath);
       if (absPath.startsWith(normalizedScanDir) && !scannedDirectoryPaths.has(absPath)) {
@@ -96,17 +100,17 @@ export function mergeSummaries(scanDir: string, knowledgeDir: string, partialSum
 
   // Merge files
   if (partialSummaries.files) {
-    for (const [filePath, fileSummary] of Object.entries(partialSummaries.files)) {
+    for (const fileSummary of partialSummaries.files) {
       if(fileSummary.exports && fileSummary.exports.length == 0) fileSummary.exports = undefined;
       if(fileSummary.imports && fileSummary.imports.length == 0) fileSummary.imports = undefined;
 
-      summaries.files[filePath] = {
+      summaries.files[fileSummary.path] = {
         ...fileSummary,
         lastUpdated: new Date().toISOString()
       };
     }
 
-    const scannedFilePaths: Set<string> = new Set(Object.keys(partialSummaries.files).map(x => path.join(baseDir, x)));
+    const scannedFilePaths: Set<string> = new Set(partialSummaries.files.map(x => path.join(baseDir, x.path)));
     for (const filePath of Object.keys(summaries.files)) {
       const absPath = path.join(baseDir, filePath);
       if (absPath.startsWith(normalizedScanDir) && !scannedFilePaths.has(absPath)) {

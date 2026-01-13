@@ -24,12 +24,14 @@ interface SummariesData {
     };
 }
 export interface PartialSummaries {
-    directories?: {
-        [dirPath: string]: DirectorySummary;
-    };
-    files?: {
-        [filePath: string]: FileSummary;
-    };
+    directories: PartialDirectorySummary[];
+    files: PartialFileSummary[];
+}
+export interface PartialDirectorySummary extends DirectorySummary {
+    path: string;
+}
+export interface PartialFileSummary extends FileSummary {
+    path: string;
 }
 export declare function mergeSummaries(scanDir: string, knowledgeDir: string, partialSummaries: PartialSummaries): SummariesData;
 export declare function getSummaries(knowledgeDir: string): SummariesData;

@@ -105,15 +105,15 @@ async function handleMerge() {
     }
 
     // Merge all files in order
-    const merged: any = { directories: {}, files: {} };
+    const merged: PartialSummaries = { directories: [], files: []};
 
     filesToMerge.forEach(filePath => {
-      const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      if (content.directories && typeof content.directories === 'object') {
-        Object.assign(merged.directories, content.directories);
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf8')) as PartialSummaries;
+      if (content.directories) {
+        merged.directories.push(...content.directories);
       }
-      if (content.files && typeof content.files === 'object') {
-        Object.assign(merged.files, content.files);
+      if (content.files) {
+        merged.files.push(...content.files);
       }
     });
 
@@ -121,7 +121,7 @@ async function handleMerge() {
       fs.mkdirSync(knowledgeDir, { recursive: true });
     }
 
-    const current = mergeSummaries(scanDir, knowledgeDir, merged as PartialSummaries);
+    const current = mergeSummaries(scanDir, knowledgeDir, merged);
 
     const result = {
       status: 'success',
