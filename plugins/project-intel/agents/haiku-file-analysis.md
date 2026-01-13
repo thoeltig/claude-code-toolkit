@@ -11,23 +11,11 @@ Analyze a batch of project files and generate structured summaries in JSON forma
 
 ## Input You'll Receive
 
-You will receive a batch object with:
+You will receive an output directory, a batch number and a list of files like:
 
-```json
-{
-  "batchNumber": 1,
-  "type": "files",
-  "items": [
-    {
-      "path": "path/to/file.ts",
-      "ext": ".ts",
-      "size": 2048,
-      "depth": 2,
-      "fullPath": "/full/absolute/path/to/file.ts",
-      "content": "... full file contents or [Binary file] or [Error reading file] ..."
-    }
-  ]
-}
+```
+"path/to/file1.ts"
+"path/to/file2.ts"
 ```
 
 ## File Analysis Task
@@ -36,21 +24,39 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 ```json
 {
-  "files": {
-    "path/to/file.ts": {
+  "directories": [
+     {
+      "path": "path/to",
+      "summary": "One sentence describing what the directory contains",
+      "purpose": "1-2 sentences explaining the directories's role and purpose in the project",
+      "technologies": ["usedTechnology1", "usedTechnology2"]
+    }
+  ],
+  "files": [
+     {
+      "path": "path/to/file1.ts",
       "summary": "One sentence describing what the file contains",
-      "purpose": "1-2 sentences explaining the file's role in the project",
+      "purpose": "1-2 sentences explaining the file's role and purpose in the project",
+      "role": "implementation",
+      "exports": ["exportName1", "exportName2"],
+      "imports": ["dependency1", "dependency2"]
+    },
+    {
+      "path": "path/to/file2.ts",
+      "summary": "One sentence describing what the file contains",
+      "purpose": "1-2 sentences explaining the file's role and purpose in the project",
       "role": "implementation",
       "exports": ["exportName1", "exportName2"],
       "imports": ["dependency1", "dependency2"]
     }
-  }
+  ]
 }
 ```
 
 **Field Requirements:**
+- **path**: The relative path to the file or directory
 - **summary**: One sentence describing what the file contains or implements
-- **purpose**: 1-2 sentences explaining the file's role in the broader project
+- **purpose**: 1-3 sentences explaining the file's role in the broader project
 - **role**: One of: "documentation", "implementation", "configuration", "test", "build", "script"
   - `documentation`: README, guides, markdown docs, SKILL.md
   - `implementation`: Source code files (*.ts, *.py, *.js)
@@ -58,17 +64,20 @@ For each file in the batch, **read its content** and generate this JSON structur
   - `test`: Test files (*test.*, *spec.*)
   - `build`: Build scripts, bundler configs
   - `script`: Utility scripts (bash, python scripts)
+- **technologies** (optional): 2-5 key technologies defined in file
 - **exports** (optional): 2-5 key exports/functions/classes defined in file
 - **imports** (optional): 2-5 key dependencies/imports used by file
 
 ## Process
 
-1. **Examine input batch** - Review file items, their content, metadata
-2. **Read file content** - Use the `content` field provided for each file
+1. **Examine input batch** - Review filepaths
+2. **Read file content** - Read each file
 3. **Classify role** - Determine file's role based on extension and content
+4. **Extract technologies** - Identify 2-5 key technologies from files in this directory
 4. **Extract exports** - Identify 2-5 key functions/classes/exports from content
 5. **Extract imports** - Identify 2-5 key dependencies from content
-6. **Generate summaries** - Create specific, focused summaries for each file
+6. **Generate summaries** - Create specific, focused summaries for each file and directory
+6. **Generate purpose** - Identify and create the broader role and purpose of each file and directory
 7. **Format as minified JSON** - No whitespace, single line
 8. **Write to file** - Use path `$KNOWLEDGE_DIR/haiku-batch-<N>.json` (N from batchNumber)
 
@@ -76,7 +85,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 **Format**: Valid minified JSON (no spaces, no pretty-printing)
 
-**Structure**: `{"files":{"path":{"summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}}}`
+**Structure**: `{"directories":[ {"path":"...","summary":"...","purpose":"...","technologies":[...]},{"path":"...","summary":"...","purpose":"...","technologies":[...]}],"files":[ {"path":"...","summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...] },{"path":"...","summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]},{"path":"...","summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}]}`
 
 **File Location**: Write to `$KNOWLEDGE_DIR/haiku-batch-<N>.json` where N is the batchNumber
 
@@ -86,20 +95,20 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 **Input File:**
 ```typescript
-// plugins/project-intel/scripts/lib/collectors/project-scanner.ts
+// plugins/project-intel/scripts/lib/project-scanner.ts
 // ... file content with scanProject function, FileInfo interface, etc ...
 ```
 
 **Output:**
 ```json
-{"files":{"plugins/project-intel/scripts/lib/collectors/project-scanner.ts":{"summary":"Walks filesystem to extract directory structure and file metadata for project analysis","purpose":"Collects raw project data including file paths, extensions, sizes, and directory structure needed for batching and analysis","role":"implementation","exports":["scanProject","ProjectData","FileInfo"],"imports":["fs","path"]}}}
+{"directories":[{"path":"plugins/project-intel/scripts/lib","summary":"Contains scripts for scanning the project files and directory structure and for processing the summarized results.","purpose":"Essential scripts used find all existing files in the project structure which are used in the batch analysing process. Also contains logic to aggregate and merge the analysed results into a summary which can be queried for information about the project.","technologies":["TypeScript"]}],"files":[{"path":"plugins/project-intel/scripts/lib/project-scanner.ts","summary":"Recursively walks filesystem extracting file metadata and statistics while filtering ignored directories and generating project structure.","purpose":"Collects raw project data including file paths, sizes, and extension counts needed for batching and analysis in the scan workflow.","role":"implementation","exports":["scanProject","FileInfo","RawProjectData"],"imports":["fs","path"]}]}
 ```
 
 ## Quality Guidelines
 
 - **Content-based**: Use file content to identify actual exports, imports, and purpose
 - **Specificity**: Summaries should be distinct and specific to each file
-- **Brevity**: Summaries one sentence, purposes 1-2 sentences max
+- **Brevity**: Summaries one sentence, purposes 1-3 sentences max
 - **Relevance**: Focus on technical details useful for searching later
 - **Accuracy**: Exports/imports should be actual identifiers from file, not guesses
 
@@ -108,17 +117,17 @@ For each file in the batch, **read its content** and generate this JSON structur
 - **Binary file**: If content is "[Binary file]", set role based on extension only
 - **Truncated file**: If content is "[... File truncated ...]", analyze available content
 - **Error reading**: If content is "[Error reading file: ...]", use path/extension to infer role
-- **Empty batch**: Output `{"files":{}}`
+- **Empty batch**: Output `{"directories":[{...}],"files":[{...}]}`
 
 ## CRITICAL: JSON Output Validation (Non-Negotiable)
 
 **BEFORE outputting any JSON, you MUST:**
 
-1. **Validate Structure**: Ensure output is `{"files":{...}}` with proper nesting
+1. **Validate Structure**: Ensure output is `{"directories":[{...}],"files":[{...}]}` with proper nesting
 2. **Check Braces**: Count opening `{` and closing `}` - must be equal
 3. **Verify Quotes**: All property names and string values must use double quotes `"`
 4. **Test Parseable**: Mentally parse the JSON - ensure NO trailing commas, NO unquoted keys
-5. **Check Completeness**: JSON must have closing `}}` - never output truncated JSON
+5. **Check Completeness**: JSON must have closing `}` - never output truncated JSON
 6. **Verify All Files**: Every file from input batch must appear in output files object
 7. **Test Output**: If you're unsure, rewrite the output completely rather than patch incomplete JSON
 
@@ -127,12 +136,6 @@ For each file in the batch, **read its content** and generate this JSON structur
 - Rewrite the entire output from scratch
 - Verify it's valid before returning
 - If a batch is incomplete, say so explicitly instead of returning broken JSON
-
-**Examples of INVALID outputs (never do this):**
-- `{"files":{"path":...` (missing closing braces)
-- `{"files":{"path":{...},` (trailing comma)
-- `{files:{...}}` (unquoted property names)
-- `{"files":{...}}}}` (extra closing braces)
 
 ## Success Criteria
 
