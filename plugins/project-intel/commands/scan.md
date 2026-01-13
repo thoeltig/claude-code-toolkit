@@ -9,14 +9,16 @@ allowed-tools: Read, Bash(node:*)
 Orchestrate a complete project scan followed by parallel Haiku file analysis to generate searchable summaries.
 
 **Parameters:**
-- `--location`: Folder paths to scan (default: current project directory)
-- `--knowledgeDir`: Project knowledge directory (default: .knowledge in current directory)
+- `--location`: Folder to analyze (default: current working directory)
+- `--knowledgeDir`: Where to store summaries.json (default: .knowledge/ in current working directory)
+  **Note:** This is NOT relative to --location. Specify full path to use a shared knowledge directory.
 
 **Usage Examples:**
 - `/scan` - Full scan of current project
 - `/scan --location=../my-project` - Full scan of specific project
 - `/scan --location=/absolute/path/to/project` - Use absolute path
-- `/scan --knowledgeDir=../.knowledge` - Full scan and output to specific knowledge directory
+- `/scan --knowledgeDir=../.knowledge` - Full scan with custom knowledge directory
+- `/scan --location=./plugins --knowledgeDir=./.knowledge` - Scan plugins folder, store knowledge at repo root (recommended for monorepos)
 
 **Process:**
 1. Scan provided folder path (metadata only) by script
