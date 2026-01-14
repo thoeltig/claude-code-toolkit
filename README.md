@@ -27,6 +27,7 @@ Then install any plugin:
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.1.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
+| **[project-intel](./plugins/project-intel/)** | Lightweight reconnaissance system that provides semantic direction before code exploration with persistent knowledge across sessions | 1.0.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -73,6 +74,18 @@ Download complete page content as markdown to filesystem for repeated analysis a
 Get alerted when Claude Code tasks complete or hook events occur with native system notifications. Works seamlessly on Windows, macOS, and Linux with automatic fallback to console output.
 
 **Install:** `/plugin install cross-platform-notification@claude-code-toolkit`
+
+### Project Intel
+Lightweight reconnaissance system that provides semantic direction before expensive code exploration. Query first to get a ranked list of relevant files - saves exploration tokens and reduces context pollution.
+
+- **`/scan` command**: Generate semantic summaries of project structure once, reuse forever
+- **`/query` command**: Search summaries by semantic relevance to find relevant files without reading them
+- Wave-based parallel processing with persistent cross-session knowledge
+- Semantic scoring on purpose, role, exports, imports, and technologies
+- Breakeven analysis: Saves 10k-20k tokens after 3-4 successful queries
+- Best for mid to large projects (25+ files), stable codebases, team projects
+
+**Install:** `/plugin install project-intel@claude-code-toolkit`
 
 ## 📚 Documentation
 

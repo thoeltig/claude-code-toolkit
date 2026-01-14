@@ -7,7 +7,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-## [1.0.0.0] - 2026-01-13
+## [1.0.0.0] - 2026-01-14
 
 _First release: Lightweight reconnaissance system for directed code exploration._
 
@@ -31,7 +31,6 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Support for semantic matching on conceptual terms, not just keywords
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
-- Support for Read, Write, Edit, Glob, Grep and Task tools
 
 [unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.0.0.0...HEAD
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.0.0.0
