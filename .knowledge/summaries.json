@@ -1,0 +1,2473 @@
+{
+  "generated": "2026-01-13T23:59:24.089Z",
+  "directories": {
+    ".": {
+      "summary": "Claude Code plugin toolkit root containing plugin ecosystem, documentation, and configuration",
+      "purpose": "Main project directory housing multiple Claude Code plugins with shared infrastructure",
+      "technologies": [
+        "Plugin System",
+        "Markdown",
+        "JSON",
+        "Git",
+        "Knowledge Base System"
+      ],
+      "lastUpdated": "2026-01-09T00:00:00Z"
+    },
+    "plugins/changelog": {
+      "path": "plugins/changelog",
+      "summary": "Contains the changelog plugin for creating and maintaining CHANGELOG.md files following standard formats.",
+      "purpose": "Provides a comprehensive skill (managing-changelog) for managing project changelog documentation with support for Common Changelog and Keep a Changelog formats, including workflows for creation, updates, validation, and prerelease promotion.",
+      "technologies": [
+        "Markdown",
+        "Semantic Versioning",
+        "Common Changelog",
+        "Keep a Changelog"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.474Z"
+    },
+    "plugins/changelog/skills/managing-changelog": {
+      "path": "plugins/changelog/skills/managing-changelog",
+      "summary": "Contains the managing-changelog skill definition and documentation for changelog management workflows.",
+      "purpose": "Implements the core skill for users to create, update, and maintain CHANGELOG.md files with quality assurance and validation, following industry-standard formats with 5 core workflows.",
+      "technologies": [
+        "YAML",
+        "Markdown"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities": {
+      "path": "plugins/claude-code-capabilities",
+      "summary": "Contains the claude-code-capabilities plugin with multiple skills for managing Claude Code features and capabilities.",
+      "purpose": "Provides comprehensive management capabilities for all Claude Code features including agent skills, hooks, plugins, MCPs, subagents, prompts, and slash commands with detailed workflows and supporting documentation.",
+      "technologies": [
+        "Markdown",
+        "YAML",
+        "Python",
+        "TypeScript"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills",
+      "summary": "Contains comprehensive documentation for creating, analyzing, updating and improving Claude Code agent skills.",
+      "purpose": "Provides guidance and workflows for managing the full lifecycle of agent skills including creation, analysis, improvement, and maintenance. Includes best practices, templates, and validation checklists for skill authoring.",
+      "technologies": [
+        "YAML",
+        "Markdown",
+        "Skills Framework"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/templates": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/templates",
+      "summary": "Contains templates for creating new agent skills with proper structure and formatting.",
+      "purpose": "Provides standardized templates that guide users through skill creation with proper YAML frontmatter, sections, and documentation patterns to ensure consistency.",
+      "technologies": [
+        "Markdown",
+        "YAML",
+        "Templates"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks",
+      "summary": "Contains comprehensive documentation and examples for managing Claude Code hooks including configuration guides, real-world examples, security checklists, templates, and prompt-based hook implementations.",
+      "purpose": "Provides complete skill-based guidance for creating, analyzing, updating, and securing hooks across all 9 event types with practical examples, templates, and security validation requirements.",
+      "technologies": [
+        "Claude Code Hooks",
+        "Bash",
+        "Python",
+        "JSON",
+        "MCP Protocol"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples",
+      "summary": "Contains practical implementation examples demonstrating MCP tool targeting, plugin-based hooks, and prompt-based decision-making for common hook scenarios.",
+      "purpose": "Provides ready-to-use examples and patterns for specific hook use cases including security validation, audit logging, and intelligent decision-making.",
+      "technologies": [
+        "JSON",
+        "Bash",
+        "Python",
+        "Claude Haiku LLM"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/templates": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/templates",
+      "summary": "Contains template configurations and scripts for implementing hook system before and after tool execution.",
+      "purpose": "Provides boilerplate code and configuration examples for users to create custom hooks that intercept Claude Code operations.",
+      "technologies": [
+        "JSON",
+        "Python",
+        "Bash"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps",
+      "summary": "Comprehensive skill documentation for creating, analyzing, configuring, and managing Model Context Protocol (MCP) servers for Claude Code integration.",
+      "purpose": "Provides systematic guidance for evaluating whether logic should become an MCP, creating new MCP servers, analyzing existing implementations, configuring connections, and using MCPs in conversations. Serves as the central reference for MCP management workflows including security best practices, OAuth authentication, and plugin bundling patterns.",
+      "technologies": [
+        "Model Context Protocol",
+        "TypeScript",
+        "Python",
+        "Node.js",
+        "OAuth 2.0"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-plugins": {
+      "path": "plugins/claude-code-capabilities/skills/managing-plugins",
+      "summary": "Documentation and specifications for plugin creation, bundling, marketplace configuration, validation, and distribution workflows.",
+      "purpose": "Comprehensive guidance for developers on how to create, package, and distribute Claude Code plugins with proper manifest configuration and team distribution patterns. Includes validation rules, testing procedures, and pre-distribution checklists to ensure plugin quality.",
+      "technologies": [
+        "Plugin Architecture",
+        "Semantic Versioning",
+        "JSON Configuration",
+        "Marketplace Management",
+        "Git Distribution"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts",
+      "summary": "Comprehensive documentation for prompt engineering techniques, patterns, and best practices optimized for Claude 4.5.",
+      "purpose": "Provides skill-based guidance for creating, analyzing, optimizing, and implementing effective prompts including guardrails, context management, and advanced patterns. Serves as reference material for understanding prompt engineering principles and applying techniques systematically.",
+      "technologies": [
+        "Prompt Engineering",
+        "Claude 4.5",
+        "LLM Optimization"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands",
+      "summary": "Complete guides for designing, implementing, and optimizing slash commands with best practices and real-world examples.",
+      "purpose": "Delivers practical guidance for creating effective slash commands including naming conventions, argument handling, security considerations, and extensive examples. Enables users to build custom command workflows with proper validation and execution patterns.",
+      "technologies": [
+        "Slash Commands",
+        "Bash Integration",
+        "CLI Design"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents",
+      "summary": "Contains comprehensive documentation and patterns for analyzing, creating, and managing subagent configurations for task delegation and automation.",
+      "purpose": "Provides systematic guidance for determining when to use subagents, evaluating agent effectiveness, creating specialized agents, and optimizing agent configurations. Includes decision matrices, improvement patterns, and real-world examples for multi-agent orchestration and permission management.",
+      "technologies": [
+        "Subagent Architecture",
+        "Task Delegation",
+        "Prompt Engineering",
+        "Multi-Agent Patterns",
+        "Permission Management"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/cross-platform-notification": {
+      "path": "plugins/cross-platform-notification",
+      "summary": "Contains a Claude Code plugin that sends native system notifications for Claude Code events across Windows, macOS, and Linux.",
+      "purpose": "Provides real-time desktop notifications for Claude Code events with platform-specific implementations and automatic fallback to console output.",
+      "technologies": [
+        "Python",
+        "PowerShell",
+        "terminal-notifier",
+        "notify-send"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/cross-platform-notification/hooks": {
+      "path": "plugins/cross-platform-notification/hooks",
+      "summary": "Defines hook configuration for the cross-platform notification plugin.",
+      "purpose": "Registers the notification hook that intercepts Claude Code events and triggers the notification script.",
+      "technologies": [
+        "JSON",
+        "Claude Code hooks"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/cross-platform-notification/scripts": {
+      "path": "plugins/cross-platform-notification/scripts",
+      "summary": "Contains the Python script that implements cross-platform system notifications.",
+      "purpose": "Executes the notification logic triggered by Claude Code hooks, handling platform detection and fallback mechanisms.",
+      "technologies": [
+        "Python"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/fetch-full-content": {
+      "path": "plugins/fetch-full-content",
+      "summary": "Plugin for downloading full webpage content and converting to markdown with caching capabilities.",
+      "purpose": "Provides complete content retrieval from URLs without information loss through summarization, stores cached files for reuse across sessions, and offers advantages over built-in WebFetch for documentation and specification analysis.",
+      "technologies": [
+        "Python",
+        "BeautifulSoup",
+        "Markdownify",
+        "Playwright",
+        "Requests"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/fetch-full-content/scripts": {
+      "path": "plugins/fetch-full-content/scripts",
+      "summary": "Contains Python scripts for downloading and cleaning HTML content from web pages.",
+      "purpose": "Implements the core functionality for fetching URLs, removing navigation/ads, and converting HTML to clean markdown format with JavaScript rendering support.",
+      "technologies": [
+        "Python",
+        "Playwright",
+        "BeautifulSoup",
+        "Markdownify"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/session-protocol": {
+      "path": "plugins/session-protocol",
+      "summary": "Plugin providing token-optimized session continuity management and context preservation across Claude Code conversations.",
+      "purpose": "Enables seamless context preservation across Claude Code sessions through structured JSON state management. Captures pending tasks, completed work, architectural decisions, and critical findings allowing users to continue exactly where they left off.",
+      "technologies": [
+        "JSON",
+        "Git",
+        "Python",
+        "TypeScript"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/session-protocol/commands": {
+      "path": "plugins/session-protocol/commands",
+      "summary": "Contains command documentation for session protocol management operations.",
+      "purpose": "Provides user-facing command documentation for saving and loading session context in the session-protocol plugin.",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/session-protocol/hooks": {
+      "path": "plugins/session-protocol/hooks",
+      "summary": "Contains hook configuration for automatically detecting existing session protocol on session start.",
+      "purpose": "Provides SessionStart hook that auto-detects existing session-protocol.json files and notifies Claude to prompt users to load previous session context.",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/session-protocol/scripts": {
+      "path": "plugins/session-protocol/scripts",
+      "summary": "Contains Python scripts for session protocol automation and validation.",
+      "purpose": "Implements session start hooks and protocol validation to provide automatic session awareness without user intervention.",
+      "technologies": [
+        "Python"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/session-protocol/skills": {
+      "path": "plugins/session-protocol/skills",
+      "summary": "Contains core skill documentation for managing session continuity workflows.",
+      "purpose": "Documents the session state management logic and workflows for saving and loading context across sessions.",
+      "technologies": [
+        "Markdown",
+        "JSON"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/project-intel/agents": {
+      "path": "plugins/project-intel/agents",
+      "summary": "Contains agent definitions for parallel file analysis using Haiku subagents.",
+      "purpose": "Defines the haiku-file-analysis agent specification that executes batch analysis tasks to generate structured JSON summaries of project files and directories.",
+      "technologies": [
+        "YAML",
+        "Markdown"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/project-intel/commands": {
+      "path": "plugins/project-intel/commands",
+      "summary": "Slash command definitions for project-intel plugin operations.",
+      "purpose": "Provides user-facing command interfaces for scanning projects, querying summaries, and controlling the project intelligence workflow through declarative markdown specifications.",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/project-intel/scripts": {
+      "path": "plugins/project-intel/scripts",
+      "summary": "Contains CLI scripts and utilities for scanning projects, merging Haiku summaries, and querying the knowledge base.",
+      "purpose": "Central hub for the project reconnaissance system that enables scanning project structures, aggregating batch analysis results, and searching project summaries with semantic scoring.",
+      "technologies": [
+        "TypeScript",
+        "Node.js",
+        "CLI"
+      ],
+      "lastUpdated": "2026-01-13T23:59:24.087Z"
+    },
+    "plugins/project-intel/scripts/lib": {
+      "path": "plugins/project-intel/scripts/lib",
+      "summary": "Contains library modules for filesystem scanning and summary merging operations.",
+      "purpose": "Core logic library providing reusable functions for project structure analysis and knowledge base persistence.",
+      "technologies": [
+        "TypeScript",
+        "Filesystem Operations",
+        "Data Merging"
+      ],
+      "lastUpdated": "2026-01-13T23:59:24.088Z"
+    },
+    "plugins/documentation": {
+      "path": "plugins/documentation",
+      "summary": "Comprehensive documentation management plugin with skills and workflows for creating and maintaining high-quality project documentation.",
+      "purpose": "Provides structured guidance for documentation creation, updates, validation, and agile documentation principles with emphasis on clarity, accessibility, and inclusivity.",
+      "technologies": [
+        "Markdown",
+        "Documentation best practices",
+        "Agile methodology"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/documentation/skills/managing-documentation": {
+      "path": "plugins/documentation/skills/managing-documentation",
+      "summary": "Contains the managing-documentation skill file defining documentation workflows and standards.",
+      "purpose": "Defines a comprehensive skill for creating, updating, and validating project documentation following industry best practices.",
+      "technologies": [
+        "Markdown",
+        "ARID principles",
+        "Documentation patterns"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    },
+    "plugins/project-intel": {
+      "path": "plugins/project-intel",
+      "summary": "Lightweight reconnaissance system for semantic project exploration with file summaries and intelligent querying.",
+      "purpose": "Provides persistent knowledge of project structure for fast cross-session queries, enables guided exploration through semantic search without expensive blind file reading, and maintains project understanding as code evolves.",
+      "technologies": [
+        "TypeScript",
+        "Node.js",
+        "JSON",
+        "Semantic Scoring"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.475Z"
+    }
+  },
+  "files": {
+    "CHANGELOG.md": {
+      "summary": "Complete version history documenting all releases from v1.0.0.0 to v1.10.0.0 with detailed feature additions, changes, and fixes for Claude Code Toolkit marketplace plugins",
+      "purpose": "Tracks all changes across marketplace releases, plugin updates, and feature introductions using Common Changelog and Semantic Versioning standards. Provides users and developers with comprehensive release notes and version history.",
+      "role": "documentation",
+      "exports": [
+        "v1.10.0.0",
+        "v1.9.0.0",
+        "v1.8.1.0",
+        "v1.8.0.0",
+        "v1.7.0.0",
+        "v1.6.0.0",
+        "v1.5.0.0",
+        "v1.4.0.0"
+      ],
+      "imports": [
+        "Common Changelog",
+        "Keep a Changelog",
+        "Semantic Versioning"
+      ],
+      "lastUpdated": "2026-01-09T14:21:50.890Z"
+    },
+    "CODE_OF_CONDUCT.md": {
+      "summary": "Contributor Covenant Code of Conduct defining community standards, enforcement guidelines, and correction procedures for inappropriate behavior in the Claude Code Toolkit community",
+      "purpose": "Establishes expectations for respectful participation, outlines consequences for violations, and provides clear processes for reporting and addressing code of conduct violations. Ensures a welcoming and inclusive community environment.",
+      "role": "documentation",
+      "exports": [
+        "Our Pledge",
+        "Our Standards",
+        "Enforcement Responsibilities",
+        "Enforcement Guidelines",
+        "Scope",
+        "Attribution"
+      ],
+      "imports": [
+        "Contributor Covenant v2.0",
+        "Mozilla diversity"
+      ],
+      "lastUpdated": "2026-01-09T14:21:50.891Z"
+    },
+    "CONTRIBUTING.md": {
+      "summary": "Guidelines for contributing to the Claude Code Toolkit marketplace, including scope, bug reporting, enhancement suggestions, development standards, and pull request process",
+      "purpose": "Provides clear contribution guidelines focusing on bug fixes and enhancements to existing plugins. Defines plugin structure, naming conventions, code standards, and the PR review process for external contributors.",
+      "role": "documentation",
+      "exports": [
+        "How Can I Contribute",
+        "Reporting Bugs",
+        "Suggesting Enhancements",
+        "Development Guidelines",
+        "Pull Request Process",
+        "Code Standards"
+      ],
+      "imports": [
+        "Keep a Changelog",
+        "plugin.json",
+        "YAML frontmatter"
+      ],
+      "lastUpdated": "2026-01-09T14:21:50.891Z"
+    },
+    "LICENSE": {
+      "summary": "MIT License providing open-source software permissions and copyright notice for Thore Höltig's Claude Code Toolkit",
+      "purpose": "Grants permission to use, modify, and distribute the software under MIT license terms while limiting liability. Establishes legal framework for public use and redistribution.",
+      "role": "documentation",
+      "exports": [
+        "MIT License",
+        "Copyright (c) 2025",
+        "Permission granted"
+      ],
+      "imports": [],
+      "lastUpdated": "2026-01-09T14:21:50.891Z"
+    },
+    "README.md": {
+      "summary": "Main project documentation for Claude Code Toolkit marketplace featuring quick start, plugin listings, feature highlights, installation instructions, and version history links",
+      "purpose": "Serves as the primary entry point for users discovering the marketplace. Documents available plugins, their capabilities, installation procedures, and links to detailed documentation and contribution guidelines.",
+      "role": "documentation",
+      "exports": [
+        "Quick Start",
+        "Available Plugins",
+        "Plugin Highlights",
+        "Documentation",
+        "Contributing",
+        "License"
+      ],
+      "imports": [
+        "changelog plugin",
+        "session-protocol plugin",
+        "claude-code-capabilities plugin",
+        "fetch-full-content plugin",
+        "cross-platform-notification plugin",
+        "project-intel plugin"
+      ],
+      "lastUpdated": "2026-01-09T14:21:50.891Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/optimization-strategies.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/optimization-strategies.md",
+      "summary": "Before/after examples demonstrating specific optimizations for context reduction, quality improvement, hallucination prevention, and caching.",
+      "purpose": "Provides concrete examples of prompt optimization techniques with quantified improvements including token reductions, quality gains, and implementation strategies.",
+      "role": "documentation",
+      "exports": [
+        "Context Reduction Optimization",
+        "Quality Improvement Optimization",
+        "Hallucination Reduction Optimization",
+        "Caching Implementation Optimization",
+        "Prompt Splitting Optimization",
+        "Combined Optimization Example",
+        "Optimization Examples 1-11"
+      ],
+      "imports": [
+        "Token reduction techniques",
+        "Caching patterns",
+        "Prompt splitting strategies"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/output-formats.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/output-formats.md",
+      "summary": "XML templates for structured documentation of prompt analysis, optimization, creation, extraction decisions, and migration reports.",
+      "purpose": "Provides standardized output templates for systematic documentation of prompt engineering work including analysis reports, optimization reports, and migration reports.",
+      "role": "documentation",
+      "exports": [
+        "Analysis Report Template",
+        "Optimization Report Template",
+        "Extraction Decision Template",
+        "Creation Summary Template",
+        "Migration Report Template",
+        "Template Usage Guide"
+      ],
+      "imports": [
+        "XML structure",
+        "Workflow integration patterns"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/prompt-chaining-architecture.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/prompt-chaining-architecture.md",
+      "summary": "Documents multi-prompt orchestration patterns including linear, parallel, hierarchical, and specialized chaining workflows with handoff strategies.",
+      "purpose": "Explains when and how to structure complex tasks across multiple sequential or parallel prompts rather than single prompts. Provides architectural patterns, XML-based handoff mechanisms, orchestration strategies, and common workflows for research, content creation, and data processing.",
+      "role": "documentation",
+      "exports": [
+        "Linear Sequential Pattern",
+        "Parallel Independent Pattern",
+        "Hierarchical Orchestration Pattern",
+        "Self-Correction Chain",
+        "Escalation Chain",
+        "Verification Loop"
+      ],
+      "imports": [
+        "Chain-of-thought reasoning",
+        "Extended thinking patterns",
+        "Prompt optimization techniques"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/quick-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/quick-reference.md",
+      "summary": "Fast validation checklists, common issues with solutions, and decision trees for rapid prompt engineering assessment.",
+      "purpose": "Provides quick diagnosis tools for evaluating and improving prompts including symptom-to-fix mappings, severity assessment guides, decision matrices for technique selection, and context optimization quick wins. Enables rapid prompt validation and issue resolution.",
+      "role": "documentation",
+      "exports": [
+        "Quick Validation Checklist",
+        "Common Issues Diagnosis",
+        "Fast Decision Trees",
+        "Severity Assessment Guide",
+        "Technique Selection Matrix",
+        "Context Optimization Quick Wins"
+      ],
+      "imports": [
+        "Prompt validation principles",
+        "Optimization techniques",
+        "Best practice patterns"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/SKILL.md",
+      "summary": "Skill navigation guide describing workflows for analyzing, creating, optimizing, and updating prompts with reference system.",
+      "purpose": "Acts as index and workflow guide for the managing-prompts skill, directing users to appropriate techniques and supporting files based on their task. Organizes five core workflows (analysis, creation, optimization, migration, extraction decision) with quick reference system and Claude 4.5-specific guidance.",
+      "role": "documentation",
+      "exports": [
+        "Workflow 1:Analyzing Existing Prompts",
+        "Workflow 2:Creating New Prompts",
+        "Workflow 3:Optimizing Existing Prompts",
+        "Workflow 4:Updating Outdated Prompts",
+        "Workflow 5:Deciding Logic Extraction"
+      ],
+      "imports": [
+        "Technique reference patterns",
+        "Output format templates",
+        "Guardrails implementation"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/technique-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/technique-reference.md",
+      "summary": "Indexed prompt engineering techniques organized by use case with quick lookup tables and application patterns.",
+      "purpose": "Provides indexed reference for 15+ prompt engineering techniques (clarity, hallucination prevention, consistency, reasoning, structure, context optimization, security) with lookup tables, application patterns, combinations, and anti-patterns. Enables technique selection flowchart-driven prompt design.",
+      "role": "documentation",
+      "exports": [
+        "Explicit instructions",
+        "Quote-grounding",
+        "Structured Outputs",
+        "Extended thinking",
+        "Role prompting",
+        "Prompt caching",
+        "Chain-of-thought"
+      ],
+      "imports": [
+        "Guardrails implementation patterns",
+        "Architecture patterns",
+        "Context optimization strategies"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/argument-patterns.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/argument-patterns.md",
+      "summary": "Comprehensive guide to argument handling patterns for slash commands including types, validation, and best practices.",
+      "purpose": "Describes argument patterns for slash commands including no arguments, single $ARGUMENTS, positional $1-$9 arguments, and validation approaches. Provides decision framework, common patterns by use case, validation strategies, documentation practices, and troubleshooting for argument-related issues.",
+      "role": "documentation",
+      "exports": [
+        "No Arguments Pattern",
+        "Single Variable Argument ($ARGUMENTS)",
+        "Positional Arguments ($1-$9)",
+        "Pattern 1:PR Number",
+        "Pattern 2:File Path",
+        "Pattern 3:Multiple Files",
+        "Pattern 4:Topic or Query"
+      ],
+      "imports": [
+        "Command validation patterns",
+        "File reference conventions",
+        "Error handling strategies"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/best-practices.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/best-practices.md",
+      "summary": "Comprehensive best practices for naming, prompting, frontmatter, bash execution, and command organization.",
+      "purpose": "Establishes standards for slash command development including lowercase hyphenated naming, explicit direct prompts with XML structure, proper frontmatter usage, secure bash restrictions, file reference patterns, and testing checklists. Includes common mistakes and solutions, extended thinking guidance, and performance considerations.",
+      "role": "documentation",
+      "exports": [
+        "Command Naming Rules",
+        "Prompt Content Guidelines",
+        "YAML Frontmatter Fields",
+        "Bash Execution Patterns",
+        "File Reference Patterns",
+        "Testing Checklist"
+      ],
+      "imports": [
+        "Managing prompts skill reference",
+        "Claude best practices",
+        "Security considerations"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/creation-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/creation-guide.md",
+      "summary": "Step-by-step guide for creating slash commands with decision matrix, five-phase creation process, and validation checklists.",
+      "purpose": "Walks through command creation from planning through testing including purpose definition, argument determination, bash assessment, name selection, prompt design, frontmatter planning, file implementation, syntax validation, and comprehensive testing. Provides decision matrix for command vs. skill selection and common patterns with real examples.",
+      "role": "documentation",
+      "exports": [
+        "Decision Matrix:Command vs. Skill",
+        "Phase 1:Planning",
+        "Phase 2:Design",
+        "Phase 3:Implementation",
+        "Phase 4:Validation",
+        "Phase 5:Testing"
+      ],
+      "imports": [
+        "Slash command best practices",
+        "Argument handling patterns",
+        "File naming conventions"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/examples.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/examples.md",
+      "summary": "Annotated real-world examples of slash commands demonstrating effective patterns, improvements, and anti-patterns to avoid.",
+      "purpose": "Provides 8 detailed command examples (simple analysis, PR review, model validation, strategic brief, security scan, research, file comparison, extended thinking) with analysis of strengths/weaknesses, improved versions, and anti-patterns to avoid. Shows progression from basic to complex commands with learning takeaways.",
+      "role": "documentation",
+      "exports": [
+        "Example 1:Simple Analysis Command",
+        "Example 2:PR Review with GitHub Integration",
+        "Example 3:Model Validation Command",
+        "Example 4:Strategic Brief Generation",
+        "Example 5:File-Specific Analysis",
+        "Example 6:Research Command"
+      ],
+      "imports": [
+        "Best practices patterns",
+        "Command creation patterns",
+        "Extended thinking techniques"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/SKILL.md",
+      "summary": "Comprehensive skill documentation covering slash command creation workflows, validation, analysis, and integration with other skills.",
+      "purpose": "Defines the managing-slash-commands skill scope, including core workflows for creating new commands, analyzing existing ones, deciding between commands and skills, updating outdated commands, and tool usage patterns. Includes quick validation checklist and troubleshooting guide.",
+      "role": "documentation",
+      "exports": [
+        "managing-slash-commands",
+        "Workflow 1:Creating a New Slash Command",
+        "Workflow 2:Analyzing Existing Slash Commands",
+        "Workflow 3:Suggesting Command vs. Skill Conversion",
+        "Workflow 4:Updating Outdated Slash Commands"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/slashcommand-tool-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/slashcommand-tool-reference.md",
+      "summary": "Advanced reference documentation for SlashCommand tool, plugin commands, and MCP command integration patterns.",
+      "purpose": "Provides detailed specification of programmatic command invocation via SlashCommand tool, plugin command distribution and namespacing, MCP command discovery and usage, and decision framework for choosing appropriate command architecture.",
+      "role": "documentation",
+      "exports": [
+        "SlashCommand Tool",
+        "Plugin Commands",
+        "MCP Commands",
+        "Comparing Command Types",
+        "Choosing Command Architecture"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/validation-checklist.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/validation-checklist.md",
+      "summary": "Comprehensive 11-phase validation framework covering file structure, YAML syntax, prompt content, arguments, bash execution, security, integration, and testing.",
+      "purpose": "Provides systematic validation methodology with quick (5 min) and comprehensive (15-20 min) checklists for ensuring slash commands are correct, secure, and effective. Includes common issues, troubleshooting, and severity-based sign-off criteria.",
+      "role": "documentation",
+      "exports": [
+        "Quick Validation",
+        "Comprehensive Validation",
+        "Validation Workflow",
+        "Common Issues and Fixes",
+        "Sign-Off Criteria"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-slash-commands/templates/command-template.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/templates/command-template.md",
+      "summary": "Provides reusable markdown templates for different types of slash command implementations with customization checklists.",
+      "purpose": "Supplies ready-to-use templates for minimal, standard, argument-based, bash-executing, and complex structured commands. Guides users through template selection based on requirements and provides validation checklist before saving.",
+      "role": "documentation",
+      "exports": [
+        "Template:Minimal Command",
+        "Template:Standard Command",
+        "Template:Command with Arguments",
+        "Template:Command with Bash Execution",
+        "Template:Complex Command with Structure"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/agents-command-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/agents-command-guide.md",
+      "summary": "Interactive guide for managing subagents through the /agents command interface with full menu-based configuration capabilities.",
+      "purpose": "Documents the /agents command interface for viewing, creating, editing, and deleting subagents with visual tool selection. Explains tool management, best practices for command versus file management, and workflow for creating agents interactively.",
+      "role": "documentation",
+      "exports": [
+        "/agents Interface",
+        "View All Available Subagents",
+        "Create New Subagent",
+        "Edit Existing Custom Subagents",
+        "Delete Custom Subagents",
+        "Inspect Subagent Configuration"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/analysis-framework.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/analysis-framework.md",
+      "summary": "Systematic 8-phase framework for evaluating subagent effectiveness including configuration parsing, description quality, name appropriateness, and issue categorization.",
+      "purpose": "Provides comprehensive methodology for analyzing existing subagents across configuration, description quality, naming, system prompt effectiveness, tool configuration, model selection, and effectiveness patterns. Includes assessment output format and time-sensitive content detection.",
+      "role": "documentation",
+      "exports": [
+        "Analysis Process",
+        "Phase 1:Configuration Parsing",
+        "Phase 2:Description Quality Assessment",
+        "Phase 3:Name Appropriateness",
+        "Phase 4:System Prompt Evaluation",
+        "Phase 5:Tool Configuration Analysis",
+        "Phase 6:Model Selection Evaluation",
+        "Phase 7:Effectiveness Pattern Recognition",
+        "Phase 8:Issue Categorization"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/cli-configuration.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/cli-configuration.md",
+      "summary": "Documentation for dynamically defining subagents via CLI --agents flag without saving agent files.",
+      "purpose": "Explains CLI-based agent definition using JSON syntax for session-specific agents, automation scripts, and testing. Includes complete examples, escaping guide, and workflow for testing agents via CLI before promoting to permanent files.",
+      "role": "documentation",
+      "exports": [
+        "Basic Syntax",
+        "JSON Format",
+        "Use Cases",
+        "Complete Example",
+        "Multi-Agent CLI Configuration",
+        "Workflow:From Testing to File",
+        "Best Practices"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/configuration-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/configuration-reference.md",
+      "summary": "Complete field reference guide for all available YAML frontmatter fields in subagent configuration files.",
+      "purpose": "Provides comprehensive documentation of required fields (name, description) and optional fields (tools, model, permissionMode, skills) with examples, validation rules, and migration guidance for subagent configuration.",
+      "role": "documentation",
+      "exports": [
+        "name",
+        "description",
+        "tools",
+        "model",
+        "permissionMode",
+        "skills",
+        "Complete Configuration Example",
+        "Field Priority"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/decision-matrix.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/decision-matrix.md",
+      "summary": "Scoring framework for evaluating when to use subagents versus direct tool calls across 5 decision dimensions.",
+      "purpose": "Provides quantitative decision criteria (0-10 point scoring system) for task complexity, context preservation, parallelization opportunity, focus requirements, and iteration depth to determine optimal execution strategy.",
+      "role": "documentation",
+      "exports": [
+        "Scoring Framework",
+        "Context Preservation Criteria",
+        "Task Complexity Criteria",
+        "Parallelization Scoring",
+        "Focus Requirement Scoring",
+        "Iteration Depth Scoring",
+        "Score Interpretation Guide",
+        "Built-in Agent Selection",
+        "Decision Tree Summary"
+      ],
+      "imports": [
+        "Decision Framework",
+        "Agent Selection Patterns",
+        "Edge Cases and Special Considerations"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/example-subagents.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/example-subagents.md",
+      "summary": "Three production-ready subagent reference implementations demonstrating best practices for agent structure, descriptions, and workflows.",
+      "purpose": "Provides concrete templates for code-reviewer, debugger, and data-scientist agents that can be adapted for similar specialized agents, showing proper configuration, activation patterns, and output formatting.",
+      "role": "documentation",
+      "exports": [
+        "Code Reviewer Agent",
+        "Debugger Agent",
+        "Data Scientist Agent",
+        "Reference Pattern",
+        "Adaptation Patterns"
+      ],
+      "imports": [
+        "Agent Configuration Structure",
+        "Workflow Design",
+        "Output Format Specification"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/improvement-patterns.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/improvement-patterns.md",
+      "summary": "Seventeen optimization patterns for enhancing subagent descriptions, system prompts, tool configurations, and model selection.",
+      "purpose": "Describes specific improvements to agent discoverability, clarity, and efficiency through pattern-based optimization of descriptions, system prompts, tool restrictions, and model choices with practical before/after examples.",
+      "role": "documentation",
+      "exports": [
+        "Description Optimization Patterns",
+        "System Prompt Enhancement Patterns",
+        "Tool Configuration Optimization Patterns",
+        "Model Selection Optimization Patterns",
+        "Combined Optimization Examples",
+        "Quick Reference Matrix"
+      ],
+      "imports": [
+        "Improvement Methodology",
+        "Pattern Classification",
+        "Implementation Examples"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/multi-agent-patterns.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/multi-agent-patterns.md",
+      "summary": "Advanced patterns for coordinating multiple subagents through parallel and sequential orchestration strategies.",
+      "purpose": "Provides guidance for identifying parallelization opportunities, designing sequential chains, optimizing resource usage, and balancing performance factors when using multiple agents together.",
+      "role": "documentation",
+      "exports": [
+        "Parallel Execution Patterns",
+        "Sequential Chain Patterns",
+        "Hybrid Patterns",
+        "Resource Optimization",
+        "Anti-Patterns",
+        "Practical Examples",
+        "Decision Framework"
+      ],
+      "imports": [
+        "Multi-Agent Orchestration",
+        "Context Preservation Strategy",
+        "Cost Optimization Approach"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/permission-modes.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/permission-modes.md",
+      "summary": "Comprehensive guide to five permission modes controlling how agents handle authorization for sensitive operations.",
+      "purpose": "Explains permission mode options (default, acceptEdits, bypassPermissions, plan, ignore) with decision criteria, use cases, and security considerations for each mode in different operational contexts.",
+      "role": "documentation",
+      "exports": [
+        "Permission Mode Options",
+        "Default Mode",
+        "AcceptEdits Mode",
+        "BypassPermissions Mode",
+        "Plan Mode",
+        "Ignore Mode",
+        "Decision Framework",
+        "Mode Selection Matrix",
+        "Implementation Examples",
+        "Best Practices"
+      ],
+      "imports": [
+        "Agent Configuration",
+        "Security Considerations",
+        "Trust Models"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/plugin-agents.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/plugin-agents.md",
+      "summary": "Guide for discovering, using, managing, and creating subagents within plugins for integration with Claude Code.",
+      "purpose": "Documents how plugin agents are discovered and managed, handling conflicts with custom agents, creating agents for distribution within plugins, and best practices for plugin developers and users.",
+      "role": "documentation",
+      "exports": [
+        "Plugin Agent Discovery",
+        "Using Plugin Agents",
+        "Managing Plugin Agent Conflicts",
+        "Creating Agents for Plugins",
+        "Agent Naming Convention",
+        "Best Practices for Developers",
+        "Best Practices for Users",
+        "Workflow Guide",
+        "Troubleshooting Guide"
+      ],
+      "imports": [
+        "Plugin Architecture",
+        "Agent Priority System",
+        "Conflict Resolution Patterns"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-subagents/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-subagents/SKILL.md",
+      "summary": "Master skill documentation for managing subagents with systematic workflows for analysis, creation, improvement, and delegation decisions.",
+      "purpose": "Provides nine core workflows covering delegation analysis, concept explanation, agent evaluation, configuration updates, improvement recommendations, creation criteria, CLI management, configuration reference, and resumable agent usage with progressive disclosure of detailed supporting files.",
+      "role": "documentation",
+      "exports": [
+        "Workflow 1:Analyzing Context for Subagent Delegation",
+        "Workflow 2:Explaining Subagent Concepts",
+        "Workflow 3:Evaluating Existing Configurations",
+        "Workflow 4:Identifying Outdated Agents",
+        "Workflow 5:Recommending Improvements",
+        "Workflow 6:Deciding When to Create",
+        "Workflow 7:Managing via /agents Command",
+        "Workflow 8:Understanding Configuration Fields",
+        "Workflow 9:Using Resumable Subagents",
+        "Tool Usage Patterns",
+        "Best Practices",
+        "Anti-Patterns",
+        "Quick Decision Framework"
+      ],
+      "imports": [
+        "Decision Matrix Framework",
+        "Analysis Framework",
+        "Example Implementations",
+        "Improvement Patterns",
+        "Permission Modes",
+        "Plugin Integration",
+        "Multi-Agent Patterns"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/cross-platform-notification/CHANGELOG.md": {
+      "path": "plugins/cross-platform-notification/CHANGELOG.md",
+      "summary": "Release notes documenting the first release of cross-platform notification support for Claude Code hook events.",
+      "purpose": "Tracks version history and feature additions for cross-platform system notifications, including platform-specific implementations for Windows, macOS, and Linux with console fallback.",
+      "role": "documentation",
+      "exports": [
+        "Version 1.0.0.0",
+        "Features Added",
+        "Platform Support"
+      ],
+      "imports": [
+        "Semantic Versioning",
+        "Common Changelog Format"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/cross-platform-notification/README.md": {
+      "path": "plugins/cross-platform-notification/README.md",
+      "summary": "Documentation explaining the cross-platform notification plugin's features, installation, configuration, and troubleshooting.",
+      "purpose": "Provides users with complete setup instructions and usage guidance for the notification plugin across Windows, macOS, and Linux.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/cross-platform-notification/hooks/hooks.json": {
+      "path": "plugins/cross-platform-notification/hooks/hooks.json",
+      "summary": "Defines notification hook configuration that executes the claude_code_notifier.py script on Claude Code Notification events.",
+      "purpose": "Registers the Python notification script as a hook handler for Claude Code notification events.",
+      "role": "configuration",
+      "imports": [
+        "claude_code_notifier.py"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/cross-platform-notification/scripts/claude_code_notifier.py": {
+      "path": "plugins/cross-platform-notification/scripts/claude_code_notifier.py",
+      "summary": "Python script that reads Claude Code hook events from stdin and sends platform-specific system notifications with fallback to console output.",
+      "purpose": "Implements the core notification logic for Windows (PowerShell toast), macOS (terminal-notifier), and Linux (notify-send) with automatic platform detection and error handling.",
+      "role": "implementation",
+      "exports": [
+        "read_hook_input",
+        "get_notification_message",
+        "notify_macos",
+        "notify_linux",
+        "notify_windows",
+        "send_notification",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "platform",
+        "subprocess",
+        "sys",
+        "typing"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/fetch-full-content/CHANGELOG.md": {
+      "path": "plugins/fetch-full-content/CHANGELOG.md",
+      "summary": "Release history documenting versions, features, and changes to the fetch-full-content plugin.",
+      "purpose": "Tracks version history and improvements including content retrieval enhancements, caching features, and security considerations.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/fetch-full-content/README.md": {
+      "path": "plugins/fetch-full-content/README.md",
+      "summary": "Comprehensive documentation for the Fetch-Full-Content plugin explaining its purpose, usage, and differences from built-in WebFetch.",
+      "purpose": "Guides users on when and how to use the plugin, documents security considerations, provides usage examples, and explains the architecture and key features for downloading complete web documentation.",
+      "role": "documentation",
+      "exports": [
+        "Installation Instructions",
+        "Usage Examples",
+        "Security Warning",
+        "Features List",
+        "Best Practices"
+      ],
+      "imports": [
+        "BeautifulSoup",
+        "Markdownify",
+        "Playwright",
+        "Requests"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/fetch-full-content/commands/fetch-full-content.md": {
+      "path": "plugins/fetch-full-content/commands/fetch-full-content.md",
+      "summary": "Command documentation for the /fetch-full-content slash command defining usage, arguments, execution, and examples.",
+      "purpose": "Defines the command interface, argument parsing, execution flow, and usage examples for downloading and converting URLs to markdown.",
+      "role": "documentation",
+      "exports": [
+        "fetch-full-content command"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/fetch-full-content/scripts/fetch_full_content.py": {
+      "path": "plugins/fetch-full-content/scripts/fetch_full_content.py",
+      "summary": "Python script that downloads HTML pages, removes navigation/UI elements, and converts cleaned HTML to markdown files with optional JavaScript rendering support.",
+      "purpose": "Core implementation that fetches URLs via HTTP or Playwright, intelligently cleans extracted HTML by removing ads/navigation, converts to markdown, and caches output files for reuse.",
+      "role": "script",
+      "exports": [
+        "HTMLDownloader",
+        "URLProcessor",
+        "main",
+        "parse_arguments"
+      ],
+      "imports": [
+        "requests",
+        "BeautifulSoup",
+        "markdownify",
+        "playwright",
+        "pathlib",
+        "argparse"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/CHANGELOG.md": {
+      "path": "plugins/project-intel/CHANGELOG.md",
+      "summary": "Version history and release notes for the project-intel plugin documenting features, improvements, and changes.",
+      "purpose": "Tracks project evolution and features introduced with version 1.0.0.0 as the first release, including semantic scoring, wave-based processing, persistent storage, and query capabilities.",
+      "role": "documentation",
+      "exports": [
+        "Version 1.0.0.0 Features",
+        "Changelog Format",
+        "Semantic Versioning"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/README.md": {
+      "path": "plugins/project-intel/README.md",
+      "summary": "Complete guide to Project Intelligence plugin explaining value proposition, quick start, semantic search capabilities, best practices, and design decisions.",
+      "purpose": "Serves as primary documentation for using the plugin effectively, covering when to use it versus alternatives, maintenance strategies, query approaches, performance characteristics, and architectural design rationale.",
+      "role": "documentation",
+      "exports": [
+        "Quick Start Guide",
+        "Commands Reference",
+        "Architecture Diagram",
+        "Best Practices",
+        "Performance Characteristics",
+        "Design Decisions",
+        "Troubleshooting"
+      ],
+      "imports": [
+        "Node.js 16.9+"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/agents/haiku-file-analysis.md": {
+      "path": "plugins/project-intel/agents/haiku-file-analysis.md",
+      "summary": "Agent specification defining the batch file analysis workflow for Haiku subagents to generate structured JSON summaries of project files and directories.",
+      "purpose": "Establishes the contract for Haiku agent invocation during parallel batch processing, documents JSON output structure, defines classification rules for file roles, and provides quality guidelines for analysis accuracy.",
+      "role": "documentation",
+      "exports": [
+        "Input Format",
+        "Output Structure",
+        "Field Requirements",
+        "Process Steps",
+        "Quality Guidelines",
+        "Error Handling",
+        "Success Criteria"
+      ],
+      "imports": [
+        "Read Tool",
+        "Write Tool"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/commands/query.md": {
+      "path": "plugins/project-intel/commands/query.md",
+      "summary": "Command specification for searching project summaries using semantic keywords and confidence-based ranking.",
+      "purpose": "Documents the /query command interface, semantic scoring algorithm, implementation details for CLI execution, and error handling for project knowledge search without reading files.",
+      "role": "documentation",
+      "exports": [
+        "Query Command Syntax",
+        "Parameters",
+        "Scoring Algorithm",
+        "Implementation Steps",
+        "Error Handling"
+      ],
+      "imports": [
+        "Node.js CLI",
+        "JSON Output",
+        "Bash Tools"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/commands/scan.md": {
+      "path": "plugins/project-intel/commands/scan.md",
+      "summary": "Command specification for orchestrating project scans and parallel Haiku batch analysis to build persistent project knowledge.",
+      "purpose": "Documents the /scan command workflow including filesystem traversal, batch creation, wave-based agent invocation, merge operations, and final storage of summaries for project intelligence.",
+      "role": "documentation",
+      "exports": [
+        "Scan Command Syntax",
+        "Parameters",
+        "Process Steps",
+        "Error Handling",
+        "CLI Details",
+        "Output Formats"
+      ],
+      "imports": [
+        "Node.js CLI",
+        "Haiku Agents",
+        "Task Tool"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/scripts/ctx.ts": {
+      "path": "plugins/project-intel/scripts/ctx.ts",
+      "summary": "Main CLI entry point that handles scan, merge, and query commands with argument parsing and semantic search capabilities.",
+      "purpose": "Primary command-line interface managing the entire workflow:scanning projects, merging Haiku-generated batch summaries, and querying the accumulated knowledge base with keyword scoring. Routes user commands and coordinates between scanner and merger modules.",
+      "role": "implementation",
+      "exports": [
+        "parseArgs",
+        "handleScan",
+        "handleMerge",
+        "handleQuery",
+        "expandGlob",
+        "calculateConfidence",
+        "printHelp"
+      ],
+      "imports": [
+        "fs",
+        "path",
+        "scanProject",
+        "mergeSummaries",
+        "getSummaries"
+      ],
+      "lastUpdated": "2026-01-13T23:59:24.088Z"
+    },
+    "plugins/project-intel/scripts/package-lock.json": {
+      "path": "plugins/project-intel/scripts/package-lock.json",
+      "summary": "Lock file specifying exact versions of project-knowledge-base dependencies including TypeScript and type definitions.",
+      "purpose": "Ensures reproducible builds by pinning @types/node 20.19.27 and typescript 5.9.3 versions across environments.",
+      "role": "configuration",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/scripts/package.json": {
+      "path": "plugins/project-intel/scripts/package.json",
+      "summary": "Project manifest defining metadata, build scripts, and development dependencies for the project-intel CLI tool.",
+      "purpose": "Configures the Node.js package with build and dev scripts, TypeScript dependencies, and executable bin entry point for the ctx command.",
+      "role": "configuration",
+      "lastUpdated": "2026-01-13T23:59:24.088Z"
+    },
+    "plugins/project-intel/scripts/tsconfig.json": {
+      "path": "plugins/project-intel/scripts/tsconfig.json",
+      "summary": "TypeScript compiler configuration targeting ES2022 with strict type checking and CommonJS module output.",
+      "purpose": "Defines compilation settings for transpiling TypeScript source files to JavaScript in the dist directory with source maps and declaration files.",
+      "role": "configuration",
+      "lastUpdated": "2026-01-13T23:59:24.088Z"
+    },
+    "plugins/session-protocol/CHANGELOG.md": {
+      "path": "plugins/session-protocol/CHANGELOG.md",
+      "summary": "Documents version history and feature changes for session-protocol plugin from v1.0.0.0 through v1.1.0.0.",
+      "purpose": "Tracks breaking changes (notification removal in v1.1), core functionality additions (save/load context, task consolidation, git integration), and token optimization techniques. Provides version comparison links and semantic versioning reference.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/session-protocol/README.md": {
+      "path": "plugins/session-protocol/README.md",
+      "summary": "Comprehensive documentation covering session protocol plugin features, installation, usage, workflows, JSON schema, privacy practices, token optimization techniques, and troubleshooting.",
+      "purpose": "Primary user-facing documentation explaining how to use the session protocol plugin for saving and loading session context, including detailed workflow steps, JSON schema reference, and best practices for task consolidation.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/session-protocol/commands/load-session-protocol.md": {
+      "path": "plugins/session-protocol/commands/load-session-protocol.md",
+      "summary": "Command documentation for loading and restoring previous session context from session-protocol.json file.",
+      "purpose": "Instructs users to execute Workflow 2 (Loading Session Context) via the managing-session-continuity skill to restore unfinished tasks, git state validation, and file references from prior sessions.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/session-protocol/commands/save-session-protocol.md": {
+      "path": "plugins/session-protocol/commands/save-session-protocol.md",
+      "summary": "Command documentation for capturing and persisting current session context to session-protocol.json file.",
+      "purpose": "Instructs users to execute Workflow 1 (Saving Session Context) via the managing-session-continuity skill to archive unfinished tasks, decisions, file references, and git state for session continuity.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/session-protocol/hooks/hooks.json": {
+      "path": "plugins/session-protocol/hooks/hooks.json",
+      "summary": "Configuration file defining the SessionStart hook that executes the session protocol check script.",
+      "purpose": "Registers the session protocol check script to run automatically when a new session starts, allowing auto-detection of existing session state without explicit user invocation.",
+      "role": "configuration",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/session-protocol/scripts/sessionstart-session-protocol-check.py": {
+      "path": "plugins/session-protocol/scripts/sessionstart-session-protocol-check.py",
+      "summary": "SessionStart hook script that detects existing session-protocol.json and returns structured hook response informing Claude to prompt user for loading previous session.",
+      "purpose": "Executes on session start to check for existing session protocol file and communicate detection status back to Claude through official hook response schema, enabling seamless session awareness without user action.",
+      "role": "script",
+      "exports": [
+        "check_session_protocol_exists",
+        "create_hook_response",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "pathlib.Path"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/session-protocol/skills/managing-session-continuity/SKILL.md": {
+      "path": "plugins/session-protocol/skills/managing-session-continuity/SKILL.md",
+      "summary": "Detailed skill documentation defining two core workflows (WF1:Save Context, WF2:Load Context) for managing session continuity with task consolidation logic and JSON schema specifications.",
+      "purpose": "Provides implementation guidance for save and load workflows including step-by-step procedures, consolidation decision matrix, JSON format specifications, tool usage, error handling, and example outputs for session protocol functionality.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/changelog/CHANGELOG.md": {
+      "path": "plugins/changelog/CHANGELOG.md",
+      "summary": "Documents all notable changes to the changelog plugin with version history and release notes.",
+      "purpose": "Maintains a complete audit trail of the changelog plugin's evolution, documenting features added, changes made, and removals across releases using Common Changelog format.",
+      "role": "documentation",
+      "exports": [
+        "v1.1.0",
+        "v1.0.0",
+        "Unreleased"
+      ],
+      "imports": [
+        "Common Changelog",
+        "Keep a Changelog",
+        "Semantic Versioning"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/changelog/documentation_sources.json": {
+      "path": "plugins/changelog/documentation_sources.json",
+      "summary": "References external documentation sources for changelog standards and best practices.",
+      "purpose": "Provides a curated list of authoritative sources for changelog format standards including Common Changelog, Keep a Changelog, and Semantic Versioning specifications.",
+      "role": "configuration",
+      "imports": [
+        "common-changelog.org",
+        "keepachangelog.com",
+        "semver.org"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/changelog/README.md": {
+      "path": "plugins/changelog/README.md",
+      "summary": "Comprehensive user guide for the changelog plugin with installation, usage examples, and best practices.",
+      "purpose": "Documents the changelog plugin's capabilities, installation process, usage workflows, and best practices for creating and maintaining CHANGELOG.md files following industry standards.",
+      "role": "documentation",
+      "exports": [
+        "Installation",
+        "Usage Examples",
+        "Key Features",
+        "Format Standards",
+        "Best Practices"
+      ],
+      "imports": [
+        "Common Changelog",
+        "Keep a Changelog",
+        "Semantic Versioning",
+        "GitHub Actions"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/changelog/skills/managing-changelog/SKILL.md": {
+      "path": "plugins/changelog/skills/managing-changelog/SKILL.md",
+      "summary": "Complete skill definition for managing changelog operations with 5 core workflows and comprehensive reference documentation.",
+      "purpose": "Provides Claude with detailed procedures for creating, updating, validating, and promoting changelog entries across multiple formats, including format reference, anti-patterns, tool usage, and integration examples.",
+      "role": "documentation",
+      "exports": [
+        "WF1:Create CHANGELOG.md",
+        "WF2:Add Release Entry",
+        "WF3:Update Unreleased",
+        "WF4:Validate Format",
+        "WF5:Promote Prerelease"
+      ],
+      "imports": [
+        "Read tool",
+        "Write tool",
+        "Edit tool",
+        "Common Changelog",
+        "Keep a Changelog"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/CHANGELOG.md": {
+      "path": "plugins/claude-code-capabilities/CHANGELOG.md",
+      "summary": "Tracks version history and feature releases for the claude-code-capabilities plugin with detailed release notes.",
+      "purpose": "Maintains comprehensive change documentation for the plugin tracking releases of managing-agent-skills, managing-hooks, managing-plugins, managing-prompts, managing-slash-commands, managing-subagents, and managing-mcps skills.",
+      "role": "documentation",
+      "exports": [
+        "v1.8.0.0",
+        "v1.7.0.0",
+        "v1.6.0.0",
+        "v1.5.0.0",
+        "v1.4.0.0",
+        "v1.3.0.0",
+        "v1.2.0.0",
+        "v1.1.0.0",
+        "v1.0.0.0"
+      ],
+      "imports": [
+        "Keep a Changelog",
+        "Semantic Versioning"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/documentation_sources.json": {
+      "path": "plugins/claude-code-capabilities/documentation_sources.json",
+      "summary": "Curates external documentation sources for Claude Code capabilities and Anthropic API references.",
+      "purpose": "Provides a comprehensive index of authoritative documentation sources for agent skills, hooks, MCPs, plugins, prompts, slash commands, and subagents along with protocol specifications and examples.",
+      "role": "configuration",
+      "imports": [
+        "code.claude.com",
+        "docs.claude.com",
+        "platform.anthropic.com",
+        "modelcontextprotocol.io"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/README.md": {
+      "path": "plugins/claude-code-capabilities/README.md",
+      "summary": "Complete guide to the claude-code-capabilities plugin covering all 7 included skills with features, usage patterns, and technical implementation notes.",
+      "purpose": "Provides comprehensive documentation for users on all capabilities including installation, usage examples for each skill, model selection guidance, technical implementation patterns, and token optimization strategies.",
+      "role": "documentation",
+      "exports": [
+        "managing-agent-skills",
+        "managing-hooks",
+        "managing-plugins",
+        "managing-prompts",
+        "managing-slash-commands",
+        "managing-subagents",
+        "managing-mcps"
+      ],
+      "imports": [
+        "Claude Code documentation",
+        "Anthropic API",
+        "Hooks events",
+        "MCP servers",
+        "Agent skills"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/analysis-framework.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/analysis-framework.md",
+      "summary": "Systematic framework for evaluating existing agent skills across 7 evaluation criteria with issue categorization and analysis patterns.",
+      "purpose": "Provides Claude with detailed evaluation methodology for analyzing skill quality, identifying improvements, and generating actionable recommendations organized by severity (critical, major, minor) with implementation guidance.",
+      "role": "documentation",
+      "exports": [
+        "YAML Frontmatter Analysis",
+        "Content Structure Analysis",
+        "Content Quality Analysis",
+        "Best Practices Compliance",
+        "Supporting Files Analysis",
+        "Activation Analysis",
+        "Documentation Completeness",
+        "Issue Categorization"
+      ],
+      "imports": [
+        "YAML syntax",
+        "Skill structure",
+        "Progressive disclosure"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/best-practices.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/best-practices.md",
+      "summary": "Comprehensive guide covering core principles, naming conventions, descriptions, file organization, content guidelines, and executable code best practices for agent skill creation.",
+      "purpose": "Establishes foundational standards for skill design including conciseness, model compatibility, cross-platform paths, description writing with trigger keywords, token limits, progressive disclosure patterns, and common anti-patterns to avoid.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/creation-checklist.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/creation-checklist.md",
+      "summary": "Step-by-step validation checklist organized across six phases (planning, design, implementation, validation, testing, deployment) with detailed requirements and validation criteria.",
+      "purpose": "Provides systematic guidance for creating new skills from initial conception through deployment. Includes decision matrices, YAML validation, name/description validation, content checks, security validation, and completion criteria to ensure all skills meet quality standards.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-analysis.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-analysis.md",
+      "summary": "Demonstrates common skill mistakes and fixes with red-flag checklists categorized by severity (critical, major, minor) and includes quality assessment patterns.",
+      "purpose": "Shows how to identify and fix skill quality issues through before/after examples. Covers YAML problems, name issues, vague descriptions, deep file nesting, missing validation, time-sensitive content, cross-platform incompatibilities, and documentation completeness.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-creation.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-creation.md",
+      "summary": "Provides real-world skill examples with naming patterns, description evolution, and progressive disclosure structures demonstrating best practices.",
+      "purpose": "Illustrates effective skill creation through official examples (analyzing-financial-statements, applying-brand-guidelines, creating-financial-models), naming conventions, description development from vague to excellent, and file organization patterns for various complexity levels.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-improvement-content.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-improvement-content.md",
+      "summary": "Before/after transformations showing how to improve skill content by removing verbosity, adding validation, fixing vagueness, eliminating time-sensitive content, and adding company-specific knowledge.",
+      "purpose": "Demonstrates content quality improvements through five transformations:reducing bloat while focusing on proprietary information, adding validation checkpoints at each workflow step, replacing time-based conditionals with clear current/old approach sections, and incorporating company-specific knowledge.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-improvement-descriptions.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-improvement-descriptions.md",
+      "summary": "Shows skill description and name improvement transformations from vague to specific with clear triggers and proper formatting.",
+      "purpose": "Provides pattern examples for fixing skill naming and description issues, demonstrates description formulas for various trigger types (informational and action triggers), and shows how to match action verbs to actual skill capabilities.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-improvement-structure.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/examples-improvement-structure.md",
+      "summary": "Before/after examples showing how to implement progressive disclosure, improve file organization, add clear loading guidance, and structure complex skills efficiently.",
+      "purpose": "Demonstrates progressive disclosure patterns for breaking monolithic files into organized structures, adding context-specific loading guidance, and optimizing file organization for both human clarity and AI context efficiency.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/quick-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/quick-reference.md",
+      "summary": "Quick validation cheat sheet with 60-second checklist, templates, decision trees, troubleshooting guide, and success criteria for rapid skill pre-flight checks.",
+      "purpose": "Provides rapid-reference material for validating skills before deployment. Includes YAML requirements, content length targets, naming patterns, common mistakes with fixes, file structure templates, and quick troubleshooting solutions for common issues.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/SKILL.md",
+      "summary": "Comprehensive skill for managing Claude Code agent skills including creation, analysis, improvement, and updating workflows.",
+      "purpose": "Enables users to create, analyze, evaluate, and improve agent skills through structured workflows. Covers skill design, validation, architecture, security, API integration, and best practices for token-efficient skill authoring.",
+      "role": "documentation",
+      "exports": [
+        "Managing Agent Skills",
+        "Creating a New Skill",
+        "Analyzing Existing Skills",
+        "Suggesting Skill Conversion",
+        "Updating Outdated Skills",
+        "Progressive Disclosure References",
+        "Skill Storage Locations",
+        "Key Principles",
+        "Technical Architecture",
+        "Security Considerations",
+        "API Integration",
+        "Package Dependencies",
+        "MCP Tool References",
+        "Skill Composition",
+        "Evaluation-Driven Development",
+        "Iterative Development with Claude",
+        "Tool Usage Patterns",
+        "Anti-Patterns to Avoid",
+        "Quick Validation Checklist",
+        "Quick Troubleshooting"
+      ],
+      "imports": [
+        "best-practices.md",
+        "creation-checklist.md",
+        "analysis-framework.md",
+        "examples-creation.md",
+        "examples-analysis.md",
+        "examples-improvement-descriptions.md",
+        "examples-improvement-content.md",
+        "examples-improvement-structure.md",
+        "quick-reference.md",
+        "templates/skill-template.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-agent-skills/templates/skill-template.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-agent-skills/templates/skill-template.md",
+      "summary": "Template for creating new agent skills with YAML frontmatter, workflow sections, and validation guidelines.",
+      "purpose": "Provides a standardized structure and starting point for authoring new agent skills with proper formatting, sections, and best practices baked into the template for consistent skill creation.",
+      "role": "documentation",
+      "exports": [
+        "YAML Frontmatter",
+        "Skill Name section",
+        "When to Use This Skill",
+        "Core Workflow",
+        "Supporting Resources",
+        "Dependencies",
+        "Usage Examples",
+        "Validation Checklist",
+        "Key Principles",
+        "Troubleshooting",
+        "Output Format"
+      ],
+      "imports": [
+        "best-practices.md",
+        "validation-rules.md",
+        "examples.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/configuration-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/configuration-guide.md",
+      "summary": "Comprehensive guide for configuring hooks in Claude Code settings files with proper structure and best practices.",
+      "purpose": "Explains hook configuration structure, file locations, configuration options, matchers, timeouts, environment variables, and complete examples for implementing hooks in Claude Code.",
+      "role": "documentation",
+      "exports": [
+        "Configuration File Locations",
+        "Basic Configuration Structure",
+        "Hook Event Configuration",
+        "Matcher Patterns",
+        "Hook Types",
+        "Multiple Hooks per Event",
+        "Timeout Configuration",
+        "Environment Variables",
+        "Complete Configuration Example",
+        "Configuration Validation",
+        "Debugging Configuration",
+        "Configuration Tips"
+      ],
+      "imports": [
+        "hook-types-reference.md",
+        "hook-schemas-reference.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/debugging-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/debugging-guide.md",
+      "summary": "Comprehensive troubleshooting and testing guide for Claude Code hooks with verification tools and debugging techniques.",
+      "purpose": "Provides systematic approaches for debugging hook issues including verification commands, common problems with solutions, testing strategies, and debugging techniques for hook development.",
+      "role": "documentation",
+      "exports": [
+        "Verification Tools",
+        "Check Hook Registration",
+        "Enable Debug Mode",
+        "Validate JSON Configuration",
+        "Common Issues and Solutions",
+        "Testing Strategies",
+        "Debugging Techniques",
+        "Performance Debugging",
+        "Common Error Messages",
+        "Debug Checklist",
+        "Getting Help",
+        "Debugging Tools"
+      ],
+      "imports": [
+        "configuration-guide.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/hook-schemas-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/hook-schemas-reference.md",
+      "summary": "Complete reference for hook input and output schemas for all 10 Claude Code hook event types.",
+      "purpose": "Documents exact JSON schemas for hook inputs and outputs including field definitions, exit codes, examples, and testing procedures for all hook event types used in Claude Code.",
+      "role": "documentation",
+      "exports": [
+        "Common Fields",
+        "PreToolUse Schema",
+        "PermissionRequest Schema",
+        "PostToolUse Schema",
+        "Notification Schema",
+        "UserPromptSubmit Schema",
+        "Stop Schema",
+        "SubagentStop Schema",
+        "PreCompact Schema",
+        "SessionStart Schema",
+        "SessionEnd Schema",
+        "Response Format Summary",
+        "Exit Code Behaviors",
+        "Testing Hook Schemas"
+      ],
+      "imports": [
+        "hook-types-reference.md",
+        "official-response-schema.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/hook-types-reference.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/hook-types-reference.md",
+      "summary": "Complete specifications for all 10 Claude Code hook event types with triggers, purposes, and use cases.",
+      "purpose": "Defines all available hook event types, their triggers, input fields, output formats, matchers, and use cases to help developers understand which hook to use for different scenarios.",
+      "role": "documentation",
+      "exports": [
+        "Hook Event Categories",
+        "PreToolUse",
+        "PermissionRequest",
+        "PostToolUse",
+        "UserPromptSubmit",
+        "SessionStart",
+        "SessionEnd",
+        "Stop",
+        "SubagentStop",
+        "Notification",
+        "PreCompact",
+        "Matcher Patterns",
+        "Parallel Execution",
+        "Hook Snapshots"
+      ],
+      "imports": [
+        "hook-schemas-reference.md",
+        "configuration-guide.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/official-response-schema.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/official-response-schema.md",
+      "summary": "Official Claude Code hook response schema with complete field reference and structured JSON examples.",
+      "purpose": "Defines the official response structure that all hooks should follow including common fields, hook-specific output, and advanced structured JSON patterns for hook responses.",
+      "role": "documentation",
+      "exports": [
+        "Complete Schema Structure",
+        "Common Fields",
+        "Hook-Specific Output",
+        "Complete Examples by Hook Type",
+        "Advanced Usage Structured JSON",
+        "Field Reference Summary",
+        "Migration Guide",
+        "Working Examples",
+        "Validation"
+      ],
+      "imports": [
+        "hook-schemas-reference.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/plugin-hooks-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/plugin-hooks-guide.md",
+      "summary": "Comprehensive guide for plugin hooks enabling distributed hook functionality across Claude Code plugins.",
+      "purpose": "Explains how plugins define and provide hooks that integrate with user and project hooks, including architecture, patterns, best practices, composition scenarios, and migration guidance.",
+      "role": "documentation",
+      "exports": [
+        "Overview",
+        "What Are Plugin Hooks",
+        "Architecture",
+        "Key Differences",
+        "Plugin Hook Structure",
+        "Environment Variables",
+        "Hook Merging and Execution",
+        "Plugin Hook Composition Patterns",
+        "Multi-Plugin Scenarios",
+        "Integration Patterns",
+        "Best Practices for Plugin Developers",
+        "Creating Plugin Hooks Step-by-Step",
+        "Troubleshooting Plugin Hooks",
+        "Security Considerations",
+        "Migration from User Hooks to Plugin Hooks"
+      ],
+      "imports": [
+        "hook-types-reference.md",
+        "configuration-guide.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/prompt-hooks-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/prompt-hooks-guide.md",
+      "summary": "Comprehensive guide explaining prompt-based hooks (type:prompt) that use LLM intelligence for context-aware decision-making instead of deterministic bash scripts.",
+      "purpose": "Documents how to create and configure prompt-based hooks for intelligent decisions like task completion analysis, semantic validation, context-aware permissions, and subagent verification. Includes response schemas, decision patterns, performance considerations, troubleshooting, and best practices.",
+      "role": "documentation",
+      "exports": [
+        "Overview",
+        "Supported Hook Events",
+        "Configuration",
+        "Response Schema",
+        "Common Decision Patterns",
+        "Step-by-Step Examples",
+        "Advanced Features",
+        "Performance Considerations",
+        "Troubleshooting",
+        "Best Practices",
+        "Comparison with Command Hooks",
+        "Limitations & Considerations",
+        "Migration Guide"
+      ],
+      "imports": [
+        "Claude Haiku LLM API",
+        "Hook Context Data",
+        "User Conversation History"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/script-examples.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/script-examples.md",
+      "summary": "Collection of complete bash and python script examples from Claude cookbooks demonstrating hook patterns for safety validation, audit logging, environment checking, and command analysis.",
+      "purpose": "Provides production-ready examples and implementation patterns for common hook scenarios including pre-write safety, bash command validation, audit tracking, script usage logging, session environment checks, and blocking operations.",
+      "role": "documentation",
+      "exports": [
+        "Example 1:Pre-Write Safety Hook",
+        "Example 2:Pre-Bash Safety Hook",
+        "Example 3:Post-Tool Audit Logger",
+        "Example 4:Script Usage Logger",
+        "Example 5:Session Start Environment Check",
+        "Example 6:Blocking Pre-Write Hook",
+        "Example 7:JSON Output for Modified Input",
+        "Common Script Patterns",
+        "Testing Hook Scripts"
+      ],
+      "imports": [
+        "Bash",
+        "Python",
+        "JSON",
+        "File Operations",
+        "Process Management"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/security-checklist.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/security-checklist.md",
+      "summary": "Comprehensive security validation requirements covering input validation, command injection prevention, path security, data protection, error handling, configuration security, script permissions, dependencies, and threat modeling.",
+      "purpose": "Provides critical security guidelines that must be followed before deploying any hook to prevent data exfiltration, command injection, path traversal, and other vulnerabilities. Includes vulnerability examples, red flags, review processes, and remediation guidelines.",
+      "role": "documentation",
+      "exports": [
+        "Critical Security Warning",
+        "Pre-Deployment Security Checklist",
+        "Configuration Security",
+        "Script Security",
+        "Environment Security",
+        "Validation Testing",
+        "Security Red Flags",
+        "Security Review Process",
+        "Remediation Guidelines",
+        "Security Maintenance"
+      ],
+      "imports": [
+        "Security Best Practices",
+        "OWASP Guidelines",
+        "Python Security",
+        "Bash Security"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/SKILL.md",
+      "summary": "Comprehensive skill documentation for the managing-hooks capability covering creation, analysis, updates, and security validation workflows for command-based and prompt-based hooks.",
+      "purpose": "Serves as the master reference documenting five major workflows (creating new hooks, analyzing existing hooks, updating hooks, plugin hooks, suggesting hook creation) with detailed steps, progressive disclosure references, quick reference, validation checklists, common patterns, and output formats.",
+      "role": "documentation",
+      "exports": [
+        "When to Use This Skill",
+        "Core Concepts",
+        "Workflow 1:Creating New Hooks",
+        "Workflow 2:Analyzing Existing Hooks",
+        "Workflow 3:Updating Hooks",
+        "Workflow 4:Working with Plugin Hooks",
+        "Workflow 5:Suggesting Hook Creation",
+        "Progressive Disclosure References",
+        "Quick Reference",
+        "Validation Checklist",
+        "Common Patterns",
+        "Anti-Patterns to Avoid",
+        "Output Format"
+      ],
+      "imports": [
+        "Hook Configuration Files",
+        "Hook Scripts",
+        "Security Guidelines",
+        "Hook Event System"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples/mcp-tool-targeting.json": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples/mcp-tool-targeting.json",
+      "summary": "Demonstrates hook configuration patterns for targeting specific MCP (Model Context Protocol) tools with matchers including global, server-specific, operation-based, and tool-specific patterns.",
+      "purpose": "Provides practical examples of MCP tool targeting with regex matchers, implementation scripts for logging and validation, setup instructions, debugging guidance, and real-world scenarios for GitHub integration, memory auditing, and filesystem protection.",
+      "role": "configuration",
+      "exports": [
+        "mcp_tool_naming",
+        "example_1_all_mcp_tools",
+        "example_2_specific_server",
+        "example_3_write_operations",
+        "example_4_specific_tool",
+        "common_matcher_patterns",
+        "implementation_examples",
+        "setup_instructions",
+        "debugging",
+        "real_world_scenarios"
+      ],
+      "imports": [
+        "MCP Tool Names",
+        "Regex Matchers",
+        "Bash Scripts",
+        "Python Scripts",
+        "Hook Input Schema"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples/plugin-hook-example.json": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples/plugin-hook-example.json",
+      "summary": "Complete working example of a Python formatter plugin hook that automatically formats Python files with Black after write/edit operations.",
+      "purpose": "Demonstrates plugin hook structure including plugin manifest, hook configuration, implementation script, behavior specifications, environment variables, testing strategy, security considerations, and multi-plugin composition patterns.",
+      "role": "configuration",
+      "exports": [
+        "plugin_structure",
+        "plugin_manifest_example",
+        "hook_configuration",
+        "hook_script",
+        "behavior",
+        "environment_variables_used",
+        "installation",
+        "testing",
+        "customization",
+        "multi_plugin_composition",
+        "advanced_features",
+        "security_considerations",
+        "benefits",
+        "limitations"
+      ],
+      "imports": [
+        "Black Formatter",
+        "Plugin System",
+        "Hook Event System",
+        "File Operations",
+        "Logging"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples/prompt-based-stop-hook.json": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/real-world-examples/prompt-based-stop-hook.json",
+      "summary": "Real-world example of an intelligent Stop hook using prompt-based decision-making to prevent Claude from stopping prematurely based on task completion analysis.",
+      "purpose": "Illustrates prompt-based hook implementation for the Stop event including evaluation criteria, decision rules, behavior examples, testing steps, customization options, benefits, and limitations of using LLM for intelligent stopping decisions.",
+      "role": "configuration",
+      "exports": [
+        "description",
+        "scenario",
+        "implementation",
+        "configuration",
+        "behavior_examples",
+        "testing_steps",
+        "benefits",
+        "limitations",
+        "customization_options"
+      ],
+      "imports": [
+        "Claude Haiku LLM",
+        "Hook Context",
+        "Conversation Analysis"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/templates/bash-hook-template.sh": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/templates/bash-hook-template.sh",
+      "summary": "Commented bash script template providing boilerplate structure for implementing command-based hooks including input parsing, validation, security checks, and proper exit codes.",
+      "purpose": "Serves as a starting point for new bash hook scripts with sections for configuration, input parsing, validation, security checks, main logic, and output handling. Includes examples of proper variable quoting, error handling, and logging patterns.",
+      "role": "script",
+      "exports": [
+        "Configuration section",
+        "Input parsing functions",
+        "Validation logic",
+        "Security checks",
+        "Main hook logic",
+        "Output formatting",
+        "Error handling patterns"
+      ],
+      "imports": [
+        "Bash utilities",
+        "JSON parsing with grep and cut",
+        "File operations",
+        "Logging mechanisms"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/templates/hook-config-template.json": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/templates/hook-config-template.json",
+      "summary": "JSON template defining hook event triggers and command handlers for PreToolUse, PostToolUse, SessionStart, SessionEnd, UserPromptSubmit, Stop, and Notification lifecycle events.",
+      "purpose": "Serves as reference configuration showing how to register hooks at different execution points with timeout settings and command paths.",
+      "role": "configuration",
+      "exports": [
+        "hooks",
+        "PreToolUse",
+        "PostToolUse",
+        "UserPromptSubmit",
+        "SessionStart",
+        "SessionEnd",
+        "Stop",
+        "Notification"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-hooks/templates/python-hook-template.py": {
+      "path": "plugins/claude-code-capabilities/skills/managing-hooks/templates/python-hook-template.py",
+      "summary": "Python template demonstrating hook script structure with input validation, JSON response formatting, logging, and configuration handling.",
+      "purpose": "Provides reusable boilerplate for creating Python-based hook scripts that process tool execution events and return control decisions.",
+      "role": "implementation",
+      "exports": [
+        "log_message",
+        "validate_file_path",
+        "output_json_response",
+        "process_hook",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "os",
+        "sys",
+        "datetime",
+        "pathlib"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/analysis-framework.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/analysis-framework.md",
+      "summary": "Nine-phase systematic framework for analyzing MCP server implementations covering discovery, protocol compliance, architecture quality, tool design, resources, security, configuration, testing, and documentation.",
+      "purpose": "Guides developers through comprehensive MCP server evaluation with detailed checklists and scoring rubrics for quality assessment.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/architecture-overview.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/architecture-overview.md",
+      "summary": "Detailed reference covering MCP protocol fundamentals, transport layers, JSON-RPC messaging, capability types (tools/resources/prompts), lifecycle flows, and SDK patterns.",
+      "purpose": "Comprehensive architecture documentation for understanding MCP design, protocol mechanics, and Claude Code integration patterns.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/configuration-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/configuration-guide.md",
+      "summary": "Complete reference for configuring MCP servers via CLI commands, .mcp.json file structure, environment variables, authentication, and scope management.",
+      "purpose": "Practical guide for connecting and configuring MCP servers with examples for stdio, HTTP, and SSE transports plus troubleshooting.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/creation-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/creation-guide.md",
+      "summary": "Step-by-step tutorial for building MCP servers in TypeScript and Python with tools, resources, prompts, error handling, testing, and deployment.",
+      "purpose": "Complete development guide enabling developers to create production-ready MCP servers from scratch with best practices and patterns.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/deprecation-notes.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/deprecation-notes.md",
+      "summary": "Migration guide documenting deprecated patterns including SSE transport, API versions, configuration formats, and CLI changes with upgrade paths.",
+      "purpose": "Reference for identifying and migrating old MCP patterns to current standards with timelines and breaking change documentation.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/enterprise-mcp-configuration.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/enterprise-mcp-configuration.md",
+      "summary": "Enterprise administration guide for deploying managed MCP servers across organizations with allowlist/denylist policies and scope hierarchy controls.",
+      "purpose": "Enables system administrators to enforce organization-wide MCP security policies and standardize approved server access across teams.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/environment-variable-expansion.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/environment-variable-expansion.md",
+      "summary": "Documents environment variable expansion syntax and patterns for parameterizing .mcp.json configurations across development, staging, and production environments.",
+      "purpose": "Enables team-shared MCP configurations with machine-specific values like API keys, database URLs, and server paths using ${VAR_NAME} syntax. Provides templates and examples for development/production deployment scenarios while maintaining secure secret management practices.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/examples.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/examples.md",
+      "summary": "Reference implementations of MCP servers from official sources including Filesystem, GitHub, Slack, Google Drive, AWS Bedrock, Playwright, and community database/HTTP patterns.",
+      "purpose": "Demonstrates production-ready MCP server implementations showing tool schemas, configuration patterns, security validation, authentication flows, and result formatting. Includes FastMCP quick start template and common patterns for rate limiting, caching, and error handling.",
+      "role": "documentation",
+      "exports": [
+        "read_file",
+        "write_file",
+        "search_files",
+        "create_issue",
+        "send_message",
+        "upload_file",
+        "invoke_agent",
+        "navigate",
+        "query_database"
+      ],
+      "imports": [
+        "@modelcontextprotocol/sdk",
+        "@slack/web-api",
+        "@octokit/rest",
+        "playwright",
+        "fastmcp"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/mcp-connector-api-integration.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/mcp-connector-api-integration.md",
+      "summary": "Complete workflow for integrating MCP servers into applications via the Anthropic Messages API with server definitions and MCPToolset configurations.",
+      "purpose": "Guides API-based integration of MCP servers outside Claude Code CLI, covering server URL configuration, tool enable/disable patterns (allowlist, denylist, mixed), multiple server management, OAuth authentication, response handling, and validation rules.",
+      "role": "documentation",
+      "exports": [
+        "mcp_tool_use",
+        "mcp_tool_result"
+      ],
+      "imports": [
+        "anthropic"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/mcp-resources-and-prompts.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/mcp-resources-and-prompts.md",
+      "summary": "Documents resource reference syntax (@mentions) and MCP prompt invocation as slash commands with discovery, usage patterns, and output limit management.",
+      "purpose": "Teaches how to access MCP-provided resources via @ syntax and invoke MCP prompts as /commands, with real-world workflow examples for GitHub PRs, database queries, Jira issues, and API documentation. Includes output limit configuration and troubleshooting strategies.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/oauth-authentication-flow.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/oauth-authentication-flow.md",
+      "summary": "Detailed OAuth 2.0 setup for MCP servers requiring authentication, covering Claude Code integration and MCP Inspector methods.",
+      "purpose": "Provides step-by-step OAuth authentication for MCP servers like GitHub, Sentry, and internal corporate services. Explains token storage, automatic refresh, troubleshooting common authentication issues, and security best practices for OAuth flow implementation.",
+      "role": "documentation",
+      "exports": [
+        "validateToken",
+        "checkPermission"
+      ],
+      "imports": [
+        "passport",
+        "passport-oauth2",
+        "@octokit/rest"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/plugin-mcp-servers.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/plugin-mcp-servers.md",
+      "summary": "Architecture and configuration patterns for bundling MCP servers within Claude Code plugins for automatic distribution and user setup.",
+      "purpose": "Explains how to bundle MCP servers in plugin.json or .mcp.json with ${CLAUDE_PLUGIN_ROOT} path variable, lifecycle management, environment variables, and configuration precedence rules. Provides complete plugin MCP examples and common patterns for single/multiple server setups.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/security-best-practices.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/security-best-practices.md",
+      "summary": "Comprehensive security guidelines for MCP server development covering input validation, authentication, authorization, secrets management, and audit logging.",
+      "purpose": "Establishes security requirements for production MCP servers including path traversal prevention, SQL injection mitigation, command injection prevention, API key management, OAuth implementation, rate limiting, error handling without information disclosure, and resource access control patterns.",
+      "role": "documentation",
+      "exports": [
+        "validatePath",
+        "validateToken",
+        "checkPermission",
+        "auditLog"
+      ],
+      "imports": [
+        "ajv",
+        "jsonschema",
+        "passport",
+        "express-rate-limit"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-mcps/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-mcps/SKILL.md",
+      "summary": "Master skill documentation defining workflows for evaluating, creating, analyzing, updating, and configuring MCP servers with decision criteria and progressive disclosure references.",
+      "purpose": "Central entry point for MCP management skill covering 7 core workflows:evaluation criteria for MCP decisions, new server creation steps, analysis framework, updating outdated implementations, configuration connection procedures, Messages API integration, and conversation-based usage patterns. References supporting documentation files and common anti-patterns.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-plugins/distribution-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-plugins/distribution-guide.md",
+      "summary": "Guides semantic versioning practices and distribution methods for plugins including local development, git repositories, team distribution, and archive formats.",
+      "purpose": "Provides developers with step-by-step instructions for versioning plugins using semantic versioning, testing distribution workflows with team auto-install features, and maintaining plugins through updates and deprecation cycles.",
+      "role": "documentation",
+      "exports": [
+        "Semantic Versioning",
+        "Version Management",
+        "Local Distribution",
+        "Git Repository Distribution",
+        "Team Distribution",
+        "Archive Distribution",
+        "Testing Workflow",
+        "Pre-Distribution Checklist",
+        "Maintenance Procedures"
+      ],
+      "imports": [
+        "plugin.json",
+        "marketplace.json",
+        "settings.json",
+        "git",
+        "bash"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-plugins/marketplace-spec.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-plugins/marketplace-spec.md",
+      "summary": "Specifies the marketplace.json schema including field definitions, source types (local paths, GitHub, Git URLs, archives), and installation commands.",
+      "purpose": "Documents the complete marketplace.json specification with field requirements, plugin entry configuration, and various source distribution patterns for local, team, and public marketplaces.",
+      "role": "documentation",
+      "exports": [
+        "Marketplace Schema",
+        "Field Specifications",
+        "Plugin Entry Fields",
+        "Local Path Source",
+        "GitHub Repository Source",
+        "Git Repository Source",
+        "URL/HTTP Source",
+        "Archive Source",
+        "Installation Commands",
+        "Auto-Installation"
+      ],
+      "imports": [
+        "marketplace.json",
+        "plugin installation commands"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-plugins/plugin-spec.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-plugins/plugin-spec.md",
+      "summary": "Defines the plugin directory structure, plugin.json manifest schema, component formats (commands, skills, hooks, MCP servers), naming conventions, and environment variables.",
+      "purpose": "Complete technical specification for plugin structure including required directory layout, manifest field types, component file formats, path rules, and use of CLAUDE_PLUGIN_ROOT for portability.",
+      "role": "documentation",
+      "exports": [
+        "Plugin Structure",
+        "plugin.json Schema",
+        "Required Fields",
+        "Field Types",
+        "Commands Format",
+        "Skills Format",
+        "Hooks Configuration",
+        "MCP Servers Configuration",
+        "Path Rules",
+        "Naming Conventions",
+        "Environment Variables"
+      ],
+      "imports": [
+        "plugin.json",
+        "Markdown files",
+        "YAML frontmatter",
+        "JSON configuration",
+        "CLAUDE_PLUGIN_ROOT"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-plugins/SKILL.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-plugins/SKILL.md",
+      "summary": "Describes when and how to use the managing-plugins skill, covering five core operations:plugin creation, component bundling, marketplace configuration, validation, and distribution packing.",
+      "purpose": "Serves as the entry point and operational guide for the managing-plugins skill, defining the skill's activation triggers, terminology, core operations with detailed process flows, and progressive references to detailed specifications.",
+      "role": "documentation",
+      "exports": [
+        "When to Use This Skill",
+        "Core Operations",
+        "OP1:Create Plugin Structure",
+        "OP2:Bundle Components by Prefix",
+        "OP3:Create Marketplace Config",
+        "OP4:Validate Plugin",
+        "OP5:Pack for Distribution",
+        "Component Integration",
+        "Context Detection Rules",
+        "Progressive References",
+        "Anti-Patterns",
+        "Error Handling"
+      ],
+      "imports": [
+        "plugin-spec.md",
+        "marketplace-spec.md",
+        "distribution-guide.md",
+        "validation-rules.md"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-plugins/validation-rules.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-plugins/validation-rules.md",
+      "summary": "Comprehensive validation checklist and debugging guide covering plugin.json validation, directory structure, component files, paths, naming, security, and common issues.",
+      "purpose": "Provides detailed validation procedures with debugging steps, CLI commands for testing plugin loading, common issue troubleshooting, error message reference, and automated validation script examples.",
+      "role": "documentation",
+      "exports": [
+        "Validation Checklist",
+        "plugin.json Validation",
+        "Directory Structure Validation",
+        "Component File Validation",
+        "Path Validation",
+        "Naming Validation",
+        "Security Validation",
+        "Debug Mode",
+        "Common Issues",
+        "Validation Commands",
+        "Error Messages Reference",
+        "Testing Procedure"
+      ],
+      "imports": [
+        "plugin.json",
+        "plugin components",
+        "JSON validators",
+        "Python json.tool",
+        "Bash scripts"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/analysis-patterns.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/analysis-patterns.md",
+      "summary": "Details six common prompt issue categories with symptoms, examples, evaluation checklists, and fix patterns for improving prompt quality.",
+      "purpose": "Educates on identifying and fixing prompt weaknesses (vague objectives, missing context, no examples, no chain-of-thought, poor structure, missing guardrails) with before/after examples demonstrating effective remediation.",
+      "role": "documentation",
+      "exports": [
+        "Common Prompt Issues",
+        "Issue Category 1:Vague Objectives",
+        "Issue Category 2:Missing Context",
+        "Issue Category 3:No Examples",
+        "Issue Category 4:No Chain-of-Thought",
+        "Issue Category 5:Poor XML Structure",
+        "Issue Category 6:No Guardrails",
+        "Quality Assessment Criteria",
+        "Analysis Template",
+        "Example Full Analysis"
+      ],
+      "imports": [
+        "XML tags",
+        "Examples",
+        "Chain-of-Thought patterns",
+        "Quality criteria",
+        "Prompt templates"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/architecture-patterns.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/architecture-patterns.md",
+      "summary": "Provides four main prompt architectural patterns:Simple Task, Complex Reasoning, Agent/Workflow, and Multi-Window with detailed templates and examples.",
+      "purpose": "Delivers reusable prompt structures optimized for different task complexity levels, including pattern selection guidance, template variables for customization, and multi-context window strategies for extended workflows.",
+      "role": "documentation",
+      "exports": [
+        "Simple Task Pattern",
+        "Complex Reasoning Pattern",
+        "Agent/Workflow Pattern",
+        "Multi-Window Pattern",
+        "Template Variables",
+        "Pattern Selection Guide",
+        "Multi-Context Window Workflows",
+        "State Management Structure",
+        "Context Awareness Best Practices",
+        "Complete Example:Multi-Window Feature Implementation",
+        "Decision Tree"
+      ],
+      "imports": [
+        "XML tags",
+        "Prompt templates",
+        "State files (JSON)",
+        "Git workflows"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/claude-4-5-optimization.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/claude-4-5-optimization.md",
+      "summary": "Details Claude 4.5-specific prompt engineering techniques including explicit instructions, contextual motivation, example quality, output control, and parallelization strategies.",
+      "purpose": "Provides practical guidance for leveraging Claude 4.5 capabilities including explicit instruction requirements, context awareness for multi-window workflows, tool usage direction, parallel execution patterns, and model selection considerations.",
+      "role": "documentation",
+      "exports": [
+        "Core 4.5 Principles",
+        "Be Explicit with Instructions",
+        "Add Contextual Motivation",
+        "Pay Attention to Examples",
+        "Long-Horizon Reasoning",
+        "Context Awareness and Multi-Window Workflows",
+        "Output Control",
+        "Communication Style",
+        "Format Control",
+        "Tool Usage Direction",
+        "Parallel Tool Calling",
+        "Extended Thinking Sensitivity",
+        "Subagent Orchestration",
+        "Research and Analysis",
+        "Vision and Image Processing",
+        "Code and Development",
+        "Model Selection and Alternatives",
+        "Performance Optimization Checklist"
+      ],
+      "imports": [
+        "Claude models",
+        "Extended thinking",
+        "XML structure",
+        "Progress tracking",
+        "Subagent orchestration"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/consistency-techniques.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/consistency-techniques.md",
+      "summary": "Patterns for enforcing consistent outputs through prefilling, Structured Outputs API, and format specifications.",
+      "purpose": "Guides implementation of format compliance techniques including prefilling, API-enforced Structured Outputs, and format specifications for reliable output generation.",
+      "role": "documentation",
+      "exports": [
+        "Prefilling",
+        "Structured Outputs",
+        "Format Specification",
+        "XML Formatting",
+        "CSV Formatting",
+        "JSON Schema",
+        "Tools-Based Structured Outputs"
+      ],
+      "imports": [
+        "Anthropic API",
+        "JSON Schema",
+        "response_format parameter"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/context-optimization.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/context-optimization.md",
+      "summary": "Comprehensive strategies for token efficiency including prompt caching, document organization, context reduction, and splitting decisions.",
+      "purpose": "Provides detailed guidance on optimizing context window usage through caching strategies, document placement, quote-grounding, and prompt splitting for cost reduction and quality improvement.",
+      "role": "documentation",
+      "exports": [
+        "Token Counting",
+        "Prompt Caching",
+        "Cache Lifetime Options",
+        "Document Organization",
+        "Quote-Grounding",
+        "Summarization Chains",
+        "Context Reduction",
+        "TTL Selection",
+        "Cache Performance Measurement"
+      ],
+      "imports": [
+        "Claude Sonnet 4.5",
+        "Token budget awareness",
+        "Prompt caching API"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/extended-thinking-implementation.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/extended-thinking-implementation.md",
+      "summary": "Guide for using Claude's extended thinking capabilities for complex reasoning tasks with configuration and best practices.",
+      "purpose": "Explains when and how to use extended thinking mode, budget management, prompting strategies, multi-turn handling, and integration with other techniques like caching and Structured Outputs.",
+      "role": "documentation",
+      "exports": [
+        "Extended Thinking",
+        "Thinking Budget Management",
+        "Batch Processing Requirement",
+        "Multi-Round Thinking",
+        "Thinking Block Handling",
+        "Automatic Caching Behavior",
+        "Cache Invalidation Patterns",
+        "Decision Tree for Extended Thinking"
+      ],
+      "imports": [
+        "Extended thinking API",
+        "Batch API",
+        "Prompt caching",
+        "Tool use workflows"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/extraction-decision-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/extraction-decision-guide.md",
+      "summary": "Decision framework for determining when to extract logic into reusable prompts versus scripts versus keeping code inline.",
+      "purpose": "Provides structured criteria and scoring system for evaluating three extraction options:prompt templates, deterministic scripts, or inline logic based on reusability, complexity, and requirements.",
+      "role": "documentation",
+      "exports": [
+        "Decision Tree",
+        "Prompt Extraction Criteria",
+        "Script Extraction Criteria",
+        "Keep Inline Criteria",
+        "Scoring Framework",
+        "Combined Extraction Strategy",
+        "Quick Reference Decision Chart",
+        "Extraction Process"
+      ],
+      "imports": [
+        "Reusability evaluation",
+        "Complexity assessment",
+        "Deterministic logic evaluation"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/guardrails-implementation.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/guardrails-implementation.md",
+      "summary": "Specific patterns and implementations for hallucination prevention, consistency enforcement, security measures, and character maintenance.",
+      "purpose": "Provides production-ready patterns for implementing safeguards including quote-grounding, citation verification, knowledge restriction, input screening, jailbreak resistance, and prompt leak protection.",
+      "role": "documentation",
+      "exports": [
+        "Permission to Admit Uncertainty",
+        "Quote-Grounding",
+        "Citation Verification",
+        "Knowledge Restriction",
+        "Chain-of-Thought Verification",
+        "Format Specification",
+        "Response Prefilling",
+        "Sequential Task Chaining",
+        "Input Pre-Screening",
+        "Prompt Leak Protection",
+        "Jailbreak Resistance",
+        "Output Sanitization",
+        "Role Definition",
+        "Scenario-Based Guidance",
+        "Reference Standards",
+        "Capability Boundaries"
+      ],
+      "imports": [
+        "Epistemic honesty patterns",
+        "Security screening",
+        "Role-play frameworks"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/claude-code-capabilities/skills/managing-prompts/migration-guide.md": {
+      "path": "plugins/claude-code-capabilities/skills/managing-prompts/migration-guide.md",
+      "summary": "Patterns and checklist for migrating prompts from Claude 3 to Claude 4.5 with new capabilities and behavioral differences.",
+      "purpose": "Helps teams update existing prompts to leverage Claude 4.5 improvements including explicit instruction following, context awareness, extended thinking, and multi-window workflows.",
+      "role": "documentation",
+      "exports": [
+        "Instruction Specificity Pattern",
+        "Contextual Motivation Pattern",
+        "Example Quality Alignment",
+        "Summary Request Pattern",
+        "Action Framing Pattern",
+        "Quality Modifiers",
+        "Parallel Tool Execution",
+        "Context Awareness Leverage",
+        "Multi-Window Workflows",
+        "Subagent Delegation",
+        "Migration Checklist",
+        "Common Issues and Solutions",
+        "Testing Migration Success",
+        "Quick Migration Template"
+      ],
+      "imports": [
+        "Claude 4.5 capabilities",
+        "Context awareness features"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/project-intel/scripts/lib/project-scanner.ts": {
+      "path": "plugins/project-intel/scripts/lib/project-scanner.ts",
+      "summary": "Recursively walks filesystem extracting file metadata and statistics while filtering ignored directories and generating project structure.",
+      "purpose": "Collects raw project data including file paths, sizes, and extension counts needed for batching and analysis in the scan workflow. Filters common ignore patterns like node_modules, dist, and .knowledge.",
+      "role": "implementation",
+      "exports": [
+        "scanProject",
+        "FileInfo",
+        "RawProjectData"
+      ],
+      "imports": [
+        "fs",
+        "path"
+      ],
+      "lastUpdated": "2026-01-13T23:59:24.088Z"
+    },
+    "plugins/project-intel/scripts/lib/summary-merger.ts": {
+      "path": "plugins/project-intel/scripts/lib/summary-merger.ts",
+      "summary": "Merges Haiku batch analysis results into persistent summaries.json knowledge base with deduplication and cleanup.",
+      "purpose": "Aggregates partial summaries from multiple Haiku batch files into a centralized knowledge base, handling directory and file record updates with timestamps and removing stale entries that are no longer part of the scanned location.",
+      "role": "implementation",
+      "exports": [
+        "DirectorySummary",
+        "FileSummary",
+        "PartialSummaries",
+        "PartialDirectorySummary",
+        "PartialFileSummary",
+        "mergeSummaries",
+        "getSummaries"
+      ],
+      "imports": [
+        "fs",
+        "path"
+      ],
+      "lastUpdated": "2026-01-13T23:59:24.088Z"
+    },
+    "plugins/documentation/CHANGELOG.md": {
+      "path": "plugins/documentation/CHANGELOG.md",
+      "summary": "Release history and feature changelog for the documentation plugin documenting all versions and changes.",
+      "purpose": "Tracks version history, features, and improvements to the documentation plugin following semantic versioning.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/documentation/README.md": {
+      "path": "plugins/documentation/README.md",
+      "summary": "Comprehensive guide to the documentation plugin including features, installation, workflows, quality standards, and best practices.",
+      "purpose": "Provides complete user documentation for the documentation plugin, explaining its skills, workflows, quality standards, and implementation approach.",
+      "role": "documentation",
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    },
+    "plugins/documentation/skills/managing-documentation/SKILL.md": {
+      "path": "plugins/documentation/skills/managing-documentation/SKILL.md",
+      "summary": "Detailed skill definition for managing-documentation with four core workflows covering documentation creation, updates, validation, and agile principles.",
+      "purpose": "Defines a comprehensive skill for agents to create, update, and validate project documentation with detailed workflows, checklists, quality criteria, and inclusive language guidelines.",
+      "role": "documentation",
+      "exports": [
+        "managing-documentation skill",
+        "Workflow 1:Creating New Documentation",
+        "Workflow 2:Updating Existing Documentation",
+        "Workflow 3:Validating Documentation Quality",
+        "Workflow 4:Applying Agile/Lean Principles"
+      ],
+      "lastUpdated": "2026-01-13T22:47:09.476Z"
+    }
+  }
+}
