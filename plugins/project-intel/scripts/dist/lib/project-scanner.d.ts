@@ -1,9 +1,5 @@
-interface FileInfo {
-    path: string;
-    size: number;
-}
 interface RawProjectData {
-    files: FileInfo[];
+    filePaths: string[];
     projectStats: {
         totalFiles: number;
         extensionCount: Record<string, number>;

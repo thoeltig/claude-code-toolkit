@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scanProject = scanProject;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const child_process_1 = require("child_process");
 const IGNORED_DIRS = new Set([
     'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj',
     '.git', '.svn', 'coverage', '.pytest_cache', '.venv', 'venv', '.env', '.idea',
@@ -44,11 +45,23 @@ const IGNORED_DIRS = new Set([
 function shouldIgnore(name) {
     return IGNORED_DIRS.has(name) || name.startsWith('.');
 }
-function getFiles(dir, rootDir, files) {
+function getFiles(dir, rootDir, filePaths) {
+    if (!fs.existsSync(dir)) {
+        return;
+    }
     try {
-        if (!fs.existsSync(dir)) {
-            return;
-        }
+        const files = (0, child_process_1.execSync)(`git ls-files --full-name -- "${path.normalize(dir)}"`, { encoding: 'utf-8' })
+            .trim()
+            .split('\n');
+        const filtered = files.filter(file => {
+            const segments = file.split('/');
+            return !segments.some(x => IGNORED_DIRS.has(x));
+        });
+        filePaths.push(...filtered);
+        return;
+    }
+    catch (e) { }
+    try {
         const entries = fs.readdirSync(dir);
         for (const entry of entries) {
             if (shouldIgnore(entry)) {
@@ -57,30 +70,27 @@ function getFiles(dir, rootDir, files) {
             const fullPath = path.join(dir, entry);
             const stat = fs.statSync(fullPath);
             if (stat.isDirectory()) {
-                getFiles(fullPath, rootDir, files);
+                getFiles(fullPath, rootDir, filePaths);
             }
             else if (stat.isFile()) {
-                files.push({
-                    path: fullPath,
-                    size: stat.size
-                });
+                filePaths.push(fullPath);
             }
         }
     }
     catch (e) { }
 }
 async function scanProject(location) {
-    const files = [];
-    getFiles(location, location, files);
-    const extensionCount = files.reduce((acc, file) => {
-        const ext = path.extname(file.path).toLowerCase() || 'none';
+    const filePaths = [];
+    getFiles(location, location, filePaths);
+    const extensionCount = filePaths.reduce((acc, file) => {
+        const ext = path.extname(file).toLowerCase() || 'none';
         acc[ext] = (acc[ext] || 0) + 1;
         return acc;
     }, {});
     return {
-        files,
+        filePaths,
         projectStats: {
-            totalFiles: files.length,
+            totalFiles: filePaths.length,
             extensionCount
         }
     };
