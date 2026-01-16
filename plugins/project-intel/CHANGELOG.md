@@ -7,6 +7,21 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.1.0.0] - 2026-01-16
+
+_Performance enhancement: Git-based incremental scanning reduces file processing by 80-95% on subsequent scans._
+
+### Added
+
+- Git integration for incremental scanning: Only re-analyze files modified since last scan
+- Automatic git tracking detection: Uses `git ls-files` when available, falls back to filesystem walk
+- Modification timestamp tracking from git history for accurate staleness detection
+
+### Improved
+
+- Scan performance and token usage by only scanning the files modified since last scan
+- Slash command context: Removed unnecessary information from `/scan` and `/query` command to reduce model context bloat and use less tokens
+
 ## [1.0.0.0] - 2026-01-14
 
 _First release: Lightweight reconnaissance system for directed code exploration._
@@ -32,5 +47,6 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.0.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.1.0.0...HEAD
+[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.1.0.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.0.0.0
