@@ -5,5 +5,5 @@ interface RawProjectData {
         extensionCount: Record<string, number>;
     };
 }
-export declare function scanProject(location: string): Promise<RawProjectData>;
+export declare function scanProject(location: string, knowledgeDir: string): Promise<RawProjectData>;
 export {};

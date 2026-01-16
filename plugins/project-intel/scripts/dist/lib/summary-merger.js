@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getOrCreateSummaries = getOrCreateSummaries;
 exports.mergeSummaries = mergeSummaries;
 exports.getSummaries = getSummaries;
 const fs = __importStar(require("fs"));
