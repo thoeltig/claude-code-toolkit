@@ -58,38 +58,7 @@ Parse JSON response structure:
 }
 ```
 
-### Step 2: Format and display results
-
-Group results by parent directory to visualize project structure:
-
-```
-Found N matches for "keywords" (scope: all|<path>)
-
-plugins/fetch-full-content/
-├─ commands/
-│  └─ [FILE] fetch-full-content.md (Score: 48)
-│     Summary: Slash command for downloading full URL content
-│     Purpose: Command syntax, arguments, examples
-│     Role: documentation
-│     Exports: [Format, Execution, Output, Examples]
-│
-├─ scripts/
-│  └─ [FILE] fetch_full_content.py (Score: 20)
-│     Summary: Downloads HTML, converts to Markdown
-│     Purpose: Core implementation with Playwright support
-│     Role: script
-│     Exports: [HTMLDownloader, URLProcessor, main]
-
-plugins/project-intel/
-├─ [DIR] scripts/ (Score: 18)
-│  Tech: [TypeScript, Node.js]
-│
-├─ commands/
-│  └─ [FILE] query.md (Score: 26)
-│     Purpose: Knowledge base search interface
-```
-
-### Step 3: Suggest next actions
+### Step 2: Suggest next actions
 Based on results:
 
 **If no results:**
@@ -134,11 +103,6 @@ JSON structure with scored results, pre-sorted by confidence descending.
 - Per keyword: Individual keyword scores summed
 - Results sorted by total score descending
 - Limited to --max parameter (default 25)
-
-**Why semantic-first?**
-- Finding authentication by searching purpose/exports is better than finding it by path alone
-- A file with "authentication" in purpose/exports is more relevant than one with "auth" in directory name
-- Developers need semantic relevance, not directory structure matching
 
 **Scope Filtering:**
 - Empty scope: Search all items

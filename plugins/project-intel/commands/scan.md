@@ -46,22 +46,12 @@ Execute the scanner to analyze project structure and save to scan.json.
 node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --location="$LOCATION" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
-Parse the JSON response to extract `path` and `size` properties.
+Parse the JSON response to extract the `filePaths` values.
 
 ### Step 2: Create batches from filtered files
 Batch the file list (from Step 2) into groups of ~8 files per batch for parallel analysis.
 
-### Step 3: Warn if many batches
-If total batches ≥ 20, display warning about processing time:
-```
-⚠️  This project requires N batches for analysis
-    (Estimated: ~N minutes with 10 parallel agents)
-
-Continue? This may take a while for large projects.
-[yes/no]
-```
-
-### Step 4: Invoke Haiku agents in waves
+### Step 3: Invoke Haiku agents in waves
 Process batches in waves of max 10 concurrent agents:
 
 **Wave-based invocation:**
@@ -103,7 +93,7 @@ Task(
 done
 ```
 
-### Step 5: Execute merge command
+### Step 4: Execute merge command
 Combine all batch results into project knowledge:
 
 ```bash
@@ -114,7 +104,7 @@ Parse the JSON response to extract:
 - Number of files analyzed
 - Location of summaries.json
 
-### Step 6: Report completion
+### Step 5: Report completion
 Display summary to user:
 ```
 ✓ Analysis complete
@@ -150,11 +140,8 @@ Next step: Use /query "keyword" to search file summaries
 **Scan.json Structure:**
 ```json
 {
-  "files": [
-    {
-        "path": "plugins\\project-intel\\README.md",
-        "size": 12403
-    }
+  "filePaths": [
+    "plugins\\project-intel\\README.md"
   ],
   "projectStats": {
     "totalFiles": 1,

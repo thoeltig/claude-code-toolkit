@@ -31,6 +31,7 @@ export interface PartialDirectorySummary extends DirectorySummary {
 export interface PartialFileSummary extends FileSummary {
     path: string;
 }
+export declare function getOrCreateSummaries(knowledgeDir: string): SummariesData;
 export declare function mergeSummaries(location: string, knowledgeDir: string, partialSummaries: PartialSummaries): SummariesData;
 export declare function getSummaries(knowledgeDir: string): SummariesData;
 export {};

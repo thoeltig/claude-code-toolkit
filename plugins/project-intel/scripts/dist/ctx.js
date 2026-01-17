@@ -87,7 +87,7 @@ async function handleScan() {
     if (!fs.existsSync(knowledgeDir)) {
         fs.mkdirSync(knowledgeDir, { recursive: true });
     }
-    const scanData = await (0, project_scanner_1.scanProject)(location);
+    const scanData = await (0, project_scanner_1.scanProject)(location, knowledgeDir);
     fs.writeFileSync(output, JSON.stringify(scanData));
     console.log(JSON.stringify(scanData));
     process.exit(0);

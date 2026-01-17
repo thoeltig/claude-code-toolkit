@@ -40,7 +40,7 @@ export interface PartialFileSummary extends FileSummary {
   path: string; 
 }
 
-function getOrCreateSummaries(knowledgeDir: string): SummariesData {
+export function getOrCreateSummaries(knowledgeDir: string): SummariesData {
   const summariesPath = path.join(knowledgeDir, 'summaries.json');
 
   if (fs.existsSync(summariesPath)) {
