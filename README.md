@@ -1,6 +1,6 @@
 # Claude Code Toolkit
 
-A curated marketplace of powerful Claude Code plugins that extend your development workflow with intelligent automation, best practices enforcement, and productivity tools.
+A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.
 
 ## 🚀 Quick Start
 
@@ -21,15 +21,39 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
+| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.1.0.0 |
+| **[project-intel](./plugins/project-intel/)** | Lightweight reconnaissance system that provides semantic direction before code exploration with persistent knowledge across sessions | 1.1.0.0 |
+| **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.1.0.0 |
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
 | **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
-| **[session-protocol](./plugins/session-protocol/)** | Manage session continuity across Claude conversations by saving and loading structured context | 1.1.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
-| **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.1.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
-| **[project-intel](./plugins/project-intel/)** | Lightweight reconnaissance system that provides semantic direction before code exploration with persistent knowledge across sessions | 1.0.0.0 |
 
 ## 🎯 Plugin Highlights
+
+### Session Protocol
+Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
+
+**Install:** `/plugin install session-protocol@claude-code-toolkit`
+
+### Project Intel
+Lightweight reconnaissance system that provides semantic direction before expensive code exploration. Query first to get a ranked list of relevant files - saves exploration tokens and reduces context pollution.
+
+- **`/scan` command**: Generate semantic summaries of project structure once, reuse forever
+- **`/query` command**: Search summaries by semantic relevance to find relevant files without reading them
+- Wave-based parallel processing with persistent cross-session knowledge
+- Semantic scoring on purpose, role, exports, imports, and technologies
+- Breakeven analysis: Saves 10k-20k tokens after 3-4 successful queries
+- Best for mid to large projects (25+ files), stable codebases, team projects
+
+**Install:** `/plugin install project-intel@claude-code-toolkit`
+
+### Fetch-Full-Content
+Download complete page content as markdown to filesystem for repeated analysis and 100% information retrieval. Built-in WebFetch tool uses AI summarization which will return 30-80% of the information depending on the content size.
+
+⚠️ **Security**: No prompt injection guards - only use on trusted sources like official documentation. Use built-in WebFetch tool for untrusted sources.
+
+**Install:** `/plugin install fetch-full-content@claude-code-toolkit`
 
 ### Changelog
 Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
@@ -45,11 +69,6 @@ Create and maintain high-quality project documentation with comprehensive valida
 
 **Install:** `/plugin install documentation@claude-code-toolkit`
 
-### Session Protocol
-Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
-
-**Install:** `/plugin install session-protocol@claude-code-toolkit`
-
 ### Claude Code Capabilities
 The most comprehensive toolkit for working with Claude Code's extensibility features. Includes 7 specialized skills for managing every aspect of your Claude Code setup.
 
@@ -63,29 +82,10 @@ The most comprehensive toolkit for working with Claude Code's extensibility feat
 
 **Install:** `/plugin install claude-code-capabilities@claude-code-toolkit`
 
-### Fetch-Full-Content
-Download complete page content as markdown to filesystem for repeated analysis and 100% information retrieval. Built-in WebFetch tool uses AI summarization which will return 30-80% of the information depending on the content size.
-
-⚠️ **Security**: No prompt injection guards - only use on trusted sources like official documentation. Use built-in WebFetch tool for untrusted sources.
-
-**Install:** `/plugin install fetch-full-content@claude-code-toolkit`
-
 ### Cross-Platform Notification
 Get alerted when Claude Code tasks complete or hook events occur with native system notifications. Works seamlessly on Windows, macOS, and Linux with automatic fallback to console output.
 
 **Install:** `/plugin install cross-platform-notification@claude-code-toolkit`
-
-### Project Intel
-Lightweight reconnaissance system that provides semantic direction before expensive code exploration. Query first to get a ranked list of relevant files - saves exploration tokens and reduces context pollution.
-
-- **`/scan` command**: Generate semantic summaries of project structure once, reuse forever
-- **`/query` command**: Search summaries by semantic relevance to find relevant files without reading them
-- Wave-based parallel processing with persistent cross-session knowledge
-- Semantic scoring on purpose, role, exports, imports, and technologies
-- Breakeven analysis: Saves 10k-20k tokens after 3-4 successful queries
-- Best for mid to large projects (25+ files), stable codebases, team projects
-
-**Install:** `/plugin install project-intel@claude-code-toolkit`
 
 ## 📚 Documentation
 

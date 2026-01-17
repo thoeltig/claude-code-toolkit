@@ -5,10 +5,40 @@
     "email": "[email protected]"
   },
   "metadata": {
-    "description": "Custom Claude Code capabilities and tools",
-    "version": "1.11.0.0"
+    "description": "A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.",
+    "version": "1.12.0.0"
   },
   "plugins": [
+    {
+      "name": "session-protocol",
+      "source": "./plugins/session-protocol",
+      "description": "Session continuity management across Claude conversations",
+      "version": "1.1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "project-intel",
+      "source": "./plugins/project-intel",
+      "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
+      "version": "1.1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "fetch-full-content",
+      "source": "./plugins/fetch-full-content",
+      "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations.",
+      "version": "1.1.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
     {
       "name": "changelog",
       "source": "./plugins/changelog",
@@ -30,16 +60,6 @@
       "strict": false
     },
     {
-      "name": "session-protocol",
-      "source": "./plugins/session-protocol",
-      "description": "Session continuity management across Claude conversations",
-      "version": "1.1.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
-    },
-    {
       "name": "claude-code-capabilities",
       "source": "./plugins/claude-code-capabilities",
       "description": "Comprehensive management of Claude Code features including skills, commands, hooks, MCPs, prompts, and subagents",
@@ -50,29 +70,9 @@
       "strict": false
     },
     {
-      "name": "fetch-full-content",
-      "source": "./plugins/fetch-full-content",
-      "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations.",
-      "version": "1.1.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
-    },
-    {
       "name": "cross-platform-notification",
       "source": "./plugins/cross-platform-notification",
       "description": "A Claude Code plugin with a hook that sends native system notifications for Claude Code notifications.",
-      "version": "1.0.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
-    },
-    {
-      "name": "project-intel",
-      "source": "./plugins/project-intel",
-      "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
       "version": "1.0.0.0",
       "author": {
         "name": "Thore Höltig"
