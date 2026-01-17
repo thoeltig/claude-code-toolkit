@@ -9,6 +9,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.12.0.0] - 2026-01-18
+
+_Marketplace release with project-intel performance enhancement._
+
+### Changed
+
+- **project-intel plugin** ([v1.1.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.1.0.0)): Performance enhancement with Git-based incremental scanning
+  - Only re-analyze files modified since last scan (80-95% reduction on subsequent scans)
+  - Automatic git tracking detection with filesystem fallback
+  - Modification timestamp tracking from git history for accurate staleness detection
+
+---
+
 ## [1.11.0.0] - 2026-01-14
 
 _Marketplace release with lightweight reconnaissance system for directed code exploration._

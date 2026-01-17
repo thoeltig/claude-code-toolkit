@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.",
-    "version": "1.11.0.0"
+    "version": "1.12.0.0"
   },
   "plugins": [
     {
@@ -23,7 +23,7 @@
       "name": "project-intel",
       "source": "./plugins/project-intel",
       "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
-      "version": "1.0.0.0",
+      "version": "1.1.0.0",
       "author": {
         "name": "Thore Höltig"
       },
