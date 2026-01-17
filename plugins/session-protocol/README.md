@@ -44,8 +44,6 @@ cp -r session-protocol ~/.claude/plugins/
 ### Scripts
 
 - `sessionstart-session-protocol-check.py`: Auto-detect existing protocol on session start
-- `precompact-session-protocol-reminder.py`: Remind to save before session compact
-- `claude_code_notifier.py`: Notification helper to show messages to users for workflow events
 
 ## Usage
 
@@ -243,78 +241,13 @@ Applied multiple token optimization techniques to the traditionally verbose mark
 
 ## Hooks Integration
 
-The plugin includes automated hooks that enhance session workflow with notifications.
+The plugin includes an automated hook for session awareness.
 
-### Hooks Configuration
+### SessionStart Hook
 
-Located in `hooks/hooks.json`, referenced by plugin.json:
-
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/hook-wrapper-with-notification.py\" sessionstart-session-protocol-check.py",
-            "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/hook-wrapper-with-notification.py\" precompact-session-protocol-reminder.py",
-            "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/claude_code_notifier.py\""
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-### Hook Behavior
-
-**SessionStart Hook**:
-- Auto-detects session-protocol.json on session start
-- **User notification**: "A session protocol file exists. Type /load-session-protocol to restore it, or continue without loading."
-- **System message**: "Found session-protocol.json from previous session"
-- Claude receives structured guidance to inform user and wait for decision
-
-**PreCompact Hook**:
-- Triggers before context compaction
-- **User notification**: "Context is full and will be compacted. Run /save-session-protocol if you have unfinished work to preserve."
-- **System message**: "Context compaction imminent - consider saving state"
-- Claude receives instructions to evaluate unfinished work and recommend saving if needed
-
-**Notification Hook**:
-- Sends system notifications for workflow events
-- Cross-platform support (Windows, macOS, Linux)
-- Customizable messages via CLAUDE_NOTIFIER_CUSTOM_MESSAGES environment variable
-
-### Hook Scripts
-
-All hooks use the official Claude Code response schema with:
-- **User notifications**: Clear, actionable messages displayed to user
-- **System messages**: Instructions for Claude
-- **Structured guidance**: JSON in additionalContext with severity, actions, and checks
-
-**Wrapper pattern**: `hook-wrapper-with-notification.py` provides unified notification handling for workflow hooks.
+- Auto-detects existing session-protocol.json on session start
+- Informs Claude of previous session state so user can be prompted to load it
+- No user-facing notifications (use cross-platform-notification plugin if desired)
 
 ## Troubleshooting
 
@@ -333,19 +266,11 @@ All hooks use the official Claude Code response schema with:
 **Cause**: Not a git repository (no `.git` folder)
 **Fix**: Normal behavior, git integration is optional
 
+---
+
 ## Version History
 
-See [CHANGELOG.md](CHANGELOG.md) for plugin version history.
-
-## Contributing
-
-See root [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
-
-**Accepted contributions**:
-- Bug fixes
-- Performance improvements
-- Documentation enhancements
-- Token optimization suggestions
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ## License
 
@@ -353,5 +278,9 @@ See root [LICENSE](../../LICENSE) for details.
 
 ## Support
 
-- Issues: https://github.com/thoeltig/claude-code-toolkit/issues
-- Documentation: https://github.com/thoeltig/claude-code-toolkit
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
+
+---
+
+**Author**: [Thore Höltig](https://github.com/thoeltig)

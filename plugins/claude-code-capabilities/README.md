@@ -630,20 +630,21 @@ This plugin is built from official Claude Code documentation:
 
 Over 74 documentation files were analyzed and synthesized into the current implementation.
 
-## Contributing
+---
 
-Contributions welcome! See the main repository [CONTRIBUTING.md](https://github.com/thoeltig/claude-code-toolkit/blob/develop/CONTRIBUTING.md) for guidelines.
+## Version History
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/thoeltig/claude-code-toolkit/blob/develop/LICENSE)
+See root [LICENSE](../../LICENSE) for details.
 
 ## Support
 
-- **Issues:** [GitHub Issues](https://github.com/thoeltig/claude-code-toolkit/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/thoeltig/claude-code-toolkit/discussions)
-- **Repository:** [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
 
-## Changelog
+---
 
-See [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
+**Author**: [Thore Höltig](https://github.com/thoeltig)

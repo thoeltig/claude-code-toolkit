@@ -16,7 +16,6 @@ download_docs.log
 
 # Build artifacts
 *.tar.gz
-dist/
 build/
 node_modules/
 

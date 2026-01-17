@@ -1,0 +1,9 @@
+{
+  "name": "fetch-full-content",
+  "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations.",
+  "version": "1.1.0.0",
+  "author": {
+    "name": "Thore Höltig",
+    "url": "https://github.com/thoeltig/claude-code-toolkit"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "documentation",
+  "description": "Comprehensive skill for creating, updating, and maintaining high-quality project documentation",
+  "version": "1.0.0.0",
+  "author": {
+    "name": "Thore Höltig",
+    "url": "https://github.com/thoeltig/claude-code-toolkit"
+  }
+}
