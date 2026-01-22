@@ -4,9 +4,9 @@
  * One JSON object per line
  */
 
-import { BaseDataSet } from "../types";
+import { FlatArrayDataSet } from "../types";
 
-export function convertToJsonl(data: BaseDataSet): string {
+export function convertToJsonl(data: FlatArrayDataSet): string {
   return data.records
     .map((record) => JSON.stringify(record))
     .join("\n");

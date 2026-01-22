@@ -11,9 +11,16 @@ export type Format = "csv" | "json_pretty" | "json_compact" | "jsonl" | "toon" |
 export type Directory = "data" | "answers_validation" | "questions" | "answers_template" | "subagent_outputs" | "results";
 export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "multiple_steps";
 
-export interface Metadata extends ValuesMetadata {
+export interface MetadataFlatArray {
   generatedAt: string,
   description: string,
+  fieldCount: number,
+  recordCount: number,
+  totalValues: number,
+}
+
+export interface MetadataNetsedObject extends MetadataFlatArray {
+  nestingLevels: string,
 }
 
 export interface ValuesMetadata {
@@ -53,59 +60,75 @@ export interface ProductRecord extends DataRecord {
   discontinuedDate?:string;
 }
 
+export interface SearchMetadata extends DataRecord{
+  category: string;
+  sku: string;
+  manufacturerCode: string;
+  avgRating?: number;
+}
+
+export interface ProductIdentity extends NestedSecondLevelDataRecord {
+  productName: string;
+  description: string;
+  searchMetadata: SearchMetadata;
+}
+
+export interface Pricing extends DataRecord {
+  price: number;
+  costPrice: number;
+}
+
+export interface InventoryStats extends DataRecord {
+  reorderPoint: number;
+  lastRestocked: string;
+  unitsShipped: number;
+}
+
+export interface Inventory extends NestedSecondLevelDataRecord {
+  stockQuantity: number;
+  warehouseLocation: string;
+  stats: InventoryStats;
+}
+
+export interface Supplier extends DataRecord {
+  supplierName: string;
+  supplierLocation: string;
+}
+
+export interface PhysicalCharacteristics extends DataRecord {
+  weight: number;
+  dimensions: string;
+  hazardous: boolean;
+  fragile: boolean;
+  shelfLife?: number;
+}
+
+export interface NestedProductRecord extends NestedFirstLevelDataRecord {
+  productId: string;
+  discontinuedDate?: string;
+  identity: ProductIdentity;
+  pricing: Pricing;
+  inventory: Inventory;
+  supplier: Supplier;
+  physical: PhysicalCharacteristics;
+}
+
 export interface DataRecord {
   [key: string]: string | number | boolean | null | undefined;
 }
 
-export interface BaseDataSet {
-  metadata: Metadata;
+export interface NestedSecondLevelDataRecord {
+  [key: string]: InventoryStats | SearchMetadata | number | string | null | undefined;
+}
+
+export interface NestedFirstLevelDataRecord {
+  [key: string]: ProductIdentity | Pricing | Inventory | Supplier | PhysicalCharacteristics | string | null | undefined;
+}
+
+export interface FlatArrayDataSet {
+  metadata: MetadataFlatArray;
   records: DataRecord[];
 }
-
-// CSV-specific structure
-export interface CsvData extends BaseDataSet {
-  headers: string[];
-}
-
-// JSON-specific structure
-export interface JsonData extends BaseDataSet {
-  structure: Record<string, unknown>;
-}
-
-// Markdown-specific structure
-export interface MarkdownData extends BaseDataSet {
-  sections: MarkdownSection[];
-}
-
-export interface MarkdownSection {
-  title: string;
-  content: string;
-  level: number;
-}
-
-// YAML-specific structure
-export interface YamlData extends BaseDataSet {
-  structure: Record<string, unknown>;
-}
-
-// Apache log-specific structure
-export interface ApacheLogEntry {
-  ip: string;
-  timestamp: string;
-  method: string;
-  path: string;
-  protocol: string;
-  status: number;
-  bytes: number;
-  referer: string;
-  userAgent: string;
-}
-
-export interface ApacheLogData extends BaseDataSet {
-  logs: ApacheLogEntry[];
-}
-
-export type ConcreteDataSet = CsvData | JsonData | MarkdownData | YamlData | ApacheLogData;
 
 // ============================================================================
 // QUESTION & ANSWER TYPES

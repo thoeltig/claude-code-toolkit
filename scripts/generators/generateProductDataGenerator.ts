@@ -4,7 +4,7 @@
  * Can be converted to all target formats
  */
 
-import { Metadata, BaseDataSet, ProductRecord } from "../types";
+import { MetadataFlatArray, FlatArrayDataSet, ProductRecord } from "../types";
 import { ProductRecordRandomizer } from "./productRecordRandomizer";
 
 export class ProductDataGenerator {  
@@ -14,7 +14,7 @@ export class ProductDataGenerator {
     this.data = new ProductRecordRandomizer(seed);
   }
 
-  public generate(recordCount: number, allFieldsManadatory: boolean): BaseDataSet {
+  public generate(recordCount: number, allFieldsManadatory: boolean): FlatArrayDataSet {
     const records: ProductRecord[] = [];
     let recordIndex = 0;
     let totalValues = 0;
@@ -39,7 +39,7 @@ export class ProductDataGenerator {
       recordIndex++;
     }
 
-    const metadata:Metadata = {
+    const metadata:MetadataFlatArray = {
       fieldCount: Object.keys(records[0] || {}).length,
       recordCount: records.length,
       totalValues: totalValues,
@@ -51,7 +51,7 @@ export class ProductDataGenerator {
   }
 }
 
-export function generateProductDataGenerator(recordCount: number, allFieldsManadatory: boolean): BaseDataSet {
+export function generateProductDataGenerator(recordCount: number, allFieldsManadatory: boolean): FlatArrayDataSet {
   const generator = new ProductDataGenerator();
   return generator.generate(recordCount, allFieldsManadatory);
 }

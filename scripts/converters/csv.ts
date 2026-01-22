@@ -3,9 +3,9 @@
  * Converts base dataset to CSV with proper handling of optional fields
  */
 
-import { BaseDataSet, DataRecord } from "../types";
+import { FlatArrayDataSet } from "../types";
 
-export function convertToCsv(data: BaseDataSet): string {
+export function convertToCsv(data: FlatArrayDataSet): string {
   if (data.records.length === 0) {
     return "";
   }
