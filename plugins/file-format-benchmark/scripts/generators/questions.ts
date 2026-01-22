@@ -4,11 +4,11 @@
  */
 
 import { QUESTIONS_DISTRIBUTION } from "../consts";
-import { BaseDataSet, DataRecord, AnswerAndQuestion } from "../types";
+import { FlatArrayDataSet, DataRecord, AnswerAndQuestion } from "../types";
 import { Randomizer } from "./randomizer";
 
 interface QuestionGeneratorContext {
-  data: BaseDataSet;
+  data: FlatArrayDataSet;
   records: DataRecord[];
 }
 
@@ -19,7 +19,7 @@ export class QuestionnaireGenerator {
     this.rand = new Randomizer(seed);
   }
 
-  public generate(data: BaseDataSet): AnswerAndQuestion[] {
+  public generate(data: FlatArrayDataSet): AnswerAndQuestion[] {
     const productIdField = "productId";
     const ctx: QuestionGeneratorContext = {
       data,
@@ -544,7 +544,7 @@ export class QuestionnaireGenerator {
   }
 }
 
-export function generateQuestionnaire(data: BaseDataSet): AnswerAndQuestion[] {
+export function generateQuestionnaire(data: FlatArrayDataSet): AnswerAndQuestion[] {
   const generator = new QuestionnaireGenerator();
   return generator.generate(data);
 }

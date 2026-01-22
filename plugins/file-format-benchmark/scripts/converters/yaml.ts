@@ -3,9 +3,9 @@
  * Converts base dataset to YAML format
  */
 
-import { BaseDataSet } from "../types";
+import { FlatArrayDataSet } from "../types";
 
-export function convertToYaml(data: BaseDataSet): string {
+export function convertToYaml(data: FlatArrayDataSet): string {
   const lines: string[] = [];
 
   // Add products

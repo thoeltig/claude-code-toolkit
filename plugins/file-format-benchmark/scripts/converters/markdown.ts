@@ -3,9 +3,9 @@
  * Converts base dataset to markdown tables and sections
  */
 
-import { BaseDataSet, DataRecord } from "../types";
+import { FlatArrayDataSet, DataRecord } from "../types";
 
-export function convertToMarkdown(data: BaseDataSet): string {
+export function convertToMarkdown(data: FlatArrayDataSet): string {
   const lines: string[] = [];
 
   // Group records by category

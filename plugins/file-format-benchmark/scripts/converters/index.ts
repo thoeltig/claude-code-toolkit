@@ -3,7 +3,7 @@
  * Routes to appropriate format converter
  */
 
-import { BaseDataSet, Format } from "../types";
+import { FlatArrayDataSet, Format } from "../types";
 import { convertToCsv } from "./csv";
 import { convertToPrettyJson, convertToMinifiedJson } from "./json";
 import { convertToMarkdown } from "./markdown";
@@ -12,7 +12,7 @@ import { convertToApacheLogs } from "./apache";
 import { convertToJsonl } from "./jsonl";
 import { encode } from "@toon-format/toon";
 
-export function convertToFormat(data: BaseDataSet, format: Format): string {
+export function convertToFormat(data: FlatArrayDataSet, format: Format): string {
   switch (format) {
     case "csv":
       return convertToCsv(data);

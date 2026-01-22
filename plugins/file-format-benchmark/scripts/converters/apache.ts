@@ -3,9 +3,9 @@
  * Converts base dataset to Apache Combined Log Format
  */
 
-import { BaseDataSet, DataRecord } from "../types";
+import { FlatArrayDataSet, DataRecord } from "../types";
 
-export function convertToApacheLogs(data: BaseDataSet): string {
+export function convertToApacheLogs(data: FlatArrayDataSet): string {
   const lines: string[] = [];
 
   for (const record of data.records) {
