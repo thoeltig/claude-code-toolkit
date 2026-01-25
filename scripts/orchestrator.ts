@@ -144,12 +144,14 @@ export class BenchmarkingOrchestrator {
 
           // Convert to format
           const fileContent = convertToFormat(dataToUse, format);
-          const characterCount = fileContent.length;
           const fileExt = this.getFileExtension(format);
           const dataFileName = `${format}_with_${fieldsMandatoryText}_${recordCount}_flat_records.${fileExt}`;
           const dataFilePath = path.join(this.outputDir, DIRECTORY_DATA, format, dataFileName);
           const expectedOutputFilePath = path.join(this.outputDir, DIRECTORY_SUBAGENT_OUTPUT, format,`answers_with_${fieldsMandatoryText}_${recordCount}_flat_records.json`);
           fs.writeFileSync(dataFilePath, fileContent);
+          const content = fs.readFileSync(dataFilePath, "utf-8"); // Read file again to get actual content size     
+          const characterCount= content.length;
+
           console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} flat data set rows and ${fieldsMandatoryText} data)`);
 
           // Track result
