@@ -104,15 +104,15 @@ Most benchmarks focus on token efficiency (chars/token). This research also high
 
 **Read Phase Token Usage (chars per token):**
 
-| Rank | Format | Mandatory 80 | Optional 80 | Optional 40 | Mandatory 40 | Best Efficiency |
-|------|--------|-------------|-----------|-----------|-------------|-----------------|
-| 1 | TOON | 5.179 | 2.285 | 2.327 | 5.024 | 5.18 chars/token |
-| 2 | JSON Compact | 3.041 | 3.334 | 3.289 | 3.000 | 3.33 chars/token |
-| 3 | JSONL | 2.981 | 3.264 | 3.221 | 2.940 | 3.26 chars/token |
-| 4 | YAML | 2.196 | 2.409 | 2.464 | 2.255 | 2.46 chars/token |
-| 5 | CSV | 2.516 | 2.717 | 2.668 | 2.463 | 2.72 chars/token |
-| 6 | JSON Pretty | 1.961 | 2.147 | 2.194 | 2.010 | 2.19 chars/token |
-| 7 | Markdown | 2.161 | 2.164 | 2.174 | 2.169 | 2.17 chars/token |
+| Rank | Format | Mandatory 80 | Mandatory 40 | Optional 80 | Optional 40 | Best Efficiency |
+|------|--------|-------------|-------------|-----------|-----------|-----------------|
+| 1 | TOON | 5.179 | 5.024 | 2.285 | 2.327 | 5.18 chars/token |
+| 2 | JSON Compact | 3.041 | 3.000 | 3.334 | 3.289 | 3.33 chars/token |
+| 3 | JSONL | 2.981 | 2.940 | 3.264 | 3.221 | 3.26 chars/token |
+| 4 | YAML | 2.196 | 2.255 | 2.409 | 2.464 | 2.46 chars/token |
+| 5 | CSV | 2.516 | 2.463 | 2.717 | 2.668 | 2.72 chars/token |
+| 6 | JSON Pretty | 1.961 | 2.010 | 2.147 | 2.194 | 2.19 chars/token |
+| 7 | Markdown | 2.161 | 2.169 | 2.164 | 2.174 | 2.17 chars/token |
 
 **Key Observation**: TOON shows exceptional efficiency for mandatory data but collapses with optional fields. JSON formats show stable efficiency across variants.
 
