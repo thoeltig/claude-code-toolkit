@@ -16,17 +16,15 @@ export const FILE_METRICS:string = "metrics.json";
 
 export const QUESTIONS_COUNT = 120;
 export const QUESTIONS_DISTRIBUTION = {
-    field_retrieval: Math.ceil(QUESTIONS_COUNT * 0.35), 
-    aggregation: Math.ceil(QUESTIONS_COUNT * 0.275), 
+    field_retrieval: Math.ceil(QUESTIONS_COUNT * 0.4), 
+    aggregation: Math.ceil(QUESTIONS_COUNT * 0.15), 
     filtering: Math.ceil(QUESTIONS_COUNT * 0.2),
-    structure_awareness: Math.ceil(QUESTIONS_COUNT * 0.125), 
-    multiple_steps: Math.ceil(QUESTIONS_COUNT * 0.05)
+    structure_awareness: Math.ceil(QUESTIONS_COUNT * 0.25)
 };
 
 export const QUESTIONS_WEIGHT_DISTRIBUTION = {
     field_retrieval: 0.35, 
-    aggregation: 0.2, 
+    aggregation: 0.15, 
     filtering: 0.2,
-    structure_awareness: 0.25, 
-    multiple_steps: 0
+    structure_awareness: 0.3
 };

@@ -40,6 +40,30 @@ export class Randomizer{
   
     return map;
   }
+  
+  public getUniqueNumericFieldsAndValues<T>(values: T[], count: number, fieldToSkip?: string): Map<string, T>{  
+    const map = new Map<string, T>();
+    let randomValues = this.getRandomItems(values, count);
+    for (let i = 0; i < randomValues.length; i++) {
+      const value = randomValues[i];
+      
+      let addValueToMap = false;
+      for (let retryCount = 0; retryCount < 3; retryCount++) {
+        const field = this.getRandomNumbericField(value, fieldToSkip);
+        addValueToMap = map.get(field) ? false : true;
+        if(addValueToMap){
+          map.set(field, value);
+          break;
+        }
+      }
+
+      if(!addValueToMap){
+        i--;
+      }
+    }
+  
+    return map;
+  }
 
   public getRandomItem<T>(arr: T[]): T {
     return arr[Math.floor(this.rand() * arr.length)];
