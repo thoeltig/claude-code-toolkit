@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import MetricsExtraction from "./analytics/metrics-extraction";
-import { MergedValidationReport, QuestionCategory, UserMetrics } from "./types";
+import { GeneratorResult, MergedValidationReport, QuestionCategory, UserMetrics } from "./types";
 import ReportValidator from "./validators/reportValidator";
 import { DIRECTORY_ANSWERS_VALIDATION, FILE_ANALYTICS_RESULT, FILE_METADATA, FILE_METRICS, QUESTIONS_DISTRIBUTION, QUESTIONS_WEIGHT_DISTRIBUTION } from "./consts";
 
@@ -169,9 +169,9 @@ class BenchmarkAnalytics {
     }
   }
 
-  private loadMetadata(): any {
+  private loadMetadata(): GeneratorResult {
     const content = fs.readFileSync(this.metadataFile, "utf-8");
-    return JSON.parse(content);
+    return JSON.parse(content) as GeneratorResult;
   }
 
   private validateResults(): Map<string, MergedValidationReport> {    
@@ -186,7 +186,7 @@ class BenchmarkAnalytics {
       const validator = new ReportValidator(this.outputDir);
       var reports = validator.validate();
       reports.forEach(x => {
-        const key = `${x.format}_${x.recordCount}`;
+        const key = this.getLookupKey(x.format, x.recordCount, x.variant === 'optional');
         results.set(key, x);
       });
     } catch (err) {
@@ -198,22 +198,21 @@ class BenchmarkAnalytics {
 
   private calculateMetrics(
     userMetrics: UserMetrics[],
-    metadata: any,
+    metadata: GeneratorResult,
     validationResults: Map<string, MergedValidationReport>
   ): TestMetrics[] {
     const metrics: TestMetrics[] = [];
 
     // Build lookup map from metadata
     const datasetMap = new Map<string, any>();
-    const filesArray = metadata.files || metadata.filesPerRecordCount || [];
+    const filesArray = metadata.filesPerRecordCount || [];
 
     for (const file of filesArray) {
       if (Array.isArray(file.dataAndOutput)) {
         for (const dataAndOutput of file.dataAndOutput) {
-          const format = dataAndOutput.format;
-          const key = `${format}_${file.recordCount}`;
+          const key = this.getLookupKey(dataAndOutput.format, file.recordCount, dataAndOutput.allFieldsManadatory === false);
           datasetMap.set(key, {
-            format,
+            format: dataAndOutput.format,
             recordCount: file.recordCount,
             totalValues: file.totalValues,
             characterCount: dataAndOutput.metadata.characterCount,
@@ -238,27 +237,16 @@ class BenchmarkAnalytics {
 
     // Process each test case
     for (const userMetric of userMetrics) {
-      // Parse testCase to extract format and density
-      const match = userMetric.testCase.match(/^([a-z_]+)_(\d+)_/);
-      if (!match) {
-        console.warn(`Could not parse test case: ${userMetric.testCase}`);
-        continue;
-      }
-
-      const format = match[1];
-      const recordCount = parseInt(match[2]);
-      const datasetKey = `${format}_${recordCount}`;
-      const validationKey = `${format}_${recordCount}`;
-
-      const datasetInfo = datasetMap.get(datasetKey);
+      const lookupKey = this.getLookupKey(userMetric.format, userMetric.recordCount, userMetric.hasOptionalData);
+      const datasetInfo = datasetMap.get(lookupKey);
       if (!datasetInfo) {
-        console.warn(`Dataset info not found for: ${datasetKey}`);
+        console.warn(`Dataset info not found for: ${lookupKey}`);
         continue;
       }
 
-      const validation = validationResults.get(validationKey);
+      const validation = validationResults.get(lookupKey);
       if (!validation) {
-        console.warn(`Validation info not found for: ${validationKey}`);
+        console.warn(`Validation info not found for: ${lookupKey}`);
         continue;
       }
 
@@ -305,6 +293,10 @@ class BenchmarkAnalytics {
     }
 
     return metrics;
+  }
+
+  private getLookupKey(format: string, recordCount: number, hasOptionalData: boolean): string {
+    return `${format}_${recordCount}_${hasOptionalData ? 'optional' : 'mandatory'}`;
   }
 
   private normalizedAmountScore(min: number, max: number, value: number): number{
