@@ -47,11 +47,15 @@ interface TestMetrics {
   tokensPerObject: number; 
   // Reasoning cost per question answered. Indicates how complex the reasoning task is for this format
   avgReasoningTokensPerAnswer: number;
+  // Represents information density: how much accuracy per token consumed. Higher values indicate more information delivered per token.
+  informationValuePerToken: number;
+  // Tokens wasted on inaccurate output that increases context pollution. Higher values indicate format reliability risk.
+  costOfInaccuracy: number;
+  // Reading + reasoning tokens
+  totalTokensUsed: number;
 
   // Results
 
-  // Reading + reasoning tokens
-  totalTokensUsed: number;
   // Effective tokens: assumes lower accuracy wastes tokens. Accounts for format quality via accuracy percentage.
   efficientlyUsedTokens: number;
   // Same as above but weighted by question importance: field retrieval and structure awareness questions weighted higher than aggregation and filtering.
@@ -288,8 +292,11 @@ class BenchmarkAnalytics {
         charsPerToken: parseFloat((datasetInfo.characterCount / userMetric.readTokens).toFixed(3)),
         tokensPerValue: parseFloat((userMetric.readTokens / datasetInfo.totalValues).toFixed(3)),
         tokensPerObject: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
-        avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),
+        avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),        
+        informationValuePerToken: parseFloat(((validation.accuracy.accuracyPercent / totalTokensUsed) * 100).toFixed(3)),
+        costOfInaccuracy: parseFloat((totalTokensUsed * (1 - (validation.accuracy.accuracyPercent / 100))).toFixed(3)),
         totalTokensUsed: totalTokensUsed,
+
         efficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.accuracyPercent / 100)).toFixed(3)),
         weightedEfficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.weightedAccuracyPercent / 100)).toFixed(3)),
         efficiencyScore: parseFloat(((validation.accuracy.accuracyPercent*0.7) + (normalizedAmountScore*0.3)).toFixed(3)),
@@ -329,15 +336,13 @@ class BenchmarkAnalytics {
           ["field_retrieval", QUESTIONS_DISTRIBUTION["field_retrieval"]],
           ["aggregation", QUESTIONS_DISTRIBUTION["aggregation"]],
           ["filtering", QUESTIONS_DISTRIBUTION["filtering"]],
-          ["structure_awareness", QUESTIONS_DISTRIBUTION["structure_awareness"]],
-          ["multiple_steps", QUESTIONS_DISTRIBUTION["multiple_steps"]]
+          ["structure_awareness", QUESTIONS_DISTRIBUTION["structure_awareness"]]
         ],
         questionWeightDistribution: [
           ["field_retrieval", QUESTIONS_WEIGHT_DISTRIBUTION["field_retrieval"]],
           ["aggregation", QUESTIONS_WEIGHT_DISTRIBUTION["aggregation"]],
           ["filtering", QUESTIONS_WEIGHT_DISTRIBUTION["filtering"]],
-          ["structure_awareness", QUESTIONS_WEIGHT_DISTRIBUTION["structure_awareness"]],
-          ["multiple_steps", QUESTIONS_WEIGHT_DISTRIBUTION["multiple_steps"]]
+          ["structure_awareness", QUESTIONS_WEIGHT_DISTRIBUTION["structure_awareness"]]
         ],
       },
       rankings,
