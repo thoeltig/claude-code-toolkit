@@ -3,12 +3,12 @@
  * Converts base dataset to minified JSON
  */
 
-import { FlatArrayDataSet } from "../types";
+import { FlatArrayDataSet, NestedDataSet } from "../types";
 
-export function convertToPrettyJson(data: FlatArrayDataSet): string {
+export function convertToPrettyJson(data: FlatArrayDataSet | NestedDataSet): string {
   return JSON.stringify(data.records, null, 2);
 }
 
-export function convertToMinifiedJson(data: FlatArrayDataSet): string {
+export function convertToMinifiedJson(data: FlatArrayDataSet | NestedDataSet): string {
   return JSON.stringify(data.records);
 }
