@@ -1,10 +1,11 @@
 # File Format Token Efficiency Benchmark: Comprehensive Analysis
 
-**Test Case**: `benchmark_format_all_variant_all_haiku_off`
-**Date**: 2025-12-19
-**Model**: Claude 4.5 Haiku
-**Extended Thinking**: Off
-**Status**: First iteration - findings published to inform future test methodology
+- **Date**: 2025-12-19
+- **Model**: Claude 4.5 Haiku
+- **Extended Thinking**: Off
+- **Formats**: CSV, JSON (pretty & compact), JSONL, TOON, Markdown, YAML
+- **Test data**: 40 & 80 product records as flat arrays
+- **Status**: First iteration - findings published to inform future test methodology
 
 ---
 
@@ -41,13 +42,13 @@ This requires measuring:
 - **Information Fidelity**: How accurately can the model understand and answer questions about the data?
 - **Robustness**: How consistent is performance across data variants (mandatory vs optional fields)?
 
-Traditional benchmarks focus on token efficiency (chars/token). This research adds the critical dimension: **what is the model actually learning?**
+Most benchmarks focus on token efficiency (chars/token). This research also highlights **information accuracy** (how correctly the model can extract data) and **tokens-per-value** (how much structural overhead each format requires per data field).
 
 ### 1.2 Test Design
 
 **Data Generation:**
 - 7 formats tested: CSV, JSON Compact, JSON Pretty, JSONL, TOON, Markdown, YAML
-- 2 variants per format: mandatory (22 fields, dense) and optional (22 mandatory + 12 optional, sparse)
+- 2 variants per format: mandatory (22 fields, dense) and optional (19 mandatory + 3 optional, sparse)
 - 2 record counts: 40 and 80 records
 - 28 total test combinations
 
@@ -67,17 +68,16 @@ Traditional benchmarks focus on token efficiency (chars/token). This research ad
 - Multi-step = 0% (testing limits, not practical baseline)
 
 **Execution Strategy:**
-- Phase 1: Readonly test to establish token cache (eliminates read-time variability)
+- Phase 1: Readonly test to establish read token per file format
 - Phase 2: 3 independent full tests per combination with extended thinking disabled
 - Metrics: read tokens, reasoning tokens, output tokens, accuracy, duration
 
 ### 1.3 Metrics Definition
 
 **Token Metrics:**
-- `readTokens`: Tokens consumed reading the data file (cached on subsequent runs)
+- `readTokens`: Tokens consumed reading the data file
 - `reasoningTokens`: Tokens consumed during inference (answering questions)
 - `totalTokens`: readTokens + reasoningTokens
-- All token measurements capture first pass (no caching benefits in comparative analysis)
 
 **Accuracy Metrics:**
 - `rawAccuracy`: Correct answers / 120 total
@@ -176,32 +176,45 @@ Weighted accuracy prioritizes field retrieval and structure awareness (60% combi
 
 **Critical Insight**: Markdown is the only format where weighted accuracy decreases below raw accuracy (-0.70%), indicating it systematically fails on questions requiring understanding data structure. While the delta is small, combined with the extremely low baseline accuracy (23.05%), this reveals fundamental format inadequacy for structured data.
 
-### 2.5 Information Value Per Token: The Missing Metric
+### 2.5 Information Value Per Token
 
 This metric quantifies the actual utility delivered per token consumed—answering "is this format worth its token cost?"
 
-**Calculation**: (Correct Answers × 100) / Total Tokens
+**Calculation**: (accuracy percent / total tokens) × 100
 
-| Format | 80 Records | 40 Records | Average Information Value |
-|--------|-----------|-----------|---------------------------|
-| CSV | 0.473 units/token | 1.107 units/token | **0.790 units/token** |
-| JSON Compact | 0.331 units/token | 0.666 units/token | **0.499 units/token** |
-| JSON Pretty | 0.187 units/token | 0.361 units/token | **0.274 units/token** |
-| JSONL | 0.295 units/token | 0.653 units/token | **0.474 units/token** |
-| TOON | 0.295 units/token | 0.588 units/token | **0.442 units/token** |
-| Markdown | 0.389 units/token | 0.637 units/token | **0.513 units/token** |
-| YAML | 0.220 units/token | 0.436 units/token | **0.328 units/token** |
+#### Full Breakdown by Variant
 
-**Ranking by Information Value (average across all variants):**
-1. CSV: 0.790 units/token
-2. Markdown: 0.513 units/token
-3. JSON Compact: 0.499 units/token
-4. JSONL: 0.474 units/token
-5. TOON: 0.442 units/token
-6. YAML: 0.328 units/token
-7. JSON Pretty: 0.274 units/token
+| Format | Mandatory 80 | Mandatory 40 | Optional 80 | Optional 40 | Mandatory Avg | Optional Avg |
+|--------|-------------|-------------|-----------|-----------|--------------|-------------|
+| CSV | 0.399 | 1.064 | 0.579 | 1.153 | **0.732** | **0.866** |
+| TOON | 0.418 | 1.213 | 0.228 | 0.388 | **0.816** | **0.308** |
+| JSON Compact | 0.333 | 0.520 | 0.329 | 0.925 | **0.426** | **0.627** |
+| Markdown | 0.388 | 0.637 | 0.389 | 0.638 | **0.512** | **0.514** |
+| JSONL | 0.285 | 0.512 | 0.305 | 0.902 | **0.398** | **0.604** |
+| YAML | 0.211 | 0.423 | 0.228 | 0.451 | **0.317** | **0.340** |
+| JSON Pretty | 0.180 | 0.350 | 0.194 | 0.374 | **0.265** | **0.284** |
 
-**Critical Interpretation**: CSV and Markdown appear to deliver high information value, but this metric is **misleading without accuracy context**. CSV delivers 52.64% accurate information while JSON Compact delivers 65.28%—meaning CSV's "value" includes 47% incorrect data. Markdown's 23.05% accuracy means its high ratio reflects **extreme token efficiency delivering mostly wrong answers**. **Correct metric: weighted-information-value per token** (Section 6.4).
+#### Variant Impact Analysis
+
+| Format | Mandatory Avg | Optional Avg | Delta | Change | Interpretation |
+|--------|--------------|-------------|-------|--------|-----------------|
+| TOON | 0.816 | 0.308 | -0.508 | **-62.2%** | Catastrophic collapse with optional data |
+| JSONL | 0.398 | 0.604 | +0.205 | **+51.4%** | Dramatically improves with optional fields |
+| JSON Compact | 0.426 | 0.627 | +0.201 | **+47.0%** | Significantly better with optional fields |
+| CSV | 0.732 | 0.866 | +0.134 | **+18.4%** | Improves moderately with optional data |
+| JSON Pretty | 0.265 | 0.284 | +0.019 | **+7.2%** | Minimal improvement |
+| YAML | 0.317 | 0.340 | +0.023 | **+7.1%** | Minimal improvement |
+| Markdown | 0.512 | 0.514 | +0.001 | **+0.2%** | No meaningful difference |
+
+**Critical Findings:**
+
+1. **TOON's Optional Data Failure**: Only format that degrades (-62.2%) with optional fields. Binary format overhead explodes when fields are sparse.
+
+2. **JSON Formats Excel with Optional Data**: JSON Compact (+47.0%) and JSONL (+51.4%) deliver significantly more information value per token when fields are optional. Both omit null values and by that reduce structural overhead so the overall needed tokens are reduced while accuracy is remains the same.
+
+3. **40-Record Advantage**: All formats show higher information value at 40 records (1.064 for CSV, 1.213 for TOON mandatory), indicating better model comprehension and accuracy when using smaller data sets with less tokens.
+
+4. **Misleading Metric Without Accuracy**: CSV and Markdown appear to deliver high value (0.866 and 0.514 optional avg), but this includes 47% and 77% incorrect data respectively. **Raw information-per-token favors low-token formats regardless of accuracy quality**.
 
 ### 2.6 Context Pollution Cost: Cost of Inaccuracy
 
@@ -221,7 +234,7 @@ Lower values = less wasted tokens on inaccurate output
 | YAML | 10,578 tokens wasted | 4,570 tokens wasted | **7,574 avg** |
 | JSON Pretty | 12,628 tokens wasted | 6,043 tokens wasted | **9,335 avg** |
 
-**Key Finding**: Markdown wastes the fewest absolute tokens on inaccuracy because it uses few tokens overall. However, as a **percentage of total tokens**, Markdown wastes 77% on inaccuracy—the highest waste ratio. JSON Pretty wastes 35% (moderate), while JSON Compact wastes only 35% (moderate). CSV wastes 47% despite low token count.
+**Key Finding**: Markdown wastes the fewest absolute tokens on inaccuracy because it uses few tokens overall. However, as a **percentage of total tokens**, Markdown wastes 77% on inaccuracy—the highest waste ratio. JSON Pretty and JSON Compact wastes 35% (moderate). CSV wastes 47% despite low token count.
 
 ---
 
