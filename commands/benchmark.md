@@ -1,6 +1,6 @@
 ---
-description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), JSONL, TOON, Markdown, YAML, Apache). Generates test data, executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
-argument-hint: [--formats csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache] [--variant optional,mandatory] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
+description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), TOON, XML, YAML). Generates test data variants (flat and nested), executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
+argument-hint: [--formats csv,json_compact,json_pretty,toon,xml,yaml] [--variant optional,mandatory] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
 allowed-tools: Bash
 ---
 
@@ -23,7 +23,7 @@ You are orchestrating a comprehensive benchmarking test suite for measuring file
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
-- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache)
+- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,toon,xml,yaml)
 - `--variant`: Data variant with optional or mandatory values (default: both - optional,mandatory)
 - `--model`: haiku or sonnet (default: haiku)
 - `--thinking`: on or off (default: on)
@@ -58,7 +58,7 @@ Extract from $ARGUMENTS:
 
 ### Argument Examples
 
-- `--formats csv,markdown` → Test only CSV and Markdown
+- `--formats csv,xml` → Test only CSV and XML
 - `--model sonnet --thinking off` → Use Sonnet without extended thinking
 - `--output /path/to/benchmark` → Use custom folder path
 - `--formats csv --output ./csv_benchmark` → CSV only in custom folder
@@ -78,7 +78,7 @@ else
   # Format: benchmark_{formats}_{variant}_{model}_{thinking}
   # Use shorthand for "all" cases to keep folder names reasonable
 
-  if [ "$FORMATS" = "csv,json_compact,json_pretty,jsonl,toon,markdown,yaml,apache" ]; then
+  if [ "$FORMATS" = "csv,json_compact,json_pretty,toon,xml,yaml" ]; then
     FORMATS_PART="format_all"
   else
     FORMATS_PART="${FORMATS//,/_}"
@@ -100,7 +100,7 @@ echo "Benchmark output folder: $BENCHMARK_OUTPUT_DIR"
 
 **Example generated folder names:**
 - All defaults: `benchmark_format_all_variant_all_haiku_on`
-- Specific formats: `benchmark_csv_markdown_optional_haiku_on`
+- Specific formats: `benchmark_csv_xml_optional_haiku_on`
 - Specific variants: `benchmark_format_all_optional_sonnet_off`
 - Custom path: Use `--output /path/to/folder`
 
@@ -117,10 +117,11 @@ npm run generate --output "$BENCHMARK_OUTPUT_DIR"
 This:
 1. Compiles TypeScript to JavaScript (orchestrator.ts, analytics.ts, etc.)
 2. Generates test data to `$BENCHMARK_OUTPUT_DIR`:
-   - Data files (CSV, JSON compact/pretty, JSONL, TOON, Markdown, YAML, Apache logs)
-   - 2 data variants: optional, mandatory
-   - Record count format: 100, 50
-   - Questionnaires with 100+ questions per dataset
+   - Data files (CSV, JSON compact/pretty, TOON, XML, YAML)
+   - 2 data structure variants: flat and nested (flat for CSV, both for others)
+   - 2 data content variants: optional, mandatory
+   - Record count: 80
+   - Questionnaires with 120 questions per dataset
    - Answer templates
    - metadata.json with all dataset information
    - Directory structure for test execution
@@ -130,17 +131,17 @@ This:
 Read `${BENCHMARK_OUTPUT_DIR}/metadata.json` to get all test cases.
 
 For each format in the selected formats list:
-  For each optional data variant in the selected variant list:
-    For each recordCount (100, 50):
-      Create three test cases: `{format}_{variant}_{recordCount}_{model}_{thinking}_{one/two/three}`
+  For each data structure variant (flat, nested - nested unavailable for CSV):
+    For each content variant in the selected variant list:
+      Create three test cases: `{format}_{structure}_{variant}_{model}_{thinking}_{one/two/three}`
 
 Example test cases:
-- csv_optional_100_haiku_on_1, csv_optional_100_haiku_on_2, csv_optional_100_haiku_on_3 
-- json_compact_mandatory_50_sonnet_off_1, json_compact_mandatory_50_sonnet_off_2, json_compact_mandatory_50_sonnet_off_3
+- csv_flat_optional_haiku_on_1, csv_flat_optional_haiku_on_2, csv_flat_optional_haiku_on_3
+- json_compact_nested_mandatory_sonnet_off_1, json_compact_nested_mandatory_sonnet_off_2, json_compact_nested_mandatory_sonnet_off_3
 
-**Total test cases**: selected_formats × selected_variant × 2 record counts x 3 test runs
+**Total test cases**: selected_formats × data_structure_variants × selected_content_variants × 3 test runs
 
-If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
+If all 6 formats selected: 1 csv × 1 flat × 2 content × 3 + 5 formats × 2 structure × 2 content × 3 = 6 + 60 = 66 test cases
 
 ## Step 4: Execute Tests - Format-Sequential Approach
 
@@ -159,8 +160,10 @@ If all 8 formats selected: 8 x 2 × 2 × 3 = 96 test cases
 - No parallel reads of same file
 - No task re-launches
 
-**Total Tests per Format:** 2 variants × 2 record counts × (1 read + 3 full) = 16 tests
-**Peak Parallel Tasks:** 4-12 (read + up to 3 fulls per combination)
+**Total Tests per Format:**
+- CSV: 1 structure × 2 content variants × (1 read + 3 full) = 8 tests
+- Others: 2 structure × 2 content variants × (1 read + 3 full) = 16 tests
+**Peak Parallel Tasks:** 4 (read + up to 3 fulls per combination)
 
 ### Algorithm
 
@@ -170,9 +173,14 @@ For each FORMAT in selected_formats (one format at a time):
   Full agent_ids_for_format = []
   launched_combinations = Set()  // Track to prevent re-launches
 
-  For each VARIANT in selected_variants:
-    For each RECORD_COUNT in [80, 40]:
-      combination_name = {format}_{variant}_{recordCount}
+  For each STRUCTURE in data_structure_variants:
+    // Skip nested for CSV format
+    IF format == "csv" AND structure == "nested":
+      CONTINUE
+    ENDIF
+
+    For each VARIANT in selected_variants:
+      combination_name = {format}_{structure}_{variant}
 
       // GUARD: Never launch same combination twice
       IF combination_name in launched_combinations:
@@ -199,7 +207,7 @@ For each FORMAT in selected_formats (one format at a time):
       // IMPORTANT: Record both readonly and full test agent IDs
       // Store in agent_ids.json for later extraction
       WriteToAgentIdsFile({
-        format, variant, recordCount,
+        format, structure, variant,
         readonly_agent_id,
         full_test_ids: [id1, id2, id3]
       })
@@ -207,21 +215,21 @@ For each FORMAT in selected_formats (one format at a time):
   Save all agent_ids_for_format (read + full) to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json
   Move to next format
 
-Total execution: ~8 formats × ~16 tests per = 128 tasks total
+Total execution: ~6 formats × ~12 tests per = 72+ tasks total (depends on structure variants)
 GUARANTEE: Each combination tested exactly once, each agent task launched exactly once
 AGENT_IDS_FILE: All IDs saved to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json for extraction
 ```
 
 ### 4a. Launch Read-Only Test (Sequential - Wait for Completion)
 
-For each format + variant + record count combination:
+For each format + structure + variant combination:
 
 ```bash
 Task(
-  description: "Readonly test: {format}_{variant}_{recordCount} data file read",
+  description: "Readonly test: {format}_{structure}_{variant} data file read",
   subagent_type: "benchmark-read-only",
   model: "haiku",
-  prompt: "Read this file completely: ${BENCHMARK_OUTPUT_DIR}/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext} . Do not process or analyze."
+  prompt: "Read this file completely: ${BENCHMARK_OUTPUT_DIR}/data/{format}/{format}_with_{variant}_{recordCount}_{structure}_records.{ext} . Do not process or analyze."
 )
 ```
 
@@ -246,7 +254,7 @@ After read-only test finishes for a combination, launch all 3 full tests in para
 # Launch 3 full tests in parallel (only for this combination)
 # GUARD: Track output files to prevent duplicate writes
 for test_number in {1..3}; do
-  output_file = "${BENCHMARK_OUTPUT_DIR}/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json"
+  output_file = "${BENCHMARK_OUTPUT_DIR}/subagent_outputs/{format}/answers_for_{structure}_{variant}_{recordCount}_records_{test_number}.json"
   IF file_exists(output_file):
     ERROR: "Output file already exists: " + output_file
     ERROR: "This indicates a duplicate test run - benchmarking is corrupted"
@@ -254,23 +262,23 @@ for test_number in {1..3}; do
   ENDIF
 
   Task(
-    description: "Full test {format}_{variant}_{recordCount} run-{test_number}/3",
+    description: "Full test {format}_{structure}_{variant} run-{test_number}/3",
     subagent_type: "benchmark-full-test",
     model: "{model}",
     thinking_mode: "{thinking}",
     prompt: "
 Format: {format}
+Structure: {structure}
 Variant: {variant}
-Record Count: {recordCount}
 Test Run: {test_number}/3
 
 Files to read ONCE each:
-- Data file: ${BENCHMARK_OUTPUT_DIR}/data/{format}/{format}_with_{variant}_{recordCount}_records.{ext}
+- Data file: ${BENCHMARK_OUTPUT_DIR}/data/{format}/{format}_with_{variant}_{recordCount}_{structure}_records.{ext}
 - Questionnaire: ${BENCHMARK_OUTPUT_DIR}/questions/questions_for_{variant}_{recordCount}_records.json
 - Answer template: ${BENCHMARK_OUTPUT_DIR}/answers_template/answers_for_{variant}_{recordCount}_records_template.json
 
 Output path (write ONCE):
-- ${BENCHMARK_OUTPUT_DIR}/subagent_outputs/{format}/answers_for_{variant}_{recordCount}_records_{test_number}.json
+- ${BENCHMARK_OUTPUT_DIR}/subagent_outputs/{format}/answers_for_{structure}_{variant}_{recordCount}_records_{test_number}.json
 
 Read each file exactly ONCE. Answer all questions based ONLY on data in the file. Write output file exactly ONCE."
   )
@@ -285,7 +293,7 @@ This launches 3 full tests in parallel which will:
 
 **CRITICAL - Single Execution & Write Guarantee**:
 - Launch all 3 tests together for this combination
-- **NEVER** launch duplicate full tests for same {format}_{variant}_{recordCount}_{test_number}
+- **NEVER** launch duplicate full tests for same {format}_{structure}_{variant}_{test_number}
 - **DO NOT** retry or re-launch individual test runs
 - WAIT for all 3 to complete before moving to next combination
 - Verify output files are created exactly once (check before/after)
@@ -327,30 +335,32 @@ node dist/analytics.js \
   "read": {
     "files": [
       {
-        "file": "csv_with_optional_100_records.csv",
+        "file": "csv_with_optional_80_flat_records.csv",
         "path": "/path/to/data/...",
         "agentId": "agent-abc123",
         "format": "csv",
+        "structure": "flat",
         "variant": "optional",
-        "recordCount": 100,
+        "recordCount": 80,
         "readTokens": 15234,
         "readDurationMs": 1523.0
       }
     ],
     "summary": {
-      "totalFiles": 32,
-      "totalReadTokens": 487488,
-      "totalReadDurationMs": 48748.0,
-      "averageReadTokens": 15234,
-      "averageDurationMs": 1523.4
+      "totalFiles": 18,
+      "totalReadTokens": 274176,
+      "totalReadDurationMs": 27417.6,
+      "averageReadTokens": 15232,
+      "averageDurationMs": 1523.2
     }
   },
   "reasoning": {
     "files": [
       {
         "format": "csv",
+        "structure": "flat",
         "variant": "optional",
-        "recordCount": 100,
+        "recordCount": 80,
         "testRuns": 3,
         "durationMs": 49984.33,
         "reasoningTokens": 5941.67,
@@ -358,11 +368,11 @@ node dist/analytics.js \
       }
     ],
     "summary": {
-      "totalTestCases": 32,
-      "totalDurationMs": 1599494.56,
-      "totalReasoningTokens": 190133.44,
-      "totalOutputTokens": 28202.56,
-      "averageDurationMs": 49984.20,
+      "totalTestCases": 18,
+      "totalDurationMs": 899915.94,
+      "totalReasoningTokens": 106950.06,
+      "totalOutputTokens": 15859.94,
+      "averageDurationMs": 49995.33,
       "averageReasoningTokens": 5941.67,
       "averageOutputTokens": 881.33
     }
@@ -408,23 +418,24 @@ The benchmark output folder contains all generated data and test results:
 ${BENCHMARK_OUTPUT_DIR}/
 ├── data/
 │   └── {format}/
-│       ├── {format}_with_{variant}_100_records.{ext}
-│       └── {format}_with_{variant}_50_records.{ext}
+│       ├── {format}_with_{variant}_80_{flat|nested}_records.{ext}
+│       ├── ...
 ├── questions/
-│   ├── questions_for_{variant}_100_records.json
-│   └── questions_for_{variant}_50_records.json
+│   ├── questions_with_{variant}_80_records.json
+│   └── ...
 ├── answers_template/
-│   ├── answers_for_{variant}_100_records_template.json
-│   └── answers_for_{variant}_50_records_template.json
+│   ├── answers_with_{variant}_80_records_template.json
+│   └── ...
 ├── answers_validation/
-│   └── questions_and_answers_for_{variant}_{recordCount}_records.json
+│   └── questions_and_answers_with_{variant}_80_records.json
 ├── subagent_outputs/
 │   └── {format}/
-│       ├── answers_for_{variant}_100_records_1.json
-│       ├── answers_for_{variant}_100_records_2.json
-│       └── answers_for_{variant}_100_records_3.json
+│       ├── answers_for_{flat|nested}_{variant}_80_records_1.json
+│       ├── answers_for_{flat|nested}_{variant}_80_records_2.json
+│       ├── answers_for_{flat|nested}_{variant}_80_records_3.json
+│       └── ...
 ├── results/
-│   └── {format}_{variant}_{recordCount}_validation.json
+│   └── {format}_{flat|nested}_{variant}_80_validation.json
 ├── metadata.json
 ├── agent_ids.json (generated during Step 4)
 ├── metrics.json (auto-generated by analytics.js during Step 6 from agent transcripts)
@@ -447,11 +458,9 @@ This modularity allows running benchmarks for different format subsets at differ
 - csv → .csv
 - json_compact → .json
 - json_pretty → .json
-- jsonl → .jsonl
 - toon → .toon
-- markdown → .md
+- xml → .xml
 - yaml → .yaml
-- apache → .log
 
 ## Important Notes
 
@@ -501,7 +510,7 @@ This modularity allows running benchmarks for different format subsets at differ
    - Generates combined `metrics.json` file
    - Runs comprehensive analysis
 
-9. **Default All Formats**: If --formats not specified, test all 8 formats
+9. **Default All Formats**: If --formats not specified, test all 6 formats (csv, json_compact, json_pretty, toon, xml, yaml)
 
 10. **Default Haiku**: If --model not specified, use haiku
 
