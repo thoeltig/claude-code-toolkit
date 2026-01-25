@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { generateProductDataGenerator } from "./generators/generateProductDataGenerator";
+import { convertToNestedObject, generateProductDataGenerator } from "./generators/generateProductDataGenerator";
 import { convertToFormat } from "./converters/index";
 import { generateQuestionnaire } from "./generators/questions";
 import { validateAnswers } from "./validators/answerValidator";
@@ -32,7 +32,7 @@ import {
  } from "./consts";
 
 const MANDATORY_STATE: boolean[] = [true, false];
-const TARGET_SIZES: number[] = [80, 40];
+const TARGET_SIZES: number[] = [80];
 
 export class BenchmarkingOrchestrator {
   private outputDir: string;
@@ -141,22 +141,53 @@ export class BenchmarkingOrchestrator {
           dataAndOutput: []
         };
 
-        // Generate formats
+        // Generate array formats
         for (const format of FORMATS) {
-          console.log(`Generating ${format.toUpperCase()} file with ${fieldsMandatoryText} ${targetSize} records`);
+          console.log(`Generating ${format.toUpperCase()} file with ${fieldsMandatoryText} ${targetSize} flat records`);
 
           // Convert to format
           const fileContent = convertToFormat(dataToUse, format);
           const characterCount = fileContent.length;
           const fileExt = this.getFileExtension(format);
-          const dataFileName = `${format}_with_${fieldsMandatoryText}_${recordCount}_records.${fileExt}`;
+          const dataFileName = `${format}_with_${fieldsMandatoryText}_${recordCount}_flat_records.${fileExt}`;
           const dataFilePath = path.join(this.outputDir, DIRECTORY_DATA, format, dataFileName);
-          const expectedOutputFilePath = path.join(this.outputDir, DIRECTORY_SUBAGENT_OUTPUT, format,`answers_with_${fieldsMandatoryText}_${recordCount}_records.json`);
+          const expectedOutputFilePath = path.join(this.outputDir, DIRECTORY_SUBAGENT_OUTPUT, format,`answers_with_${fieldsMandatoryText}_${recordCount}_flat_records.json`);
           fs.writeFileSync(dataFilePath, fileContent);
-          console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} data set rows and ${fieldsMandatoryText} data)`);
+          console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} flat data set rows and ${fieldsMandatoryText} data)`);
 
           // Track result
           generatedFiles.dataAndOutput.push({
+            structure: "flat",
+            format: format,
+            allFieldsManadatory: allFieldsManadatory,
+            dataFilePath: dataFilePath,
+            expectedOutputFilePath: expectedOutputFilePath,
+            metadata: {
+              characterCount: characterCount,
+              avgCharacterCountPerRecord: characterCount / generatedFiles.recordCount,
+              avgCharacterCountPerValue: characterCount / generatedFiles.totalValues
+            }
+          });
+        }
+        
+        // Generate nested formats (without CSV because it can not display nested structure)
+        for (const format of FORMATS.filter(x => x !== "csv")) {
+          console.log(`Generating ${format.toUpperCase()} file with ${fieldsMandatoryText} ${targetSize} nested records`);
+
+          // Convert to format
+          const nestedObjects = convertToNestedObject(dataToUse);
+          const fileContent = convertToFormat(nestedObjects, format);
+          const characterCount = fileContent.length;
+          const fileExt = this.getFileExtension(format);
+          const dataFileName = `${format}_with_${fieldsMandatoryText}_${recordCount}_nested_records.${fileExt}`;
+          const dataFilePath = path.join(this.outputDir, DIRECTORY_DATA, format, dataFileName);
+          const expectedOutputFilePath = path.join(this.outputDir, DIRECTORY_SUBAGENT_OUTPUT, format,`answers_with_${fieldsMandatoryText}_${recordCount}_nested_records.json`);
+          fs.writeFileSync(dataFilePath, fileContent);
+          console.log(`✓ Data: ${dataFileName} (${characterCount} chars, ${recordCount} nested data set rows and ${fieldsMandatoryText} data)`);
+
+          // Track result
+          generatedFiles.dataAndOutput.push({
+            structure: "nested",
             format: format,
             allFieldsManadatory: allFieldsManadatory,
             dataFilePath: dataFilePath,
@@ -238,11 +269,9 @@ export class BenchmarkingOrchestrator {
       csv: "csv",
       json_pretty: "json",
       json_compact: "json",
-      jsonl: "jsonl",
       toon: "toon",
-      markdown: "md",
+      xml: "xml",
       yaml: "yaml",
-      apache: "log",
     };
     return extensions[format];
   }

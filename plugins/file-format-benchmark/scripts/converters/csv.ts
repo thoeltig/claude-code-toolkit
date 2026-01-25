@@ -3,9 +3,14 @@
  * Converts base dataset to CSV with proper handling of optional fields
  */
 
-import { FlatArrayDataSet } from "../types";
+import { FlatArrayDataSet, NestedDataSet } from "../types";
 
-export function convertToCsv(data: FlatArrayDataSet): string {
+export function convertToCsv(data: FlatArrayDataSet | NestedDataSet): string {
+  // CSV only supports flat data
+  if ("nestingLevels" in data.metadata) {
+    return "";
+  }
+
   if (data.records.length === 0) {
     return "";
   }

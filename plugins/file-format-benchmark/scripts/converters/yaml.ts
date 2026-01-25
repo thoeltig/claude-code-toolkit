@@ -1,11 +1,11 @@
 /**
  * YAML format converter
- * Converts base dataset to YAML format
+ * Converts flat and nested datasets to YAML format
  */
 
-import { FlatArrayDataSet } from "../types";
+import { FlatArrayDataSet, NestedDataSet } from "../types";
 
-export function convertToYaml(data: FlatArrayDataSet): string {
+export function convertToYaml(data: FlatArrayDataSet | NestedDataSet): string {
   const lines: string[] = [];
 
   // Add products
@@ -13,13 +13,55 @@ export function convertToYaml(data: FlatArrayDataSet): string {
 
   for (const record of data.records) {
     lines.push("  - product:");
-    for (const [key, value] of Object.entries(record)) {
-      const yamlValue = formatYamlValue(value);
-      lines.push(`      ${key}: ${yamlValue}`);
-    }
+    recordToYaml(record, 3, lines);
   }
 
   return lines.join("\n");
+}
+
+/**
+ * Convert a record to YAML lines with proper indentation
+ */
+function recordToYaml(record: any, indent: number, lines: string[]): void {
+  const pad = " ".repeat(indent);
+
+  for (const [key, value] of Object.entries(record)) {
+    if (value === null || value === undefined) {
+      lines.push(`${pad}${key}: null`);
+    } else if (isObject(value)) {
+      lines.push(`${pad}${key}:`);
+      objectToYaml(value, indent + 2, lines);
+    } else {
+      const yamlValue = formatYamlValue(value);
+      lines.push(`${pad}${key}: ${yamlValue}`);
+    }
+  }
+}
+
+/**
+ * Convert a nested object to YAML lines
+ */
+function objectToYaml(obj: any, indent: number, lines: string[]): void {
+  const pad = " ".repeat(indent);
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) {
+      lines.push(`${pad}${key}: null`);
+    } else if (isObject(value)) {
+      lines.push(`${pad}${key}:`);
+      objectToYaml(value, indent + 2, lines);
+    } else {
+      const yamlValue = formatYamlValue(value);
+      lines.push(`${pad}${key}: ${yamlValue}`);
+    }
+  }
+}
+
+/**
+ * Check if value is an object (not array, not null)
+ */
+function isObject(value: unknown): boolean {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**

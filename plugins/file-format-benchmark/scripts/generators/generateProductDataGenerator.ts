@@ -4,7 +4,7 @@
  * Can be converted to all target formats
  */
 
-import { MetadataFlatArray, FlatArrayDataSet, ProductRecord } from "../types";
+import { MetadataFlatArray, FlatArrayDataSet, ProductRecord, NestedProductRecord, NestedDataSet, MetadataNetsedObject } from "../types";
 import { ProductRecordRandomizer } from "./productRecordRandomizer";
 
 export class ProductDataGenerator {  
@@ -49,9 +49,65 @@ export class ProductDataGenerator {
 
     return { metadata, records };
   }
+  
+
+  public convert(arrayDataSet: FlatArrayDataSet): NestedDataSet {
+    const metadata: MetadataNetsedObject = {
+      ...arrayDataSet.metadata,
+      nestingLevels: 3
+    };
+
+    const records: NestedProductRecord[] = [];
+    arrayDataSet.records.forEach(r => {
+      records.push({        
+          productId: r.productId,
+          discontinuedDate: r.discontinuedDate,
+          identity: {
+            productName: r.productName,
+            description: r.description,
+            searchMetadata: {    
+              category: r.category,
+              sku: r.sku,
+              manufacturerCode: r.manufacturerCode,
+              avgRating: r.avgRating
+            }
+          },
+          pricing: {
+            price: r.price,
+            costPrice: r.costPrice
+          },
+          inventory: {
+            stockQuantity: r.stockQuantity,
+            warehouseLocation: r.warehouseLocation,
+            stats: {              
+              reorderPoint: r.reorderPoint,
+              lastRestocked: r.lastRestocked,
+              unitsShipped: r.unitsShipped
+            }
+          },
+          supplier: {
+            supplierName: r.supplierName,
+            supplierLocation: r.supplierLocation
+          },
+          physical: {
+            weight: r.weight,
+            dimensions: r.dimensions,
+            hazardous: r.hazardous,
+            fragile: r.fragile,
+            shelfLife: r.shelfLife
+          },
+      });
+    });
+    return { metadata, records };
+  }
 }
 
 export function generateProductDataGenerator(recordCount: number, allFieldsManadatory: boolean): FlatArrayDataSet {
   const generator = new ProductDataGenerator();
   return generator.generate(recordCount, allFieldsManadatory);
+}
+
+export function convertToNestedObject(arrayDataSet: FlatArrayDataSet): NestedDataSet {
+  const generator = new ProductDataGenerator();
+  return generator.convert(arrayDataSet);
 }

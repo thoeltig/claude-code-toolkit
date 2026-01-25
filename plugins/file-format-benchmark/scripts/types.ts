@@ -7,7 +7,7 @@
 // DATA TYPES
 // ============================================================================
 
-export type Format = "csv" | "json_pretty" | "json_compact" | "jsonl" | "toon" | "markdown" | "yaml" | "apache";
+export type Format = "csv" | "json_pretty" | "json_compact" | "toon" | "xml" | "yaml";
 export type Directory = "data" | "answers_validation" | "questions" | "answers_template" | "subagent_outputs" | "results";
 export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "multiple_steps";
 
@@ -20,7 +20,7 @@ export interface MetadataFlatArray {
 }
 
 export interface MetadataNetsedObject extends MetadataFlatArray {
-  nestingLevels: string,
+  nestingLevels: number,
 }
 
 export interface ValuesMetadata {
@@ -127,7 +127,12 @@ export interface NestedFirstLevelDataRecord {
 
 export interface FlatArrayDataSet {
   metadata: MetadataFlatArray;
-  records: DataRecord[];
+  records: ProductRecord[];
+}
+
+export interface NestedDataSet {
+  metadata: MetadataNetsedObject;
+  records: NestedProductRecord[];
 }
 
 // ============================================================================
@@ -346,6 +351,7 @@ export interface GeneratedFiles{
 }
 
 export interface DataAndOutput{
+  structure: string,
   format: Format;
   allFieldsManadatory: boolean;
   dataFilePath: string;
