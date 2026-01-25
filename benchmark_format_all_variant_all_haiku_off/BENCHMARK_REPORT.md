@@ -712,7 +712,8 @@ Multi-step questions excluded (0% weight) as they represent edge case reasoning,
 ---
 
 - **Report Generated**: 2026-01-25
-- **Generated with the help of**: Claude 4.5 Sonnet
+- **Written by**: Thore Höltig
+- **With the help of**: Claude 4.5 Sonnet
 - **Data Source**: `benchmark_format_all_variant_all_haiku_off/analytics_results.json`
-- **Next Iteration**: Extended thinking impact analysis (Iteration 2)
+- **Next Iteration**: Extended thinking impact analysis and nested objects (Iteration 2)
 - **Publication**: Open source research, GitHub
