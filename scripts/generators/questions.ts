@@ -50,10 +50,6 @@ export class QuestionnaireGenerator {
     id += entries.length;
     console.log("Structure questions: "+ entries.length);
 
-    entries = this.generateMultipleStepsQuestions(ctx, QUESTIONS_DISTRIBUTION.multiple_steps, id);
-    answersAndQuestions.push(...entries);
-    console.log("Multiple steps questions: "+ entries.length);
-
     console.log("Total questions: "+ answersAndQuestions.length);
     return answersAndQuestions;
   }
@@ -77,7 +73,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "field_retrieval",
         difficulty: "easy",
-        question: `What is the ${field} of product ${record[idField]}?`,
+        question: `What is the ${this.splitCamelCase(field)} of product ${record[idField]}?`,
         expectedAnswer: {
           value: String(value),
           validationMethod: "exact",
@@ -97,7 +93,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "field_retrieval",
         difficulty: "medium",
-        question: `What are the ${radomFields.join(", ")} of product ${record[idField]}?`,
+        question: `What are the ${this.splitMultipleCamelCases(radomFields)} of product ${record[idField]}?`,
         expectedAnswer: {
           value: values,
           validationMethod: "array_set",
@@ -130,7 +126,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "field_retrieval",
         difficulty: "hard",
-        question: `What are the ${radomFields.join(", ")} of product ${record[idField]} and the ${radomFields2.join(", ")} of product ${record2[idField]}?`,
+        question: `What are the ${this.splitMultipleCamelCases(radomFields)} of product ${record[idField]} and the ${this.splitMultipleCamelCases(radomFields2)} of product ${record2[idField]}?`,
         expectedAnswer: {
           value: [...values, ...values2],
           validationMethod: "array_set",
@@ -152,11 +148,8 @@ export class QuestionnaireGenerator {
     const splitCount = Math.ceil(count / 3); // sum, min/max, avg
     const remainingCount = count - splitCount * 2;
     
-    let records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const numericField = this.rand.getRandomNumbericField(record, idField);
-
+    let map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, splitCount, idField);
+    map.forEach((_, numericField) => {
       const expectedSum = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0);
       
       startId++;
@@ -164,7 +157,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "aggregation",
         difficulty: "easy",
-        question: `How much is the sum of all values in ${numericField} across all products?`,
+        question: `How much is the sum of all values in ${this.splitCamelCase(numericField)} across all products?`,
         expectedAnswer: {
           value: expectedSum,
           validationMethod: "numeric",
@@ -172,14 +165,12 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [numericField],
       });
-    }
+    });
     
-    records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const isMin = i % 2;
-      const record = records[i];
-      const numericField = this.rand.getRandomNumbericField(record, idField);
-
+    let i = 0;
+    map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, splitCount, idField);
+    map.forEach((_, numericField) => {
+      const isMin = (i++) % 2;
       var numbers = ctx.records.map((r) => Number(r[numericField] || 0));
       const expected = isMin ? Math.min(...numbers) : Math.max(...numbers);
       
@@ -188,7 +179,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "aggregation",
         difficulty: "medium",
-        question: `What is the ${isMin ? 'lowest' : 'highest'} value in ${numericField} across all products?`,
+        question: `What is the ${isMin ? 'lowest' : 'highest'} value in ${this.splitCamelCase(numericField)} across all products?`,
         expectedAnswer: {
           value: expected,
           validationMethod: "numeric",
@@ -196,13 +187,10 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [numericField],
       });
-    }
+    });
                 
-    records = this.rand.getRandomItems(ctx.records, remainingCount);
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const numericField = this.rand.getRandomNumbericField(record, idField);
-
+    map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, remainingCount, idField);
+    map.forEach((_, numericField) => {
       const expectedAvg = ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / ctx.records.length;
       
       startId++;
@@ -210,7 +198,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "aggregation",
         difficulty: "hard",
-        question: `What is the average value in ${numericField} across all products?`,
+        question: `What is the average value in ${this.splitCamelCase(numericField)} across all products?`,
         expectedAnswer: {
           value: Math.round(expectedAvg * 100) / 100,
           validationMethod: "numeric",
@@ -218,7 +206,7 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [numericField],
       });
-    }
+    });
 
     return questions;
   }
@@ -229,11 +217,12 @@ export class QuestionnaireGenerator {
     if(count < 0){
       return questions;
     }
+    console.log("Start");
 
     const splitCount = Math.ceil(count / 3); // equal, above/belowe avg, equal + above/belowe avg
     const remainingCount = count - splitCount * 2;
         
-    const map = this.rand.getUniqueFieldsAndValues(ctx.records, splitCount);
+    let map = this.rand.getUniqueFieldsAndValues(ctx.records, splitCount);
     map.forEach((record, field) => {
       const value = record[field];
       const expectedCount = ctx.records.filter(x => x[field] === value).length;
@@ -243,7 +232,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "filtering",
         difficulty: "easy",
-        question: `How many products have '${value}' in ${field}?`,
+        question: `How many products have '${value}' in ${this.splitCamelCase(field)}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -252,12 +241,12 @@ export class QuestionnaireGenerator {
         dataReferences: [field],
       });
     });
-    
-    let records = this.rand.getRandomItems(ctx.records, splitCount);
-    for (let i = 0; i < records.length; i++) {
-      const filterForAbove = i % 2 === 0;
-      const record = records[i];
-      const numericField = this.rand.getRandomNumbericField(record, idField);
+    console.log("Easy done");
+
+    let i = 0;
+    map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, splitCount, idField);
+    map.forEach((_, numericField) => {
+      const filterForAbove = (i++) % 2 === 0;
 
       const avg = Math.round((ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / ctx.records.length) * 100) / 100;
       const expectedCount = ctx.records.filter((r) => {
@@ -270,7 +259,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "filtering",
         difficulty: "medium",
-        question: `How many products have a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}?`,
+        question: `How many products have a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${this.splitCamelCase(numericField)}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -278,15 +267,15 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [numericField],
       });
-    }
+    });
     
-    records = this.rand.getRandomItems(ctx.records, remainingCount);
-    for (let i = 0; i < records.length; i++) {
-      const filterForAbove = i % 2 === 0;
-      const record = records[i];
+    console.log("Medium done");
+    
+    map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, remainingCount, idField);
+    map.forEach((record, numericField) => {
+      const filterForAbove = (i++) % 2 === 0;
       const field = this.rand.getRandomField(record, idField);
       const value = record[field];
-      const numericField = this.rand.getRandomNumbericField(record, field);
 
       const filtered = ctx.records.filter(x => x[field] === value);
       const avg =  Math.round((ctx.records.reduce((sum, r) => sum + Number(r[numericField] || 0), 0) / filtered.length) * 100) / 100;
@@ -300,7 +289,7 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "filtering",
         difficulty: "hard",
-        question: `How many products have '${value}' in ${field} and a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${numericField}?`,
+        question: `How many products have '${value}' in ${this.splitCamelCase(field)} and a value ${filterForAbove ? 'above' : 'belowe'} the average of ${avg} in ${this.splitCamelCase(numericField)}?`,
         expectedAnswer: {
           value: expectedCount,
           validationMethod: "numeric",
@@ -308,7 +297,9 @@ export class QuestionnaireGenerator {
         },
         dataReferences: [field, numericField],
       });
-    }
+    });
+
+    console.log("Hard done");
 
     return questions;
   }
@@ -485,47 +476,10 @@ export class QuestionnaireGenerator {
         id: startId,
         category: "structure_awareness",
         difficulty: "hard",
-        question: `What are all the unique values in ${field} across all products?`,
+        question: `What are all the unique values in ${this.splitCamelCase(field)} across all products?`,
         expectedAnswer: {
           value: expectedArray,
           validationMethod: "array_set",
-        },
-        dataReferences: [field]
-      });
-    });
-
-    return questions;
-  }
-
-  private generateMultipleStepsQuestions(ctx: QuestionGeneratorContext, count: number, startId: number): AnswerAndQuestion[] {
-    const questions: AnswerAndQuestion[] = [];
-
-    const fields = this.rand.getRandomItems(["category", "supplierName", "supplierLocation", "description", "hazardous", "fragile"], count);
-    fields.forEach((field, i) => {
-      const filterForMost = i % 2 === 0;
-
-      const valueHistogram = new Map<string, number>();
-      ctx.records.forEach(r => {
-        const value = String(r[field] || '');
-        valueHistogram.set(value, (valueHistogram.get(value) || 0) + 1);
-      });
-      const firstValue = Array.from(valueHistogram.entries()).filter(x => x[0] !== '').reduce((a, b) =>{
-          return filterForMost ? (b[1] > a[1] ? b : a) : (b[1] < a[1] ? a : b);
-      })[0];
-
-      const expected: string[] = [];
-      expected.push(firstValue);
-      expected.push(String(valueHistogram.get(firstValue) || ''));
-
-      startId++;
-      questions.push({
-        id: startId,
-        category: "multiple_steps",
-        difficulty: "hard",
-        question: `Which ${field} occures the ${filterForMost ? 'most' : 'least'} across all products and in how many products in total?`,
-        expectedAnswer: {
-          value: expected,
-          validationMethod: "array_set"
         },
         dataReferences: [field]
       });
@@ -541,6 +495,17 @@ export class QuestionnaireGenerator {
       return values.push(value.toString());
     });
     return values;
+  }
+
+  splitMultipleCamelCases(fields: string[]):string{
+    return fields.map(x =>this.splitCamelCase(x)).join(", ")
+  }
+
+  private splitCamelCase(field: string): string {
+    return field
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+      .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+      .toLowerCase();
   }
 }
 
