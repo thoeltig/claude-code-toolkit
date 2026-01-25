@@ -37,18 +37,30 @@ interface TestMetrics {
   avgAccuracyPercent: number;
   avgWeightedAccuracyPercent: number;
 
-  // Calculated metrics
+  // Calculated metrics section
+
+  // This is only interesting to see how the conversion rate from characters to tokens is.
   charsPerToken: number;
-  tokensPerValue: number;
-  tokensPerRecord: number;
+  // Information efficiency: tokens needed per data value. Lower is better - represents how densely packed the format is.
+  tokensPerValue: number;  
+  // Information efficiency: tokens needed per object. Lower is better - accounts for structural overhead.
+  tokensPerObject: number; 
+  // Reasoning cost per question answered. Indicates how complex the reasoning task is for this format
   avgReasoningTokensPerAnswer: number;
 
-  // Result
+  // Results
+
+  // Reading + reasoning tokens
   totalTokensUsed: number;
+  // Effective tokens: assumes lower accuracy wastes tokens. Accounts for format quality via accuracy percentage.
   efficientlyUsedTokens: number;
+  // Same as above but weighted by question importance: field retrieval and structure awareness questions weighted higher than aggregation and filtering.
   weightedEfficientlyUsedTokens: number;
-  // Efficiency score = (Accuracy percentage ÷ total tokens) × 1000. Higher is better.
+  // Combined score (0-100): accuracy weighted 70% + token efficiency weighted 30%.
+  // Prioritizes correctness over token usage - a format that is accurate is preferred because inaccuracy will lead to multiple reads and more reasoning.
+  // normalizedAmountScore: lower token usage = higher score (max tokens used = 0, min tokens used = 100).
   efficiencyScore: number;
+  // Same scoring as efficiencyScore but uses weighted accuracy: field retrieval and structure awareness answers count more than aggregation and filtering
   weightedEfficiencyScore: number;
 }
 
@@ -72,6 +84,8 @@ interface AnalyticsOutput {
 
 interface Ranking { 
   avgCharsPerToken: number; 
+  avgTokensPerValue: number; 
+  avgTokensPerObject: number; 
   avgAccuracy: number;
   mostTokenEfficient: RankingEntry[];
   leastTokenUsage: RankingEntry[];
@@ -87,6 +101,8 @@ interface RankingEntry {
   recordCount: number; 
   charsPerToken: number; 
   tokensUsed: number; 
+  tokensPerValue: number; 
+  tokensPerObject: number; 
   accuracyPercent: number; 
   efficientlyUsedTokens: number; 
   efficiencyScore: number;
@@ -244,7 +260,7 @@ class BenchmarkAnalytics {
 
       const entry = minMaxRecordCount.get(userMetric.recordCount);
       const totalTokensUsed = userMetric.readTokens + userMetric.reasoningTokens;
-      const normalizedAmountScore = this.normalizedAmountScore(entry.min-100, entry.max+100, totalTokensUsed);
+      const normalizedAmountScore = this.normalizedAmountScore(entry.min-10, entry.max+10, totalTokensUsed);
       metrics.push({
         testCase: userMetric.testCase,
         format: userMetric.format,
@@ -271,7 +287,7 @@ class BenchmarkAnalytics {
 
         charsPerToken: parseFloat((datasetInfo.characterCount / userMetric.readTokens).toFixed(3)),
         tokensPerValue: parseFloat((userMetric.readTokens / datasetInfo.totalValues).toFixed(3)),
-        tokensPerRecord: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
+        tokensPerObject: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
         avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),
         totalTokensUsed: totalTokensUsed,
         efficientlyUsedTokens: parseFloat((totalTokensUsed * (validation.accuracy.accuracyPercent / 100)).toFixed(3)),
@@ -338,6 +354,8 @@ class BenchmarkAnalytics {
     for (const recordCount of recordCounts) {
       const formatMetrics = metrics.filter((m) => m.recordCount === recordCount);
       const avgCharsPerToken = Math.round(formatMetrics.reduce((sum, m) => sum + m.charsPerToken, 0) / formatMetrics.length*1000)/1000;
+      const avgTokensPerValue = Math.round(formatMetrics.reduce((sum, m) => sum + m.tokensPerValue, 0) / formatMetrics.length*1000)/1000;
+      const avgTokensPerObject = Math.round(formatMetrics.reduce((sum, m) => sum + m.tokensPerObject, 0) / formatMetrics.length*1000)/1000;
       const avgAccuracy = Math.round(formatMetrics.reduce((sum, m) => sum + m.avgAccuracyPercent, 0) / formatMetrics.length*1000)/1000;
 
       const mostTokenEfficient:RankingEntry[] =[];
@@ -384,6 +402,8 @@ class BenchmarkAnalytics {
 
       byRecordCount[recordCount] = { 
         avgCharsPerToken, 
+        avgTokensPerValue,
+        avgTokensPerObject,
         avgAccuracy,
         mostTokenEfficient: mostTokenEfficient,
         leastTokenUsage: leastTokenUsage,
@@ -404,6 +424,8 @@ class BenchmarkAnalytics {
       recordCount: metric.recordCount,
       charsPerToken: metric.charsPerToken, 
       tokensUsed: metric.totalTokensUsed,
+      tokensPerValue: metric.tokensPerValue,
+      tokensPerObject: metric.tokensPerObject,
       accuracyPercent: metric.avgAccuracyPercent,
       efficientlyUsedTokens: metric.efficientlyUsedTokens,
       efficiencyScore: metric.efficiencyScore,
