@@ -1,9 +1,9 @@
 {
     "timestamp": "2025-12-19T04:21:12.497Z",
     "testConfigurations": {
-        "metadataFile": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\metadata.json",
-        "agentIdsFile": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\agent_ids.json",
-        "metricsFile": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\metrics.json",
+        "metadataFile": "benchmark_format_all_variant_all_haiku_off\\metadata.json",
+        "agentIdsFile": "benchmark_format_all_variant_all_haiku_off\\agent_ids.json",
+        "metricsFile": "benchmark_format_all_variant_all_haiku_off\\metrics.json",
         "model": "Haiku 4.5",
         "thinking": "off",
         "formats": [

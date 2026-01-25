@@ -3,7 +3,7 @@
         "files": [
             {
                 "file": "csv_with_mandatory_80_records.csv",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_80_records.csv",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_80_records.csv",
                 "agentId": "a4049a8",
                 "format": "csv",
                 "variant": "mandatory",
@@ -13,7 +13,7 @@
             },
             {
                 "file": "csv_with_mandatory_40_records.csv",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_40_records.csv",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_mandatory_40_records.csv",
                 "agentId": "aebe21b",
                 "format": "csv",
                 "variant": "mandatory",
@@ -23,7 +23,7 @@
             },
             {
                 "file": "csv_with_optional_80_records.csv",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_80_records.csv",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_80_records.csv",
                 "agentId": "ab5862b",
                 "format": "csv",
                 "variant": "optional",
@@ -33,7 +33,7 @@
             },
             {
                 "file": "csv_with_optional_40_records.csv",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_40_records.csv",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\csv\\csv_with_optional_40_records.csv",
                 "agentId": "ae35faa",
                 "format": "csv",
                 "variant": "optional",
@@ -43,7 +43,7 @@
             },
             {
                 "file": "json_compact_with_mandatory_80_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_80_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_80_records.json",
                 "agentId": "ae74f44",
                 "format": "json_compact",
                 "variant": "mandatory",
@@ -53,7 +53,7 @@
             },
             {
                 "file": "json_compact_with_mandatory_40_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_40_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_mandatory_40_records.json",
                 "agentId": "abb2348",
                 "format": "json_compact",
                 "variant": "mandatory",
@@ -63,7 +63,7 @@
             },
             {
                 "file": "json_compact_with_optional_80_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_80_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_80_records.json",
                 "agentId": "a1257a1",
                 "format": "json_compact",
                 "variant": "optional",
@@ -73,7 +73,7 @@
             },
             {
                 "file": "json_compact_with_optional_40_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_40_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_compact\\json_compact_with_optional_40_records.json",
                 "agentId": "a321772",
                 "format": "json_compact",
                 "variant": "optional",
@@ -83,7 +83,7 @@
             },
             {
                 "file": "json_pretty_with_mandatory_80_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_80_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_80_records.json",
                 "agentId": "a969df5",
                 "format": "json_pretty",
                 "variant": "mandatory",
@@ -93,7 +93,7 @@
             },
             {
                 "file": "json_pretty_with_mandatory_40_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_40_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_mandatory_40_records.json",
                 "agentId": "a922d3f",
                 "format": "json_pretty",
                 "variant": "mandatory",
@@ -103,7 +103,7 @@
             },
             {
                 "file": "json_pretty_with_optional_80_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_80_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_80_records.json",
                 "agentId": "ae3bb22",
                 "format": "json_pretty",
                 "variant": "optional",
@@ -113,7 +113,7 @@
             },
             {
                 "file": "json_pretty_with_optional_40_records.json",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_40_records.json",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\json_pretty\\json_pretty_with_optional_40_records.json",
                 "agentId": "a9f714c",
                 "format": "json_pretty",
                 "variant": "optional",
@@ -123,7 +123,7 @@
             },
             {
                 "file": "jsonl_with_mandatory_80_records.jsonl",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_80_records.jsonl",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_80_records.jsonl",
                 "agentId": "a768d9d",
                 "format": "jsonl",
                 "variant": "mandatory",
@@ -133,7 +133,7 @@
             },
             {
                 "file": "jsonl_with_mandatory_40_records.jsonl",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_40_records.jsonl",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_mandatory_40_records.jsonl",
                 "agentId": "a02bcfd",
                 "format": "jsonl",
                 "variant": "mandatory",
@@ -143,7 +143,7 @@
             },
             {
                 "file": "jsonl_with_optional_80_records.jsonl",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_optional_80_records.jsonl",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_optional_80_records.jsonl",
                 "agentId": "a6ea410",
                 "format": "jsonl",
                 "variant": "optional",
@@ -153,7 +153,7 @@
             },
             {
                 "file": "jsonl_with_optional_40_records.jsonl",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_optional_40_records.jsonl",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\jsonl\\jsonl_with_optional_40_records.jsonl",
                 "agentId": "accd6e0",
                 "format": "jsonl",
                 "variant": "optional",
@@ -163,7 +163,7 @@
             },
             {
                 "file": "toon_with_mandatory_80_records.toon",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_mandatory_80_records.toon",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_mandatory_80_records.toon",
                 "agentId": "a657b4a",
                 "format": "toon",
                 "variant": "mandatory",
@@ -173,7 +173,7 @@
             },
             {
                 "file": "toon_with_mandatory_40_records.toon",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_mandatory_40_records.toon",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_mandatory_40_records.toon",
                 "agentId": "af99611",
                 "format": "toon",
                 "variant": "mandatory",
@@ -183,7 +183,7 @@
             },
             {
                 "file": "toon_with_optional_80_records.toon",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_optional_80_records.toon",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_optional_80_records.toon",
                 "agentId": "a511aaf",
                 "format": "toon",
                 "variant": "optional",
@@ -193,7 +193,7 @@
             },
             {
                 "file": "toon_with_optional_40_records.toon",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_optional_40_records.toon",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\toon\\toon_with_optional_40_records.toon",
                 "agentId": "a680fef",
                 "format": "toon",
                 "variant": "optional",
@@ -203,7 +203,7 @@
             },
             {
                 "file": "markdown_with_mandatory_80_records.md",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_mandatory_80_records.md",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_mandatory_80_records.md",
                 "agentId": "a05df7a",
                 "format": "markdown",
                 "variant": "mandatory",
@@ -213,7 +213,7 @@
             },
             {
                 "file": "markdown_with_mandatory_40_records.md",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_mandatory_40_records.md",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_mandatory_40_records.md",
                 "agentId": "a73a085",
                 "format": "markdown",
                 "variant": "mandatory",
@@ -223,7 +223,7 @@
             },
             {
                 "file": "markdown_with_optional_80_records.md",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_optional_80_records.md",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_optional_80_records.md",
                 "agentId": "a4cdbd4",
                 "format": "markdown",
                 "variant": "optional",
@@ -233,7 +233,7 @@
             },
             {
                 "file": "markdown_with_optional_40_records.md",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_optional_40_records.md",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\markdown\\markdown_with_optional_40_records.md",
                 "agentId": "a99d528",
                 "format": "markdown",
                 "variant": "optional",
@@ -243,7 +243,7 @@
             },
             {
                 "file": "yaml_with_mandatory_80_records.yaml",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_mandatory_80_records.yaml",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_mandatory_80_records.yaml",
                 "agentId": "a214264",
                 "format": "yaml",
                 "variant": "mandatory",
@@ -253,7 +253,7 @@
             },
             {
                 "file": "yaml_with_mandatory_40_records.yaml",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_mandatory_40_records.yaml",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_mandatory_40_records.yaml",
                 "agentId": "adee940",
                 "format": "yaml",
                 "variant": "mandatory",
@@ -263,7 +263,7 @@
             },
             {
                 "file": "yaml_with_optional_80_records.yaml",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_optional_80_records.yaml",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_optional_80_records.yaml",
                 "agentId": "a8407b2",
                 "format": "yaml",
                 "variant": "optional",
@@ -273,7 +273,7 @@
             },
             {
                 "file": "yaml_with_optional_40_records.yaml",
-                "path": "C:\\Users\\ThoreHöltig\\Documents\\ClaudeCodeToolkit\\plugins\\file-format-benchmark\\benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_optional_40_records.yaml",
+                "path": "benchmark_format_all_variant_all_haiku_off\\data\\yaml\\yaml_with_optional_40_records.yaml",
                 "agentId": "a26a916",
                 "format": "yaml",
                 "variant": "optional",
