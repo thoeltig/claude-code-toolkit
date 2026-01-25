@@ -108,10 +108,7 @@ export class BenchmarkingOrchestrator {
 
         // Write questions
         const questionsForTest = {
-          instructions: 
-          `If you are asked for a single value like a text, number or count then set it as a string to the answer field like this: {"questionId":200,"answer":"value1"}.
-          If you are asked for multiple values at the same time then set them as comma separated string to the answer field like this: {"questionId":201,"answer":"value1,value2,value3"}.
-          IMPORTANT: When extracting dates, return them exactly as they appear in the data as plain text strings in YYYY-MM-DD format. Never convert to Date objects or perform any timezone operations.`,
+          instructions: `If you are asked for a single value like a text, number or count then set it as a string to the answer field like this: {"questionId":200,"answer":"value1"}. If you are asked for multiple values at the same time then set them as comma separated string to the answer field like this: {"questionId":201,"answer":"value1,value2,value3"}. IMPORTANT: When extracting dates, return them exactly as they appear in the data as plain text strings in YYYY-MM-DD format. Never convert to Date objects or perform any timezone operations.`,
           questions: answersAndQuestions.map<Question>(x => ({id: x.id, question: x.question}))
         }
         fs.writeFileSync(questionnaireFilePath, JSON.stringify(questionsForTest));
