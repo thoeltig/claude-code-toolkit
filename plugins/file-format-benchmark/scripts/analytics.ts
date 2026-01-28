@@ -186,7 +186,7 @@ class BenchmarkAnalytics {
       const validator = new ReportValidator(this.outputDir);
       var reports = validator.validate();
       reports.forEach(x => {
-        const key = this.getLookupKey(x.format, x.recordCount, x.variant === 'optional');
+        const key = this.getLookupKey(x.format, x.structure, x.recordCount, x.variant === 'optional');
         results.set(key, x);
       });
     } catch (err) {
@@ -210,7 +210,7 @@ class BenchmarkAnalytics {
     for (const file of filesArray) {
       if (Array.isArray(file.dataAndOutput)) {
         for (const dataAndOutput of file.dataAndOutput) {
-          const key = this.getLookupKey(dataAndOutput.format, file.recordCount, dataAndOutput.allFieldsManadatory === false);
+          const key = this.getLookupKey(dataAndOutput.format, dataAndOutput.structure, file.recordCount, dataAndOutput.allFieldsManadatory === false);
           datasetMap.set(key, {
             format: dataAndOutput.format,
             recordCount: file.recordCount,
@@ -237,7 +237,7 @@ class BenchmarkAnalytics {
 
     // Process each test case
     for (const userMetric of userMetrics) {
-      const lookupKey = this.getLookupKey(userMetric.format, userMetric.recordCount, userMetric.hasOptionalData);
+      const lookupKey = this.getLookupKey(userMetric.format, userMetric.structure, userMetric.recordCount, userMetric.hasOptionalData);
       const datasetInfo = datasetMap.get(lookupKey);
       if (!datasetInfo) {
         console.warn(`Dataset info not found for: ${lookupKey}`);
@@ -295,8 +295,8 @@ class BenchmarkAnalytics {
     return metrics;
   }
 
-  private getLookupKey(format: string, recordCount: number, hasOptionalData: boolean): string {
-    return `${format}_${recordCount}_${hasOptionalData ? 'optional' : 'mandatory'}`;
+  private getLookupKey(format: string, structure: string, recordCount: number, hasOptionalData: boolean): string {
+    return `${format}_${structure}_${recordCount}_${hasOptionalData ? 'optional' : 'mandatory'}`;
   }
 
   private normalizedAmountScore(min: number, max: number, value: number): number{

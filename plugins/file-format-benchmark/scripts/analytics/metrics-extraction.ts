@@ -10,6 +10,7 @@ import { UserMetrics } from "../types";
 
 interface AgentIdEntry {
   format: string;
+  structure: string;
   variant: string;
   recordCount: number;
   agentId: string;
@@ -40,6 +41,7 @@ interface ReadMetricsFile {
   path: string;
   agentId: string;
   format: string;
+  structure: string;
   variant: string;
   recordCount: number;
   readTokens: number;
@@ -48,6 +50,7 @@ interface ReadMetricsFile {
 
 interface ReasoningMetricsFile {
   format: string;
+  structure: string;
   variant: string;
   recordCount: number;
   testRuns: number;
@@ -100,6 +103,26 @@ class MetricsExtraction {
     const readTranscripts = this.findTranscriptFiles(agentIds.readOnlyTests.map(t => t.agentId));
     const fullTranscripts = this.findTranscriptFiles(agentIds.fullTests.map(t => t.agentId));
 
+    // Check if any transcripts were found
+    if (readTranscripts.size === 0 && fullTranscripts.size === 0) {
+      throw new Error(
+        `No transcripts found!\n\n` +
+        `Searched for:\n` +
+        `  - ${agentIds.readOnlyTests.length} read-only tests\n` +
+        `  - ${agentIds.fullTests.length} full tests\n\n` +
+        `Transcript location: ${this.projectsDir}\n\n` +
+        `Possible causes:\n` +
+        `  1. Agent tasks have not completed or were interrupted\n` +
+        `  2. Incorrect agent IDs in agent_ids.json\n` +
+        `  3. Transcripts are stored in a non-standard location\n\n` +
+        `Agent IDs:\n` +
+        `  Read-only: ${agentIds.readOnlyTests.map(t => t.agentId).join(", ")}\n` +
+        `  Full tests: ${agentIds.fullTests.map(t => t.agentId).join(", ")}`
+      );
+    }
+
+    console.log(`✓ Found ${readTranscripts.size} read transcripts and ${fullTranscripts.size} full transcripts`);
+
     console.log("Extracting read metrics...");
     const readMetrics = this.extractReadMetrics(readTranscripts, agentIds.readOnlyTests);
 
@@ -120,14 +143,69 @@ class MetricsExtraction {
   private loadAgentIds(): AgentIdsFile {
     try {
       const content = fs.readFileSync(this.agentIdsFile, "utf-8");
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+
+      // Validate structure
+      if (!parsed.testConfiguration) {
+        throw new Error("Missing 'testConfiguration' field in agent_ids.json");
+      }
+      if (!Array.isArray(parsed.readOnlyTests)) {
+        throw new Error("Missing 'readOnlyTests' array in agent_ids.json");
+      }
+      if (!Array.isArray(parsed.fullTests)) {
+        throw new Error("Missing 'fullTests' array in agent_ids.json");
+      }
+
+      return parsed as AgentIdsFile;
     } catch (err) {
-      throw new Error(`Failed to load agent IDs from ${this.agentIdsFile}: ${err}`);
+      const exampleFormat = {
+        testConfiguration: {
+          formats: ["json_compact", "csv"],
+          variants: ["optional", "mandatory"],
+          model: "haiku",
+          thinking: "off",
+          timestamp: "2026-01-27T23:40:00.000Z"
+        },
+        readOnlyTests: [
+          {
+            format: "json_compact",
+            variant: "mandatory",
+            recordCount: 80,
+            agentId: "aa71437",
+            timestamp: "2026-01-27T23:33:00.000Z"
+          }
+        ],
+        fullTests: [
+          {
+            format: "json_compact",
+            variant: "mandatory",
+            recordCount: 80,
+            agentId: "af47870",
+            testRun: 1,
+            timestamp: "2026-01-27T23:34:00.000Z"
+          }
+        ]
+      };
+
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      throw new Error(
+        `Failed to load agent IDs from ${this.agentIdsFile}:\n` +
+        `Error: ${errorMsg}\n\n` +
+        `Expected format:\n${JSON.stringify(exampleFormat, null, 2)}`
+      );
     }
   }
 
   private findTranscriptFiles(agentIds: string[]): Map<string, string> {
     const found = new Map<string, string>();
+    const notFound: string[] = [];
+
+    // Check if projects directory exists
+    if (!fs.existsSync(this.projectsDir)) {
+      console.error(`Error: Projects directory not found: ${this.projectsDir}`);
+      console.error(`Claude Code stores transcripts in: ~/.claude/projects/`);
+      console.error(`Expand ~ to your home directory and verify the path exists.`);
+    }
 
     for (const agentId of agentIds) {
       const filename = `agent-${agentId}.jsonl`;
@@ -136,8 +214,21 @@ class MetricsExtraction {
       if (match) {
         found.set(agentId, match);
       } else {
+        notFound.push(agentId);
         console.warn(`Warning: No transcript found for agent ID: ${agentId}`);
+        console.warn(`  Expected file: agent-${agentId}.jsonl`);
+        console.warn(`  Search directory: ${this.projectsDir}`);
       }
+    }
+
+    // If many transcripts are missing, provide additional guidance
+    if (notFound.length > 0 && notFound.length === agentIds.length) {
+      console.error(`\n⚠️  ERROR: No transcripts found for any agent IDs!`);
+      console.error(`This usually means:`);
+      console.error(`  1. The agent tasks have not completed yet`);
+      console.error(`  2. The transcripts are stored in a different location than: ${this.projectsDir}`);
+      console.error(`  3. The agent IDs are incorrect`);
+      console.error(`\nAgent IDs searched: ${agentIds.join(", ")}`);
     }
 
     return found;
@@ -190,6 +281,7 @@ class MetricsExtraction {
           path: metric.path,
           agentId: metric.agentId,
           format: entry.format,
+          structure: metric.structure,
           variant: entry.variant,
           recordCount: entry.recordCount,
           readTokens: metric.tokens,
@@ -204,6 +296,7 @@ class MetricsExtraction {
   private extractFileTokensFromTranscript(jsonlPath: string, agentId: string): Array<{
     file: string;
     path: string;
+    structure: string;
     tokens: number;
     time_ms: number | null;
     agentId: string;
@@ -211,6 +304,7 @@ class MetricsExtraction {
     const results: Array<{
       file: string;
       path: string;
+      structure: string;
       tokens: number;
       time_ms: number | null;
       agentId: string;
@@ -219,26 +313,31 @@ class MetricsExtraction {
     try {
       const lines = fs.readFileSync(jsonlPath, "utf-8").split("\n");
 
-      // First pass: find all tool_use Read operations with their timestamps
-      const toolUses: Map<string, { file_path: string; tool_use_timestamp: string }> = new Map();
+      // Track Read tool uses with their file paths and timestamps
+      const readToolUses: Map<string, { file_path: string; timestamp: string }> = new Map();
 
-      for (const line of lines) {
+      // First pass: find all tool_use Read operations with file_path and timestamps
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         if (!line.trim()) continue;
+
         try {
           const data = JSON.parse(line);
+
+          // Look for assistant messages with Read tool_use
           if (data.type === "assistant") {
             const msg = data.message || {};
             const content = msg.content || [];
 
             if (Array.isArray(content)) {
               for (const item of content) {
-                if (item && item.name === "Read") {
+                if (item && item.type === "tool_use" && item.name === "Read") {
                   const file_path = item.input?.file_path || "";
                   if (file_path) {
                     const tool_use_id = item.id || "";
-                    toolUses.set(tool_use_id, {
+                    readToolUses.set(tool_use_id, {
                       file_path,
-                      tool_use_timestamp: data.timestamp || "",
+                      timestamp: data.timestamp || "",
                     });
                   }
                 }
@@ -250,40 +349,48 @@ class MetricsExtraction {
         }
       }
 
-      // Second pass: find toolUseResult entries and match with tool_uses
+      // Second pass: find tool_result entries and extract token metrics from following assistant message
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         if (!line.trim()) continue;
 
         try {
           const data = JSON.parse(line);
-          const tool_use_result = data.toolUseResult || {};
 
-          if (tool_use_result && tool_use_result.file) {
-            const file_info = tool_use_result.file;
-            const file_path = file_info.filePath || "";
-
+          // Look for user messages with tool_result
+          if (data.type === "user") {
             const msg = data.message || {};
-            if (msg && msg.content) {
-              const content = msg.content;
-              if (Array.isArray(content)) {
-                for (const item of content) {
-                  if (item && item.type === "tool_result") {
-                    const tool_use_id = item.tool_use_id || "";
+            const content = msg.content || [];
 
-                    if (toolUses.has(tool_use_id) && file_path) {
-                      const result_timestamp = data.timestamp || "";
-                      const { file_path: stored_path, tool_use_timestamp } = toolUses.get(tool_use_id)!;
+            if (Array.isArray(content)) {
+              for (const item of content) {
+                if (item && item.type === "tool_result") {
+                  const tool_use_id = item.tool_use_id || "";
 
-                      // Get next message for token counts
-                      if (i + 1 < lines.length) {
-                        try {
-                          const next_data = JSON.parse(lines[i + 1]);
+                  // Check if this tool_use_id is in our Read tool uses
+                  if (readToolUses.has(tool_use_id)) {
+                    const { file_path, timestamp: tool_use_timestamp } = readToolUses.get(tool_use_id)!;
+                    const result_timestamp = data.timestamp || "";
+
+                    // Look ahead to find the next assistant message with usage metrics
+                    for (let j = i + 1; j < lines.length && j < i + 5; j++) {
+                      try {
+                        const next_line = lines[j];
+                        if (!next_line.trim()) continue;
+
+                        const next_data = JSON.parse(next_line);
+
+                        // Find assistant message with usage
+                        if (next_data.type === "assistant") {
                           const next_msg = next_data.message || {};
 
                           if (next_msg && next_msg.usage) {
                             const usage = next_msg.usage;
+                            // Use cache_creation_input_tokens for read metrics
                             const cache_creation = usage.cache_creation_input_tokens || 0;
+                            const cache_read = usage.cache_read_input_tokens || 0;
+                            // Total tokens for this read operation (newly created input)
+                            const total_tokens = cache_creation;
 
                             // Calculate time difference
                             let time_ms: number | null = null;
@@ -298,17 +405,29 @@ class MetricsExtraction {
                             }
 
                             const file_name = path.basename(file_path);
+
+                            // Extract structure (flat or nested) from filename
+                            // Pattern: *_flat_records.json or *_nested_records.json
+                            let structure = "unknown";
+                            if (file_name.includes("_flat_")) {
+                              structure = "flat";
+                            } else if (file_name.includes("_nested_")) {
+                              structure = "nested";
+                            }
+
                             results.push({
                               file: file_name,
                               path: file_path,
-                              tokens: cache_creation,
+                              structure,
+                              tokens: total_tokens,
                               time_ms,
                               agentId,
                             });
                           }
-                        } catch (e) {
-                          // Skip if next line is invalid
+                          break; // Stop looking after finding assistant message
                         }
+                      } catch (e) {
+                        // Skip invalid lines
                       }
                     }
                   }
@@ -340,7 +459,7 @@ class MetricsExtraction {
       const metrics = this.extractFullTestMetrics(transcript);
 
       if (metrics) {
-        const key = `${entry.format}_${entry.variant}_${entry.recordCount}`;
+        const key = `${entry.format}_${entry.structure}_${entry.variant}_${entry.recordCount}`;
 
         if (!resultsMap.has(key)) {
           resultsMap.set(key, []);
@@ -348,6 +467,7 @@ class MetricsExtraction {
 
         resultsMap.get(key)!.push({
           format: entry.format,
+          structure: entry.structure,
           variant: entry.variant,
           recordCount: entry.recordCount,
           testRuns: 0, // Will be set during aggregation
@@ -401,6 +521,7 @@ class MetricsExtraction {
       let last_timestamp: string | null = null;
       let total_input_tokens = 0;
       let total_output_tokens = 0;
+      let message_count = 0;
 
       for (const line of lines) {
         if (!line.trim()) continue;
@@ -410,7 +531,7 @@ class MetricsExtraction {
           const timestamp = data.timestamp;
 
           // Stop processing once we hit the first Write tool call
-          if (first_write_timestamp && timestamp === first_write_timestamp) {
+          if (first_write_timestamp && timestamp && timestamp >= first_write_timestamp) {
             last_timestamp = timestamp;
             break;
           }
@@ -423,11 +544,20 @@ class MetricsExtraction {
           }
 
           // Extract usage information from assistant messages (before Write)
-          const msg = data.message || {};
-          if (msg && msg.usage) {
-            const usage = msg.usage;
-            total_input_tokens += usage.input_tokens || 0;
-            total_output_tokens += usage.output_tokens || 0;
+          if (data.type === "assistant") {
+            const msg = data.message || {};
+            if (msg && msg.usage) {
+              const usage = msg.usage;
+              // Count actual input tokens (not cache tokens)
+              const input = usage.input_tokens || 0;
+              const output = usage.output_tokens || 0;
+
+              if (input > 0 || output > 0) {
+                total_input_tokens += input;
+                total_output_tokens += output;
+                message_count++;
+              }
+            }
           }
         } catch (e) {
           // Skip invalid JSON lines
@@ -446,7 +576,7 @@ class MetricsExtraction {
         }
       }
 
-      if (first_timestamp) {
+      if (first_timestamp && message_count > 0) {
         return {
           duration_ms,
           input_tokens: total_input_tokens,
@@ -472,6 +602,7 @@ class MetricsExtraction {
 
         reasoningFiles.push({
           format: metrics[0].format,
+          structure: metrics[0].structure,
           variant: metrics[0].variant,
           recordCount: metrics[0].recordCount,
           testRuns: metrics.length,
@@ -528,25 +659,42 @@ class MetricsExtraction {
   private mergeCombinedMetrics(combinedMetrics: CombinedMetrics): UserMetrics[] {
     const merged: UserMetrics[] = [];
 
-    // Group read metrics by format+variant+recordCount
+    // Group read metrics by format+structure+variant+recordCount
     const readMap = new Map<string, ReadMetricsFile>();
     for (const read of combinedMetrics.read.files) {
-      const key = `${read.format}_${read.variant}_${read.recordCount}`;
+      const key = `${read.format}_${read.structure}_${read.variant}_${read.recordCount}`;
       readMap.set(key, read);
     }
 
     // Merge with reasoning metrics
     for (const reasoning of combinedMetrics.reasoning.files) {
-      const key = `${reasoning.format}_${reasoning.variant}_${reasoning.recordCount}`;
+      const key = `${reasoning.format}_${reasoning.structure}_${reasoning.variant}_${reasoning.recordCount}`;
       const readData = readMap.get(key);
 
       if (!readData) {
-        throw new Error(`No read data found for ${key}. Ensure both read and reasoning metrics cover the same test cases.`);
+        console.error(`\n❌ ERROR: Mismatch between read and reasoning metrics`);
+        console.error(`\nLooking for: ${key}`);
+        console.error(`\nAvailable read test cases (${combinedMetrics.read.files.length}):`);
+        if (combinedMetrics.read.files.length === 0) {
+          console.error(`  NONE - No read metrics were extracted!`);
+          console.error(`  This means: Read-only test transcripts were not parsed correctly`);
+          console.error(`  Check that agent IDs are correct and transcripts exist`);
+        } else {
+          combinedMetrics.read.files.forEach(r => {
+            console.error(`  - ${r.format}_${r.structure}_${r.variant}_${r.recordCount}: ${r.readTokens} tokens`);
+          });
+        }
+        console.error(`\nAvailable reasoning test cases (${combinedMetrics.reasoning.files.length}):`);
+        combinedMetrics.reasoning.files.forEach(r => {
+          console.error(`  - ${r.format}_${r.structure}_${r.variant}_${r.recordCount}: ${r.reasoningTokens} tokens`);
+        });
+        throw new Error(`No read data found for ${key}`);
       }
 
       merged.push({
-        testCase: `${reasoning.format}_${reasoning.recordCount}_${reasoning.variant}`,
+        testCase: `${reasoning.format}_${reasoning.structure}_${reasoning.recordCount}_${reasoning.variant}`,
         format: reasoning.format,
+        structure: reasoning.structure,
         variant: reasoning.variant,
         recordCount: reasoning.recordCount,
         hasOptionalData: reasoning.variant !== "mandatory",
