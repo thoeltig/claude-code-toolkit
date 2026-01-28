@@ -14,6 +14,7 @@ import { DIRECTORY_ANSWERS_VALIDATION, DIRECTORY_RESULTS, DIRECTORY_SUBAGENT_OUT
 // Find all test 1 files recursively (these define the test cases)
 interface TestCase {
     format: string;
+    structure: string;
     variant: string;
     recordCount: number;
     answerFiles: string[];
@@ -54,7 +55,7 @@ class ReportValidator {
             const validationKeyFile = path.join(this.validationDir, `questions_and_answers_with_${testCase.variant}_${testCase.recordCount}_records.json`);
 
             if (!fs.existsSync(validationKeyFile)) {
-                console.warn(`⚠ Skipping ${testCase.format}_${testCase.variant}_${testCase.recordCount}: validation data not found`);
+                console.warn(`⚠ Skipping ${testCase.format}_${testCase.structure}_${testCase.variant}_${testCase.recordCount}: validation data not found`);
                 continue;
             }
 
@@ -62,7 +63,8 @@ class ReportValidator {
             const groundTruthQuestions: AnswerAndQuestion[] = validationData.answersAndQuestions;
             
             const report: MergedValidationReport = {
-                    format: testCase.format as Format,  
+                    format: testCase.format as Format,
+                    structure: testCase.structure,
                     variant: testCase.variant,
                     recordCount: testCase.recordCount,
                     testRuns: testCase.answerFiles.length,
@@ -126,10 +128,10 @@ class ReportValidator {
             report.accuracy.weightedAccuracyPercent =  Math.round((report.perRunAccuracy.reduce((sum, r) => sum + r.weightedAccuracyPercent, 0) / report.perRunAccuracy.length) * 100)/100;
             
             const statusIcon = report.accuracy.accuracyPercent === 100 ? "✓" : report.accuracy.accuracyPercent >= 90 ? "◐" : "✗";
-            console.log(`${statusIcon} ${testCase.format.padEnd(15)} ${testCase.variant.padEnd(10)} ${String(testCase.recordCount).padEnd(4)} → ${report.accuracy.accuracyPercent.toFixed(3)}%`);
+            console.log(`${statusIcon} ${testCase.format.padEnd(15)} ${testCase.structure.padEnd(8)} ${testCase.variant.padEnd(10)} ${String(testCase.recordCount).padEnd(4)} → ${report.accuracy.accuracyPercent.toFixed(3)}%`);
 
             // Save aggregated results
-            const outputFile = path.join(this.resultsDir, `${testCase.format}_${testCase.variant}_${testCase.recordCount}_validation.json`);
+            const outputFile = path.join(this.resultsDir, `${testCase.format}_${testCase.structure}_${testCase.variant}_${testCase.recordCount}_validation.json`);
             fs.writeFileSync(outputFile, JSON.stringify(report));
 
             results.push(report);
@@ -158,28 +160,33 @@ class ReportValidator {
                     }  
                 });
             } else if (entry.isFile()) {
-                // Extract variant and recordCount from filename
-                // Format: answers_with_{variant}_{recordCount}_records_1.json
-                const match = entry.name.match(/^answers_with_(.+?)_(\d+)_records_(\d+)\.json$/);
+                // Extract structure, variant, recordCount from filename
+                // Format: answers_for_{structure}_{variant}_{recordCount}_records_{testRun}.json
+                // Example: answers_for_flat_mandatory_80_records_1.json
+                const match = entry.name.match(/^answers_for_(.+?)_(.+?)_(\d+)_records_(\d+)\.json$/);
                 if (match) {
                     const format = path.basename(path.dirname(fullPath));
-                    const variant = match[1];
-                    const recordCount = parseInt(match[2]);
+                    const structure = match[1];
+                    const variant = match[2];
+                    const recordCount = parseInt(match[3]);
 
-                    const key = `${format}${variant}${recordCount}`;        
+                    const key = `${format}_${structure}_${variant}_${recordCount}`;
                     let testCase = map.get(key);
                     if(!testCase){
-                        testCase = { 
-                            format: format, 
-                            variant: variant, 
+                        testCase = {
+                            format: format,
+                            structure: structure,
+                            variant: variant,
                             recordCount: recordCount,
-                            answerFiles: [fullPath] 
+                            answerFiles: [fullPath]
                         }
                     }else{
                         testCase.answerFiles.push(fullPath);
                     }  
 
                     map.set(key, testCase);
+                }else{
+                    console.warn(`Found file with wrong name format '${entry.name}' in the folder '${path.basename(path.dirname(fullPath))}'. Expected format: 'answers_for_(.+?)_(.+?)_(\d+)_records_(\d+)\.json'`);
                 }
             }
         }

@@ -224,13 +224,14 @@ export interface ValidationReport {
 
 export interface MergedValidationReport {
   format: Format;
+  structure: string;
   variant: string;
   recordCount: number;
   testRuns: number;
   totalQuestions: number;
   accuracy: AnswerAccuracy;
   perRunAccuracy: PerTestRunAnswerAccuracy[];
-  questionsAndProvidedAnswers: QuestionsAndProvidedAnswers[];  
+  questionsAndProvidedAnswers: QuestionsAndProvidedAnswers[];
 }
 
 export interface AnswerAccuracy {
@@ -366,6 +367,7 @@ export interface DataAndOutput{
 export interface UserMetrics {
   testCase: string;
   format: string;
+  structure: string;
   variant: string;
   recordCount: number;
   hasOptionalData: boolean;
