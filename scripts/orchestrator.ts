@@ -32,7 +32,7 @@ import {
  } from "./consts";
 
 const MANDATORY_STATE: boolean[] = [true, false];
-const TARGET_SIZES: number[] = [80];
+const TARGET_SIZES: number[] = [60];
 
 export class BenchmarkingOrchestrator {
   private outputDir: string;

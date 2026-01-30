@@ -16,9 +16,9 @@ export const FILE_METRICS:string = "metrics.json";
 
 export const QUESTIONS_COUNT = 120;
 export const QUESTIONS_DISTRIBUTION = {
-    field_retrieval: Math.ceil(QUESTIONS_COUNT * 0.4), 
+    field_retrieval: Math.ceil(QUESTIONS_COUNT * 0.41), 
     aggregation: Math.ceil(QUESTIONS_COUNT * 0.15), 
-    filtering: Math.ceil(QUESTIONS_COUNT * 0.2),
+    filtering: Math.ceil(QUESTIONS_COUNT * 0.19),
     structure_awareness: Math.ceil(QUESTIONS_COUNT * 0.25)
 };
 
