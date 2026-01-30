@@ -217,7 +217,6 @@ export class QuestionnaireGenerator {
     if(count < 0){
       return questions;
     }
-    console.log("Start");
 
     const splitCount = Math.ceil(count / 3); // equal, above/belowe avg, equal + above/belowe avg
     const remainingCount = count - splitCount * 2;
@@ -241,7 +240,6 @@ export class QuestionnaireGenerator {
         dataReferences: [field],
       });
     });
-    console.log("Easy done");
 
     let i = 0;
     map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, splitCount, idField);
@@ -268,9 +266,7 @@ export class QuestionnaireGenerator {
         dataReferences: [numericField],
       });
     });
-    
-    console.log("Medium done");
-    
+        
     map = this.rand.getUniqueNumericFieldsAndValues(ctx.records, remainingCount, idField);
     map.forEach((record, numericField) => {
       const filterForAbove = (i++) % 2 === 0;
@@ -298,8 +294,6 @@ export class QuestionnaireGenerator {
         dataReferences: [field, numericField],
       });
     });
-
-    console.log("Hard done");
 
     return questions;
   }

@@ -162,7 +162,7 @@ class ReportValidator {
             } else if (entry.isFile()) {
                 // Extract structure, variant, recordCount from filename
                 // Format: answers_for_{structure}_{variant}_{recordCount}_records_{testRun}.json
-                // Example: answers_for_flat_mandatory_80_records_1.json
+                // Example: answers_for_flat_mandatory_60_records_1.json
                 const match = entry.name.match(/^answers_for_(.+?)_(.+?)_(\d+)_records_(\d+)\.json$/);
                 if (match) {
                     const format = path.basename(path.dirname(fullPath));

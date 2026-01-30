@@ -170,7 +170,7 @@ class MetricsExtraction {
           {
             format: "json_compact",
             variant: "mandatory",
-            recordCount: 80,
+            recordCount: 60,
             agentId: "aa71437",
             timestamp: "2026-01-27T23:33:00.000Z"
           }
@@ -179,7 +179,7 @@ class MetricsExtraction {
           {
             format: "json_compact",
             variant: "mandatory",
-            recordCount: 80,
+            recordCount: 60,
             agentId: "af47870",
             testRun: 1,
             timestamp: "2026-01-27T23:34:00.000Z"
