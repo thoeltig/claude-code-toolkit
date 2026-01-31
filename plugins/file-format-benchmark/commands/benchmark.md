@@ -410,6 +410,14 @@ Full results saved to: ${BENCHMARK_OUTPUT_DIR}/analytics_results.json
 =================================================================
 ```
 
+## Comparison Tables
+
+You can also generate detailed comparison tables of the output file:
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts && node tables/generate_all_tables.js --json-path ${BENCHMARK_OUTPUT_DIR}/analytics_results.json > ${BENCHMARK_OUTPUT_DIR}/tables.md
+```
+
 ## Output Folder Structure
 
 The benchmark output folder contains all generated data and test results:
