@@ -14,17 +14,17 @@ export const FILE_METADATA:string = "metadata.json";
 export const FILE_ANALYTICS_RESULT:string  = "analytics_results.json";
 export const FILE_METRICS:string = "metrics.json";
 
-export const QUESTIONS_COUNT = 120;
+export const QUESTIONS_COUNT = 125;
 export const QUESTIONS_DISTRIBUTION = {
-    field_retrieval: Math.ceil(QUESTIONS_COUNT * 0.41), 
-    aggregation: Math.ceil(QUESTIONS_COUNT * 0.15), 
-    filtering: Math.ceil(QUESTIONS_COUNT * 0.19),
-    structure_awareness: Math.ceil(QUESTIONS_COUNT * 0.25)
+    field_retrieval: 54,
+    structure_awareness: 28, 
+    filtering: 22, 
+    aggregation: 21
 };
 
 export const QUESTIONS_WEIGHT_DISTRIBUTION = {
-    field_retrieval: 0.35, 
-    aggregation: 0.15, 
-    filtering: 0.2,
-    structure_awareness: 0.3
+    field_retrieval: 0.375,
+    structure_awareness: 0.29167, 
+    filtering: 0.20833, 
+    aggregation: 0.125
 };

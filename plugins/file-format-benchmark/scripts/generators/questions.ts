@@ -35,15 +35,15 @@ export class QuestionnaireGenerator {
     id += entries.length;
     console.log("Retrival questions: "+ entries.length);
 
-    entries = this.generateAggregationQuestions(ctx, QUESTIONS_DISTRIBUTION.aggregation, id, productIdField);
-    answersAndQuestions.push(...entries);
-    id += entries.length;
-    console.log("Aggregation questions: "+ entries.length);
-
     entries = this.generateFilteringQuestions(ctx, QUESTIONS_DISTRIBUTION.filtering, id, productIdField);
     answersAndQuestions.push(...entries);
     id += entries.length;
     console.log("Filtering questions: "+ entries.length);
+
+    entries = this.generateAggregationQuestions(ctx, QUESTIONS_DISTRIBUTION.aggregation, id, productIdField);
+    answersAndQuestions.push(...entries);
+    id += entries.length;
+    console.log("Aggregation questions: "+ entries.length);
 
     entries = this.generateStructureAwarenessQuestions(ctx, QUESTIONS_DISTRIBUTION.structure_awareness, id);
     answersAndQuestions.push(...entries);
