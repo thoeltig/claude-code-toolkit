@@ -278,7 +278,22 @@ export class BenchmarkingOrchestrator {
 
 // CLI entry point
 if (require.main === module) {
-  const outputDir = process.argv[2] || "benchmarking";
+  const args = process.argv.slice(2);
+  let outputDir: string | undefined = "benchmarking";
+
+  for (let i = 0; i < args.length; i++) {
+    switch (args[i]) {
+      case "--output":
+        outputDir = args[++i];
+        break;
+    }
+  }
+
+  if (!outputDir) {
+    console.error("Usage: node dist/orchestrator.js --output <dir>");
+    process.exit(1);
+  }
+
   const orchestrator = new BenchmarkingOrchestrator(outputDir);
 
   const logSeparator = "=".repeat(60);
