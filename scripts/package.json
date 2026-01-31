@@ -1,27 +1,35 @@
 {
-  "name": "benchmarking-suite",
+  "name": "tokens-per-format-benchmark",
   "version": "1.0.0",
+  "license": "MIT",
+  "author": "Thore Höltig",
   "description": "Token efficiency and accuracy benchmarking suite for file formats",
-  "main": "dist/orchestrator.js",
-  "scripts": {
-    "build": "tsc",
-    "generate": "node dist/orchestrator.js benchmarking",
-    "validate": "node validate.js",
-    "analyze": "node dist/analytics.js",
-    "test": "npm run build && npm run generate"
-  },
   "keywords": [
     "benchmarking",
     "token-efficiency",
-    "file-formats"
+    "file-formats",
+    "llm",
+    "context",
+    "accuracy"
   ],
-  "author": "",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thoeltig/claude-code-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thoeltig/claude-code-toolkit/issues"
+  },
+  "main": "./dist/orchestrator.js",
   "devDependencies": {
     "@types/node": "25.0.1",
     "typescript": "5.3.3"
   },
   "dependencies": {
     "@toon-format/toon": "2.1.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "generate": "node dist/orchestrator.js benchmarking",
+    "analyze": "node dist/analytics.js"
   }
 }

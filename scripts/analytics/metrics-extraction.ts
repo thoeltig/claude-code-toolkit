@@ -388,7 +388,6 @@ class MetricsExtraction {
                             const usage = next_msg.usage;
                             // Use cache_creation_input_tokens for read metrics
                             const cache_creation = usage.cache_creation_input_tokens || 0;
-                            const cache_read = usage.cache_read_input_tokens || 0;
                             // Total tokens for this read operation (newly created input)
                             const total_tokens = cache_creation;
 
@@ -594,7 +593,7 @@ class MetricsExtraction {
     // Aggregate reasoning metrics by grouping test runs
     const reasoningFiles: ReasoningMetricsFile[] = [];
 
-    for (const [key, metrics] of reasoningMetricsMap) {
+    for (const [_, metrics] of reasoningMetricsMap) {
       if (metrics.length > 0) {
         const avg_duration = metrics.reduce((sum, m) => sum + m.durationMs, 0) / metrics.length;
         const avg_reasoning = metrics.reduce((sum, m) => sum + m.reasoningTokens, 0) / metrics.length;

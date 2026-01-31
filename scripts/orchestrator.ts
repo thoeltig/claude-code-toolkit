@@ -288,11 +288,15 @@ if (require.main === module) {
 
   const results = orchestrator.generateAllTestData();
 
-  console.log(`${logSeparator}`);
-  const fileCount = FORMATS.length * TARGET_SIZES.length * MANDATORY_STATE.length;
-  console.log(`Generated ${fileCount} dataset(s) with questionnaires`);
-  console.log(`Output directory: ${outputDir}`);
-  console.log(`${logSeparator}\n`);
+  if(!results || results.filesPerRecordCount.length === 0){
+    console.log(`File generation failed..`);
+  }else{
+    console.log(`${logSeparator}`);
+    const fileCount = FORMATS.length * TARGET_SIZES.length * MANDATORY_STATE.length;
+    console.log(`Generated ${fileCount} dataset(s) with questionnaires`);
+    console.log(`Output directory: ${outputDir}`);
+    console.log(`${logSeparator}\n`);
+  }
 }
 
 export default BenchmarkingOrchestrator;
