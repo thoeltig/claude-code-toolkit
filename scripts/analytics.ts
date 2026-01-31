@@ -326,14 +326,14 @@ class BenchmarkAnalytics {
         recordCounts,
         questionDistribution: [
           ["field_retrieval", QUESTIONS_DISTRIBUTION["field_retrieval"]],
-          ["aggregation", QUESTIONS_DISTRIBUTION["aggregation"]],
           ["filtering", QUESTIONS_DISTRIBUTION["filtering"]],
+          ["aggregation", QUESTIONS_DISTRIBUTION["aggregation"]],
           ["structure_awareness", QUESTIONS_DISTRIBUTION["structure_awareness"]]
         ],
         questionWeightDistribution: [
           ["field_retrieval", QUESTIONS_WEIGHT_DISTRIBUTION["field_retrieval"]],
-          ["aggregation", QUESTIONS_WEIGHT_DISTRIBUTION["aggregation"]],
           ["filtering", QUESTIONS_WEIGHT_DISTRIBUTION["filtering"]],
+          ["aggregation", QUESTIONS_WEIGHT_DISTRIBUTION["aggregation"]],
           ["structure_awareness", QUESTIONS_WEIGHT_DISTRIBUTION["structure_awareness"]]
         ],
       },
@@ -461,7 +461,7 @@ if (require.main === module) {
   }
 
   if (!agentIdsFile || !outputDir) {
-    console.error("Usage: ts-node analytics.ts --agent-ids <file> --output <dir>");
+    console.error("Usage: node dist/analytics.js --agent-ids <file> --output <dir>");
     process.exit(1);
   }
 

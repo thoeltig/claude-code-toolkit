@@ -1,6 +1,6 @@
 ---
 description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), TOON, XML, YAML). Generates test data variants (flat and nested), executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
-argument-hint: [--formats csv,json_compact,json_pretty,toon,xml,yaml] [--variant optional,mandatory] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
+argument-hint: [--formats csv,json_compact,json_pretty,toon,xml,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
 allowed-tools: Bash
 ---
 
@@ -12,7 +12,6 @@ You are orchestrating a comprehensive benchmarking test suite for measuring file
 
 **Main Orchestration & Validation Entry Points:**
 - `orchestrator.ts` → `dist/orchestrator.js` - Generates test data and metadata
-- `validate.ts` → `dist/validate.js` - **Primary validation script** (compiles AnswerValidator class)
 - `analytics.ts` → `dist/analytics.js` - Generates efficiency metrics and rankings
 
 **Supporting Utilities:**
@@ -25,6 +24,7 @@ You are orchestrating a comprehensive benchmarking test suite for measuring file
 Extract from $ARGUMENTS:
 - `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,toon,xml,yaml)
 - `--variant`: Data variant with optional or mandatory values (default: both - optional,mandatory)
+- `--structure`: Data structure (default: flat - flat,nested)
 - `--model`: haiku or sonnet (default: haiku)
 - `--thinking`: on or off (default: on)
 - `--output`: Output folder path for benchmark structure and test data (default: auto-generate in current directory)
@@ -37,9 +37,9 @@ Extract from $ARGUMENTS:
 - Example: `--output /path/to/my/benchmark`
 
 **If `--output` is NOT provided (auto-generate):**
-- Generate folder name: `benchmark_{formats}_{variant}_{model}_{thinking}` in current working directory
-- Example: `benchmark_csv_markdown_optional_haiku_on`
-- Example: `benchmark_all_optional_mandatory_sonnet_off` (if all formats)
+- Generate folder name: `benchmark_{formats}_{structure}_{variant}_{model}_{thinking}` in current working directory
+- Example: `benchmark_csv_markdown_flat_optional_haiku_on`
+- Example: `benchmark_all_nested_optional_mandatory_sonnet_off` (if all formats)
 
 **Resulting folder structure (in output folder):**
 ```
@@ -75,7 +75,7 @@ if [ -n "$OUTPUT_PATH" ]; then
   mkdir -p "$BENCHMARK_OUTPUT_DIR"
 else
   # Auto-generate folder name from parameters
-  # Format: benchmark_{formats}_{variant}_{model}_{thinking}
+  # Format: benchmark_{formats}_{structure}_{variant}_{model}_{thinking}
   # Use shorthand for "all" cases to keep folder names reasonable
 
   if [ "$FORMATS" = "csv,json_compact,json_pretty,toon,xml,yaml" ]; then
@@ -90,7 +90,13 @@ else
     VARIANT_PART="${VARIANT//,/_}"
   fi
 
-  BENCHMARK_OUTPUT_DIR="benchmark_${FORMATS_PART}_${VARIANT_PART}_${MODEL}_${THINKING}"
+  if [ "$STRUCTURE" = "flat,nested" ]; then
+    STRUCTURE_PART="structure_all"
+  else
+    STRUCTURE_PART="${STRUCTURE//,/_}"
+  fi
+
+  BENCHMARK_OUTPUT_DIR="benchmark_${FORMATS_PART}_${STRUCTURE_PART}_${VARIANT_PART}_${MODEL}_${THINKING}"
   mkdir -p "$BENCHMARK_OUTPUT_DIR"
   echo "Generated benchmark folder: $BENCHMARK_OUTPUT_DIR"
 fi
@@ -99,9 +105,9 @@ echo "Benchmark output folder: $BENCHMARK_OUTPUT_DIR"
 ```
 
 **Example generated folder names:**
-- All defaults: `benchmark_format_all_variant_all_haiku_on`
-- Specific formats: `benchmark_csv_xml_optional_haiku_on`
-- Specific variants: `benchmark_format_all_optional_sonnet_off`
+- All defaults: `benchmark_format_all_structure_all_variant_all_haiku_on`
+- Specific formats: `benchmark_csv_xml_flat_optional_haiku_on`
+- Specific variants: `benchmark_format_all_nested_optional_sonnet_off`
 - Custom path: Use `--output /path/to/folder`
 
 ## Step 2: Generate Test Data
@@ -109,9 +115,7 @@ echo "Benchmark output folder: $BENCHMARK_OUTPUT_DIR"
 Build the TypeScript project and run test data generation to the output folder:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
-npm run build
-npm run generate --output "$BENCHMARK_OUTPUT_DIR"
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts && npm run build && node dist/orchestrator.js --output ${BENCHMARK_OUTPUT_DIR}
 ```
 
 This:
@@ -121,7 +125,7 @@ This:
    - 2 data structure variants: flat and nested (flat for CSV, both for others)
    - 2 data content variants: optional, mandatory
    - Record count: 60
-   - Questionnaires with 120 questions per dataset
+   - Questionnaires with 125 questions per dataset
    - Answer templates
    - metadata.json with all dataset information
    - Directory structure for test execution
@@ -310,11 +314,7 @@ After all tests complete, run analytics which automatically:
 4. Runs comprehensive analysis
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts
-
-node dist/analytics.js \
-  --agent-ids ${BENCHMARK_OUTPUT_DIR}/agent_ids.json \
-  --output ${BENCHMARK_OUTPUT_DIR}
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts && node dist/analytics.js --agent-ids ${BENCHMARK_OUTPUT_DIR}/agent_ids.json --output ${BENCHMARK_OUTPUT_DIR}
 ```
 
 **Automatic Processing During Analytics:**
