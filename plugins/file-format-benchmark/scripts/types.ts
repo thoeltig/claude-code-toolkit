@@ -9,7 +9,7 @@
 
 export type Format = "csv" | "json_pretty" | "json_compact" | "toon" | "xml" | "yaml";
 export type Directory = "data" | "answers_validation" | "questions" | "answers_template" | "subagent_outputs" | "results";
-export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness" | "multiple_steps";
+export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness";
 
 export interface MetadataFlatArray {
   generatedAt: string,

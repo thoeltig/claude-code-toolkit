@@ -1,3 +1,5 @@
+import { DataRecord } from "../types";
+
 export class Randomizer{
   private rand: () => number;
 
@@ -17,8 +19,8 @@ export class Randomizer{
     };
   }
   
-  public getUniqueFieldsAndValues<T>(values: T[], count: number, fieldToSkip?: string): Map<string, T>{  
-    const map = new Map<string, T>();
+  public getUniqueFieldsAndValues(values: DataRecord[], count: number, fieldToSkip?: string): Map<string, DataRecord>{  
+    const map = new Map<string, DataRecord>();
     let randomValues = this.getRandomItems(values, count);
     for (let i = 0; i < randomValues.length; i++) {
       const value = randomValues[i];
@@ -41,8 +43,8 @@ export class Randomizer{
     return map;
   }
   
-  public getUniqueNumericFieldsAndValues<T>(values: T[], count: number, fieldToSkip?: string): Map<string, T>{  
-    const map = new Map<string, T>();
+  public getUniqueNumericFieldsAndValues(values: DataRecord[], count: number, fieldToSkip?: string): Map<string, DataRecord>{  
+    const map = new Map<string, DataRecord>();
     let randomValues = this.getRandomItems(values, count);
     for (let i = 0; i < randomValues.length; i++) {
       const value = randomValues[i];
@@ -82,28 +84,28 @@ export class Randomizer{
     return [...result]
   }
   
-  public getRandomFields<T>(obj: T, fieldToSkip?: string, maxCount: number = 7){
+  public getRandomFields(obj: DataRecord, fieldToSkip?: string, maxCount: number = 7): string[]{
     const fields = this.getFieldsAndSkip(obj, fieldToSkip);
     const fieldCountToUse = this.randomInt(2, maxCount);
     return this.getRandomItems(fields, fieldCountToUse);
   }
 
-  public getRandomField<T>(obj: T, fieldToSkip?: string){
+  public getRandomField(obj: DataRecord, fieldToSkip?: string): string{
     const fields = this.getFieldsAndSkip(obj, fieldToSkip);
     return this.getRandomItem(fields);
   }
   
-  public getRandomNumbericField<T>(obj: T, fieldToSkip?: string){
+  public getRandomNumbericField(obj: DataRecord, fieldToSkip?: string){
     const fields = this.getFieldsAndSkip(obj, fieldToSkip).filter(field => typeof obj[field] === 'number');
     return this.getRandomItem(fields);
   }
   
-  private getFieldsAndSkip<T>(obj: T, fieldToSkip?: string): string[]{
+  private getFieldsAndSkip(obj: DataRecord, fieldToSkip?: string): string[]{
     const fields = this.getFields(obj);
     return fieldToSkip ? fields.filter((field) => field !== fieldToSkip) : fields;  
   }
   
-  public getFields<T>(obj: T): string[]{
+  public getFields(obj: DataRecord): string[]{
     return Object.keys(obj).filter((field) => obj[field] !== null && obj[field] !== undefined);  
   }
 

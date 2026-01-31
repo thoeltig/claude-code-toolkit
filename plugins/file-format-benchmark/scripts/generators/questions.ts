@@ -482,7 +482,7 @@ export class QuestionnaireGenerator {
     return questions;
   }
   
-  private getValues<T>(record: T, fields: string[]): string[]{
+  private getValues(record: DataRecord, fields: string[]): string[]{
     const values:string[] = [];
     fields.forEach(field => {
       const value = record[field];
