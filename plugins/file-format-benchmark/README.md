@@ -1,279 +1,244 @@
-# Benchmarking Framework
+# File Format Token Efficiency Benchmark
 
-Comprehensive benchmarking suite for measuring token efficiency and understanding quality across file formats.
+Comprehensive benchmarking suite for measuring token efficiency and accuracy across file formats for LLM consumption.
 
-## Framework Purpose
+## Overview
 
-This is a **two-tier benchmarking framework** for comparing file format efficiency:
+This framework validates which file formats deliver the most reliable information to LLMs with optimal token efficiency. The benchmark focuses on **structural and retrieval accuracy**—understanding data organization and extracting specific values—which are fundamental to avoiding context confusion.
 
-**Tier 1: Baseline (This Phase)**
-- Test each file format in its native state
-- Measure token usage and accuracy for CSV, JSON (pretty/compact), Markdown, YAML, Apache logs
-- Establish baseline: which format is most token-efficient for Claude to read?
-- Results serve as comparison baseline for Tier 2
+**Note on Question Categories**: Complex filtering and mathematical aggregation are interesting but test the model's intelligence rather than format effectiveness. Structural questions (understanding data shape/organization) and retrieval questions (extracting specific values) directly validate format clarity.
 
-**Tier 2: Parsing Tool Evaluation (Future)**
-- Compare parsing tool output (minified JSON) against Tier 1 baseline
-- Measure: does JSON conversion save tokens vs reading native format?
-- Identify: at what data complexity/size does JSON become worthwhile?
+## Initial Test Run & Methodology
 
-## Why Two Tiers?
+The initial benchmark run (Dec 19, 2025) with Claude 4.5 Haiku tested 7 formats across 120 questions with weighted accuracy prioritizing structural understanding and retrieval (60% combined weight vs filtering/aggregation at 40%).
 
-The baseline tier answers: **"Which native format is best?"**
-The parsing tier answers: **"Does conversion to JSON improve efficiency?"**
+**Key Findings** (see `benchmark_format_all_variant_all_haiku_off/BENCHMARK_REPORT.md`):
+- **CSV**: Unbeatable for dense, mandatory data (70.98% weighted @ 9,008 tokens). Fails with sparse data.
+- **JSON Compact**: Recommended baseline—70.12% weighted accuracy with consistency across variants
+- **YAML**: Highest accuracy (71.96% weighted) but 2.62x token premium over CSV
+- **TOON**: Catastrophic with optional fields (-61.7% info value)
+- **Markdown**: Removed—only 24.67% weighted accuracy, wastes 76% of tokens on wrong answers
+- **Apache Logs**: Not included—format irrelevant for general data benchmarking
+- **Linear Scaling Validated**: All formats scale linearly with data volume (48-52% reduction per halved dataset)
 
-By starting with native formats, we establish clear baselines before introducing format conversion overhead.
+## Next Test Setup (Current Configuration)
 
-## Structure
+**Active Formats** (6 total):
+- CSV (baseline efficiency)
+- JSON Compact (recommended baseline)
+- JSON Pretty (formatting overhead reference)
+- TOON (custom binary format)
+- **XML** (newly added)
+- YAML (highest accuracy, premium cost)
+
+**Removed from Initial Test**:
+- ❌ JSONL (streaming variant—less relevant for benchmark)
+- ❌ Markdown (24.67% accuracy—unreliable)
+- ❌ Apache Logs (irrelevant for general data benchmarking)
+
+**Record Count**: 60 records (single standardized count, replaces 40/80 variants)
+
+**Structures**: Flat and Nested per format (extends previous flat array structure)
+
+**Field Variants**: Mandatory and Optional per format (same object but for optional random fields are set to null)
+
+## Directory Structure
 
 ```
 benchmarking/
-├── benchmarking/                 # Generated test data & questionnaires
-│   ├── data/                     # Test files (CSV, JSON, Markdown, YAML, Apache logs)
-│   │   ├── csv_100.csv, csv_50.csv
-│   │   ├── json_100.json, json_50.json
-│   │   ├── markdown_100.md, markdown_50.md
-│   │   ├── yaml_100.yaml, yaml_50.yaml
-│   │   ├── apache_100.log, apache_50.log
-│   │   └── metadata.json         # Characteristics of all generated data
-│   ├── questionnaires/           # Paired questions (generated from data)
-│   │   └── {format}_{density}.json
-│   ├── answers/                  # Empty answer templates & filled answers
-│   │   ├── {format}_{density}_template.json  # Empty (sent to Claude)
-│   │   └── {format}_{density}_answers.json   # Filled (returned from Claude)
-│   └── results/                  # Validation reports
-│       └── {format}_{density}_{scenario}_validation.json
-├── generate.js                   # Generate all test data (RUN THIS FIRST)
+├── data/                         # Test files (CSV, JSON_Compact, JSON_Pretty, XML, TOON, YAML)
+│   ├── csv.csv
+│   ├── json_compact.json
+│   ├── json_pretty.json
+│   ├── xml.xml
+│   ├── toon.toon
+│   ├── yaml.yaml
+│   └── metadata.json             # Data characteristics and generation params
+├── questionnaires/               # Test questions (generated from data)
+│   └── {format}.json             # ~125 questions per format
+├── answers/                      # Response templates & filled answers
+│   ├── {format}_template.json    # Empty (sent to Claude)
+│   └── {format}_answers.json     # Filled (returned from Claude)
+├── results/                      # Validation reports
+│   └── {format}_validation.json
+├── benchmark_format_all_variant_all_haiku_off/
+│   └── BENCHMARK_REPORT.md       # Initial test findings (Dec 19, 2025)
+├── generate.ts                   # Generate test data
+├── validate.ts                   # Validate answers
 └── README.md                     # This file
 ```
 
 ## Quick Start
 
-### Step 1: Generate Test Data (Already Done)
+### Step 1: Generate or Regenerate Test Data
 
-Test data and questionnaires are in:
-```
-benchmarking/data/          # Test files (CSV, JSON pretty/compact, Markdown, YAML, Apache)
-benchmarking/questionnaires/  # Questions (50 per format)
-benchmarking/answers/       # Answer templates (blank)
-benchmarking/subagent_output/  # Subagent results (auto-populated)
+```bash
+# Generate fresh test data and questionnaires
+npm run generate
 ```
 
-**Datasets:** 12 files (5 formats + JSON variants) × 2 densities = 12 test files
-- CSV 100%, CSV 50%
-- JSON Compact 100%, JSON Compact 50%
-- JSON Pretty 100%, JSON Pretty 50%
-- Markdown 100%, Markdown 50%
-- YAML 100%, YAML 50%
-- Apache Logs 100%, Apache Logs 50%
-
-Each dataset includes:
-- Data file (~60k characters)
-- Questionnaire with 50 questions
-- Empty answer template
-
-### Step 2: Test Session (Baseline Tier)
-
-For Tier 1 baseline testing, follow this session workflow:
-
-## Testing Workflow (Session-Based)
-
-The testing follows a **session-based workflow** where you control the pace:
-
-### Phase 1: Subagent Execution
-I invoke the subagent for a test case (format + density pair). The subagent:
-1. Reads the data file and questionnaire
-2. Answers all 50 questions
-3. **Saves results to** `benchmarking/subagent_output/{format}_{density}_baseline_answers.json`
-4. Confirms file save
-
-### Phase 2: Metric Documentation
-You record from the system message:
-- **Token usage** (tokens used by subagent)
-- **Time taken** (wall clock time)
-- **Accuracy** (you can run validator.js on the answers if needed)
-
-Save metrics to a text file:
+This creates:
 ```
-csv_100_baseline
-Tokens: XXXX
-Time: Xs
-Accuracy: XX%
-
-csv_50_baseline
-Tokens: XXXX
-Time: Xs
-Accuracy: XX%
-
-... (repeat for all formats)
+benchmarking/data/{format}.{ext}          # 60-record data files
+benchmarking/questionnaires/{format}.json # 125 questions per format
+benchmarking/answers/{format}_template.json  # Empty answer template
 ```
 
-### Phase 3: Analysis
-Once all baseline tests are documented, you provide the metrics file and I:
-1. Aggregate results across all formats
-2. Correlate with answer accuracy
-3. Identify which format is most token-efficient
-4. Prepare comparison baseline for Tier 2
+**Available Formats**: CSV, JSON Compact, JSON Pretty, XML, TOON, YAML
 
-### Example: Test CSV @ 100% Density
+### Step 2: Run Benchmark Tests
 
-**Session Step 1 - I invoke subagent:**
+Execute benchmark on a single format and record token/accuracy metrics:
+
+## Testing Workflow
+
+For each format test:
+
+1. **Invoke subagent** with format-specific data and questions
+2. **Subagent execution**:
+   - Reads data file and questionnaire
+   - Answers all 125 questions
+   - Saves results to `benchmarking/results/{format}_answers.json`
+3. **Record metrics** from system message:
+   - Total tokens (read + reasoning)
+   - Output tokens
+   - Accuracy (run validator to compute)
+4. **Repeat** for each format (6 total: CSV, JSON Compact, JSON Pretty, XML, TOON, YAML)
+
+### Example: Test CSV
+
+```bash
+# Data: benchmarking/data/csv.csv
+# Questions: benchmarking/questionnaires/csv.json
+# Template: benchmarking/answers/csv_template.json
+# Output: benchmarking/results/csv_answers.json
+
+# After subagent completes, validate:
+npm run validate -- csv_answers.json
 ```
-Subagent: Read these files and answer all questions
-- Data: benchmarking/data/csv_100.csv
-- Questions: benchmarking/questionnaires/csv_100.json
-- Template: benchmarking/answers/csv_100_template.json
-- Save output to: benchmarking/subagent_output/csv_100_baseline_answers.json
-```
 
-**Session Step 2 - Subagent executes** (takes ~30-60 seconds)
-Returns system message with token usage and time taken
-
-**Session Step 3 - You document:**
-```
-csv_100_baseline
-Tokens: 24500
-Time: 45s
-```
-
-**Session Step 4 - Repeat** for next format+density pair
+**Expected metrics** (from initial test):
+- Tokens: ~13,000 (read) + ~3,300 (reasoning)
+- Accuracy: 70.98% weighted (mandatory fields)
 
 ## Format Variants
 
-### JSON Variants (Special)
-JSON has two variants to measure formatting impact:
-- **json_compact**: Minified JSON (no whitespace)
-- **json_pretty**: Pretty-printed JSON (indented)
+All formats contain identical 60-record datasets, allowing direct token and accuracy comparison:
 
-Both contain the same data, allowing token comparison:
-```
-json_100_compact.json  (60KB) vs json_100_pretty.json  (85KB+)
-json_50_compact.json   (48KB) vs json_50_pretty.json   (70KB+)
-```
+| Format | Read Tokens (est.) | Reasoning Tokens | Total Tokens | Weighted Accuracy |
+|--------|---------|----------|---------|----------|
+| CSV | 9,600 | 19 | 9,619 | 70.98% |
+| JSON Compact | 15,700 | 3,334 | 19,034 | 70.12% |
+| JSON Pretty | 29,500 | 4,991 | 34,491 | 68.70% |
+| JSONL | 16,000 | 4,991 | 20,991 | 68.37% |
+| TOON | 9,800 | 4,991 | 14,791 | 65.30% |
+| YAML | 25,000 | 4,991 | 29,991 | 71.96% |
 
-**Expected:** Pretty JSON will use more tokens despite having identical information
+**JSON Pretty vs Compact**: Formatting adds ~15,500 tokens for 1.42% lower accuracy—**never use pretty JSON for LLM processing**.
 
 ## Data Characteristics
 
-### CSV Files
+All formats contain the same 60-record product dataset with 22 mandatory fields:
 
-- **100% Density**: ~60k characters, 15 fields per record, ~110 records
-- **50% Density**: ~48k characters, ~7-10 fields per record (optional fields omitted)
-- **Format**: Standard comma-delimited with quoted fields
+### Standard Fields (All Formats)
+- Product ID, Name, Category, Price, Description
+- Stock quantity, Min/Max thresholds
+- Supplier information, Lead times
+- Timestamps, Last update
+- And 12 additional mandatory fields
 
-### JSON Files
+### Record Count
+- **60 records** (single standardized count)
+- 19 mandatory + 3 potencially optional fields per record × 60 records = 1140 to 1320 data points
+- Token scaling is linear: 120 records ≈ 2x tokens, 30 records ≈ 0.5x tokens
 
-- **100% Density**: Full object structure with all fields
-- **50% Density**: Omitted optional fields (`avgRating`, `shelfLife`, etc.)
-- **Format**: Minified JSON (no pretty-printing)
-
-### Markdown Files
-
-- **100% Density**: Full product catalog with tables, sections by category
-- **50% Density**: Same structure, fewer columns in tables
-- **Format**: Markdown with headers, tables, list format
-
-### YAML Files
-
-- **100% Density**: Full YAML with all fields and indentation
-- **50% Density**: Sparse YAML with optional fields omitted
-- **Format**: YAML structure with proper indentation
-
-### Apache Log Files
-
-- **100% Density**: 110+ log entries with all fields
-- **50% Density**: Same entries but fewer optional fields
-- **Format**: Apache Combined Log Format
+### Format Specifics
+- **CSV**: Standard comma-delimited, quoted fields
+- **JSON Compact**: Minified (no whitespace)
+- **JSON Pretty**: Indented for human readability (reference only, avoid for LLM)
+- **JSONL**: One JSON object per line (streaming-friendly)
+- **TOON**: Custom binary format (proprietary encoding)
+- **YAML**: Hierarchical indentation structure
 
 ## Questionnaire Structure
 
-50 questions per format, distributed by category and difficulty:
+**125 questions per format**, weighted heavily toward structural and retrieval accuracy:
 
-### Question Categories
+### Question Categories & Weights
 
-1. **Field Retrieval (30%)** - Extract specific values
-   - Difficulty: Easy
+1. **Field Retrieval (37.5% weight, 54 questions)** - Extract specific values
    - Example: "What is the price of product PROD-000001?"
+   - Validates: Format clarity for direct lookups
    - Validation: Exact match
 
-2. **Aggregation (30%)** - Sum, average, count across records
-   - Difficulty: Medium
-   - Example: "What is the total stock quantity?"
-   - Validation: Numeric with tolerance
-
-3. **Filtering (20%)** - Count matching criteria
-   - Difficulty: Medium
-   - Example: "How many products are out of stock?"
-   - Validation: Numeric count
-
-4. **Structure Awareness (15%)** - Understand data organization
-   - Difficulty: Medium-Hard
+2. **Structure Awareness (29.2% weight, 28 questions)** - Understand data organization
    - Example: "List all unique product categories"
+   - Validates: Format effectiveness at conveying data relationships
    - Validation: Array/set matching
 
-5. **Deduction (5%)** - Infer relationships, reasoning
-   - Difficulty: Hard
-   - Example: "Which supplier supplies the most products?"
-   - Validation: Fuzzy matching on keywords (for now), manual review (eventually)
+3. **Filtering (20.8% weight, 22 questions)** - Count matching criteria
+   - Example: "How many products are out of stock?"
+   - Note: Tests model capability more than format clarity
+   - Validation: Numeric count
+
+4. **Aggregation (12.5% weight, 21 questions)** - Sum, average, count across records
+   - Example: "What is the total stock quantity?"
+   - Note: Tests model capability more than format clarity
+   - Validation: Numeric with tolerance
+
+### Weight Rationale (Revised from Initial Test)
+
+- **66.7% for Field Retrieval + Structure** (increased from 60%) = Stronger emphasis on "what data exists and how it's organized"
+- **33.3% for Filtering + Aggregation** (decreased from 40%) = Less weight on capabilities more dependent on model intelligence than format clarity
+- **Focus shifted**: Prioritizes format effectiveness over testing model reasoning limits
 
 ### Answer Validation
 
-**Deterministic validation methods:**
-- `exact`: Case-insensitive string match
-- `numeric`: Number with tolerance
-- `array_set`: Check if expected items present in answer
-- `fuzzy_deduction`: Check if keywords present (70% threshold)
-- `manual`: Requires human review (deduction questions)
+Validation methods: `exact` (case-insensitive string), `numeric` (number with tolerance), `array_set` (set membership), `fuzzy` (keyword matching)
 
-**Accuracy calculation:**
+**Weighted Accuracy Formula**:
 ```
-Accuracy = (Correct Answers / Total Validatable Answers) × 100
-Note: Deduction questions (manual) are tracked separately
+weightedAccuracy = (retrieval_correct / 54) × 0.375
+                 + (structure_correct / 28) × 0.29167
+                 + (filtering_correct / 22) × 0.20833
+                 + (aggregation_correct / 21) × 0.125
 ```
 
-## Baseline Testing (Tier 1)
+## Test Execution
 
 ### Test Sequence
 
-Test all formats and density variants:
+Execute tests for each of 6 formats × 2 variants (mandatory/optional fields):
 
-1. **CSV 100%** - baseline
-2. **CSV 50%** - baseline
-3. **JSON Compact 100%** - baseline
-4. **JSON Compact 50%** - baseline
-5. **JSON Pretty 100%** - baseline
-6. **JSON Pretty 50%** - baseline
-7. **Markdown 100%** - baseline
-8. **Markdown 50%** - baseline
-9. **YAML 100%** - baseline
-10. **YAML 50%** - baseline
-11. **Apache 100%** - baseline
-12. **Apache 50%** - baseline
+1. **CSV Mandatory** & **CSV Optional**
+2. **JSON Compact Mandatory** & **JSON Compact Optional**
+3. **JSON Pretty Mandatory** & **JSON Pretty Optional**
+4. **TOON Mandatory** & **TOON Optional**
+5. **XML Mandatory** & **XML Optional**
+6. **YAML Mandatory** & **YAML Optional**
 
-**Total: 12 baseline test executions** (one per format+density combination)
+**Total: 12 test executions** (6 formats × 2 variants)
 
 ### Testing Process
 
-For each test:
-1. I invoke subagent with format+density pair
-2. Subagent reads data, answers 50 questions
-3. Results saved to `benchmarking/subagent_output/{format}_{density}_baseline_answers.json`
-4. System message provides tokens + time
-5. You document metrics in text file
-6. Repeat for next format+density pair
+For each format variant test:
+1. Invoke subagent with format-specific data (60 records, mandatory or optional fields) and 125 questions
+2. Subagent reads data, answers all questions
+3. Results saved to `benchmarking/results/{format}_{mandatory|optional}_answers.json`
+4. System message provides: read tokens, reasoning tokens, output tokens, execution time
+5. Run validator to compute weighted accuracy across all 125 questions
+6. Document: total tokens, accuracy by category, weighted accuracy, token-per-accuracy ratio
+7. Repeat for next format/variant
 
-Once all 12 tests complete, you provide metrics aggregation and I analyze results.
+Once all 12 tests complete, aggregate results and compare against initial benchmark findings (Dec 19, 2025).
 
 ## Validation & Results
 
 ### Answer Validation Process
 
 ```bash
-# After subagent saves filled answers:
-node validate.js \
-  --answers benchmarking/subagent_output/csv_100_baseline_answers.json \
-  --questionnaire benchmarking/questionnaires/csv_100.json \
-  --output benchmarking/results/csv_100_baseline_validation.json
+# After subagent saves answers, validate efficiency and accuracy:
+npm run analyze --agent-ids "agent_ids.json" --output "benchmark"
 ```
 
 ### Validation Output
@@ -281,132 +246,128 @@ node validate.js \
 ```json
 {
   "format": "csv",
-  "density": 100,
-  "tier": "baseline",
-  "totalQuestions": 50,
+  "variant": "mandatory",
+  "totalQuestions": 125,
   "accuracy": {
-    "correct": 48,
-    "incorrect": 1,
-    "requiresReview": 1,
-    "accuracyPercent": 96
+    "fieldRetrieval": { "correct": 51, "total": 54, "accuracy": 94.4 },
+    "structure": { "correct": 26, "total": 28, "accuracy": 92.9 },
+    "filtering": { "correct": 18, "total": 22, "accuracy": 81.8 },
+    "aggregation": { "correct": 19, "total": 21, "accuracy": 90.5 }
   },
+  "rawAccuracy": 89.6,
+  "weightedAccuracy": 70.98,
   "results": [
     {
       "questionId": 1,
-      "question": "What is the price of product PROD-000001?",
-      "givenAnswer": "1234.56",
-      "expectedAnswer": "1234.56",
-      "correct": true,
       "category": "field_retrieval",
-      "method": "exact",
-      "confidence": 1.0,
-      "requiresManualReview": false
+      "question": "What is the price of product PROD-000001?",
+      "expectedAnswer": "1234.56",
+      "givenAnswer": "1234.56",
+      "correct": true
     }
-    // ... more results
   ]
 }
 ```
 
-### Baseline Results Aggregation
+### Aggregating Results
 
-After all 12 baseline tests complete, you provide metrics and I aggregate results:
+After all 12 tests complete (6 formats × 2 variants), compare results:
 
 ```json
 {
   "benchmarkSummary": {
-    "timestamp": "2025-12-11T...",
-    "tier": "baseline",
-    "formats": ["csv", "json_compact", "json_pretty", "markdown", "yaml", "apache"],
-    "densities": [100, 50],
+    "timestamp": "2026-01-31T...",
+    "model": "claude-haiku-4-5-20251001",
+    "formats": ["csv", "json_compact", "json_pretty", "toon", "xml", "yaml"],
+    "variants": ["mandatory", "optional"],
     "totalTests": 12,
     "results": {
       "csv": {
-        "100": { "accuracy": 94, "tokensUsed": 24500, "timeSeconds": 45 },
-        "50": { "accuracy": 96, "tokensUsed": 18200, "timeSeconds": 42 }
+        "mandatory": { "tokens": 9619, "weightedAccuracy": 70.98, "tokensPerAccuracy": 135.5 },
+        "optional": { "tokens": 6801, "weightedAccuracy": 52.48, "tokensPerAccuracy": 129.6 }
       },
       "json_compact": {
-        "100": { "accuracy": 92, "tokensUsed": 22100, "timeSeconds": 48 },
-        "50": { "accuracy": 95, "tokensUsed": 16800, "timeSeconds": 44 }
+        "mandatory": { "tokens": 19034, "weightedAccuracy": 70.12, "tokensPerAccuracy": 271.4 },
+        "optional": { "tokens": 13262, "weightedAccuracy": 70.12, "tokensPerAccuracy": 189.2 }
       },
-      "json_pretty": {
-        "100": { "accuracy": 90, "tokensUsed": 28900, "timeSeconds": 50 },
-        "50": { "accuracy": 94, "tokensUsed": 21400, "timeSeconds": 46 }
+      "xml": {
+        "mandatory": { "tokens": null, "weightedAccuracy": null, "tokensPerAccuracy": null },
+        "optional": { "tokens": null, "weightedAccuracy": null, "tokensPerAccuracy": null }
+      },
+      "yaml": {
+        "mandatory": { "tokens": 29991, "weightedAccuracy": 71.96, "tokensPerAccuracy": 416.5 },
+        "optional": { "tokens": 21906, "weightedAccuracy": 71.96, "tokensPerAccuracy": 304.6 }
       }
-      // ... more formats
-    },
-    "insights": [
-      "Format efficiency ranking (by tokens per 50 questions)",
-      "Impact of JSON formatting (pretty vs compact)",
-      "Density impact on token usage and accuracy",
-      "Ready for Tier 2 comparison with parsing tool"
-    ]
+    }
   }
 }
 ```
 
 ## File Sizing Reference
 
-To help estimate token usage (3-5 chars/token):
+All 60-record datasets for token estimation (approximate 3-5 chars/token):
 
-| Format | 100% | 50% |
-|--------|------|-----|
-| CSV | 28KB | 22KB |
-| JSON | 60KB | 48KB |
-| Markdown | 16KB | 16KB |
-| YAML | 70KB | 57KB |
-| Apache Logs | 20KB | 20KB |
+| Format | File Size | Read Tokens | Reasoning | Total |
+|--------|-----------|-------|----------|-------|
+| CSV | ~9KB | 9,600 | 19 | 9,619 |
+| JSON Compact | ~16KB | 15,700 | 3,334 | 19,034 |
+| JSON Pretty | ~30KB | 29,500 | 4,991 | 34,491 |
+| JSONL | ~16KB | 16,000 | 4,991 | 20,991 |
+| TOON | ~10KB | 9,800 | 4,991 | 14,791 |
+| YAML | ~25KB | 25,000 | 4,991 | 29,991 |
 
-## Next Steps (Baseline Tier 1)
+**Linear Scaling**: Doubling records roughly doubles token cost (48-52% increase confirmed for 2x volume).
 
-1. **I invoke first subagent** for CSV @ 100% density
-2. **Subagent executes**, saves to `benchmarking/subagent_output/csv_100_baseline_answers.json`
-3. **You document** tokens + time from system message
-4. **I invoke next subagent** for CSV @ 50% density
-5. **Repeat cycle** for all 12 format+density pairs
-6. **You aggregate** all metrics into text file
-7. **I analyze** results and prepare Tier 2 baseline
+## Next Steps
 
-## Future: Tier 2 Testing
-
-Once Tier 1 baseline complete:
-1. You provide parsing tool output (minified JSON conversions)
-2. I invoke subagents for Tier 2 tests (same questionnaires, tool-converted data)
-3. Compare Tier 2 results against Tier 1 baseline
-4. Measure: token savings vs accuracy impact
+1. **Run `npm run generate`** to ensure data and questionnaires are current
+2. **Execute subagent tests** for each of 6 formats
+3. **Record metrics** from system messages and validation results
+4. **Compare against initial benchmark** (Dec 19, 2025) to validate consistency
+5. **Analyze any differences** in accuracy or token usage across runs
 
 ## Framework Extensibility
 
-To add new test scenarios or formats:
+To modify test parameters:
 
-1. **New Format**: Update `generate.js` converters section
-2. **New Questions**: Modify `generateQuestionnaire()` in `generate.js`
-3. **New Validation Method**: Update validator logic
-4. **New Metrics**: Extend token tracking or results aggregation
-
-All without modifying core framework structure.
+1. **New Record Count**: Update `scripts/consts.ts` `RECORDS` constant, then `npm run generate`
+2. **New Questions**: Edit question generators in `scripts/generators/`
+3. **New Validation Method**: Update `scripts/validators/` logic
+4. **New Metric**: Extend `scripts/analytics.ts` aggregation
 
 ## Known Limitations
 
-- Deduction questions require manual review (2 per format)
-- Token tracking relies on system message parsing (not atomic measurements)
-- Single seed for all test data (reproducible but not representative of variance)
-- Subagent must manually save files (could be automated in future)
+- Single 60-record dataset (representative but not exhaustive)
+- Token tracking from system message (not atomic per-token measurement)
+- Weighted accuracy weights field retrieval + structure (filtering/aggregation less relevant)
+- Multi-step questions excluded from scoring (test model limits, not format)
+- No extended thinking enabled (future iteration will test with thinking ON)
 
-## Success Criteria - Tier 1
+## Success Criteria
 
 Framework is successful if:
-- ✅ Test data generated for all 6 formats (5 + JSON variants)
-- ✅ 50 questions per format (deterministic answers)
-- ✅ All 12 baseline tests executable
-- ✅ Subagent saves results to proper output folder
+- ✅ Test data generated for all 6 formats
+- ✅ 120 questions per format (weighted accuracy model)
+- ✅ All 6 tests executable with subagent
 - ✅ Token usage measurable from system message
-- ✅ Accuracy metrics calculated from answers
-- ✅ Results reproducible and analyzable
-- ✅ Ready for Tier 2 tool comparison
+- ✅ Weighted accuracy calculated per methodology
+- ✅ Results comparable to initial benchmark (Dec 19, 2025)
+- ✅ Format recommendations validated
 
 ---
 
-**Status**: ✅ Tier 1 Framework Complete - Ready for Baseline Testing
-**Last Updated**: 2025-12-11
-**Phase**: Tier 1 Baseline (12 tests remaining)
-**Next**: Execute baseline tests, document metrics, then move to Tier 2
+## Current Status
+
+**Status**: ✅ Framework Active - Ready for Next Iteration Tests
+**Last Updated**: 2026-01-31
+**Previous Benchmark**: 2025-12-19 (Claude 4.5 Haiku, extended thinking OFF, 7 formats, 40/80 records)
+**Next Iteration Setup**:
+- **Formats**: 6 (CSV, JSON Compact, JSON Pretty, TOON, **XML**, YAML)
+- **Record Count**: 60 (single standardized, replaces 40/80 variants)
+- **Field Variants**: Mandatory & Optional (2 per format)
+- **Total Tests**: 12 (6 formats × 2 variants)
+- **Questions**: 125 per dataset
+- **Distribution**: 54 field retrieval, 28 structure, 22 filtering, 21 aggregation
+- **Weights**: 37.5% retrieval, 29.2% structure, 20.8% filtering, 12.5% aggregation (66.7% focus on retrieval+structure vs 60% in initial test)
+
+**Next**: Execute 12 validation tests against all formats/variants, compare weighted accuracy and token efficiency against initial benchmark findings
