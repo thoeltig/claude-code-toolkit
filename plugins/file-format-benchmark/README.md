@@ -17,18 +17,19 @@ The initial benchmark run (Dec 19, 2025) with Claude 4.5 Haiku tested 7 formats 
 - **JSON Compact**: Recommended baseline. 1.46x tokens compared to CSV but 70.12% weighted accuracy with consistency across all variants.
 - **JSON Pretty**: Not recommended. 1.88x tokens compared to JSON Compact with similiar accuracy. Formatting only adds tokens but does not increase accuracy.
 - **YAML**: Highest accuracy (71.96% weighted) but 2.62x token compared to CSV.
-- **TOON**: Close to CSV for dense, mandatory data. Accuracy stays consitent with sparse data but tokens increased by 2.17x.
-- **Markdown**: Requieres x0.5 of CSV tokens but has a catastrophical weighted accuracy of 24.67%. ~75% of tokens wasted on wrong answers.
+- **TOON**: Close to CSV for dense, mandatory data. Accuracy stays consistent with sparse data but tokens increased by 2.17x.
+- **Markdown**: Requires x0.5 of CSV tokens but has a catastrophic weighted accuracy of 24.67%. ~75% of tokens wasted on wrong answers.
 - **Linear Scaling Validated**: All formats and variants scale linearly with data volume (48-52% reduction from 80 to 40 records).
 
 ## Next Test Setup (Current Configuration)
 
-**Active Formats** (6 total):
+**Active Formats** (7 total):
 - CSV (baseline efficiency)
 - JSON Compact (recommended baseline)
 - JSON Pretty (formatting overhead reference)
 - TOON (custom binary format)
-- XML (newly added)
+- XML Compact (minified, lowest XML token usage)
+- XML Pretty (indented, readability reference)
 - YAML (highest accuracy, premium cost)
 
 **Removed after Initial Test**:
@@ -42,88 +43,182 @@ The initial benchmark run (Dec 19, 2025) with Claude 4.5 Haiku tested 7 formats 
 
 **Field Variants**: Mandatory and Optional per format (same object but for optional random fields are set to null)
 
-## Directory Structure
+## Benchmark Workflow Overview
+
+A complete benchmark run consists of 6 steps:
+
+1. **Prepare Output Folder** - Create benchmark directory with specified parameters
+2. **Generate Test Data** - Create data files, questions, and templates for all formats/variants
+3. **Execute Tests** - Run format-sequential tests with format-specific subagents
+4. **Collect Agent IDs** - Track all readonly and full test agent IDs
+5. **Run Analytics** - Validate results and extract metrics from agent transcripts
+6. **Display Results** - Show rankings and key insights
+
+## Output Directory Structure
+
+When you run a benchmark, it generates a folder like `benchmark_format_all_flat_optional_haiku_on/` containing:
 
 ```
-benchmarking/
-├── data/                         # Test files (CSV, JSON_Compact, JSON_Pretty, XML, TOON, YAML)
-│   ├── csv.csv
-│   ├── json_compact.json
-│   ├── json_pretty.json
-│   ├── xml.xml
-│   ├── toon.toon
-│   ├── yaml.yaml
-│   └── metadata.json             # Data characteristics and generation params
-├── questionnaires/               # Test questions (generated from data)
-│   └── {format}.json             # ~125 questions per format
-├── answers/                      # Response templates & filled answers
-│   ├── {format}_template.json    # Empty (sent to Claude)
-│   └── {format}_answers.json     # Filled (returned from Claude)
-├── results/                      # Validation reports
-│   └── {format}_validation.json
-├── benchmark_format_all_variant_all_haiku_off/
-│   └── BENCHMARK_REPORT.md       # Initial test findings (Dec 19, 2025)
-├── generate.ts                   # Generate test data
-├── validate.ts                   # Validate answers
-└── README.md                     # This file
+{BENCHMARK_OUTPUT_DIR}/
+├── data/
+│   └── {format}/
+│       ├── {format}_with_optional_60_flat_records.{ext}
+│       ├── {format}_with_optional_60_nested_records.{ext}    # (not for CSV)
+│       ├── {format}_with_mandatory_60_flat_records.{ext}
+│       └── {format}_with_mandatory_60_nested_records.{ext}   # (not for CSV)
+├── questions/
+│   ├── questions_with_optional_60_records.json
+│   └── questions_with_mandatory_60_records.json
+├── answers_template/
+│   ├── answers_with_optional_60_records_template.json
+│   └── answers_with_mandatory_60_records_template.json
+├── answers_validation/
+│   ├── questions_and_answers_with_optional_60_records.json
+│   └── questions_and_answers_with_mandatory_60_records.json
+├── subagent_outputs/
+│   └── {format}/
+│       ├── answers_for_flat_optional_60_records_1.json    # Test run 1
+│       ├── answers_for_flat_optional_60_records_2.json    # Test run 2
+│       ├── answers_for_flat_optional_60_records_3.json    # Test run 3
+│       ├── answers_for_nested_optional_60_records_1.json
+│       ├── answers_for_nested_optional_60_records_2.json
+│       ├── answers_for_nested_optional_60_records_3.json
+│       ├── answers_for_flat_mandatory_60_records_1.json
+│       └── ... (more combinations)
+├── results/
+│   └── {format}_{structure}_{variant}_60_validation.json
+├── metadata.json                 # Dataset characteristics and generation parameters
+├── agent_ids.json               # All readonly and full test agent IDs (created during Step 4)
+├── metrics.json                 # Combined metrics from agent transcripts (auto-generated by analytics)
+└── analytics_results.json       # Final analysis with rankings and insights (Step 5 output)
 ```
+
+**Key Files:**
+- `agent_ids.json`: Created during test execution, contains all readonly and full test agent IDs for metrics extraction
+- `metrics.json`: Auto-generated by analytics.js, combines read and reasoning metrics extracted from agent transcripts
+- `analytics_results.json`: Final analysis output with efficiency rankings and key insights
 
 ## Quick Start
 
-A benchmark is executed over flat or nested structure to have a clear per structure analytics result which compares mandatory and optional variants for all formats. Running both structures at the same time is possible but analytics script is designed to compare the all formats per variants which currently does not include a grouping by structure.
-
-1. **Run `npm run generate`** to ensure data and questionnaires are current
-2. **Choose a structure** to test (flat or nested)
-3. **Execute subagent tests** for each of 6 formats and variants
-4. **Run `npm run analyze`** from generate results from system messages and validation results
-5. **Analyze result** for accuracy or token usage
-
-### Step 1: Generate or Regenerate Test Data
+Use the `/benchmark` slash command to orchestrate a complete benchmarking run:
 
 ```bash
-# Generate fresh test data and questionnaires
-npm run generate
+/benchmark [--formats csv,json_compact,json_pretty,toon,xml,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
 ```
 
-This creates:
+**Default behavior** (if no arguments provided):
+- Tests all 7 formats (CSV, JSON Compact, JSON Pretty, TOON, XML Pretty, XML Compact, YAML)
+- Tests both mandatory and optional variants
+- Tests both flat and nested structures (flat only for CSV)
+- Uses Haiku model
+- Enables extended thinking
+- Auto-generates folder name like `benchmark_format_all_structure_all_variant_all_haiku_on/`
+
+**Important**: The analytics script groups results by format and variant only, not by structure. To get accurate per-structure comparisons, run separate benchmarks per structure:
+```bash
+/benchmark --structure flat --output ./benchmark_flat
+/benchmark --structure nested --output ./benchmark_nested
 ```
-benchmarking/data/{format}.{ext}          # 60-record data files
-benchmarking/questionnaires/{format}.json # 125 questions per format
-benchmarking/answers/{format}_template.json  # Empty answer template
-```
 
-**Available Formats**: CSV, JSON Compact, JSON Pretty, XML, TOON, YAML
+This ensures analytics output reflects the specific structure being tested.
 
-### Step 2: Run Benchmark Tests
+### Step 1: Prepare Output Folder
 
-Execute benchmark on a single format and record token/accuracy metrics:
+The benchmark command creates a working directory to store all generated data and test results. If `--output` is specified, that path is used; otherwise a folder is auto-generated based on parameters.
 
-### Step 3: Validation
+### Step 2: Generate Test Data
 
 ```bash
-# After subagent saves answers, validate efficiency and accuracy:
-npm run analyze --agent-ids "agent_ids.json" --output "benchmark"
+cd scripts && npm run build && node dist/orchestrator.js --output {OUTPUT_DIR}
 ```
 
-This creates:
+This generates:
+- 60-record data files in all formats (CSV, JSON Compact, JSON Pretty, TOON, XML, YAML)
+- Flat and/or nested structure variants (flat only for CSV)
+- Mandatory and optional field variants
+- 125 test questions per variant
+- Answer templates for each variant
+- `metadata.json` with dataset characteristics
+
+### Step 3: Load Test Configuration
+
+Read `metadata.json` to determine all test cases. For each format/structure/variant combination:
+- Execute 1 read-only test (to warm the cache)
+- Execute 3 full tests in parallel (to measure accuracy and token usage)
+
+### Step 4: Execute Format-Sequential Tests
+
+Process formats one at a time to ensure cache locality and stability:
+- **Per format**: Execute all variants and structures
+- **Per combination**: Launch 1 read test → wait → launch 3 full tests in parallel
+- **Track agent IDs** in `agent_ids.json` for later metrics extraction
+
+The benchmark-full-test subagent:
+- Reads data file, questionnaire, and answer template (once each)
+- Answers all 125 questions based only on the data
+- Writes results to `subagent_outputs/{format}/` directory
+- System message includes token and reasoning metrics
+
+### Step 5: Run Analytics
+
+```bash
+cd scripts && node dist/analytics.js --agent-ids {OUTPUT_DIR}/agent_ids.json --output {OUTPUT_DIR}
 ```
-benchmarking/analytics_results.json # Ranked summary and also accuracy, token usage and efficiency breakdown per testcase
-```
+
+Analytics automatically:
+1. Validates all test case outputs using metadata and answers
+2. Reads `agent_ids.json` to get all agent IDs
+3. Extracts read metrics from readonly test transcripts
+4. Extracts reasoning metrics from full test transcripts
+5. Combines metrics into `metrics.json`
+6. Calculates efficiency rankings
+7. Outputs `analytics_results.json` with insights
+
+### Step 6: Review Results
+
+Results are displayed and saved to `analytics_results.json`:
+- Token efficiency rankings (chars/token, tokens/value, tokens/object)
+- Accuracy rankings (standard and weighted)
+- Efficiency score combining accuracy and token usage
+- Format comparison insights
 
 ## Testing Workflow
 
-For each format test:
+The benchmark executes a format-sequential strategy to maintain cache locality and stability:
 
-1. **Invoke subagent** with format-specific data and questions
-2. **Subagent execution**:
-   - Reads data file and questionnaire
-   - Answers all 125 questions
-   - Saves results to `benchmarking/results/{format}_answers.json`
-3. **Record metrics** from system message:
-   - Total tokens (read + reasoning)
+### For Each Format (one at a time)
+
+**Read-Only Test (once per structure/variant combination)**:
+1. Launch `benchmark-read-only` subagent
+2. Read data file completely (caches the data)
+3. Collect returned agent ID
+4. Wait for completion
+
+**Full Tests (3 parallel tests after read completes)**:
+1. Launch 3x `benchmark-full-test` subagents in parallel
+2. Each reads:
+   - Data file (benefits from warm cache)
+   - Questionnaire with 125 questions
+   - Answer template
+3. Each writes results to `subagent_outputs/{format}/answers_for_{structure}_{variant}_60_records_{1,2,3}.json`
+4. System message captures:
+   - Input tokens (data + questions)
+   - Reasoning tokens
    - Output tokens
-   - Accuracy (run validator to compute)
-4. **Repeat** for each format (6 total: CSV, JSON Compact, JSON Pretty, XML, TOON, YAML)
+5. Wait for all 3 to complete
+
+**Validation (automatic during analytics)**:
+1. Compare answers against expected values using validator rules
+2. Calculate accuracy per question category
+3. Generate `results/{format}_{structure}_{variant}_60_validation.json`
+
+### Agent ID Tracking
+
+Each combination generates 4 agent IDs:
+- 1 readonly agent ID (from read test)
+- 3 full test agent IDs (from full tests 1, 2, 3)
+
+All IDs are collected in `agent_ids.json` for metrics extraction in Step 5.
 
 ## Data Characteristics
 
@@ -133,13 +228,23 @@ All formats contain the same 60-record product dataset with 22 fields:
 - **CSV**: A format for storing tabular data where each line is a record and columns are separated by commas.
 - **JSON Pretty**: A format for storing structured data with key-value pairs and arrays. Indented for human readability.
 - **JSON Compact**: Same as JSON Pretty but minified (no whitespace or new lines).
-- **XML**: A format for storing structured data with hierarchical tags that separate information from its presentation. Indented for human readability.
+- **XML Pretty**: A format for storing structured data with hierarchical tags that separate information from its presentation. Indented for human readability.
+- **XML Compact**: Same as XML Pretty but minified (no whitespace or indentation). Approximately 11-19% smaller than XML Pretty depending on structure and field variants.
 - **TOON**: A compact, human-readable encoding of the JSON data model for LLM prompts (see [Token-Oriented Object Notation](https://toonformat.dev/))
-- **YAML**: A format for storing structured data with hierarchical indentation for a human-readability.
+- **YAML**: A format for storing structured data with hierarchical indentation for human readability.
+
+### Formatting Impact: Pretty vs Compact
+
+To measure formatting overhead on token usage and accuracy, the benchmark tests both pretty (indented) and minified (compact) versions:
+
+- **JSON Pretty vs Compact**: Compacting reduces tokens by ~17.6% with equivalent accuracy. Validates whether formatting is redundant for LLM understanding.
+- **XML Pretty vs Compact**: Compacting reduces tokens by ~11-19% (varies by structure/variant). Tests if XML formatting follows similar patterns to JSON.
+
+This comparison helps answer: **Do LLMs need human-readable formatting, or can compact versions deliver equivalent understanding with less token overhead?**
 
 ### Record Count
 - **60 records**
-- 19 mandatory + 3 potencially optional fields per record × 60 records = 1140 to 1320 data points
+- 19 mandatory + 3 potentially optional fields per record × 60 records = 1140 to 1320 data points
 
 ### Standard Fields (All Formats)
 - Product ID, Name, Category, Price, Description
