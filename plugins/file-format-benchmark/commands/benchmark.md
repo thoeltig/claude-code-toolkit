@@ -1,6 +1,6 @@
 ---
-description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), TOON, XML, YAML). Generates test data variants (flat and nested), executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
-argument-hint: [--formats csv,json_compact,json_pretty,toon,xml,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
+description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), TOON, XML (compact/pretty), YAML). Generates test data variants (flat and nested), executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
+argument-hint: [--formats csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
 allowed-tools: Bash
 ---
 
@@ -22,7 +22,7 @@ You are orchestrating a comprehensive benchmarking test suite for measuring file
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
-- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,toon,xml,yaml)
+- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml)
 - `--variant`: Data variant with optional or mandatory values (default: both - optional,mandatory)
 - `--structure`: Data structure (default: flat - flat,nested)
 - `--model`: haiku or sonnet (default: haiku)
@@ -78,7 +78,7 @@ else
   # Format: benchmark_{formats}_{structure}_{variant}_{model}_{thinking}
   # Use shorthand for "all" cases to keep folder names reasonable
 
-  if [ "$FORMATS" = "csv,json_compact,json_pretty,toon,xml,yaml" ]; then
+  if [ "$FORMATS" = "csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml" ]; then
     FORMATS_PART="format_all"
   else
     FORMATS_PART="${FORMATS//,/_}"
@@ -145,7 +145,7 @@ Example test cases:
 
 **Total test cases**: selected_formats × data_structure_variants × selected_content_variants × 3 test runs
 
-If all 6 formats selected: 1 csv × 1 flat × 2 content × 3 + 5 formats × 2 structure × 2 content × 3 = 6 + 60 = 66 test cases
+If all 7 formats selected: 2 variants × 1 flat structure x 1 CSV format + 2 variants x 2 structures x 6 formats = 26 test cases
 
 ## Step 4: Execute Tests - Format-Sequential Approach
 
@@ -219,7 +219,7 @@ For each FORMAT in selected_formats (one format at a time):
   Save all agent_ids_for_format (read + full) to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json
   Move to next format
 
-Total execution: ~6 formats × ~12 tests per = 72+ tasks total (depends on structure variants)
+Total execution: 7 formats (CSV: 8 tasks + 6 others: 16 tasks each) = 104 tasks total with all structures/variants
 GUARANTEE: Each combination tested exactly once, each agent task launched exactly once
 AGENT_IDS_FILE: All IDs saved to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json for extraction
 ```
@@ -467,7 +467,8 @@ This modularity allows running benchmarks for different format subsets at differ
 - json_compact → .json
 - json_pretty → .json
 - toon → .toon
-- xml → .xml
+- xml_compact → .xml
+- xml_pretty → .xml
 - yaml → .yaml
 
 ## Important Notes
@@ -518,7 +519,7 @@ This modularity allows running benchmarks for different format subsets at differ
    - Generates combined `metrics.json` file
    - Runs comprehensive analysis
 
-9. **Default All Formats**: If --formats not specified, test all 6 formats (csv, json_compact, json_pretty, toon, xml, yaml)
+9. **Default All Formats**: If --formats not specified, test all 7 formats (csv, json_compact, json_pretty, toon, xml_pretty, xml_compact, yaml)
 
 10. **Default Haiku**: If --model not specified, use haiku
 

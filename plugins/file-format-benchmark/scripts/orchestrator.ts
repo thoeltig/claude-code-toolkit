@@ -269,7 +269,8 @@ export class BenchmarkingOrchestrator {
       json_pretty: "json",
       json_compact: "json",
       toon: "toon",
-      xml: "xml",
+      xml_pretty: "xml",
+      xml_compact: "xml",
       yaml: "yaml",
     };
     return extensions[format];
