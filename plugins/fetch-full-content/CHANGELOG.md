@@ -5,7 +5,24 @@ All notable changes to the fetch-full-content plugin documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [Unreleased]
+## [1.2.0.0] - 2026-02-01
+
+### Added
+
+- Basic prompt injection filtering for common hidden content vectors
+  - Removes HTML comments
+  - Filters elements with `display: none` or `visibility: hidden`
+  - Removes elements with font-size < 6px (handles px, em, rem, pt units)
+  - Filters elements with opacity < 10%
+  - Removes elements with very low alpha channel colors (< 10%)
+- Warning output when hidden content is filtered (both stdout and markdown file)
+- Enhanced security notice in README clarifying filtering scope
+
+### Security
+
+- Added filtering to reduce prompt injection risk from common hidden content injection vectors
+- Note: Filtering is a basic defense layer, not comprehensive protection
+- Security warning updated to reflect filtering capabilities and limitations
 
 ## [1.1.0.0] - 2026-01-10
 
@@ -54,7 +71,8 @@ _First release._
 - Efficient handling of both static and JS-rendered pages
 - Cached files enable building agent skills from complete documentation
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.1.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.2.0.0...HEAD
+[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.1.0.0...FetchFullContent_v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.1.0...FetchFullContent_v1.1.0.0
-[1.0.1.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.0.1.0
+[1.0.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.0.0...FetchFullContent_v1.0.1.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.0.0.0
