@@ -17,7 +17,7 @@ export interface FileSummary {
   lastUpdated: string;
 }
 
-interface SummariesData {
+export interface SummariesData {
   generated: string;
   directories: {
     [dirPath: string]: DirectorySummary;
@@ -58,7 +58,7 @@ export function getOrCreateSummaries(knowledgeDir: string): SummariesData {
   };
 }
 
-function writeSummaries(knowledgeDir: string, data: SummariesData): void {
+export function writeSummaries(knowledgeDir: string, data: SummariesData): void {
   const summariesPath = path.join(knowledgeDir, 'summaries.json');
   const tempPath = summariesPath + '.tmp';
 
@@ -119,8 +119,4 @@ export function mergeSummaries(location: string, knowledgeDir: string, partialSu
 
   writeSummaries(knowledgeDir, summaries);
   return summaries;
-}
-
-export function getSummaries(knowledgeDir: string): SummariesData {
-  return getOrCreateSummaries(knowledgeDir);
 }
