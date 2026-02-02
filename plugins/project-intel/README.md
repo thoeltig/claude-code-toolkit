@@ -65,7 +65,31 @@ Output:
   Summaries stored in: .knowledge/summaries.json
 ```
 
-### 3. Query Before Exploring
+### 3. Automatic Session Notifications
+
+When you start a new session, project-intel automatically checks your project knowledge and notifies you:
+
+**If knowledge exists:**
+```
+✓ Project knowledge is up to date
+  You can use /query to find relevant information about 121 files in the current project.
+
+  [If files changed]
+  ⚠ 30 files need update since last knowledge scan. Run /scan to update.
+```
+
+**If knowledge doesn't exist:**
+```
+ℹ No project knowledge found
+  Run /scan to generate intelligent summaries of project files for fast searches.
+```
+
+This automatic notification helps you:
+- Know immediately what project knowledge is available
+- Understand when knowledge needs refreshing
+- Get prompted to generate knowledge if missing
+
+### 4. Query Before Exploring
 ```bash
 /query "authentication"
 /query "api endpoints rate limiting"
@@ -98,25 +122,38 @@ Returns ranked list of relevant files/directories **without reading them** - pro
 
 ## Commands
 
-### `/scan --location=<path> --knowledgeDir=<path>`
+### `/scan [--location=<path>] [--knowledgeDir=<path>]`
 Generate or update semantic summaries.
 
 **Parameters:**
 - `--location`: Directory to analyze (default: current directory)
-- `--knowledgeDir`: Output location for summaries (default: .knowledge in current directory)
+- `--knowledgeDir`: Output location for summaries (optional - auto-detected if not provided)
+
+**Auto-detection of knowledge directory:**
+If `--knowledgeDir` is not specified, scan searches for `.knowledge/` in this order:
+1. From provided `--location` (if different from current directory)
+2. From current working directory
+3. Falls back to creating `.knowledge/` in current directory
+
+This means you rarely need to specify `--knowledgeDir` explicitly.
 
 **What it does:**
 1. Walks filesystem (metadata only, 0 tokens)
 2. Batches files for analysis (~8 files per batch)
 3. Launches Haiku agents in parallel waves (max 10 concurrent)
 4. Each agent summarizes files: purpose, role, exports, imports
-5. Merges results into `summaries.json`
+5. Detects changes: new files, modified files, deleted files
+6. Removes deleted files from summaries automatically
+7. Removes empty directories from summaries when all files are deleted
+8. Merges results into `summaries.json`
 
 **Cost:** ~1200 tokens + the files read tokens per batch (similiar to internal explore tool)
 
 **Incremental updates:** Re-running scan merges new summaries with existing ones. Only changed files need re-analysis.
 
-**Git optimization:** If git is available, scan automatically uses git history to identify modified files since last scan, reducing the number files to process to only what is actually needed. Fallback to filesystem walk for non-git projects.
+**Git optimization:** If git is available, scan automatically uses git history to identify modified files since last scan, reducing the number files to process to only what is actually needed. Fallback to filesystem modification date detection for non-git projects.
+
+**Automatic cleanup:** Deleted files are removed from summaries automatically. If an entire directory becomes empty (all files deleted), the directory entry is also removed.
 
 **Example:**
 ```bash
@@ -127,14 +164,17 @@ Generate or update semantic summaries.
 /scan --location=../my-project --knowledgeDir=../my-project/.knowledge
 ```
 
-### `/query "<keywords>" [--scope=<path>] [--max=N] --knowledgeDir=<path>`
+### `/query "<keywords>" [--scope=<path>] [--max=N] [--knowledgeDir=<path>]`
 Search summaries by semantic relevance.
 
 **Parameters:**
 - `<keywords>`: Search terms (e.g., "authentication", "api rate limiting")
 - `--scope`: Limit to specific directory (optional)
 - `--max`: Maximum results (default: 25)
-- `--knowledgeDir`: Location of summaries.json (default: .knowledge in current directory)
+- `--knowledgeDir`: Location of summaries.json (optional - auto-detected if not provided)
+
+**Auto-detection of knowledge directory:**
+Like `/scan`, query also auto-detects `.knowledge/` if not explicitly specified, searching from current directory or git root.
 
 **What it does:**
 1. Semantic scoring across summary, purpose, exports, imports, technologies, role
@@ -182,23 +222,42 @@ Even if those exact keywords don't appear, files covering these concepts score h
 
 ```
 Initial Setup (One-time):
-  /scan
+  SessionStart Hook (automatic)
+    ↓ [No knowledge found?]
+    ↓ Suggest: Run /scan
+
+  /scan [--location=<path>]
     ↓
-  Filesystem walk (0 tokens)
+  Auto-detect .knowledge/ directory
     ↓
+  Filesystem walk + change detection (0 tokens)
+    ↓ (Detects: new files, modified files, deleted files)
+
   Batch creation (~8 files per batch)
     ↓
   Parallel Haiku analysis in waves
     - Wave 1: Batches 1-10 analyze concurrently
     - Wave 2: Batches 11-20 analyze concurrently
-    - Each batch: subagent invocation ~1200 tokens + the files read tokens (similiar to internal explore tool)
+    - Each batch: subagent invocation ~1200 tokens + the files read tokens
+    ↓
+  Automatic cleanup:
+    - Remove deleted files from summaries
+    - Remove empty directories from summaries
     ↓
   Merge to summaries.json
     ✅ Stored persistently
 
 
 Across Sessions:
-  /query "keywords"
+  SessionStart Hook (automatic)
+    ↓ [Knowledge exists?]
+    ↓ Show file count + files needing update
+    ↓ [Changes detected?]
+    ↓ Suggest: Run /scan to update
+
+  /query "keywords" [--location=<path>]
+    ↓
+  Auto-detect .knowledge/ directory (if needed)
     ↓
   Semantic search summaries.json (~1k tokens)
     ↓
@@ -443,8 +502,23 @@ npm run build
 **Why git-based incremental scanning?**
 - Git history provides accurate modification tracking without stat races
 - Only needed files are processed on subsequent scans
-- Transparent fallback for non-git projects (filesystem walk)
+- Transparent fallback for non-git projects (filesystem modification dates)
 - Subdirectory scans benefit from git filtering even when focusing on specific areas
+
+**Why SessionStart hook?**
+- Users need immediate feedback on knowledge status without manual checks
+- Automatic reminders prevent stale knowledge from going unnoticed
+- Low overhead (runs once per session, simple file checks)
+- Helps users understand project state before they start work
+- Reduces time spent figuring out "should I update knowledge?"
+
+**Why automatic deletion cleanup?**
+- Critical for query accuracy: Prevents returning information about files that no longer exist
+- Removed files are automatically deleted from summaries on next scan
+- Empty directories are removed to avoid cluttering query results
+- Users don't accidentally try to read files that have been deleted or moved
+- Keeps knowledge consistent with actual project state
+- Ensures query results only reference valid, existing code
 
 ---
 

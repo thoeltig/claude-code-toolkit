@@ -7,6 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.2.0.0] - 2026-02-02
+
+_Automatic session notifications and intelligent knowledge maintenance with deletion cleanup and dynamic directory discovery._
+
+### Added
+
+- **SessionStart hook**: Automatic notification on session start showing:
+  - Total files available for querying in current project knowledge
+  - Number of files needing update (new + modified since last scan)
+  - Suggestion to run `/scan` if no knowledge exists for the project
+  - Suggestion to run `/scan` to update when changes are detected
+- **Automatic file deletion cleanup**: Files removed from scan location are now automatically deleted from summaries
+- **Automatic directory cleanup**: Empty directories are automatically removed from summaries when all their files are deleted
+- **Filesystem modification date detection**: Filesystem scanning now checks file modification times to detect new, modified, and deleted files (parity with git-based detection)
+- **Dynamic knowledgeDir discovery**: Intelligent fallback chain for finding `.knowledge` directory:
+  1. Use explicitly provided `--knowledgeDir` argument (if specified)
+  2. Search from provided scan/query location (if location differs from cwd)
+  3. Search from current working directory (process location)
+  - Eliminates need to always specify `--knowledgeDir` for same-directory scans
+
+### Improved
+
+- **Knowledge maintenance**: Summaries stay accurate automatically - deleted and empty entries cleaned up
+- **Cross-platform consistency**: Filesystem-based scanning now detects changes identically to git-based scanning (new/modified/deleted)
+- **Ease of use**: No need to remember or repeatedly specify `--knowledgeDir` when scanning from project root
+- **Session workflow**: Users immediately see project knowledge status without manual checks
+
 ## [1.1.0.0] - 2026-01-16
 
 _Performance enhancement: Git-based incremental scanning reduces file processing by 80-95% on subsequent scans._
