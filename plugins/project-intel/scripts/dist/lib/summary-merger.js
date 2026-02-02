@@ -34,8 +34,8 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrCreateSummaries = getOrCreateSummaries;
+exports.writeSummaries = writeSummaries;
 exports.mergeSummaries = mergeSummaries;
-exports.getSummaries = getSummaries;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 function getOrCreateSummaries(knowledgeDir) {
@@ -108,8 +108,5 @@ function mergeSummaries(location, knowledgeDir, partialSummaries) {
     }
     writeSummaries(knowledgeDir, summaries);
     return summaries;
-}
-function getSummaries(knowledgeDir) {
-    return getOrCreateSummaries(knowledgeDir);
 }
 //# sourceMappingURL=summary-merger.js.map

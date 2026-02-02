@@ -80,8 +80,31 @@ async function main() {
         process.exit(1);
     }
 }
+function getKnowledgeDir() {
+    let knowledgeDir = args.knowledgeDir;
+    // Auto-detect if not provided
+    if (!knowledgeDir) {
+        if (args.location) {
+            const detected = (0, project_scanner_1.findKnowledgeDir)(args.location);
+            if (detected) {
+                return detected;
+            }
+        }
+        const detected = (0, project_scanner_1.findKnowledgeDir)(process.cwd());
+        if (detected) {
+            return detected;
+        }
+    }
+    else {
+        return path.resolve(knowledgeDir);
+    }
+    return undefined;
+}
 async function handleScan() {
-    const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
+    let knowledgeDir = getKnowledgeDir();
+    if (!knowledgeDir) {
+        knowledgeDir = path.join(process.cwd(), '.knowledge');
+    }
     const output = path.join(knowledgeDir, 'scan.json');
     const location = args.location || process.cwd();
     if (!fs.existsSync(knowledgeDir)) {
@@ -94,7 +117,11 @@ async function handleScan() {
 }
 async function handleMerge() {
     const location = args.location || process.cwd();
-    const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
+    const knowledgeDir = getKnowledgeDir();
+    if (!knowledgeDir) {
+        console.log(JSON.stringify({ error: `.knowledge/ is missing! You need to run scan first before trying to merge scan results.` }));
+        return;
+    }
     const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
     try {
         // Support glob patterns and single files
@@ -175,7 +202,7 @@ async function handleQuery() {
     try {
         const keywords = topic.toLowerCase().split(/\s+/).filter(k => k.length > 0);
         // Load summaries directly
-        const summaries = (0, summary_merger_1.getSummaries)(knowledgeDir);
+        const summaries = (0, summary_merger_1.getOrCreateSummaries)(knowledgeDir);
         const scoredResults = [];
         // Score files
         Object.entries(summaries.files).forEach(([filePath, summary]) => {
