@@ -66,20 +66,24 @@ async function main() {
 }
 
 function getKnowledgeDir(): string | undefined {  
-  let knowledgeDir = args.knowledgeDir;
+  const knowledgeDir = args.knowledgeDir;
 
   // Auto-detect if not provided
   if (!knowledgeDir) {
-    if(args.location) {
-      const detected = findKnowledgeDir(args.location);
+    const location = args.location;
+    if(location) {
+      const detected = findKnowledgeDir(location);
       if (detected) {
         return detected;
       }
     }
 
-    const detected = findKnowledgeDir(process.cwd());
-    if (detected) {
-      return detected;
+    const processLocation = process.cwd();
+    if(location != processLocation) {
+      const detected = findKnowledgeDir(processLocation);
+      if (detected) {
+        return detected;
+      }
     }
   } else {
     return path.resolve(knowledgeDir);
@@ -92,7 +96,12 @@ async function handleScan() {
   let knowledgeDir = getKnowledgeDir();
 
   if (!knowledgeDir) {
-      knowledgeDir = path.join(process.cwd(), '.knowledge');
+    if(args.calledFromHook){
+      // If no .knowledge/ could be found the scan logic doesn't need to be executed. This improves startup time because there is no benefit in scanning everything in this use case.
+      return;
+    }
+
+    knowledgeDir = path.join(process.cwd(), '.knowledge');
   }
 
   const output = path.join(knowledgeDir, 'scan.json');
@@ -103,10 +112,10 @@ async function handleScan() {
   }
 
   const scanData = await scanProject(location, knowledgeDir);
-  fs.writeFileSync(output, JSON.stringify(scanData));
+  const outputJson = JSON.stringify(scanData);
+  fs.writeFileSync(output, outputJson);
 
-  console.log(JSON.stringify(scanData));
-
+  console.log(outputJson);
   process.exit(0);
 }
 
