@@ -1,6 +1,6 @@
 ---
 description: Search project knowledge by keywords. Run proactively when user asks about project structure, context, purpose, technologies, directories, files or similar information topics. Fast and cheap way to find ranked relevant information for files/directories without reading them or expensive exploration. Use this first to get a quick overview before exploring specific code. Skip if user provides explicit file paths or exact names to find.
-argument-hint: <keywords> [--max=N] [--scope=<path>][--knowledgeDir=<knowledgeDir>] [--format=hierarchy|json] 
+argument-hint: <keywords> [--max=N] [--scope=<path>][--knowledgeDir=<knowledgeDir>] [--format=grouped|flat] 
 allowed-tools: Bash(node:*)
 ---
 
@@ -13,7 +13,9 @@ Search project summaries by keywords with confidence-based scoring and result ra
 - `--max`: Maximum results to return (default: 25)
 - `--scope`: Limit search to specific directory/file path (optional)
 - `--knowledgeDir`: Project knowledge directory (default: .knowledge in current directory)
-- `--format`: Use 'json' for flat output and 'hierarchy' for grouped by directory output (default: hierarchy)
+- `--format`: Result organization (default: grouped)
+  - `grouped`: Results organized by directory with folder context and technologies. Best for understanding subsystems.
+  - `flat`: Single list sorted by relevance. Best for broad searches across unrelated areas.
 
 **Usage Examples:**
 - `/query authentication` - Search all summaries

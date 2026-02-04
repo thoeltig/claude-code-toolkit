@@ -12,11 +12,17 @@ interface HierarchicalGrouping {
   summary?: string;
   purpose?: string;
   technologies?: string[];
-  files: FileSummary[]
+  files: GroupedScoredFileSummary[]
 }
 
 interface ScoredFileSummary extends FileSummary {
-  filePath: string; 
+  path: string; 
+  fileScore: number;
+}
+
+interface GroupedScoredFileSummary extends FileSummary {
+  fileName: string; 
+  path?: string; 
   fileScore: number;
 }
 
@@ -214,7 +220,7 @@ async function handleQuery() {
   const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
   const scope = args.scope || '';
   const maxResults = parseInt(args.max || '25', 10);
-  const format = args.format || 'json'; // 'json' for flat, 'hierarchy' for tree
+  const format = args.format || 'grouped'; // 'flat' for list, 'grouped' for tree
 
   if (!fs.existsSync(knowledgeDir)) {
     console.log(JSON.stringify({ error: 'No .knowledge found. Run: ctx scan first.' }));
@@ -234,9 +240,10 @@ async function handleQuery() {
       const fileScore = calculateConfidence(keywords, filePath, summary);
       if (fileScore > 0) {
         scoredResults.push({
-          filePath,
+          ...summary,
           fileScore,
-          ...summary
+          path: filePath,
+          lastUpdated: undefined
         });
       }
     });
@@ -249,11 +256,11 @@ async function handleQuery() {
 
     let output: any;
 
-    if (format === 'hierarchy') {
+    if (format === 'grouped') {
       // Hierarchical grouping by folder
       const grouped: Record<string, HierarchicalGrouping> = {};
       limited.forEach(item => {
-        const folderPath = path.dirname(item.filePath) || '.';
+        const folderPath = path.dirname(item.path) || '.';
 
         if (!grouped[folderPath]) {
           const directory = summaries.directories[folderPath];
@@ -269,7 +276,14 @@ async function handleQuery() {
 
         const folder = grouped[folderPath];
         folder.folderScore += item.fileScore;
-        folder.files.push(item);
+
+        const fileForGrouping: GroupedScoredFileSummary = {
+          ...item,
+          fileName: item.path.replace(folderPath+'/', ''),
+          path: undefined,
+          technologies: undefined
+        }
+        folder.files.push(fileForGrouping);
       });
 
       output = {
@@ -347,8 +361,7 @@ Commands:
 
   --scope=<path>                Limit search to specific directory/file (for query)
   --max=<number>                Maximum results to return (for query, default: 25)
-  --format=<type>               Output format: json (flat), hierarchy (grouped) 
-                                (for query, default: json)
+  --format=<type>               Output format: flat, grouped (for query, default: grouped)
   --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
 
 Examples:
@@ -357,7 +370,7 @@ Examples:
   ctx merge --summaries=/tmp/summaries.json
   ctx query "authentication"
   ctx query "auth user setup" --scope=src/auth --max=10
-  ctx query "hook" --format=hierarchy --max=20
+  ctx query "hook" --format=grouped --max=20
 `);
 }
 

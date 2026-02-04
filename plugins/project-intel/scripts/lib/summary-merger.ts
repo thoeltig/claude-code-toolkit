@@ -5,7 +5,7 @@ export interface DirectorySummary {
   summary?: string;
   purpose?: string;
   technologies?: string[];
-  lastUpdated: string;
+  lastUpdated?: string;
 }
 
 export interface FileSummary {
@@ -14,7 +14,7 @@ export interface FileSummary {
   role?: string;
   exports?: string[];
   imports?: string[];
-  lastUpdated: string;
+  lastUpdated?: string;
 }
 
 export interface SummariesData {
