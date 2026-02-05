@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
+        "target": "ES2023",
         "module": "commonjs",
         "lib": [
-            "ES2022"
+            "ES2023"
         ],
         "outDir": "./dist",
         "rootDir": "./",
@@ -13,13 +13,18 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "declaration": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true
     },
     "include": [
         "lib/**/*",
         "types/**/*",
         "utils/**/*",
-        "ctx.ts"
+        "ctx.ts",
+        "sessionstart-knowledge-check.ts"
     ],
     "exclude": [
         "node_modules",

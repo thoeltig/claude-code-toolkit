@@ -38,6 +38,7 @@ For each file in the batch, **read its content** and generate this JSON structur
       "summary": "One sentence describing what the file contains",
       "purpose": "1-2 sentences explaining the file's role and purpose in the project",
       "role": "implementation",
+      "technologies": ["usedTechnology1"],
       "exports": ["exportName1", "exportName2"],
       "imports": ["dependency1", "dependency2"]
     },
@@ -46,6 +47,7 @@ For each file in the batch, **read its content** and generate this JSON structur
       "summary": "One sentence describing what the file contains",
       "purpose": "1-2 sentences explaining the file's role and purpose in the project",
       "role": "implementation",
+      "technologies": ["usedTechnology2"],
       "exports": ["exportName1", "exportName2"],
       "imports": ["dependency1", "dependency2"]
     }
@@ -73,7 +75,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 1. **Examine input batch** - Review filepaths
 2. **Read file content** - Read each file
 3. **Classify role** - Determine file's role based on extension and content
-4. **Extract technologies** - Identify 2-5 key technologies from files in this directory
+4. **Extract technologies** - Identify 2-5 key technologies in each file and in the directory
 4. **Extract exports** - Identify 2-5 key functions/classes/exports from content
 5. **Extract imports** - Identify 2-5 key dependencies from content
 6. **Generate summaries** - Create specific, focused summaries for each file and directory
@@ -85,7 +87,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 **Format**: Valid minified JSON (no spaces, no pretty-printing)
 
-**Structure**: `{"directories":[ {"path":"...","summary":"...","purpose":"...","technologies":[...]},{"path":"...","summary":"...","purpose":"...","technologies":[...]}],"files":[ {"path":"...","summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...] },{"path":"...","summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]},{"path":"...","summary":"...","purpose":"...","role":"...","exports":[...],"imports":[...]}]}`
+**Structure**: `{"directories":[ {"path":"...","summary":"...","purpose":"...","technologies":[...]},{"path":"...","summary":"...","purpose":"...","technologies":[...]}],"files":[ {"path":"...","summary":"...","purpose":"...","role":"...","technologies":[...],"exports":[...],"imports":[...]},{"path":"...","summary":"...","purpose":"...","role":"...","technologies":[...],"exports":[...],"imports":[...]},{"path":"...","summary":"...","purpose":"...","role":"...","technologies":[...],"exports":[...],"imports":[...]}]}`
 
 **File Location**: Write to `$KNOWLEDGE_DIR/haiku-batch-<N>.json` where N is the batchNumber
 
@@ -101,7 +103,7 @@ For each file in the batch, **read its content** and generate this JSON structur
 
 **Output:**
 ```json
-{"directories":[{"path":"plugins/project-intel/scripts/lib","summary":"Contains scripts for scanning the project files and directory structure and for processing the summarized results.","purpose":"Essential scripts used find all existing files in the project structure which are used in the batch analysing process. Also contains logic to aggregate and merge the analysed results into a summary which can be queried for information about the project.","technologies":["TypeScript"]}],"files":[{"path":"plugins/project-intel/scripts/lib/project-scanner.ts","summary":"Recursively walks filesystem extracting file metadata and statistics while filtering ignored directories and generating project structure.","purpose":"Collects raw project data including file paths, sizes, and extension counts needed for batching and analysis in the scan workflow.","role":"implementation","exports":["scanProject","FileInfo","RawProjectData"],"imports":["fs","path"]}]}
+{"directories":[{"path":"plugins/project-intel/scripts/lib","summary":"Contains scripts for scanning the project files and directory structure and for processing the summarized results.","purpose":"Essential scripts used find all existing files in the project structure which are used in the batch analysing process. Also contains logic to aggregate and merge the analysed results into a summary which can be queried for information about the project.","technologies":["TypeScript"]}],"files":[{"path":"plugins/project-intel/scripts/lib/project-scanner.ts","summary":"Recursively walks filesystem extracting file metadata and statistics while filtering ignored directories and generating project structure.","purpose":"Collects raw project data including file paths, sizes, and extension counts needed for batching and analysis in the scan workflow.","role":"implementation","technologies":["TypeScript"],"exports":["scanProject","FileInfo","RawProjectData"],"imports":["fs","path"]}]}
 ```
 
 ## Quality Guidelines

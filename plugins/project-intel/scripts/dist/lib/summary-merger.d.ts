@@ -2,17 +2,18 @@ export interface DirectorySummary {
     summary?: string;
     purpose?: string;
     technologies?: string[];
-    lastUpdated: string;
+    lastUpdated?: string;
 }
 export interface FileSummary {
     summary?: string;
     purpose?: string;
     role?: string;
+    technologies?: string[];
     exports?: string[];
     imports?: string[];
-    lastUpdated: string;
+    lastUpdated?: string;
 }
-interface SummariesData {
+export interface SummariesData {
     generated: string;
     directories: {
         [dirPath: string]: DirectorySummary;
@@ -32,6 +33,5 @@ export interface PartialFileSummary extends FileSummary {
     path: string;
 }
 export declare function getOrCreateSummaries(knowledgeDir: string): SummariesData;
+export declare function writeSummaries(knowledgeDir: string, data: SummariesData): void;
 export declare function mergeSummaries(location: string, knowledgeDir: string, partialSummaries: PartialSummaries): SummariesData;
-export declare function getSummaries(knowledgeDir: string): SummariesData;
-export {};

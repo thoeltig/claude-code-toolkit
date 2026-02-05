@@ -10,7 +10,7 @@ Orchestrate a complete project scan followed by parallel Haiku file analysis to 
 
 **Parameters:**
 - `--location`: Folder to analyze (default: current working directory)
-- `--knowledgeDir`: Where to store summaries.json (default: .knowledge/ in current working directory)
+- `--knowledgeDir`: Where to store summaries.json (no need to provide it because script can auto detect .knowledge/ if it exists in the current working directory or git files. Otherwise default: .knowledge/ in current working directory)
   **Note:** This is NOT relative to --location. Specify full path to use a shared knowledge directory.
 
 **Usage Examples:**
@@ -46,7 +46,7 @@ Execute the scanner to analyze project structure and save to scan.json.
 node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --location="$LOCATION" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
-Parse the JSON response to extract the `filePaths` values.
+Parse the JSON response to extract the `filesToScan` values.
 
 ### Step 2: Create batches from filtered files
 Batch the file list (from Step 2) into groups of ~8 files per batch for parallel analysis.

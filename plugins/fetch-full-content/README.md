@@ -24,9 +24,9 @@ Download and cache full page content from URLs for complete information retrieva
 
 ## ⚠️ Security Warning
 
-**NO prompt injection detection or guards implemented.**
+Fetch-Full-Content includes **basic filtering** to remove common hidden content injection vectors (comments, invisible text, display:none elements), but this is **NOT comprehensive protection**.
 
-Fetch-Full-Content retrieves and caches raw web content without security filtering. Malicious websites can embed instructions that manipulate Claude's behavior.
+Malicious websites can still embed instructions to manipulate Claude's behavior through other means not caught by basic filtering.
 
 **ONLY use on:**
 - ✅ Official documentation sites (docs.anthropic.com, angular.dev, etc.)
@@ -38,7 +38,14 @@ Fetch-Full-Content retrieves and caches raw web content without security filteri
 - ❌ Public forums, comment sections, or social media
 - ❌ Potentially malicious sources
 
-**If unsure about a source, use the built-in WebFetch tool instead** - it includes safeguards for untrusted content.
+**Security filtering includes:**
+- Removes HTML comments
+- Filters elements with `display: none` or `visibility: hidden`
+- Removes text with font-size < 6px
+- Filters elements with opacity < 10%
+- Removes elements with very low alpha channel colors (< 10%)
+
+**If unsure about a source, use the built-in WebFetch tool instead** - it includes comprehensive safeguards for untrusted content.
 
 ## Installation
 
@@ -133,6 +140,7 @@ docs/angular-dev_dependency-injection.md
 - Strips ads and popups
 - Eliminates JavaScript UI code
 - Preserves actual content
+- Filters hidden content (comments, invisible text, display:none elements)
 
 ### Automatic JavaScript Rendering
 - Detects dynamic content (< 500 chars detected as JS-rendered)
