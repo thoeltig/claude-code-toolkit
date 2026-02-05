@@ -240,9 +240,9 @@ async function handleQuery() {
       const fileScore = calculateConfidence(keywords, filePath, summary);
       if (fileScore > 0) {
         scoredResults.push({
-          ...summary,
           fileScore,
           path: filePath,
+          ...summary,
           lastUpdated: undefined
         });
       }
@@ -278,8 +278,8 @@ async function handleQuery() {
         folder.folderScore += item.fileScore;
 
         const fileForGrouping: GroupedScoredFileSummary = {
-          ...item,
           fileName: item.path.replace(folderPath+'/', ''),
+          ...item,
           path: undefined,
           technologies: undefined
         }

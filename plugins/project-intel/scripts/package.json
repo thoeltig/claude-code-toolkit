@@ -1,6 +1,6 @@
 {
     "name": "project-intel",
-    "version": "1.3.0.0",
+    "version": "1.3.1.0",
     "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
     "main": "dist/ctx.js",
     "bin": {
