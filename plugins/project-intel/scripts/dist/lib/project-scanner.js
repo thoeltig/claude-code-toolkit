@@ -85,7 +85,8 @@ function getSummaryFiles(summaries) {
     // Find oldest scan date and create look for filepath and date
     summaryFileEntries
         .forEach(x => {
-        const lastUpdate = new Date(x[1].lastUpdated);
+        const dateString = x[1].lastUpdated;
+        const lastUpdate = dateString ? new Date(dateString) : new Date();
         mapOfSummaryFileEntries.set(x[0], lastUpdate);
     });
     return mapOfSummaryFileEntries;

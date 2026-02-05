@@ -2,15 +2,16 @@ export interface DirectorySummary {
     summary?: string;
     purpose?: string;
     technologies?: string[];
-    lastUpdated: string;
+    lastUpdated?: string;
 }
 export interface FileSummary {
     summary?: string;
     purpose?: string;
     role?: string;
+    technologies?: string[];
     exports?: string[];
     imports?: string[];
-    lastUpdated: string;
+    lastUpdated?: string;
 }
 export interface SummariesData {
     generated: string;

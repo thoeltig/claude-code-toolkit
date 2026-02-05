@@ -67,7 +67,7 @@ function main() {
     try {
         // .knowledge exists, proceed with normal flow
         const ctxPath = path.join(__dirname, 'ctx.js');
-        const scanOutput = (0, child_process_1.execSync)(`node "${ctxPath}" scan`, {
+        const scanOutput = (0, child_process_1.execSync)(`node "${ctxPath}" scan --calledFromHook`, {
             encoding: 'utf8',
             cwd: process.cwd(),
             stdio: ['pipe', 'pipe', 'ignore']
