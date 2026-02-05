@@ -12,6 +12,7 @@ export interface FileSummary {
   summary?: string;
   purpose?: string;
   role?: string;
+  technologies?: string[];
   exports?: string[];
   imports?: string[];
   lastUpdated?: string;

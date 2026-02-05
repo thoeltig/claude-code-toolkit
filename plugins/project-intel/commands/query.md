@@ -36,30 +36,6 @@ Run the knowledge query CLI with user parameters:
 node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js query "$KEYWORDS" --scope="$SCOPE" --max="$MAX" --knowledgeDir="$KNOWLEDGE_DIR" --format="$FORMAT"
 ```
 
-Parse JSON response structure:
-```json
-{
-  "source": "summaries",
-  "query": "...",
-  "keywords": [...],
-  "scope": "all|<path>",
-  "total": N,
-  "results": [
-    {
-      "type": "directory|file",
-      "path": "...",
-      "score": N,
-      "summary": "...",
-      "purpose": "...",
-      "technologies": [...],  // for directories
-      "role": "...",          // for files
-      "exports": [...],       // for files
-      "imports": [...]        // for files
-    }
-  ]
-}
-```
-
 ### Step 2: Suggest next actions
 Based on results:
 
