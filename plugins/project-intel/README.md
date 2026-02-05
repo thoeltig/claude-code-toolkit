@@ -164,22 +164,25 @@ This means you rarely need to specify `--knowledgeDir` explicitly.
 /scan --location=../my-project --knowledgeDir=../my-project/.knowledge
 ```
 
-### `/query "<keywords>" [--scope=<path>] [--max=N] [--knowledgeDir=<path>]`
+### `/query "<keywords>" [--scope=<path>] [--max=N] [--format=<type>] [--knowledgeDir=<path>]`
 Search summaries by semantic relevance.
 
 **Parameters:**
 - `<keywords>`: Search terms (e.g., "authentication", "api rate limiting")
 - `--scope`: Limit to specific directory (optional)
 - `--max`: Maximum results (default: 25)
+- `--format`: Result organization (default: `grouped`)
+  - `grouped`: Results organized by directory with folder context and technologies. Best for understanding subsystems and architecture.
+  - `flat`: Single ranked list sorted by relevance. Best for broad searches across unrelated parts of the project.
 - `--knowledgeDir`: Location of summaries.json (optional - auto-detected if not provided)
 
 **Auto-detection of knowledge directory:**
 Like `/scan`, query also auto-detects `.knowledge/` if not explicitly specified, searching from current directory or git root.
 
 **What it does:**
-1. Semantic scoring across summary, purpose, exports, imports, technologies, role
+1. Semantic scoring across summary, purpose, exports, imports, file-level technologies, and role
 2. Returns ranked results (higher score = more relevant)
-3. Grouped by directory for structure visibility
+3. Results organized by format (grouped by directory or flat list)
 
 **Cost:** ~1k tokens (orchestration + CLI execution)
 
@@ -293,6 +296,7 @@ Across Sessions:
       "summary": "Main authentication module entry point",
       "purpose": "Export auth functions and middleware",
       "role": "implementation",
+      "technologies": ["TypeScript", "JWT"],
       "exports": ["authenticate", "logout", "middleware"],
       "imports": ["jwt", "bcrypt", "express"],
       "lastUpdated": "2026-01-08T00:00:00Z"
@@ -300,6 +304,8 @@ Across Sessions:
   }
 }
 ```
+
+**Note:** Query results omit `lastUpdated` (no longer necessary with SessionStart hook showing staleness). Per-file `technologies` helps with detailed matching and cross-file comparisons in flat query results.
 
 ---
 
@@ -315,9 +321,10 @@ Across Sessions:
 4. **Team sync**: Pull teammate scans from git
 
 **Staleness signals:**
-- Query returns files with old `lastUpdated` dates
+- SessionStart hook reports files need updating (when changes detected by git or filesystem)
 - You know you've changed an area significantly
 - Summaries don't match your current understanding
+- Query results feel outdated or missing recent work
 
 **Re-scan strategy:**
 ```bash
@@ -462,10 +469,10 @@ npm run build
 - Scan only specific areas to incrementally build persistent knowledge
 
 ### When should I re-scan?
+- SessionStart hook alerts you that files need updating (automatic detection)
 - After major code changes (new features, refactoring)
-- When query results show old `lastUpdated` dates
 - After pulling significant teammate updates
-- When summaries don't match your understanding
+- When query results don't match your current understanding of the codebase
 
 ---
 
