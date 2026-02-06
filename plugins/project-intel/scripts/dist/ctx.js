@@ -140,7 +140,7 @@ async function handleMerge() {
         console.log(JSON.stringify({ error: `${types_1.KNOWLEDGE_DIRECTORY} is missing! You need to run scan first before trying to merge scan results.` }));
         return;
     }
-    const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
+    const summariesPath = path.join(knowledgeDir, 'haiku-batch-*.json');
     try {
         // Support glob patterns and single files
         const filesToMerge = expandGlob(summariesPath);

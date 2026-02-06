@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.5.1.0] - 2026-02-06
+
+### Fixed
+
+- **Partial summaries merge**: Fixed error when knowledgeDir argument wasn't provided on merge. Problem was the usage of the undefined argument value after already locating the actual knowledge directorie.
+
 ## [1.5.0.0] - 2026-02-06
 
 _Refactoring and bug fixes for code organization and discovery logic._
@@ -125,7 +131,8 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.1.0...HEAD
+[1.5.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.0.0...ProjectIntel_v1.5.1.0
 [1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.4.0.0...ProjectIntel_v1.5.0.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.3.0.0...ProjectIntel_v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.2.0.0...ProjectIntel_v1.3.0.0

@@ -121,7 +121,7 @@ async function handleMerge() {
       return;
   }
 
-  const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
+  const summariesPath = path.join(knowledgeDir, 'haiku-batch-*.json');
 
   try {
     // Support glob patterns and single files
