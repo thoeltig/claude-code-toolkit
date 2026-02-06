@@ -1,5 +1,5 @@
 {
-  "generated": "2026-02-06T02:41:41.093Z",
+  "generated": "2026-02-06T17:23:18.785Z",
   "directories": {
     "plugins/project-intel/commands": {
       "path": "plugins/project-intel/commands",
@@ -12,53 +12,57 @@
     },
     "plugins/project-intel/scripts": {
       "path": "plugins/project-intel/scripts",
-      "summary": "Contains TypeScript implementation of the project scanning and analysis CLI tool.",
-      "purpose": "Core implementation directory that houses the main entry point and library modules for project intelligence reconnaissance. Enables scanning projects, merging analysis results, and querying knowledge bases.",
+      "summary": "Command-line entry point and utility scripts for scanning projects and querying accumulated knowledge.",
+      "purpose": "Main interface for the project-intel plugin, coordinating scan operations, summary merging, and knowledge queries through CLI commands.",
       "technologies": [
         "TypeScript",
         "Node.js"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:23:18.785Z"
     },
     "plugins/project-intel/scripts/lib": {
       "path": "plugins/project-intel/scripts/lib",
-      "summary": "Contains reusable library modules for project scanning and knowledge management.",
-      "purpose": "Provides shared utilities for scanning project filesystems, managing git integration, and merging file summaries into a knowledge base. Essential for the scan workflow.",
+      "summary": "Core libraries for project scanning, file detection, and summary management.",
+      "purpose": "Provides essential scanning logic for filesystem and git-based file detection, summary merging/persistence, and knowledge discovery to support the scan and merge workflows.",
       "technologies": [
         "TypeScript",
         "Node.js",
-        "Git"
+        "Git",
+        "Filesystem API"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:23:18.785Z"
     },
     "plugins/project-intel": {
       "path": "plugins/project-intel",
-      "summary": "Lightweight reconnaissance system providing semantic project analysis and querying capabilities.",
-      "purpose": "Enables fast, directed code exploration through persistent project knowledge generation and semantic search. Provides scanning, merging, and querying functionality to avoid expensive blind exploration of large codebases.",
+      "summary": "Plugin providing project reconnaissance system with semantic file analysis, incremental scanning, and knowledge persistence.",
+      "purpose": "Enables directed code exploration through batched file analysis and semantic summaries. Provides scan, merge, and query capabilities for navigating large codebases efficiently without reading every file.",
       "technologies": [
         "TypeScript",
         "Node.js",
+        "Git",
         "JSON"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-06T17:23:18.784Z"
     },
     ".claude-plugin": {
       "path": ".claude-plugin",
-      "summary": "Contains marketplace configuration defining all available plugins.",
-      "purpose": "Serves as the central registry for the Claude Code Toolkit marketplace, listing metadata and configuration for all seven plugins with version tracking and author information.",
+      "summary": "Contains marketplace configuration for the Claude Code Toolkit plugins distribution.",
+      "purpose": "Defines the plugin marketplace metadata and registry for all available plugins in the toolkit. Enables users to discover and install plugins through Claude Code's marketplace system.",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:10:34.046Z"
     },
     "plugins/project-intel/.claude-plugin": {
       "path": "plugins/project-intel/.claude-plugin",
-      "summary": "Contains plugin manifest and configuration for the project-intel plugin.",
-      "purpose": "Defines the project-intel plugin's metadata, version, and hooks configuration for integration with Claude Code.",
+      "summary": "Plugin metadata and hook configuration for project-intel.",
+      "purpose": "Defines the plugin manifest and event handlers for project-intel integration with Claude Code. Specifies plugin name, version, description, author, and hook integration points.",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:10:34.047Z"
     },
     "": {
       "path": "",
@@ -182,24 +186,14 @@
     },
     "plugins/session-protocol": {
       "path": "plugins/session-protocol",
-      "summary": "Plugin providing token-optimized session continuity management across Claude Code conversations through structured JSON state storage.",
-      "purpose": "Enables seamless context preservation across sessions by capturing pending tasks, completed work, architectural decisions, and git state. Reduces save/load token overhead by 59-62% compared to markdown-based approaches while maintaining privacy and git awareness.",
+      "summary": "Complete plugin for session continuity and task management across Claude Code sessions.",
+      "purpose": "Enables users to save and restore conversation context, pending tasks, and git state between sessions with token-optimized JSON storage.",
       "technologies": [
         "Python",
         "JSON",
-        "Git"
+        "TypeScript"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
-    },
-    "plugins/session-protocol/commands": {
-      "path": "plugins/session-protocol/commands",
-      "summary": "Command definitions for saving and loading session protocol context.",
-      "purpose": "Provides CLI interfaces for users to manually trigger session context save and load operations through /save-session-protocol and /load-session-protocol commands.",
-      "technologies": [
-        "CLI",
-        "Markdown"
-      ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     "plugins/session-protocol/hooks": {
       "path": "plugins/session-protocol/hooks",
@@ -437,21 +431,15 @@
   "files": {
     "plugins/project-intel/CHANGELOG.md": {
       "path": "plugins/project-intel/CHANGELOG.md",
-      "summary": "Detailed version history documenting project-intel changes from v1.0.0.0 to v1.4.0.0 following semantic versioning.",
-      "purpose": "Records all notable changes, bug fixes, feature additions, and improvements across versions to track plugin evolution and provide upgrade guidance for users.",
+      "summary": "Documents all notable changes, bug fixes, improvements, and features added across project-intel plugin versions 1.0.0.0 through 1.5.1.0.",
+      "purpose": "Maintains project history and communicates feature additions, stability improvements, and breaking changes to users. Tracks evolution from initial reconnaissance system through git integration, query optimization, and automatic knowledge maintenance.",
       "role": "documentation",
       "technologies": [
         "Markdown",
-        "Semantic Versioning"
+        "Semantic Versioning",
+        "Changelog Format"
       ],
-      "exports": [
-        "[1.4.0.0]",
-        "[1.3.0.0]",
-        "[1.2.0.0]",
-        "[1.1.0.0]",
-        "[1.0.0.0]"
-      ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:23:18.785Z"
     },
     "plugins/project-intel/README.md": {
       "path": "plugins/project-intel/README.md",
@@ -462,110 +450,116 @@
     },
     "plugins/project-intel/scripts/ctx.ts": {
       "path": "plugins/project-intel/scripts/ctx.ts",
-      "summary": "Main CLI entry point that implements scan, merge, and query commands for project intelligence operations.",
-      "purpose": "Primary command handler that orchestrates project scanning, summary merging, and knowledge base queries. Parses CLI arguments, manages knowledge directories, and calculates semantic search scoring.",
+      "summary": "CLI main entry point parsing commands (scan, merge, query) and implementing knowledge directory discovery, result formatting, and semantic scoring logic.",
+      "purpose": "Routes user commands to appropriate handlers, manages knowledge directory detection with fallback chains, implements semantic search scoring weighted toward purpose/summary, and formats results hierarchically or flat based on user preference. Central hub coordinating all project-intel operations.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
-        "Node.js"
+        "Node.js",
+        "Semantic Scoring",
+        "Path Resolution",
+        "Glob Patterns"
       ],
       "exports": [
         "parseArgs",
-        "main",
         "handleScan",
         "handleMerge",
         "handleQuery",
         "calculateConfidence",
         "expandGlob",
-        "printHelp"
+        "getKnowledgeDir"
       ],
       "imports": [
         "fs",
         "path",
-        "project-scanner",
-        "summary-merger"
+        "./lib/project-scanner",
+        "./lib/summary-merger",
+        "./types"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:23:18.785Z"
     },
     "plugins/project-intel/scripts/lib/project-scanner.ts": {
       "path": "plugins/project-intel/scripts/lib/project-scanner.ts",
-      "summary": "Implements project scanning with git integration and filesystem traversal to identify new, modified, and deleted files.",
-      "purpose": "Recursively scans project directories or uses git metadata to detect file changes. Supports incremental scanning by comparing against existing summaries. Filters ignored directories and normalizes paths.",
+      "summary": "Detects files needing analysis through git-based or filesystem-based scanning, tracking new/modified/deleted files, and filtering ignored directories while reporting project statistics.",
+      "purpose": "Core scanning engine that identifies which files require analysis by comparing current state against existing knowledge summaries. Supports both efficient git-based incremental scanning and full filesystem walks with ignore-list support. Produces batches of files for Haiku analysis.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
         "Node.js",
         "Git",
-        "child_process"
+        "Child Process Execution",
+        "Filesystem API",
+        "Path Normalization"
       ],
       "exports": [
         "scanProject",
         "findKnowledgeDir",
-        "ScanResult"
+        "ScanResult",
+        "Files"
       ],
       "imports": [
         "fs",
         "path",
-        "execSync"
+        "child_process",
+        "./summary-merger",
+        "../types"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:23:18.785Z"
     },
     "plugins/project-intel/scripts/lib/summary-merger.ts": {
       "path": "plugins/project-intel/scripts/lib/summary-merger.ts",
-      "summary": "Manages reading, writing, and merging of file and directory summaries into persistent knowledge storage.",
-      "purpose": "Provides data structures and functions for persisting analyzed file metadata. Converts between storage format and runtime maps, merges partial batch results, and maintains lastUpdated timestamps.",
+      "summary": "Loads, merges, and persists file/directory summaries with atomic writes and empty directory cleanup.",
+      "purpose": "Manages summary storage lifecycle including loading from disk, merging batch results, writing with atomic operations, and maintaining consistency.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
-        "Node.js"
+        "Node.js",
+        "JSON",
+        "Filesystem"
       ],
       "exports": [
         "getOrCreateSummaries",
         "writeSummaries",
-        "mergeSummaries",
-        "DirectorySummary",
-        "FileSummary",
-        "SummariesData",
-        "PartialSummaries"
+        "mergeSummaries"
       ],
       "imports": [
         "fs",
-        "path"
+        "path",
+        "types"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     ".claude-plugin/marketplace.json": {
       "path": ".claude-plugin/marketplace.json",
-      "summary": "Marketplace registry containing metadata for all seven Claude Code plugins with versions and descriptions.",
-      "purpose": "Central configuration file that registers all plugins in the marketplace including session-protocol, project-intel, fetch-full-content, changelog, documentation, claude-code-capabilities, and cross-platform-notification with their source paths and versions.",
+      "summary": "Marketplace registry defining seven plugins with metadata, versions, descriptions, and authors.",
+      "purpose": "Central registry for Claude Code Toolkit plugins enabling discovery and installation. Lists session-protocol, project-intel, fetch-full-content, changelog, documentation, claude-code-capabilities, and cross-platform-notification plugins.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
       "exports": [
-        "name",
-        "owner",
-        "metadata",
-        "plugins"
+        "plugins",
+        "marketplace metadata"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:10:34.047Z"
     },
     "plugins/project-intel/.claude-plugin/plugin.json": {
       "path": "plugins/project-intel/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest declaring project-intel as a lightweight reconnaissance system for semantic code exploration.",
-      "purpose": "Registers the project-intel plugin with Claude Code, specifying its metadata, version 1.4.0.0, author information, and hook configuration reference.",
+      "summary": "Plugin manifest for project-intel specifying name, version, description, author and hooks configuration file.",
+      "purpose": "Claude Code plugin descriptor defining project-intel metadata (v1.5.1.0), author information, and reference to hooks.json for event handlers. Enables Claude Code platform to recognize and load the plugin.",
       "role": "configuration",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code"
       ],
       "exports": [
         "name",
-        "description",
         "version",
+        "description",
         "author",
         "hooks"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:10:34.047Z"
     },
     "CHANGELOG.md": {
       "path": "CHANGELOG.md",
@@ -1403,87 +1397,44 @@
     },
     "plugins/project-intel/scripts/package.json": {
       "path": "plugins/project-intel/scripts/package.json",
-      "summary": "Defines project metadata, scripts, dependencies, and entry point for the project-intel package.",
-      "purpose": "Configuration file that specifies the package name, version, CLI entry point, build scripts, and development dependencies. Enables the ctx command and npm script management.",
+      "summary": "NPM package configuration for project-intel scripts with TypeScript build setup and CLI entrypoint.",
+      "purpose": "Defines build and runtime configuration for the project-intel CLI tool. Specifies ctx as the executable binary, TypeScript compilation scripts, and development dependencies for building the Node.js application.",
       "role": "configuration",
       "technologies": [
-        "Node.js",
-        "npm"
+        "JSON",
+        "TypeScript",
+        "Node.js"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "exports": [
+        "scripts",
+        "dependencies",
+        "bin"
+      ],
+      "imports": [
+        "@types/node",
+        "typescript"
+      ],
+      "lastUpdated": "2026-02-06T17:10:34.047Z"
     },
     "plugins/session-protocol/CHANGELOG.md": {
       "path": "plugins/session-protocol/CHANGELOG.md",
-      "summary": "Version history and release notes for session-protocol plugin documenting breaking changes, feature additions, and removals.",
-      "purpose": "Tracks all notable changes to the session-protocol plugin using semantic versioning, documenting the notification separation in v1.1.0.0 and core features in v1.0.0.0.",
+      "summary": "Version history and release notes for the session-protocol plugin following Common Changelog and Keep a Changelog formats.",
+      "purpose": "Documents all changes, breaking changes, and features added across session-protocol versions from 1.0.0.0 to 1.2.0.0 with semantic versioning.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
-        "Semantic Versioning",
-        "Changelog"
+        "Markdown"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     "plugins/session-protocol/README.md": {
       "path": "plugins/session-protocol/README.md",
-      "summary": "Comprehensive documentation for the session-protocol plugin covering installation, features, usage, workflows, JSON schema, privacy considerations, and token optimization techniques.",
-      "purpose": "Serves as the primary user-facing documentation explaining how session continuity works, when to save/load sessions, how to interpret session state, and best practices for task consolidation and context management.",
+      "summary": "Comprehensive guide for the session-protocol plugin covering features, installation, workflows, JSON schema, and best practices.",
+      "purpose": "Provides complete documentation for users on session continuity management including save/load workflows, task consolidation, git integration, privacy enforcement, and token optimization techniques.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
-        "JSON"
+        "Markdown"
       ],
-      "exports": [
-        "Session Protocol Plugin",
-        "Token Optimization",
-        "Workflow documentation",
-        "JSON Schema"
-      ],
-      "imports": [
-        "Task management concepts",
-        "Git integration",
-        "Privacy enforcement",
-        "Context blocks"
-      ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
-    },
-    "plugins/session-protocol/commands/load-session-protocol.md": {
-      "path": "plugins/session-protocol/commands/load-session-protocol.md",
-      "summary": "Command documentation for loading previous session context from session-protocol.json file.",
-      "purpose": "Instructs users and Claude on how to execute Workflow 2 (Loading Session Context) including reading, parsing, validating, and presenting restored session state.",
-      "role": "documentation",
-      "technologies": [
-        "Markdown",
-        "CLI"
-      ],
-      "exports": [
-        "load-session-protocol command",
-        "Workflow 2 steps"
-      ],
-      "imports": [
-        "managing-session-continuity skill",
-        "session-protocol.json"
-      ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
-    },
-    "plugins/session-protocol/commands/save-session-protocol.md": {
-      "path": "plugins/session-protocol/commands/save-session-protocol.md",
-      "summary": "Command documentation for saving current session context to session-protocol.json file.",
-      "purpose": "Instructs users and Claude on how to execute Workflow 1 (Saving Session Context) including extracting, consolidating tasks, and writing minified JSON with privacy enforcement.",
-      "role": "documentation",
-      "technologies": [
-        "Markdown",
-        "CLI"
-      ],
-      "exports": [
-        "save-session-protocol command",
-        "Workflow 1 steps"
-      ],
-      "imports": [
-        "managing-session-continuity skill",
-        "TodoWrite context"
-      ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     "plugins/session-protocol/hooks/hooks.json": {
       "path": "plugins/session-protocol/hooks/hooks.json",
@@ -1504,25 +1455,23 @@
     },
     "plugins/session-protocol/scripts/sessionstart-session-protocol-check.py": {
       "path": "plugins/session-protocol/scripts/sessionstart-session-protocol-check.py",
-      "summary": "Python script that detects existing session-protocol.json and generates structured hook response with assistant instructions.",
-      "purpose": "Implements the SessionStart hook logic to check for session-protocol.json existence and return official Claude Code hook response schema with context data instructing Claude to inform the user.",
+      "summary": "Python script that checks for existing session-protocol.json on session start and returns Claude Code hook response.",
+      "purpose": "Implements the SessionStart hook to automatically detect previous session protocols and notify the user with structured instructions for loading context.",
       "role": "script",
       "technologies": [
-        "Python",
-        "JSON",
-        "UTF-8 encoding"
+        "Python"
       ],
       "exports": [
-        "check_session_protocol_exists()",
-        "create_hook_response()",
-        "main()"
+        "check_session_protocol_exists",
+        "create_hook_response",
+        "main"
       ],
       "imports": [
-        "json module",
-        "sys module",
-        "pathlib.Path"
+        "json",
+        "sys",
+        "pathlib"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     "plugins/session-protocol/skills/managing-session-continuity/SKILL.md": {
       "path": "plugins/session-protocol/skills/managing-session-continuity/SKILL.md",
@@ -3455,26 +3404,26 @@
     },
     "plugins/project-intel/scripts/sessionstart-knowledge-check.ts": {
       "path": "plugins/project-intel/scripts/sessionstart-knowledge-check.ts",
-      "summary": "TypeScript script that checks for project knowledge availability and notifies users of outdated or missing documentation.",
-      "purpose": "SessionStart hook handler that executes on every session to verify knowledge status, detect file changes, and suggest running /scan if knowledge is missing or stale.",
+      "summary": "SessionStart hook that notifies users of project knowledge availability and detects files needing updates.",
+      "purpose": "Provides session initialization feedback showing knowledge status, file counts, and suggestions to run scans when updates are detected.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
-        "Node.js"
+        "Node.js",
+        "Hook System"
       ],
       "exports": [
         "outputHookResponse",
         "outputSuggestionToRunInitialScan",
-        "main",
-        "AdditionalContext",
-        "HookResponse"
+        "main"
       ],
       "imports": [
         "child_process",
         "path",
-        "./lib/project-scanner"
+        "project-scanner",
+        "types"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     "plugins/project-intel/scripts/tsconfig.json": {
       "path": "plugins/project-intel/scripts/tsconfig.json",
@@ -3485,26 +3434,54 @@
     },
     "plugins/session-protocol/.claude-plugin/plugin.json": {
       "path": "plugins/session-protocol/.claude-plugin/plugin.json",
-      "summary": "Plugin metadata defining the session-protocol plugin with version 1.1.0.0 and hooks configuration reference.",
-      "purpose": "Registers the session-protocol plugin in the Claude Code marketplace with author information and hook definitions for session continuity management.",
+      "summary": "Plugin manifest for the session-protocol plugin with metadata and hook configuration.",
+      "purpose": "Defines the session-protocol plugin's name, version, author, and points to its hooks configuration file.",
       "role": "configuration",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
     "README.md": {
       "path": "README.md",
-      "summary": "Comprehensive documentation for the Claude Code Toolkit marketplace featuring installation instructions, plugin descriptions, and usage guidance.",
-      "purpose": "Primary user-facing documentation that provides quick-start instructions, detailed plugin highlights with feature descriptions, installation commands, and architecture overview of the toolkit ecosystem.",
+      "summary": "Comprehensive documentation of Claude Code Toolkit marketplace with plugin descriptions, quick start guide, and feature highlights.",
+      "purpose": "Primary user-facing documentation introducing the toolkit, its seven plugins, their capabilities, installation instructions, and links to detailed documentation. Establishes the toolkit's value proposition of token cost reduction, context preservation, and development automation.",
       "role": "documentation",
       "technologies": [
         "Markdown"
       ],
       "exports": [
-        "Claude Code Toolkit",
-        "Available Plugins",
         "Quick Start",
-        "Plugin Highlights"
+        "Plugin Highlights",
+        "Documentation Links"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-06T17:10:34.047Z"
+    },
+    "plugins/project-intel/scripts/types.ts": {
+      "path": "plugins/project-intel/scripts/types.ts",
+      "summary": "TypeScript type definitions and constants for summaries, query results, and hook responses.",
+      "purpose": "Centralizes shared types used across scanning, merging, and query modules enabling type safety and reducing duplication.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript"
+      ],
+      "exports": [
+        "KNOWLEDGE_DIRECTORY",
+        "SUMMARIES_FILE",
+        "SCAN_FILE",
+        "FORMAT_FLAT",
+        "FORMAT_GROUPED",
+        "QUERY_RESULT_MAX",
+        "DirectorySummary",
+        "FileSummary",
+        "SummariesData",
+        "PartialSummaries",
+        "ScoredFileSummary",
+        "HierarchicalGrouping",
+        "AdditionalContext",
+        "HookResponse"
+      ],
+      "lastUpdated": "2026-02-06T16:43:35.148Z"
     }
   }
 }
