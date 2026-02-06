@@ -158,8 +158,8 @@ async function handleMerge() {
       status: 'success',
       summary: {
         location: path.join(knowledgeDir, SUMMARIES_FILE),
-        directoryEntryCount: Object.keys(current.directories).length,
-        fileEntryCount: Object.keys(current.files).length,
+        directoryEntryCount: current.directories.size,
+        fileEntryCount: current.files.size,
       },
       merge: {
         processedPartialSummaryFiles: filesToMerge.length,

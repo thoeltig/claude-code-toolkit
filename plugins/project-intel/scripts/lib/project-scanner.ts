@@ -245,7 +245,7 @@ function deletedOldEntriesFromKnowledge(filePaths: string[], summaries: Summarie
     summaries.files.delete(x);
   });
 
-  const fileKeys = Object.keys(summaries.files);
+  const fileKeys = [...summaries.files.keys()];
   const remainingDictionariesInFiles = new Set<string>(fileKeys.map(x => path.dirname(x)));
   directoryDeleteCandidates.forEach(x => {
     if(remainingDictionariesInFiles.has(x) === false){
@@ -301,7 +301,7 @@ export function findKnowledgeDir(location: string): string | undefined {
 
 export async function scanProject(location: string, knowledgeDir: string): Promise<ScanResult> {
   const summaries = getOrCreateSummaries(knowledgeDir);
-  let filesInSummary = Object.keys(summaries.files).length;
+  let filesInSummary = summaries.files.size;
 
   if (!fs.existsSync(location)) {
     return createOutput([], filesInSummary, knowledgeDir);
