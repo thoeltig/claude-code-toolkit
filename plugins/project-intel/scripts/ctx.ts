@@ -4,27 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { findKnowledgeDir, scanProject } from './lib/project-scanner';
 import { mergeSummaries, getOrCreateSummaries } from './lib/summary-merger';
-import type { PartialSummaries, FileSummary } from './lib/summary-merger';
-
-interface HierarchicalGrouping {
-  folderPath: string; 
-  folderScore: number;
-  summary?: string;
-  purpose?: string;
-  technologies?: string[];
-  files: GroupedScoredFileSummary[]
-}
-
-interface ScoredFileSummary extends FileSummary {
-  path: string; 
-  fileScore: number;
-}
-
-interface GroupedScoredFileSummary extends FileSummary {
-  fileName: string; 
-  path?: string; 
-  fileScore: number;
-}
+import { FORMAT_FLAT, FORMAT_GROUPED, GroupedScoredFileSummary, HierarchicalGrouping, KNOWLEDGE_DIRECTORY, PartialSummaries, QUERY_RESULT_MAX, SCAN_FILE, ScoredFileSummary, SUMMARIES_FILE } from './types';
 
 function parseArgs(argv: string[]): { command: string; args: Record<string, string>; positional: string[] } {
   const args: Record<string, string> = {};
@@ -100,6 +80,8 @@ function getKnowledgeDir(): string | undefined {
 
 async function handleScan() {
   let knowledgeDir = getKnowledgeDir();
+  const processLocation = path.normalize(process.cwd());
+  const location = path.normalize(args.location || processLocation);
 
   if (!knowledgeDir) {
     if(args.calledFromHook){
@@ -107,11 +89,18 @@ async function handleScan() {
       return;
     }
 
-    knowledgeDir = path.join(process.cwd(), '.knowledge');
+    knowledgeDir = path.join(processLocation, KNOWLEDGE_DIRECTORY);
+  }else if(!location.includes(knowledgeDir.replace('\\'+KNOWLEDGE_DIRECTORY,''))){
+    // if the location is higher up in the directory structure than the .knowledgeDir then this is either called by the hook in a random directory or the location argument is wrong
+    if(args.calledFromHook){
+      return;
+    }
+
+    console.log(JSON.stringify({ error: `The location to scan '${location}' is higher in the directory structure than the found .knowledgeDir '${knowledgeDir}'. If proceeded this will lead to path missmatches in the ${SUMMARIES_FILE}. Provide correct values for the arguments '--location' and/or '--knowledgeDir'.` }));
+    return;
   }
 
-  const output = path.join(knowledgeDir, 'scan.json');
-  const location = args.location || process.cwd();
+  const output = path.join(knowledgeDir, SCAN_FILE);
 
   if (!fs.existsSync(knowledgeDir)) {
     fs.mkdirSync(knowledgeDir, { recursive: true });
@@ -128,7 +117,7 @@ async function handleScan() {
 async function handleMerge() {   
   const knowledgeDir = getKnowledgeDir();
   if (!knowledgeDir) {
-      console.log(JSON.stringify({ error: `.knowledge/ is missing! You need to run scan first before trying to merge scan results.` }));
+      console.log(JSON.stringify({ error: `${KNOWLEDGE_DIRECTORY} is missing! You need to run scan first before trying to merge scan results.` }));
       return;
   }
 
@@ -168,7 +157,7 @@ async function handleMerge() {
     const result = {
       status: 'success',
       summary: {
-        location: path.join(knowledgeDir, 'summaries.json'),
+        location: path.join(knowledgeDir, SUMMARIES_FILE),
         directoryEntryCount: Object.keys(current.directories).length,
         fileEntryCount: Object.keys(current.files).length,
       },
@@ -215,13 +204,13 @@ function expandGlob(pattern: string): string[] {
 
 async function handleQuery() {
   const topic = positional[0] || '';
-  const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
+  const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), KNOWLEDGE_DIRECTORY);
   const scope = args.scope || '';
-  const maxResults = parseInt(args.max || '25', 10);
-  const format = args.format || 'grouped'; // 'flat' for list, 'grouped' for tree
+  const maxResults = parseInt(args.max || `${QUERY_RESULT_MAX}`, 10);
+  const format = args.format || FORMAT_GROUPED; // 'flat' for list, 'grouped' for tree
 
   if (!fs.existsSync(knowledgeDir)) {
-    console.log(JSON.stringify({ error: 'No .knowledge found. Run: ctx scan first.' }));
+    console.log(JSON.stringify({ error: `No ${KNOWLEDGE_DIRECTORY} found. Run: ctx scan first.` }));
     process.exit(1);
   }
 
@@ -254,7 +243,7 @@ async function handleQuery() {
 
     let output: any;
 
-    if (format === 'grouped') {
+    if (format === FORMAT_GROUPED) {
       // Hierarchical grouping by folder
       const grouped: Record<string, HierarchicalGrouping> = {};
       limited.forEach(item => {
@@ -348,24 +337,24 @@ Commands:
   scan                          Scan project directory and save structure
 
   --location=<path>             The directory to scan (default: cwd)
-  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
+  --knowledgeDir=<path>         Project knowledge directory (default: ${KNOWLEDGE_DIRECTORY} in current directory)
 
-  merge                         Merge Haiku-generated summaries into .knowledge/summaries.json
+  merge                         Merge Haiku-generated summaries into ${KNOWLEDGE_DIRECTORY}/${SUMMARIES_FILE}
   
   --location=<path>             The directory that was scanned scan (default: cwd)
-  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
+  --knowledgeDir=<path>         Project knowledge directory (default: ${KNOWLEDGE_DIRECTORY} in current directory)
 
   query <topic>                 Search project summaries by keywords (scored results)
 
   --scope=<path>                Limit search to specific directory/file (for query)
-  --max=<number>                Maximum results to return (for query, default: 25)
-  --format=<type>               Output format: flat, grouped (for query, default: grouped)
-  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
+  --max=<number>                Maximum results to return (for query, default: ${QUERY_RESULT_MAX})
+  --format=<type>               Output format: ${FORMAT_FLAT}, ${FORMAT_GROUPED} (for query, default: ${FORMAT_GROUPED})
+  --knowledgeDir=<path>         Project knowledge directory (default: ${KNOWLEDGE_DIRECTORY} in current directory)
 
 Examples:
   ctx scan
   ctx scan --location=../my-project
-  ctx merge --summaries=/tmp/summaries.json
+  ctx merge --summaries=/tmp/${SUMMARIES_FILE}
   ctx query "authentication"
   ctx query "auth user setup" --scope=src/auth --max=10
   ctx query "hook" --format=grouped --max=20

@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { getOrCreateSummaries, SummariesData, writeSummaries } from './summary-merger';
+import { getOrCreateSummaries, writeSummaries } from './summary-merger';
+import { KNOWLEDGE_DIRECTORY, SUMMARIES_FILE, SummariesData } from '../types';
 
 export interface ScanResult {
   filesToScan: string[];
@@ -20,9 +21,9 @@ interface Files{
 }
 
 const IGNORED_DIRS = new Set([
-  'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj',
-  '.git', '.svn', 'coverage', '.pytest_cache', '.venv', 'venv', '.env', '.idea',
-  '.vscode', 'vendor', 'tmp', '.cache', '.knowledge', '.claude', 
+  'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj', 
+  '.git', '.svn', 'coverage', '.pytest_cache', '.venv', 'venv', '.env', '.idea', 
+  '.meteor', '.angular', '.vscode', '.vs', 'vendor', 'tmp', '.cache', KNOWLEDGE_DIRECTORY, '.claude', 
 ]);
 
 function shouldIgnore(name: string): boolean {
@@ -34,23 +35,24 @@ function trimToProjectDirFromFilepath(filepath: string, projectRoot:string): str
   return path.relative(projectRoot, filepath).replace(/\\/g, '/');
 }
 
-function searchFileSystemRecursive(dir: string, fileName: string): string | undefined {  
+function searchFileSystemRecursive(dir: string): string | undefined {  
   try {
     const entries = fs.readdirSync(dir);
     for (const entry of entries) {
-      if (entry !== '.knowledge' && shouldIgnore(entry)) {
-        continue;
-      }
-
-      const fullPath = path.join(dir, entry);
-      const stat = fs.statSync(fullPath);
-      if (stat.isDirectory()) {
-        const foundPath = searchFileSystemRecursive(fullPath, fileName);
-        if(foundPath){
-          return foundPath;
+      const dirPath = path.join(dir, entry);
+      const stat = fs.statSync(dirPath);
+      if (stat.isDirectory()) {        
+        if (entry === KNOWLEDGE_DIRECTORY) {
+          const fullPath = path.join(dirPath, SUMMARIES_FILE);
+          if(fs.existsSync(fullPath)) {
+            return path.normalize(fullPath);
+          }
         }
-      } else if (stat.isFile() && fullPath.endsWith(fileName)) {
-        return fullPath;
+        
+        const result = searchFileSystemRecursive(dirPath);
+        if(result) {
+          return result;
+        }
       }
     }
   } catch {}
@@ -95,9 +97,9 @@ function getGitTrackedFiles(location: string): string[]{
   return filteredTrackedFiles;
 }
 
-function isGitInstalled(): boolean {
+function isGitRepository(): boolean {
   try {
-    execSync('git --version', { stdio: 'ignore' });
+    execSync('git rev-parse --git-dir', { stdio: 'ignore' });
     return true;
   } catch {
     return false;
@@ -279,22 +281,21 @@ function createOutput(filePaths: string[], filesInSummary: number, knowledgeDir:
 }
 
 export function findKnowledgeDir(location: string): string | undefined {
-  const summaryFile = '.knowledge/summaries.json';
-
-  if (isGitInstalled()) {
+  if (isGitRepository()) {
     try {
+      const fileLocation = path.join(KNOWLEDGE_DIRECTORY, SUMMARIES_FILE);
       const foundKnowledgeFile = execSync(`git ls-files --full-name -- "${location}"`, { encoding: 'utf-8' })
         .trim()
         .split('\n')
-        .find(f => f.endsWith(summaryFile));
+        .find(f => f.endsWith(fileLocation));
 
       if(foundKnowledgeFile){
-        return path.dirname(path.join(location, foundKnowledgeFile));
+        return path.normalize(path.dirname(path.join(location, foundKnowledgeFile)));
       }
     } catch { }
   }
 
-  const foundFile = searchFileSystemRecursive(location, summaryFile);
+  const foundFile = searchFileSystemRecursive(location);
   return foundFile ? path.dirname(foundFile) : undefined;
 }
 
@@ -309,7 +310,7 @@ export async function scanProject(location: string, knowledgeDir: string): Promi
   const projectRoot = path.dirname(knowledgeDir);
 
   let files: Files;
-  if(isGitInstalled()){
+  if(isGitRepository()){
     files = getFilesFromGit(location, summaries, projectRoot);
   }
   else{

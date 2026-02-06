@@ -1,54 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
-export interface DirectorySummary {
-  summary?: string;
-  purpose?: string;
-  technologies?: string[];
-  lastUpdated?: string;
-}
-
-export interface FileSummary {
-  summary?: string;
-  purpose?: string;
-  role?: string;
-  technologies?: string[];
-  exports?: string[];
-  imports?: string[];
-  lastUpdated?: string;
-}
-
-export interface SummariesDataStorage {
-  generated: string;
-  directories: {
-    [dirPath: string]: DirectorySummary;
-  };
-  files: {
-    [filePath: string]: FileSummary;
-  };
-}
-
-export interface SummariesData {
-  generated: string;
-  directories: Map<string, DirectorySummary>;
-  files: Map<string, FileSummary>;
-}
-
-export interface PartialSummaries {
-  directories: PartialDirectorySummary[];
-  files: PartialFileSummary[];
-}
-
-export interface PartialDirectorySummary extends DirectorySummary {
-  path: string; 
-}
-
-export interface PartialFileSummary extends FileSummary {
-  path: string; 
-}
+import { DirectorySummary, FileSummary, PartialSummaries, SUMMARIES_FILE, SummariesData, SummariesDataStorage } from '../types';
 
 export function getOrCreateSummaries(knowledgeDir: string): SummariesData {
-  const summariesPath = path.join(knowledgeDir, 'summaries.json');
+  const summariesPath = path.join(knowledgeDir, SUMMARIES_FILE);
 
   if (fs.existsSync(summariesPath)) {  
     try {
@@ -59,7 +14,7 @@ export function getOrCreateSummaries(knowledgeDir: string): SummariesData {
         files: new Map(Object.entries(storage.files))
       };
     } catch (e) {
-      console.error('Error reading summaries.json, creating new:', e);
+      console.error(`Error reading ${SUMMARIES_FILE}, creating new:`, e);
     }
   }
 
