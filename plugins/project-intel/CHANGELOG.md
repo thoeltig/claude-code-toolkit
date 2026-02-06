@@ -11,7 +11,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
-- **Partial summaries merge**: Fixed error when knowledgeDir argument wasn't provided on merge. Problem was the usage of the undefined argument value after already locating the actual knowledge directorie.
+- **Partial summaries merge**: Fixed error when knowledgeDir argument wasn't provided on merge. Problem was the usage of the undefined argument value after already locating the actual knowledge directory.
+- **Remaining old record structure removed**: Fixed remaining usages of old files and directories as record structure and use map structure instead. Now also returns correct total sizes on scan / mergen and delete obsolete directory entries properly.
 
 ## [1.5.0.0] - 2026-02-06
 
