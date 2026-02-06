@@ -38,6 +38,7 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const project_scanner_1 = require("./lib/project-scanner");
 const summary_merger_1 = require("./lib/summary-merger");
+const types_1 = require("./types");
 function parseArgs(argv) {
     const args = {};
     const positional = [];
@@ -80,22 +81,66 @@ async function main() {
         process.exit(1);
     }
 }
+function getKnowledgeDir() {
+    const knowledgeDir = args.knowledgeDir;
+    // Auto-detect if not provided
+    if (!knowledgeDir) {
+        const location = args.location;
+        if (location) {
+            const detected = (0, project_scanner_1.findKnowledgeDir)(location);
+            if (detected) {
+                return detected;
+            }
+        }
+        const processLocation = process.cwd();
+        if (location != processLocation) {
+            const detected = (0, project_scanner_1.findKnowledgeDir)(processLocation);
+            if (detected) {
+                return detected;
+            }
+        }
+    }
+    else {
+        return path.resolve(knowledgeDir);
+    }
+    return undefined;
+}
 async function handleScan() {
-    const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
-    const output = path.join(knowledgeDir, 'scan.json');
-    const location = args.location || process.cwd();
+    let knowledgeDir = getKnowledgeDir();
+    const processLocation = path.normalize(process.cwd());
+    const location = path.normalize(args.location || processLocation);
+    if (!knowledgeDir) {
+        if (args.calledFromHook) {
+            // If no .knowledge/ could be found the scan logic doesn't need to be executed. This improves startup time because there is no benefit in scanning everything in this use case.
+            return;
+        }
+        knowledgeDir = path.join(processLocation, types_1.KNOWLEDGE_DIRECTORY);
+    }
+    else if (!location.includes(knowledgeDir.replace('\\' + types_1.KNOWLEDGE_DIRECTORY, ''))) {
+        // if the location is higher up in the directory structure than the .knowledgeDir then this is either called by the hook in a random directory or the location argument is wrong
+        if (args.calledFromHook) {
+            return;
+        }
+        console.log(JSON.stringify({ error: `The location to scan '${location}' is higher in the directory structure than the found .knowledgeDir '${knowledgeDir}'. If proceeded this will lead to path missmatches in the ${types_1.SUMMARIES_FILE}. Provide correct values for the arguments '--location' and/or '--knowledgeDir'.` }));
+        return;
+    }
+    const output = path.join(knowledgeDir, types_1.SCAN_FILE);
     if (!fs.existsSync(knowledgeDir)) {
         fs.mkdirSync(knowledgeDir, { recursive: true });
     }
     const scanData = await (0, project_scanner_1.scanProject)(location, knowledgeDir);
-    fs.writeFileSync(output, JSON.stringify(scanData));
-    console.log(JSON.stringify(scanData));
+    const outputJson = JSON.stringify(scanData);
+    fs.writeFileSync(output, outputJson);
+    console.log(outputJson);
     process.exit(0);
 }
 async function handleMerge() {
-    const location = args.location || process.cwd();
-    const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
-    const summariesPath = path.join(args.knowledgeDir, 'haiku-batch-*.json');
+    const knowledgeDir = getKnowledgeDir();
+    if (!knowledgeDir) {
+        console.log(JSON.stringify({ error: `${types_1.KNOWLEDGE_DIRECTORY} is missing! You need to run scan first before trying to merge scan results.` }));
+        return;
+    }
+    const summariesPath = path.join(knowledgeDir, 'haiku-batch-*.json');
     try {
         // Support glob patterns and single files
         const filesToMerge = expandGlob(summariesPath);
@@ -119,13 +164,13 @@ async function handleMerge() {
         }
         const analysedFilesCount = merged.files.length;
         const analysedDirectoriesCount = merged.directories.length;
-        const current = (0, summary_merger_1.mergeSummaries)(location, knowledgeDir, merged);
+        const current = (0, summary_merger_1.mergeSummaries)(knowledgeDir, merged);
         const result = {
             status: 'success',
             summary: {
-                location: path.join(knowledgeDir, 'summaries.json'),
-                directoryEntryCount: Object.keys(current.directories).length,
-                fileEntryCount: Object.keys(current.files).length,
+                location: path.join(knowledgeDir, types_1.SUMMARIES_FILE),
+                directoryEntryCount: current.directories.size,
+                fileEntryCount: current.files.size,
             },
             merge: {
                 processedPartialSummaryFiles: filesToMerge.length,
@@ -164,29 +209,30 @@ function expandGlob(pattern) {
 }
 async function handleQuery() {
     const topic = positional[0] || '';
-    const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), '.knowledge');
+    const knowledgeDir = args.knowledgeDir || path.join(process.cwd(), types_1.KNOWLEDGE_DIRECTORY);
     const scope = args.scope || '';
-    const maxResults = parseInt(args.max || '25', 10);
-    const format = args.format || 'json'; // 'json' for flat, 'hierarchy' for tree
+    const maxResults = parseInt(args.max || `${types_1.QUERY_RESULT_MAX}`, 10);
+    const format = args.format || types_1.FORMAT_GROUPED; // 'flat' for list, 'grouped' for tree
     if (!fs.existsSync(knowledgeDir)) {
-        console.log(JSON.stringify({ error: 'No .knowledge found. Run: ctx scan first.' }));
+        console.log(JSON.stringify({ error: `No ${types_1.KNOWLEDGE_DIRECTORY} found. Run: ctx scan first.` }));
         process.exit(1);
     }
     try {
         const keywords = topic.toLowerCase().split(/\s+/).filter(k => k.length > 0);
         // Load summaries directly
-        const summaries = (0, summary_merger_1.getSummaries)(knowledgeDir);
+        const summaries = (0, summary_merger_1.getOrCreateSummaries)(knowledgeDir);
         const scoredResults = [];
         // Score files
-        Object.entries(summaries.files).forEach(([filePath, summary]) => {
+        summaries.files.forEach((summary, filePath) => {
             if (scope && !filePath.startsWith(scope))
                 return;
             const fileScore = calculateConfidence(keywords, filePath, summary);
             if (fileScore > 0) {
                 scoredResults.push({
-                    filePath,
                     fileScore,
-                    ...summary
+                    path: filePath,
+                    ...summary,
+                    lastUpdated: undefined
                 });
             }
         });
@@ -195,13 +241,13 @@ async function handleQuery() {
         // Limit results
         const limited = scoredResults.slice(0, maxResults);
         let output;
-        if (format === 'hierarchy') {
+        if (format === types_1.FORMAT_GROUPED) {
             // Hierarchical grouping by folder
             const grouped = {};
             limited.forEach(item => {
-                const folderPath = path.dirname(item.filePath) || '.';
+                const folderPath = path.dirname(item.path) || '.';
                 if (!grouped[folderPath]) {
-                    const directory = summaries.directories[folderPath];
+                    const directory = summaries.directories.get(folderPath);
                     grouped[folderPath] = {
                         folderPath: folderPath,
                         folderScore: 0,
@@ -213,7 +259,13 @@ async function handleQuery() {
                 }
                 const folder = grouped[folderPath];
                 folder.folderScore += item.fileScore;
-                folder.files.push(item);
+                const fileForGrouping = {
+                    fileName: item.path.replace(folderPath + '/', ''),
+                    ...item,
+                    path: undefined,
+                    technologies: undefined
+                };
+                folder.files.push(fileForGrouping);
             });
             output = {
                 query: topic,
@@ -278,28 +330,27 @@ Commands:
   scan                          Scan project directory and save structure
 
   --location=<path>             The directory to scan (default: cwd)
-  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
+  --knowledgeDir=<path>         Project knowledge directory (default: ${types_1.KNOWLEDGE_DIRECTORY} in current directory)
 
-  merge                         Merge Haiku-generated summaries into .knowledge/summaries.json
+  merge                         Merge Haiku-generated summaries into ${types_1.KNOWLEDGE_DIRECTORY}/${types_1.SUMMARIES_FILE}
   
   --location=<path>             The directory that was scanned scan (default: cwd)
-  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
+  --knowledgeDir=<path>         Project knowledge directory (default: ${types_1.KNOWLEDGE_DIRECTORY} in current directory)
 
   query <topic>                 Search project summaries by keywords (scored results)
 
   --scope=<path>                Limit search to specific directory/file (for query)
-  --max=<number>                Maximum results to return (for query, default: 25)
-  --format=<type>               Output format: json (flat), hierarchy (grouped) 
-                                (for query, default: json)
-  --knowledgeDir=<path>         Project knowledge directory (default: .knowledge in current directory)
+  --max=<number>                Maximum results to return (for query, default: ${types_1.QUERY_RESULT_MAX})
+  --format=<type>               Output format: ${types_1.FORMAT_FLAT}, ${types_1.FORMAT_GROUPED} (for query, default: ${types_1.FORMAT_GROUPED})
+  --knowledgeDir=<path>         Project knowledge directory (default: ${types_1.KNOWLEDGE_DIRECTORY} in current directory)
 
 Examples:
   ctx scan
   ctx scan --location=../my-project
-  ctx merge --summaries=/tmp/summaries.json
+  ctx merge --summaries=/tmp/${types_1.SUMMARIES_FILE}
   ctx query "authentication"
   ctx query "auth user setup" --scope=src/auth --max=10
-  ctx query "hook" --format=hierarchy --max=20
+  ctx query "hook" --format=grouped --max=20
 `);
 }
 main();

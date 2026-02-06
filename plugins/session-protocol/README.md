@@ -36,23 +36,22 @@ cp -r session-protocol ~/.claude/plugins/
   - WF1: Save Context - capture state to session-protocol.json
   - WF2: Load Context - restore state from session-protocol.json
 
-### Commands
-
-- `/save-session-protocol`: Save current session context
-- `/load-session-protocol`: Load previous session context
-
 ### Scripts
 
 - `sessionstart-session-protocol-check.py`: Auto-detect existing protocol on session start
 
 ## Usage
 
+### Session Start
+
+The session start hook automatically detects existing session-protocol.json, provides the model information on what to do with it and prompts you to load it on session start.
+
 ### Save Session
 
 When ending a session with unfinished work:
 
 ```
-You: "Save session"
+You: "Save session" or "/managing-session-continuity save"
 
 Claude: Saved → sp.json
 - 5 pend (2 P1, 3 P2)
@@ -66,19 +65,12 @@ Next: TASK_001 - Fix JWT validation
 When starting a new session:
 
 ```
-You: "Load session"
+You: "Load previous session" or "/managing-session-continuity load"
 
 Claude: Loaded sp.json (2d old)
 - 3 pend, 1 prog, 8 done (1 consolidated from 12)
 - Git: feature/auth @ abc123f (2 commits ahead)
 Next: TASK_001 - Fix JWT validation
-```
-
-### Manual Invocation
-
-```
-/save-session-protocol
-/load-session-protocol
 ```
 
 ## Workflows

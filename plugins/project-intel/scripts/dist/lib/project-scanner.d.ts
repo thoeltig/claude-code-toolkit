@@ -1,9 +1,11 @@
-interface RawProjectData {
-    filePaths: string[];
+export interface ScanResult {
+    filesToScan: string[];
     projectStats: {
-        totalFiles: number;
-        extensionCount: Record<string, number>;
+        knowledgeDir: string;
+        totalFilesInKnowledge: number;
+        numberOfFilesToScan: number;
+        extensionCountsOfFilesToScan: Record<string, number>;
     };
 }
-export declare function scanProject(location: string, knowledgeDir: string): Promise<RawProjectData>;
-export {};
+export declare function findKnowledgeDir(location: string): string | undefined;
+export declare function scanProject(location: string, knowledgeDir: string): Promise<ScanResult>;
