@@ -12,8 +12,8 @@
     {
       "name": "session-protocol",
       "source": "./plugins/session-protocol",
-      "description": "Session continuity management across Claude conversations",
-      "version": "1.1.0.0",
+      "description": "Save your active tasks between sessions for seamless continuity and never loss context again.",
+      "version": "1.2.0.0",
       "author": {
         "name": "Thore Höltig"
       },
