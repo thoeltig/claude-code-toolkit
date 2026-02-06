@@ -42,7 +42,12 @@ function getOrCreateSummaries(knowledgeDir) {
     const summariesPath = path.join(knowledgeDir, 'summaries.json');
     if (fs.existsSync(summariesPath)) {
         try {
-            return JSON.parse(fs.readFileSync(summariesPath, 'utf8'));
+            const storage = JSON.parse(fs.readFileSync(summariesPath, 'utf8'));
+            return {
+                generated: storage.generated,
+                directories: new Map(Object.entries(storage.directories)),
+                files: new Map(Object.entries(storage.files))
+            };
         }
         catch (e) {
             console.error('Error reading summaries.json, creating new:', e);
@@ -50,40 +55,34 @@ function getOrCreateSummaries(knowledgeDir) {
     }
     return {
         generated: new Date().toISOString(),
-        directories: {},
-        files: {}
+        directories: new Map(),
+        files: new Map(),
     };
 }
 function writeSummaries(knowledgeDir, data) {
     const summariesPath = path.join(knowledgeDir, 'summaries.json');
     const tempPath = summariesPath + '.tmp';
     // Update generated timestamp
-    data.generated = new Date().toISOString();
+    const storage = {
+        generated: new Date().toISOString(),
+        directories: Object.fromEntries(data.directories),
+        files: Object.fromEntries(data.files)
+    };
     // Write to temp file, then rename (atomic operation)
-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+    fs.writeFileSync(tempPath, JSON.stringify(storage, null, 2));
     fs.renameSync(tempPath, summariesPath);
 }
-function mergeSummaries(location, knowledgeDir, partialSummaries) {
+function mergeSummaries(knowledgeDir, partialSummaries) {
     const summaries = getOrCreateSummaries(knowledgeDir);
-    const normalizedLocation = path.normalize(location);
-    const normalizedKnowledgeDir = path.normalize(knowledgeDir);
-    const baseDir = normalizedKnowledgeDir.slice(0, normalizedKnowledgeDir.indexOf('.knowledge'));
     // Merge directories
     if (partialSummaries.directories) {
         for (const dirSummary of partialSummaries.directories) {
             if (dirSummary.technologies && dirSummary.technologies.length == 0)
                 dirSummary.technologies = undefined;
-            summaries.directories[dirSummary.path] = {
+            summaries.directories.set(dirSummary.path, {
                 ...dirSummary,
                 lastUpdated: new Date().toISOString()
-            };
-        }
-        const scannedDirectoryPaths = new Set(partialSummaries.directories.map(x => path.join(baseDir, x.path)));
-        for (const dirPath of Object.keys(summaries.directories)) {
-            const absPath = path.join(baseDir, dirPath);
-            if (absPath.startsWith(normalizedLocation) && !scannedDirectoryPaths.has(absPath)) {
-                delete summaries.directories[dirPath];
-            }
+            });
         }
     }
     // Merge files
@@ -93,17 +92,10 @@ function mergeSummaries(location, knowledgeDir, partialSummaries) {
                 fileSummary.exports = undefined;
             if (fileSummary.imports && fileSummary.imports.length == 0)
                 fileSummary.imports = undefined;
-            summaries.files[fileSummary.path] = {
+            summaries.files.set(fileSummary.path, {
                 ...fileSummary,
                 lastUpdated: new Date().toISOString()
-            };
-        }
-        const scannedFilePaths = new Set(partialSummaries.files.map(x => path.join(baseDir, x.path)));
-        for (const filePath of Object.keys(summaries.files)) {
-            const absPath = path.join(baseDir, filePath);
-            if (absPath.startsWith(normalizedLocation) && !scannedFilePaths.has(absPath)) {
-                delete summaries.files[filePath];
-            }
+            });
         }
     }
     writeSummaries(knowledgeDir, summaries);

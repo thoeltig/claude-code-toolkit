@@ -125,7 +125,6 @@ async function handleScan() {
     process.exit(0);
 }
 async function handleMerge() {
-    const location = args.location || process.cwd();
     const knowledgeDir = getKnowledgeDir();
     if (!knowledgeDir) {
         console.log(JSON.stringify({ error: `.knowledge/ is missing! You need to run scan first before trying to merge scan results.` }));
@@ -155,7 +154,7 @@ async function handleMerge() {
         }
         const analysedFilesCount = merged.files.length;
         const analysedDirectoriesCount = merged.directories.length;
-        const current = (0, summary_merger_1.mergeSummaries)(location, knowledgeDir, merged);
+        const current = (0, summary_merger_1.mergeSummaries)(knowledgeDir, merged);
         const result = {
             status: 'success',
             summary: {
@@ -238,7 +237,7 @@ async function handleQuery() {
             limited.forEach(item => {
                 const folderPath = path.dirname(item.path) || '.';
                 if (!grouped[folderPath]) {
-                    const directory = summaries.directories[folderPath];
+                    const directory = summaries.directories.get(folderPath);
                     grouped[folderPath] = {
                         folderPath: folderPath,
                         folderScore: 0,
