@@ -7,6 +7,17 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.2.0.0] - 2026-02-06
+
+### Removed
+
+- **Breaking:** `/save-session-protocol` and `/load-session-protocol` slash commands - managing-session-continuity skill can be invoked directly if necessary
+- Command files: `save-session-protocol.md` and `load-session-protocol.md`
+
+### Changed
+
+- Improved assistant instruction in session start hook: If a session protocol exists provide complete workflow to use to the model when user wants to load a session protocol 
+
 ## [1.1.0.0] - 2026-01-08
 
 ### Changed
@@ -85,6 +96,7 @@ _First release of session continuity plugin._
 - Decision matrix format for consolidation criteria
 - Workflow structure with numbered steps vs prose paragraphs
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.1.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.2.0.0...HEAD
+[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.1.0.0...SessionProtocol_v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SessionProtocol_v1.0.0.0...SessionProtocol_v1.1.0.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.0.0.0

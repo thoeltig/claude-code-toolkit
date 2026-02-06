@@ -9,6 +9,38 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.14.0.0] - 2026-02-06
+
+_Marketplace release with project-intel stability and session-protocol command simplification._
+
+### Changed
+
+- **project-intel plugin** ([v1.4.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.4.0.0)): Stability improvements
+  - Fixed entry ordering when loading and saving from summaries
+  - Fixed merge logic to avoid obsolete entry deletion
+  - Improved ignore patterns to include dotfiles with selective filtering for build/cache directories
+  - Fixed summary lookup map building during merge
+  - Fixed file modification date comparison for accurate staleness detection
+
+- **project-intel plugin** ([v1.5.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.5.0.0)): Code organization and discovery logic improvements
+  - Extracted constants and types into dedicated types.ts file for better maintainability
+  - Fixed knowledge directory discovery with early exit when location/process directory is higher in structure
+  - Fixed unused calledFromHook early exit logic
+  - Fixed git detection to check for git repo in location instead of only checking if git is installed
+  - Simplified file system search logic in findKnowledgeDir for better reliability
+
+- **project-intel plugin** ([v1.5.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.5.1.0)): Bug fixes for partial summaries and record structure
+  - Fixed error when knowledgeDir argument wasn't provided on merge
+  - Fixed remaining usages of old files and directories record structure, now uses map structure consistently
+  - Corrected total sizes returned on scan/merge operations
+  - Fixed deletion of obsolete directory entries
+
+- **session-protocol plugin** ([v1.2.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SessionProtocol_v1.2.0.0)): Command simplification and improved session workflow
+  - **Breaking:** Removed `/save-session-protocol` and `/load-session-protocol` slash commands - managing-session-continuity skill can be invoked directly if necessary
+  - Improved assistant instruction in session start hook: complete workflow provided when session protocol exists
+
+---
+
 ## [1.13.0.0] - 2026-02-05
 
 _Marketplace release with project-intel query optimization and session automation, plus fetch-full-content security enhancements._
@@ -316,7 +348,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.13.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.14.0.0...HEAD
+[1.14.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.13.0.0...v1.14.0.0
 [1.13.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.12.0.0...v1.13.0.0
 [1.12.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.11.0.0...v1.12.0.0
 [1.11.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/v1.11.0.0

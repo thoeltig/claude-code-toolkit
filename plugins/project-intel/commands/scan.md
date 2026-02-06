@@ -97,7 +97,7 @@ done
 Combine all batch results into project knowledge:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --location="$LOCATION" --knowledgeDir="$KNOWLEDGE_DIR"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js merge --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
 Parse the JSON response to extract:

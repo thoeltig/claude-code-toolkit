@@ -8,24 +8,7 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
 import { ScanResult } from './lib/project-scanner';
-
-interface AdditionalContext {
-  severity: string;
-  assistant_action: string;
-  assistant_instruction: string;
-  user_message: string;
-  filesNeedingUpdate?: number;
-}
-
-interface HookResponse {
-  continue: boolean;
-  suppressOutput: boolean;
-  systemMessage: string;
-  hookSpecificOutput: {
-    hookEventName: string;
-    additionalContext: string;
-  };
-}
+import { AdditionalContext, HookResponse } from './types';
 
 function outputHookResponse(systemMessage: string, additionalContext: AdditionalContext): void{ 
   const response: HookResponse = {
@@ -58,7 +41,7 @@ function main(): void {
   try {
     // .knowledge exists, proceed with normal flow
     const ctxPath = path.join(__dirname, 'ctx.js');
-    const scanOutput = execSync(`node "${ctxPath}" scan --calledFromHook`, {
+    const scanOutput = execSync(`node "${ctxPath}" scan --calledFromHook=true`, {
       encoding: 'utf8',
       cwd: process.cwd(),
       stdio: ['pipe', 'pipe', 'ignore']
