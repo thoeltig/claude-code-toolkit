@@ -26,7 +26,7 @@ const IGNORED_DIRS = new Set([
 ]);
 
 function shouldIgnore(name: string): boolean {
-  return IGNORED_DIRS.has(name) || name.startsWith('.');
+  return IGNORED_DIRS.has(name);
 }
 
 function trimToProjectDirFromFilepath(filepath: string, projectRoot:string): string{
@@ -62,18 +62,17 @@ function getSummaryFiles(summaries: SummariesData): Map<string, Date>{
   const mapOfSummaryFileEntries = new Map<string, Date>();
 
   // Check for a summary if one exist filepaths can be further reduced to only the actually modified files since last scan
-  const summaryFileEntries = Object.entries(summaries.files);
-  if(summaryFileEntries.length == 0){
+  if(summaries.files.size === 0){
     // No Summary = initial scan so return all tracked files
     return mapOfSummaryFileEntries;
   }
 
   // Find oldest scan date and create look for filepath and date
-  summaryFileEntries
-    .forEach(x => { 
-      const dateString = x[1].lastUpdated;
+  summaries.files
+    .forEach((val, key) => { 
+      const dateString = val.lastUpdated;
       const lastUpdate = dateString ? new Date(dateString) : new Date();
-      mapOfSummaryFileEntries.set(x[0], lastUpdate);
+      mapOfSummaryFileEntries.set(key, lastUpdate);
     });
     
   return mapOfSummaryFileEntries;
@@ -89,7 +88,7 @@ function getGitTrackedFiles(location: string): string[]{
   const filteredTrackedFiles = trackedFiles
     .filter(f => {
       const segments = f.split('/');
-      return !segments.some(x => IGNORED_DIRS.has(x));
+      return !segments.some(x => shouldIgnore(x));
     })
     .map(x => path.join(location, x));
 
@@ -118,7 +117,7 @@ function getFilesFromGit(location: string, summaries: SummariesData, projectRoot
     
     // Check for a summary if one exist filepaths can be further reduced to only the actually modified files since last scan    
     const mapOfSummaryFileEntries = getSummaryFiles(summaries);
-    if(mapOfSummaryFileEntries.size == 0){
+    if(mapOfSummaryFileEntries.size === 0){
       // No Summary = initial scan so return all tracked files
       trackedFiles.forEach(filepath => files.new.push(trimToProjectDirFromFilepath(filepath, projectRoot)));
       return files;
@@ -143,7 +142,7 @@ function getFilesFromGit(location: string, summaries: SummariesData, projectRoot
       // Check if this is a date line (ISO format)
       if (line.match(/^\d{4}-\d{2}-\d{2}/)) {
         currentDate = new Date(line);
-      } else if (currentDate && line && !line.split('/').some(x => IGNORED_DIRS.has(x))) {
+      } else if (currentDate && line && !line.split('/').some(x => shouldIgnore(x))) {
         // Only add if we haven't seen it yet (first = most recent)
         const lastUpdated = mapOfSummaryFileEntries.get(line);
         const filepath = path.join(location, line);
@@ -231,7 +230,7 @@ function getFilesFromFileSystemRecursive(dir: string, rootDir: string, filePaths
       if (stat.isDirectory()) {
         getFilesFromFileSystemRecursive(fullPath, rootDir, filePaths);
       } else if (stat.isFile()) {
-        filePaths.set(fullPath, stat.ctime);
+        filePaths.set(fullPath, stat.mtime);
       }
     }
   } catch (e) {}
@@ -241,14 +240,14 @@ function deletedOldEntriesFromKnowledge(filePaths: string[], summaries: Summarie
   const directoryDeleteCandidates = new Set<string>();
   filePaths.forEach(x => {
     directoryDeleteCandidates.add(path.dirname(x));
-    delete summaries.files[x];
+    summaries.files.delete(x);
   });
 
   const fileKeys = Object.keys(summaries.files);
   const remainingDictionariesInFiles = new Set<string>(fileKeys.map(x => path.dirname(x)));
   directoryDeleteCandidates.forEach(x => {
     if(remainingDictionariesInFiles.has(x) === false){
-      delete summaries.directories[x];
+      summaries.directories.delete(x);
     }
   });
 
