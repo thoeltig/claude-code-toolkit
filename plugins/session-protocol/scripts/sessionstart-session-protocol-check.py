@@ -29,15 +29,15 @@ def create_hook_response() -> dict:
     additional_context_data = {
         "severity": "info",
         "assistant_action": "inform_and_wait",
-        "assistant_instruction": "Inform the user that a session protocol exists. Wait for them to decide if they want to load it.",
-        "user_message": "A session protocol file exists. Type /load-session-protocol to restore it, or continue without loading."
+        "assistant_instruction": "Inform the user that a protocol of a previous session exists. Wait for the user to decide if they want to load it. When the user decides to load it invoke the /managing-session-continuity skill and use 'WF2: Load Context' before reading 'session-protocol.json'.",
+        "user_message": "A protocol of a previous session exists. Do you want to load it into context or continue without it?"
     }
 
     # Official Claude Code hook response schema
     response = {
         "continue": True,
         "suppressOutput": False,
-        "systemMessage": "Found session-protocol.json from previous session",
+        "systemMessage": "Found a protocol of a previous session",
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
             "additionalContext": json.dumps(additional_context_data)
