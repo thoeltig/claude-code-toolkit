@@ -1,36 +1,35 @@
 {
-  "generated": "2026-02-06T02:15:32.688Z",
+  "generated": "2026-02-06T02:41:41.093Z",
   "directories": {
     "plugins/project-intel/commands": {
       "path": "plugins/project-intel/commands",
-      "summary": "Contains slash command documentation for project analysis and scanning functionality.",
-      "purpose": "Documents the /scan command syntax, parameters, and workflow for orchestrating file analysis through batch processing.",
+      "summary": "Contains command documentation for the project-intel plugin.",
+      "purpose": "Documents the scan command interface, parameters, and usage patterns for end users and developers.",
       "technologies": [
         "Markdown"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/scripts": {
       "path": "plugins/project-intel/scripts",
-      "summary": "TypeScript build configuration and CLI entry point for the project-intel plugin's scanning and querying functionality.",
-      "purpose": "Provides the compilation setup for TypeScript files and serves as the runtime environment for the ctx CLI tool that manages project intelligence operations like scanning, merging, and querying.",
+      "summary": "Contains TypeScript implementation of the project scanning and analysis CLI tool.",
+      "purpose": "Core implementation directory that houses the main entry point and library modules for project intelligence reconnaissance. Enables scanning projects, merging analysis results, and querying knowledge bases.",
       "technologies": [
         "TypeScript",
-        "Node.js",
-        "CommonJS"
+        "Node.js"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/scripts/lib": {
       "path": "plugins/project-intel/scripts/lib",
-      "summary": "Core libraries for filesystem scanning, summary merging, and incremental change detection.",
-      "purpose": "Provides essential utilities for collecting project data via filesystem/git walking, tracking file modifications, and aggregating analysis results into persistent summaries.",
+      "summary": "Contains reusable library modules for project scanning and knowledge management.",
+      "purpose": "Provides shared utilities for scanning project filesystems, managing git integration, and merging file summaries into a knowledge base. Essential for the scan workflow.",
       "technologies": [
         "TypeScript",
         "Node.js",
         "Git"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel": {
       "path": "plugins/project-intel",
@@ -45,22 +44,21 @@
     },
     ".claude-plugin": {
       "path": ".claude-plugin",
-      "summary": "Root plugin configuration and marketplace definition for the Claude Code Toolkit.",
-      "purpose": "Defines the marketplace entry point listing all available plugins (session-protocol, project-intel, fetch-full-content, changelog, documentation, claude-code-capabilities, cross-platform-notification) with versions and descriptions.",
-      "technologies": [
-        "JSON",
-        "Plugin Architecture"
-      ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
-    },
-    "plugins/project-intel/.claude-plugin": {
-      "path": "plugins/project-intel/.claude-plugin",
-      "summary": "Plugin configuration directory for the project-intel plugin.",
-      "purpose": "Contains metadata and hook definitions for the lightweight reconnaissance system plugin.",
+      "summary": "Contains marketplace configuration defining all available plugins.",
+      "purpose": "Serves as the central registry for the Claude Code Toolkit marketplace, listing metadata and configuration for all seven plugins with version tracking and author information.",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
+    },
+    "plugins/project-intel/.claude-plugin": {
+      "path": "plugins/project-intel/.claude-plugin",
+      "summary": "Contains plugin manifest and configuration for the project-intel plugin.",
+      "purpose": "Defines the project-intel plugin's metadata, version, and hooks configuration for integration with Claude Code.",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "": {
       "path": "",
@@ -439,10 +437,21 @@
   "files": {
     "plugins/project-intel/CHANGELOG.md": {
       "path": "plugins/project-intel/CHANGELOG.md",
-      "summary": "Version history for the project-intel plugin from v1.0.0.0 to v1.3.0.0 documenting feature additions, improvements, and changes.",
-      "purpose": "Documents all notable changes to the project-intel plugin including query optimization, session automation, git-based incremental scanning, and deletion cleanup features.",
+      "summary": "Detailed version history documenting project-intel changes from v1.0.0.0 to v1.4.0.0 following semantic versioning.",
+      "purpose": "Records all notable changes, bug fixes, feature additions, and improvements across versions to track plugin evolution and provide upgrade guidance for users.",
       "role": "documentation",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "Markdown",
+        "Semantic Versioning"
+      ],
+      "exports": [
+        "[1.4.0.0]",
+        "[1.3.0.0]",
+        "[1.2.0.0]",
+        "[1.1.0.0]",
+        "[1.0.0.0]"
+      ],
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/README.md": {
       "path": "plugins/project-intel/README.md",
@@ -453,8 +462,8 @@
     },
     "plugins/project-intel/scripts/ctx.ts": {
       "path": "plugins/project-intel/scripts/ctx.ts",
-      "summary": "Main CLI entry point for the project-intel plugin supporting scan, merge, and query operations with semantic scoring and hierarchical result grouping.",
-      "purpose": "Implements the ctx command-line interface that handles project scanning for summary generation, merging of batch analysis results, and semantic querying of project knowledge with support for grouped and flat output formats.",
+      "summary": "Main CLI entry point that implements scan, merge, and query commands for project intelligence operations.",
+      "purpose": "Primary command handler that orchestrates project scanning, summary merging, and knowledge base queries. Parses CLI arguments, manages knowledge directories, and calculates semantic search scoring.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
@@ -462,32 +471,32 @@
       ],
       "exports": [
         "parseArgs",
+        "main",
         "handleScan",
         "handleMerge",
         "handleQuery",
         "calculateConfidence",
-        "printHelp",
-        "getKnowledgeDir"
+        "expandGlob",
+        "printHelp"
       ],
       "imports": [
         "fs",
         "path",
-        "findKnowledgeDir",
-        "scanProject",
-        "mergeSummaries",
-        "getOrCreateSummaries"
+        "project-scanner",
+        "summary-merger"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/scripts/lib/project-scanner.ts": {
       "path": "plugins/project-intel/scripts/lib/project-scanner.ts",
-      "summary": "Filesystem traversal and change detection module that identifies files to scan using git tracking or filesystem modification dates with automatic cleanup of deleted entries.",
-      "purpose": "Provides core scanning functionality to walk the filesystem, detect new/modified/deleted files using git or filesystem modification dates, filter ignored directories, and automatically remove deleted file entries from project knowledge to maintain accuracy.",
+      "summary": "Implements project scanning with git integration and filesystem traversal to identify new, modified, and deleted files.",
+      "purpose": "Recursively scans project directories or uses git metadata to detect file changes. Supports incremental scanning by comparing against existing summaries. Filters ignored directories and normalizes paths.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
         "Node.js",
-        "Git"
+        "Git",
+        "child_process"
       ],
       "exports": [
         "scanProject",
@@ -497,52 +506,66 @@
       "imports": [
         "fs",
         "path",
-        "execSync",
-        "getOrCreateSummaries",
-        "writeSummaries"
+        "execSync"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/scripts/lib/summary-merger.ts": {
       "path": "plugins/project-intel/scripts/lib/summary-merger.ts",
-      "summary": "Merges partial summaries from Haiku agents into persistent knowledge while removing deleted files and empty directories.",
-      "purpose": "Aggregates batch analysis results into summaries.json, updates timestamps, and cleans up stale entries when files are deleted or projects change.",
+      "summary": "Manages reading, writing, and merging of file and directory summaries into persistent knowledge storage.",
+      "purpose": "Provides data structures and functions for persisting analyzed file metadata. Converts between storage format and runtime maps, merges partial batch results, and maintains lastUpdated timestamps.",
       "role": "implementation",
       "technologies": [
         "TypeScript",
-        "Node.js",
-        "JSON"
+        "Node.js"
       ],
       "exports": [
+        "getOrCreateSummaries",
+        "writeSummaries",
+        "mergeSummaries",
         "DirectorySummary",
         "FileSummary",
         "SummariesData",
-        "PartialSummaries",
-        "PartialDirectorySummary",
-        "PartialFileSummary",
-        "getOrCreateSummaries",
-        "writeSummaries",
-        "mergeSummaries"
+        "PartialSummaries"
       ],
       "imports": [
         "fs",
         "path"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     ".claude-plugin/marketplace.json": {
       "path": ".claude-plugin/marketplace.json",
-      "summary": "Root marketplace configuration file listing all seven plugins available in the Claude Code Toolkit with metadata and source locations.",
-      "purpose": "Registers the entire marketplace in Claude Code with plugin registry, version information, author details, and plugin source directories for automatic discovery and installation.",
+      "summary": "Marketplace registry containing metadata for all seven Claude Code plugins with versions and descriptions.",
+      "purpose": "Central configuration file that registers all plugins in the marketplace including session-protocol, project-intel, fetch-full-content, changelog, documentation, claude-code-capabilities, and cross-platform-notification with their source paths and versions.",
       "role": "configuration",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "JSON"
+      ],
+      "exports": [
+        "name",
+        "owner",
+        "metadata",
+        "plugins"
+      ],
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/.claude-plugin/plugin.json": {
       "path": "plugins/project-intel/.claude-plugin/plugin.json",
-      "summary": "Plugin metadata defining the project-intel plugin with version 1.4.0.0 and hooks configuration reference.",
-      "purpose": "Registers the project-intel plugin in the Claude Code marketplace with author information and hook definitions for the lightweight reconnaissance system.",
+      "summary": "Plugin manifest declaring project-intel as a lightweight reconnaissance system for semantic code exploration.",
+      "purpose": "Registers the project-intel plugin with Claude Code, specifying its metadata, version 1.4.0.0, author information, and hook configuration reference.",
       "role": "configuration",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "JSON"
+      ],
+      "exports": [
+        "name",
+        "description",
+        "version",
+        "author",
+        "hooks"
+      ],
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "CHANGELOG.md": {
       "path": "CHANGELOG.md",
@@ -1380,10 +1403,14 @@
     },
     "plugins/project-intel/scripts/package.json": {
       "path": "plugins/project-intel/scripts/package.json",
-      "summary": "NPM package configuration for project-intel scripts defining CLI binary, build tasks, and development dependencies for TypeScript compilation.",
-      "purpose": "Configures the project-intel CLI package with build and watch scripts, main entry point, bin executable, TypeScript and Node.js type definitions as dev dependencies for building the ctx command-line tool.",
+      "summary": "Defines project metadata, scripts, dependencies, and entry point for the project-intel package.",
+      "purpose": "Configuration file that specifies the package name, version, CLI entry point, build scripts, and development dependencies. Enables the ctx command and npm script management.",
       "role": "configuration",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "Node.js",
+        "npm"
+      ],
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/session-protocol/CHANGELOG.md": {
       "path": "plugins/session-protocol/CHANGELOG.md",
@@ -3408,13 +3435,13 @@
     },
     "plugins/project-intel/commands/scan.md": {
       "path": "plugins/project-intel/commands/scan.md",
-      "summary": "Documentation describing the /scan command workflow for orchestrating parallel file analysis through batching and Haiku agent invocation.",
-      "purpose": "Specifies the scan command behavior, parameters, multi-step process, error handling, and technical implementation details for project knowledge generation.",
+      "summary": "Comprehensive documentation for the scan command including parameters, usage examples, process flow, and technical implementation details.",
+      "purpose": "Guides users and developers on how to use the scan command for analyzing projects. Documents the multi-wave Haiku batch processing orchestration, error handling, and output structures.",
       "role": "documentation",
       "technologies": [
         "Markdown"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     },
     "plugins/project-intel/hooks/hooks.json": {
       "path": "plugins/project-intel/hooks/hooks.json",
@@ -3465,10 +3492,19 @@
     },
     "README.md": {
       "path": "README.md",
-      "summary": "Comprehensive guide introducing the Claude Code Toolkit marketplace with quick start instructions and detailed descriptions of seven available plugins.",
-      "purpose": "Serves as the primary documentation for users, explaining the toolkit's value proposition, available plugins (session-protocol, project-intel, fetch-full-content, changelog, documentation, claude-code-capabilities, cross-platform-notification), installation methods, and feature highlights.",
+      "summary": "Comprehensive documentation for the Claude Code Toolkit marketplace featuring installation instructions, plugin descriptions, and usage guidance.",
+      "purpose": "Primary user-facing documentation that provides quick-start instructions, detailed plugin highlights with feature descriptions, installation commands, and architecture overview of the toolkit ecosystem.",
       "role": "documentation",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "Markdown"
+      ],
+      "exports": [
+        "Claude Code Toolkit",
+        "Available Plugins",
+        "Quick Start",
+        "Plugin Highlights"
+      ],
+      "lastUpdated": "2026-02-06T02:41:41.093Z"
     }
   }
 }
