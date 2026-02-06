@@ -213,7 +213,7 @@ async function handleQuery() {
         const summaries = (0, summary_merger_1.getOrCreateSummaries)(knowledgeDir);
         const scoredResults = [];
         // Score files
-        Object.entries(summaries.files).forEach(([filePath, summary]) => {
+        summaries.files.forEach((summary, filePath) => {
             if (scope && !filePath.startsWith(scope))
                 return;
             const fileScore = calculateConfidence(keywords, filePath, summary);

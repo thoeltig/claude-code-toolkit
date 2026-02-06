@@ -233,7 +233,7 @@ async function handleQuery() {
     const scoredResults: ScoredFileSummary[] = [];
 
     // Score files
-    Object.entries(summaries.files).forEach(([filePath, summary]: any) => {
+    summaries.files.forEach((summary, filePath) => {
       if (scope && !filePath.startsWith(scope)) return;
       const fileScore = calculateConfidence(keywords, filePath, summary);
       if (fileScore > 0) {
