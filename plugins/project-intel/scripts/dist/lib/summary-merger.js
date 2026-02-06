@@ -38,8 +38,9 @@ exports.writeSummaries = writeSummaries;
 exports.mergeSummaries = mergeSummaries;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const types_1 = require("../types");
 function getOrCreateSummaries(knowledgeDir) {
-    const summariesPath = path.join(knowledgeDir, 'summaries.json');
+    const summariesPath = path.join(knowledgeDir, types_1.SUMMARIES_FILE);
     if (fs.existsSync(summariesPath)) {
         try {
             const storage = JSON.parse(fs.readFileSync(summariesPath, 'utf8'));
@@ -50,7 +51,7 @@ function getOrCreateSummaries(knowledgeDir) {
             };
         }
         catch (e) {
-            console.error('Error reading summaries.json, creating new:', e);
+            console.error(`Error reading ${types_1.SUMMARIES_FILE}, creating new:`, e);
         }
     }
     return {

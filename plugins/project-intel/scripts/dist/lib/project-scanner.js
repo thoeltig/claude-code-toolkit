@@ -39,10 +39,11 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const child_process_1 = require("child_process");
 const summary_merger_1 = require("./summary-merger");
+const types_1 = require("../types");
 const IGNORED_DIRS = new Set([
     'node_modules', 'dist', 'build', '.next', '__pycache__', 'target', 'bin', 'obj',
     '.git', '.svn', 'coverage', '.pytest_cache', '.venv', 'venv', '.env', '.idea',
-    '.vscode', 'vendor', 'tmp', '.cache', '.knowledge', '.claude',
+    '.meteor', '.angular', '.vscode', '.vs', 'vendor', 'tmp', '.cache', types_1.KNOWLEDGE_DIRECTORY, '.claude',
 ]);
 function shouldIgnore(name) {
     return IGNORED_DIRS.has(name);
@@ -51,23 +52,23 @@ function trimToProjectDirFromFilepath(filepath, projectRoot) {
     // Normalize to forward slashes for consistency across platforms (git uses forward slashes)
     return path.relative(projectRoot, filepath).replace(/\\/g, '/');
 }
-function searchFileSystemRecursive(dir, fileName) {
+function searchFileSystemRecursive(dir) {
     try {
         const entries = fs.readdirSync(dir);
         for (const entry of entries) {
-            if (entry !== '.knowledge' && shouldIgnore(entry)) {
-                continue;
-            }
-            const fullPath = path.join(dir, entry);
-            const stat = fs.statSync(fullPath);
+            const dirPath = path.join(dir, entry);
+            const stat = fs.statSync(dirPath);
             if (stat.isDirectory()) {
-                const foundPath = searchFileSystemRecursive(fullPath, fileName);
-                if (foundPath) {
-                    return foundPath;
+                if (entry === types_1.KNOWLEDGE_DIRECTORY) {
+                    const fullPath = path.join(dirPath, types_1.SUMMARIES_FILE);
+                    if (fs.existsSync(fullPath)) {
+                        return path.normalize(fullPath);
+                    }
                 }
-            }
-            else if (stat.isFile() && fullPath.endsWith(fileName)) {
-                return fullPath;
+                const result = searchFileSystemRecursive(dirPath);
+                if (result) {
+                    return result;
+                }
             }
         }
     }
@@ -104,9 +105,9 @@ function getGitTrackedFiles(location) {
         .map(x => path.join(location, x));
     return filteredTrackedFiles;
 }
-function isGitInstalled() {
+function isGitRepository() {
     try {
-        (0, child_process_1.execSync)('git --version', { stdio: 'ignore' });
+        (0, child_process_1.execSync)('git rev-parse --git-dir', { stdio: 'ignore' });
         return true;
     }
     catch {
@@ -269,20 +270,20 @@ function createOutput(filePaths, filesInSummary, knowledgeDir) {
     };
 }
 function findKnowledgeDir(location) {
-    const summaryFile = '.knowledge/summaries.json';
-    if (isGitInstalled()) {
+    if (isGitRepository()) {
         try {
+            const fileLocation = path.join(types_1.KNOWLEDGE_DIRECTORY, types_1.SUMMARIES_FILE);
             const foundKnowledgeFile = (0, child_process_1.execSync)(`git ls-files --full-name -- "${location}"`, { encoding: 'utf-8' })
                 .trim()
                 .split('\n')
-                .find(f => f.endsWith(summaryFile));
+                .find(f => f.endsWith(fileLocation));
             if (foundKnowledgeFile) {
-                return path.dirname(path.join(location, foundKnowledgeFile));
+                return path.normalize(path.dirname(path.join(location, foundKnowledgeFile)));
             }
         }
         catch { }
     }
-    const foundFile = searchFileSystemRecursive(location, summaryFile);
+    const foundFile = searchFileSystemRecursive(location);
     return foundFile ? path.dirname(foundFile) : undefined;
 }
 async function scanProject(location, knowledgeDir) {
@@ -293,7 +294,7 @@ async function scanProject(location, knowledgeDir) {
     }
     const projectRoot = path.dirname(knowledgeDir);
     let files;
-    if (isGitInstalled()) {
+    if (isGitRepository()) {
         files = getFilesFromGit(location, summaries, projectRoot);
     }
     else {
