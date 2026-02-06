@@ -7,6 +7,18 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.4.0.0] - 2026-02-06
+
+_Stability improvements: Bug fixes for entry ordering, merge logic, ignore patterns, and timestamp handling._
+
+### Fixed
+
+- **Entry ordering**: Fixed reorder problem when loading and saving entries from summaries
+- **Merge logic**: Removed obsolete entry deletion in merge (already handled by scan)
+- **Ignore patterns**: Internal ignore logic now properly includes dotfiles with selective filtering for build/cache directories on top of gitignore rules
+- **Summary lookup**: Fixed lookup map building when merging scan results
+- **Timestamp comparison**: Fixed file modification date comparison for accurate staleness detection
+
 ## [1.3.0.0] - 2026-02-05
 
 _Query optimization: Better output structure, per-file technologies for detailed analysis, and improved default behavior._
@@ -98,7 +110,8 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.3.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.4.0.0...HEAD
+[1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.3.0.0...ProjectIntel_v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.2.0.0...ProjectIntel_v1.3.0.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.1.0.0...ProjectIntel_v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.0.0.0...ProjectIntel_v1.1.0.0
