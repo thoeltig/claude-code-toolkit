@@ -114,26 +114,31 @@ Session 2: /resume → Load cleaned transcript
 
 ## Known Limitations
 
-### Token Count Display Not Updated
+### Top-Level Context Percentage Lags (But Token Savings Are Visible)
 
-After deduplication runs, the actual transcript file is smaller and uses fewer tokens for reconstruction. However, the token usage displayed in the conversation (e.g., from `/context` command) may still show the pre-deduplication count.
+Token savings **are immediately visible**, but appear in different places within `/context`:
 
-**Why this happens:**
+**✅ Already Updated (Real Savings Shown):**
+- Messages section: Drops from higher to lower count (e.g., 47.9k → 17.3k)
+- Free space: Increases (e.g., 128k → 158k)
 
-The displayed token count reflects the message usage tokens reported when the conversation was happening, not a recalculation based on the deduplicated content. These are fixed values captured during the session and not updated retroactively.
+**⚠️ Lags Behind:**
+- Top-level percentage: Still shows pre-deduplication value (e.g., stays at 35%) until cache invalidates
 
-**Context window calculation (unclear):**
+**Why this split happens:**
 
-It's currently unknown whether Claude's context window limit is enforced by:
-- Actual tokenization of the current transcript content (in which case deduplication provides real benefit)
-- Summing up reported message usage tokens (in which case deduplication reduces file size but doesn't change the reported usage)
+The top-level percentage is calculated from `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` which contains the cached token values from the current prompt cache. Since deduplication modified the persisted transcript and not the prompt cache these cached values don't update immediately. The messages and free space sections recalculate differently and reflect the actual smaller transcript right away.
 
-**Practical impact:**
+When the prompt cache invalidates (by default after 5 minutes), it tokenizes the deduplicated transcript and the top-level percentage updates to match.
 
-- ✅ Your resume will be faster and use fewer tokens (smaller file to reconstruct)
-- ⚠️ Token counters in the UI may not reflect this improvement immediately
+**Practical benefit when approaching context limits:**
 
-If you need accurate token savings, compare transcript file sizes before/after deduplication, or check the dry-run report.
+The real token savings are **already usable** via the messages and free space readings. If you're near capacity:
+- Messages section shows actual savings (real context available)
+- Free space shows accurate headroom
+- You can confidently stay under limits based on these numbers
+
+If you want the top-level percentage updated immediately, exit and wait for cache invalidation, then resume—the deduplicated transcript reloads fresh.
 
 ---
 

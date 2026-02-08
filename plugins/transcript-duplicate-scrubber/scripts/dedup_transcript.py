@@ -158,8 +158,12 @@ def extract_reads(messages: list[dict]) -> dict[str, list[ReadOp]]:
 
         # Get toolUseResult metadata
         tool_use_result = msg.get('toolUseResult', {})
-        result_filepath = tool_use_result.get('file', {}).get('filePath')
-        result_content = tool_use_result.get('file', {}).get('content')
+        if isinstance(tool_use_result, dict):
+            result_filepath = tool_use_result.get('file', {}).get('filePath')
+            result_content = tool_use_result.get('file', {}).get('content')
+        else:
+            result_filepath = None
+            result_content = None
 
         for item in message_content:
             if item.get('type') == 'tool_result':
