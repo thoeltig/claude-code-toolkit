@@ -1,5 +1,5 @@
 {
-  "generated": "2026-02-06T17:23:18.785Z",
+  "generated": "2026-02-08T20:43:03.686Z",
   "directories": {
     "plugins/project-intel/commands": {
       "path": "plugins/project-intel/commands",
@@ -46,13 +46,12 @@
     },
     ".claude-plugin": {
       "path": ".claude-plugin",
-      "summary": "Contains marketplace configuration for the Claude Code Toolkit plugins distribution.",
-      "purpose": "Defines the plugin marketplace metadata and registry for all available plugins in the toolkit. Enables users to discover and install plugins through Claude Code's marketplace system.",
+      "summary": "Plugin marketplace configuration directory at root level.",
+      "purpose": "Contains marketplace metadata and plugin registry for the entire Claude Code Toolkit marketplace.",
       "technologies": [
-        "JSON",
-        "Claude Code"
+        "JSON"
       ],
-      "lastUpdated": "2026-02-06T17:10:34.046Z"
+      "lastUpdated": "2026-02-08T20:43:03.685Z"
     },
     "plugins/project-intel/.claude-plugin": {
       "path": "plugins/project-intel/.claude-plugin",
@@ -426,6 +425,44 @@
         "JSON"
       ],
       "lastUpdated": "2026-02-06T02:15:32.687Z"
+    },
+    "plugins/transcript-duplicate-scrubber": {
+      "path": "plugins/transcript-duplicate-scrubber",
+      "summary": "Plugin directory containing transcript deduplication functionality for reducing token waste in Claude Code sessions.",
+      "purpose": "Provides automatic deduplication of file reads from transcripts using hash-based detection to lower token costs and hallucination risk when resuming sessions.",
+      "technologies": [
+        "Python",
+        "JSON",
+        "SHA256 Hashing"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.685Z"
+    },
+    "plugins/transcript-duplicate-scrubber/.claude-plugin": {
+      "path": "plugins/transcript-duplicate-scrubber/.claude-plugin",
+      "summary": "Plugin metadata and configuration directory for the transcript-duplicate-scrubber plugin.",
+      "purpose": "Contains plugin manifest and hook configuration files required by Claude Code to register and execute the plugin.",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.685Z"
+    },
+    "plugins/transcript-duplicate-scrubber/hooks": {
+      "path": "plugins/transcript-duplicate-scrubber/hooks",
+      "summary": "Hook configuration directory defining when and how the deduplication script executes.",
+      "purpose": "Specifies SessionEnd hook that triggers automatic deduplication as sessions close.",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.685Z"
+    },
+    "plugins/transcript-duplicate-scrubber/scripts": {
+      "path": "plugins/transcript-duplicate-scrubber/scripts",
+      "summary": "Scripts directory containing the main deduplication implementation logic.",
+      "purpose": "Houses the Python implementation for detecting and removing duplicate file reads from Claude Code transcripts.",
+      "technologies": [
+        "Python"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.685Z"
     }
   },
   "files": {
@@ -531,17 +568,19 @@
     },
     ".claude-plugin/marketplace.json": {
       "path": ".claude-plugin/marketplace.json",
-      "summary": "Marketplace registry defining seven plugins with metadata, versions, descriptions, and authors.",
-      "purpose": "Central registry for Claude Code Toolkit plugins enabling discovery and installation. Lists session-protocol, project-intel, fetch-full-content, changelog, documentation, claude-code-capabilities, and cross-platform-notification plugins.",
+      "summary": "Marketplace configuration file defining the Claude Code Toolkit with 8 plugins including their names, versions, descriptions, sources, and authors.",
+      "purpose": "Registers the marketplace with Claude Code and describes all available plugins for discovery and installation.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
       "exports": [
-        "plugins",
-        "marketplace metadata"
+        "name",
+        "owner",
+        "metadata",
+        "plugins"
       ],
-      "lastUpdated": "2026-02-06T17:10:34.047Z"
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
     "plugins/project-intel/.claude-plugin/plugin.json": {
       "path": "plugins/project-intel/.claude-plugin/plugin.json",
@@ -563,10 +602,13 @@
     },
     "CHANGELOG.md": {
       "path": "CHANGELOG.md",
-      "summary": "Complete version history of the Claude Code Toolkit from v1.0.0.0 to v1.13.0.0 documenting all features, changes, and improvements across all plugins.",
-      "purpose": "Documents all notable changes to the toolkit marketplace including new features, improvements, and breaking changes for each plugin version, formatted according to Common Changelog and Keep a Changelog standards.",
+      "summary": "Complete changelog documenting all releases of the Claude Code Toolkit marketplace from v1.0.0.0 to v1.15.0.0 with detailed version histories.",
+      "purpose": "Tracks marketplace and plugin releases, features, changes, and bug fixes across all versions using Common Changelog and Semantic Versioning standards.",
       "role": "documentation",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
     "CODE_OF_CONDUCT.md": {
       "path": "CODE_OF_CONDUCT.md",
@@ -3444,18 +3486,13 @@
     },
     "README.md": {
       "path": "README.md",
-      "summary": "Comprehensive documentation of Claude Code Toolkit marketplace with plugin descriptions, quick start guide, and feature highlights.",
-      "purpose": "Primary user-facing documentation introducing the toolkit, its seven plugins, their capabilities, installation instructions, and links to detailed documentation. Establishes the toolkit's value proposition of token cost reduction, context preservation, and development automation.",
+      "summary": "Main marketplace documentation describing the Claude Code Toolkit as a plugin marketplace with 8 available plugins.",
+      "purpose": "Provides overview of the toolkit's purpose, quick start installation, plugin catalog with descriptions, plugin highlights, and contribution guidelines.",
       "role": "documentation",
       "technologies": [
         "Markdown"
       ],
-      "exports": [
-        "Quick Start",
-        "Plugin Highlights",
-        "Documentation Links"
-      ],
-      "lastUpdated": "2026-02-06T17:10:34.047Z"
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
     "plugins/project-intel/scripts/types.ts": {
       "path": "plugins/project-intel/scripts/types.ts",
@@ -3482,6 +3519,90 @@
         "HookResponse"
       ],
       "lastUpdated": "2026-02-06T16:43:35.148Z"
+    },
+    "plugins/transcript-duplicate-scrubber/.claude-plugin/plugin.json": {
+      "path": "plugins/transcript-duplicate-scrubber/.claude-plugin/plugin.json",
+      "summary": "Plugin manifest defining transcript-duplicate-scrubber metadata, version, author, and hooks reference.",
+      "purpose": "Registers the plugin with Claude Code and points to the hooks configuration file for plugin initialization.",
+      "role": "configuration",
+      "technologies": [
+        "JSON"
+      ],
+      "exports": [
+        "name",
+        "description",
+        "version",
+        "author",
+        "hooks"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
+    },
+    "plugins/transcript-duplicate-scrubber/CHANGELOG.md": {
+      "path": "plugins/transcript-duplicate-scrubber/CHANGELOG.md",
+      "summary": "Complete version history documenting the transcript-duplicate-scrubber plugin from initial release v1.0.0.0.",
+      "purpose": "Tracks all changes, additions, and implementation details using Common Changelog and Semantic Versioning standards for transparency and feature documentation.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
+    },
+    "plugins/transcript-duplicate-scrubber/README.md": {
+      "path": "plugins/transcript-duplicate-scrubber/README.md",
+      "summary": "Comprehensive user documentation for the transcript-duplicate-scrubber plugin covering installation, usage, how it works, and technical explanation.",
+      "purpose": "Provides installation instructions, usage examples (hook and CLI modes), algorithm explanation with deduplication rules, known limitations, and cost-benefit analysis for users.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
+    },
+    "plugins/transcript-duplicate-scrubber/hooks/hooks.json": {
+      "path": "plugins/transcript-duplicate-scrubber/hooks/hooks.json",
+      "summary": "Hook configuration file specifying SessionEnd hook triggers for the dedup_transcript.py script.",
+      "purpose": "Defines when the deduplication script executes (on session end) and the command to invoke the Python script.",
+      "role": "configuration",
+      "technologies": [
+        "JSON"
+      ],
+      "exports": [
+        "hooks",
+        "SessionEnd"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
+    },
+    "plugins/transcript-duplicate-scrubber/scripts/dedup_transcript.py": {
+      "path": "plugins/transcript-duplicate-scrubber/scripts/dedup_transcript.py",
+      "summary": "Python script implementing hash-based duplicate detection and removal from Claude Code JSONL transcripts with hook and CLI modes.",
+      "purpose": "Core implementation that extracts Read/Write operations, detects content duplicates using SHA256 hashing, applies two-level deduplication rules, and replaces redundant content with transparency markers.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "SHA256",
+        "JSON",
+        "Dataclasses"
+      ],
+      "exports": [
+        "hash_content",
+        "load_transcript",
+        "extract_writes",
+        "extract_reads",
+        "find_duplicates",
+        "apply_deduplication",
+        "generate_report",
+        "save_transcript",
+        "parse_hook_message",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "hashlib",
+        "sys",
+        "pathlib.Path",
+        "typing.Optional",
+        "dataclasses.dataclass"
+      ],
+      "lastUpdated": "2026-02-08T20:43:03.686Z"
     }
   }
 }
