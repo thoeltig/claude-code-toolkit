@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.",
-    "version": "1.14.0.0"
+    "version": "1.15.0.0"
   },
   "plugins": [
     {
