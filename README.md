@@ -28,6 +28,7 @@ Then install any plugin:
 | **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
+| **[transcript-duplicate-scrubber](./plugins/transcript-duplicate-scrubber/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.0.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -86,6 +87,18 @@ The most comprehensive toolkit for working with Claude Code's extensibility feat
 Get alerted when Claude Code tasks complete or hook events occur with native system notifications. Works seamlessly on Windows, macOS, and Linux with automatic fallback to console output.
 
 **Install:** `/plugin install cross-platform-notification@claude-code-toolkit`
+
+### Transcript Duplicate Scrubber
+During development you naturally read the same file multiple times to keep important context "fresh" (higher priority). But when resuming a session Claude Code reconstructs the entire conversation from the transcript including all file reads which waste tokens without adding new information.
+
+This plugin automatically deduplicates as your session ends, removing redundant reads using intelligent deduplication:
+- **Write priority**: If a Write has content, all Reads with that content are removed
+- **Keep latest**: For multiple Reads of the same content, keep only the most recent (highest token priority)
+- **Preserve changes**: Different content is always kept (edits create different hashes)
+
+The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.
+
+**Install:** `/plugin install transcript-duplicate-scrubber@claude-code-toolkit`
 
 ## 📚 Documentation
 

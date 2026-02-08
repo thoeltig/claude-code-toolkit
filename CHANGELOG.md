@@ -9,6 +9,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.15.0.0] - 2026-02-08
+
+_Marketplace release with transcript deduplication plugin._
+
+### Added
+
+- **transcript-duplicate-scrubber plugin** ([v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/TranscriptDuplicateScrubber_v1.0.0.0)): New plugin for automatic transcript deduplication
+  - Hash-based duplicate detection (SHA256) for file content comparison
+  - Two-level deduplication strategy: Write priority (Rule 1) and token priority for Reads (Rule 2)
+  - Integration modes: Automatic via SessionEnd hook or manual CLI with `--dry-run` preview
+  - Support for minified JSONL and pretty-printed JSON transcript formats
+  - Unicode path support for non-ASCII characters
+  - Detailed reporting with transparency markers for removed duplicates
+  - O(n) time complexity with no false positives, reversible changes
+
+---
+
 ## [1.14.0.0] - 2026-02-06
 
 _Marketplace release with project-intel stability and session-protocol command simplification._
@@ -348,7 +365,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.14.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.15.0.0...HEAD
+[1.15.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.14.0.0...v1.15.0.0
 [1.14.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.13.0.0...v1.14.0.0
 [1.13.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.12.0.0...v1.13.0.0
 [1.12.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.11.0.0...v1.12.0.0

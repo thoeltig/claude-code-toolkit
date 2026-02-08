@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.",
-    "version": "1.14.0.0"
+    "version": "1.15.0.0"
   },
   "plugins": [
     {
@@ -73,6 +73,16 @@
       "name": "cross-platform-notification",
       "source": "./plugins/cross-platform-notification",
       "description": "A Claude Code plugin with a hook that sends native system notifications for Claude Code notifications.",
+      "version": "1.0.0.0",
+      "author": {
+        "name": "Thore Höltig"
+      },
+      "strict": false
+    },
+    {
+      "name": "transcript-duplicate-scrubber",
+      "source": "./plugins/transcript-duplicate-scrubber",
+      "description": "Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk and preserve context priority when resuming sessions.",
       "version": "1.0.0.0",
       "author": {
         "name": "Thore Höltig"
