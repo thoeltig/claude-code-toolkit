@@ -1,4 +1,4 @@
-# claude-code-tools
+# Read Efficient Plugin
 
 Token-efficient file reading for Claude Code - minify files to reduce context pollution and operating costs.
 
@@ -126,7 +126,7 @@ The `/read-efficient` slash command is preconfigured with `--max-output=29900` a
 
 If output exceeds the slash command limit then call the Node script with a custom / configured bash output limit:
   ```bash
-  !node ${CLAUDE_PLUGIN_ROOT}/read-minified/dist/index.js $ARGUMENTS --max-output=100000
+  !node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/index.js $ARGUMENTS --max-output=100000
   ```
 
 If output is also exceeds the bash output limit then you need to override this:
@@ -140,9 +140,6 @@ If output is also exceeds the bash output limit then you need to override this:
   ```
 
 ## Technical Details
-
-For package documentation, CLI usage, and programmatic API, see:
-`plugins/claude-code-tools/read-minified/README.md`
 
 The tool is a standalone TypeScript/Node.js package with:
 - Zero external dependencies
@@ -230,14 +227,21 @@ The tool is a standalone TypeScript/Node.js package with:
 - **Complex Subqueries** - Nested subquery resolution
 - **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
 
-All formats benefit from automatic minification and graceful fallback behavior.
+---
 
-See `read-minified/CHANGELOG.md` for detailed version history and `plugins/claude-code-tools/read-minified/README.md` for technical documentation.
+## Version History
 
-## Installation
-
-The plugin is installed as part of Claude Code. Use the `/read-efficient` command directly.
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ## License
 
-MIT
+See root [LICENSE](../../LICENSE) for details.
+
+## Support
+
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
+
+---
+
+**Author**: [Thore Höltig](https://github.com/thoeltig)

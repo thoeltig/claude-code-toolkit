@@ -9,4 +9,6 @@ Execute the Node script below to receive a more efficent version of the specifie
 - If truncation is detected run Node script by itself without the slash command. 
 - The bash output limit is 100000 characters by default and can be configured with environment variable `BASH_MAX_OUTPUT_LENGTH`.
 
-!node ${CLAUDE_PLUGIN_ROOT}/read-minified/dist/index.js $ARGUMENTS --overwrite --max-output=29900
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/index.js $ARGUMENTS --overwrite --max-output=29900
+```
