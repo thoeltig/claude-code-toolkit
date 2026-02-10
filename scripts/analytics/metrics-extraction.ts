@@ -531,6 +531,7 @@ class MetricsExtraction {
       // Second pass: accumulate metrics only until first Write tool call
       let first_timestamp: string | null = null;
       let last_timestamp: string | null = null;
+      let total_input_tokens = 0;
       let total_output_tokens = 0;
       let message_count = 0;
 
@@ -560,9 +561,11 @@ class MetricsExtraction {
             if (msg && msg.usage) {
               const usage = msg.usage;
               // Count actual input tokens (not cache tokens)
+              const input = usage.input_tokens || 0;
               const output = usage.output_tokens || 0;
 
               if (output > 0) {
+                total_input_tokens += input;
                 total_output_tokens += output;
                 message_count++;
               }
@@ -587,11 +590,12 @@ class MetricsExtraction {
 
       // Output compact JSON file characters / 3 = estimated tokens (json compact ~3 chars/token) 
       const estimatedFileTokens = resultOutputCharacterCount / 3;
+      const estimatedReasoningTokens = (total_output_tokens + total_input_tokens) - estimatedFileTokens;
 
       if (first_timestamp && message_count > 0) {
         return {
           duration_ms,
-          estimatedReasoningTokens: total_output_tokens - estimatedFileTokens,
+          estimatedReasoningTokens: estimatedReasoningTokens > 0 ? estimatedReasoningTokens : 0,
           estimatedFileTokens: estimatedFileTokens,
           output_tokens: total_output_tokens,
         };
