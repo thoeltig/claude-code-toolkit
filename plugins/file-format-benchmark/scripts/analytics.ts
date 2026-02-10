@@ -252,7 +252,7 @@ class BenchmarkAnalytics {
 
       const entry = minMaxRecordCount.get(userMetric.recordCount);
       const totalTokensUsed = userMetric.readTokens + userMetric.estimatedReasoningTokens;
-      const normalizedAmountScore = this.normalizedAmountScore(entry.min-10, entry.max+10, totalTokensUsed);
+      const normalizedAmountScore = entry ? this.normalizedAmountScore(entry.min-10, entry.max+10, totalTokensUsed) : 0;
       metrics.push({
         testCase: userMetric.testCase,
         format: userMetric.format,

@@ -486,7 +486,7 @@ export class QuestionnaireGenerator {
     const values:string[] = [];
     fields.forEach(field => {
       const value = record[field];
-      return values.push(value.toString());
+      return values.push(value ? value.toString() : '');
     });
     return values;
   }
