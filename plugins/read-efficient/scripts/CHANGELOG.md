@@ -157,9 +157,6 @@ Log file and SQL INSERT statement parsing with structured JSON output.
 - Type-aware parsing for SQL (numbers, booleans, NULL distinct)
 - Auto-detection integrated into formatDetector.ts
 
-[unreleased]: https://github.com/anthropics/claude-code/compare/v0.6.0.0...HEAD
-[0.6.0.0]: https://github.com/anthropics/claude-code/compare/v0.5.0.0...v0.6.0.0
-
 ## [0.5.0.0] - 2025-12-08
 
 Markdown anchor line extraction for precise navigation and intelligent output limits handling with auto-caching fallback.
@@ -212,10 +209,6 @@ HTML format handler with optimized semantic structures and consistent string rep
 - Wrapper around XML parser (parseXml) for reuse without modification
 - HTML preprocessing pipeline: auto-close tags → strip visual markup → parse as XML → apply semantic enhancements → JSON output
 
-[unreleased]: https://github.com/anthropics/claude-code/compare/v0.5.0.0...HEAD
-[0.5.0.0]: https://github.com/anthropics/claude-code/compare/v0.4.0.0...v0.5.0.0
-[0.4.0.0]: https://github.com/anthropics/claude-code/compare/v0.3.0.0...v0.4.0.0
-
 ## [0.3.0.0] - 2025-12-08
 
 XML format handler with full semantic preservation.
@@ -255,8 +248,6 @@ XML format handler with full semantic preservation.
 - **Line coverage**: 89.58%
 - **Test suites**: 15 suites
 - **Performance**: Full suite runs in ~5 seconds
-
-[0.3.0.0]: https://github.com/anthropics/claude-code/releases/tag/v0.3.0.0
 
 ## [0.2.0.0] - 2025-12-08
 
@@ -301,8 +292,6 @@ Multi-format file reading with block-level structure support.
   - formats/plaintext.test.ts (7 tests)
   - Utilities and integration tests
 
-[0.2.0.0]: https://github.com/anthropics/claude-code/releases/tag/v0.2.0.0
-
 ## [0.1.0.0] - 2025-12-07
 
 _First release: Foundation for token-efficient file reading._
@@ -341,4 +330,12 @@ _First release: Foundation for token-efficient file reading._
 - Processes 10+ files per second
 - No artificial limits: handles arbitrarily large files
 
-[0.1.0.0]: https://github.com/anthropics/claude-code/releases/tag/v0.1.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.8.0.0...HEAD
+[0.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.7.0.0...ClaudeCodeTools_v0.8.0.0
+[0.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.6.0.0...ClaudeCodeTools_v0.7.0.0
+[0.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.5.0.0...ClaudeCodeTools_v0.6.0.0
+[0.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.4.0.0...ClaudeCodeTools_v0.5.0.0
+[0.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.3.0.0...ClaudeCodeTools_v0.4.0.0
+[0.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.2.0.0...ClaudeCodeTools_v0.3.0.0
+[0.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.1.0.0...ClaudeCodeTools_v0.2.0.0
+[0.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/ClaudeCodeTools_v0.1.0.0

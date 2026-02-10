@@ -1,10 +1,10 @@
-# read-efficient
+# convert-to-compact-json
 
 Optimize file reading for token efficiency. Convert files to minified format (JSON or plain text), removing formatting noise while preserving information density.
 
 ## Overview
 
-`read-efficient` is a TypeScript/Node.js tool designed to reduce token overhead when reading files into Claude Code. It removes redundant whitespace and formatting while preserving semantic structure. The tool automatically detects file formats and applies appropriate minification.
+`convert-to-compact-json"` is a TypeScript/Node.js tool designed to reduce token overhead when reading files into Claude Code. It removes redundant whitespace and formatting while preserving semantic structure. The tool automatically detects file formats and applies appropriate minification.
 
 **Key Philosophy:** Information density over human readability.
 
@@ -28,10 +28,6 @@ Optimize file reading for token efficiency. Convert files to minified format (JS
 - **No Dependencies:** Pure TypeScript/Node.js, no external packages
 
 ## Installation
-
-```bash
-npm install read-efficient
-```
 
 Or use directly:
 
@@ -378,8 +374,21 @@ export function formatCsv(content: string): any {
 **Future Research:**
 - **Type Storage Review** - Test all parsers with real-world inputs to evaluate type handling improvements and potential benefits of rich type systems
 
-All formats benefit from automatic minification and graceful degradation fallback logic.
+---
+
+## Version History
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
 ## License
 
-MIT
+See root [LICENSE](../../../LICENSE) for details.
+
+## Support
+
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
+
+---
+
+**Author**: [Thore Höltig](https://github.com/thoeltig)
