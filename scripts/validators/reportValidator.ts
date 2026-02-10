@@ -114,7 +114,7 @@ class ReportValidator {
 
                 validationResult.results.forEach(x => {
                     const questionsAndProvidedAnswer = report.questionsAndProvidedAnswers.find(y => y.questionId == x.questionId);
-                    questionsAndProvidedAnswer.answers.push({
+                    questionsAndProvidedAnswer?.answers.push({
                         givenAnswer: x.givenAnswer,
                         correct: x.correct
                     });
@@ -155,7 +155,7 @@ class ReportValidator {
                     if(!testCase){
                         map.set(key, value);
                     }else{
-                        value.answerFiles.forEach(x => testCase.answerFiles.push(x));
+                        value.answerFiles.forEach(x => testCase?.answerFiles.push(x));
                         map.set(key, testCase);
                     }  
                 });
