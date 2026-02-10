@@ -49,7 +49,7 @@ try {
     // Average across multiple test runs for same format+variant+recordCount
     const avgTest = {
       readTokens: 0,
-      avgReasoningTokens: 0,
+      avgEstimatedReasoningTokens: 0,
       totalTokensUsed: 0,
       charsPerToken: 0,
       avgAccuracyPercent: 0,
@@ -62,7 +62,7 @@ try {
 
     tests.forEach(t => {
       avgTest.readTokens += t.readTokens;
-      avgTest.avgReasoningTokens += t.avgReasoningTokens;
+      avgTest.avgEstimatedReasoningTokens += t.avgEstimatedReasoningTokens;
       avgTest.totalTokensUsed += t.totalTokensUsed;
       avgTest.charsPerToken += t.charsPerToken;
       avgTest.avgAccuracyPercent += t.avgAccuracyPercent;
@@ -111,7 +111,7 @@ try {
   // Sort by specified metric
   const sortMap = {
     'read-tokens': (a, b) => a.readTokens - b.readTokens,
-    'reasoning-tokens': (a, b) => a.avgReasoningTokens - b.avgReasoningTokens,
+    'reasoning-tokens': (a, b) => a.avgEstimatedReasoningTokens - b.avgEstimatedReasoningTokens,
     'total-tokens': (a, b) => a.totalTokensUsed - b.totalTokensUsed,
     'tokens-per-char': (a, b) => a.charsPerToken - b.charsPerToken,
     'raw-accuracy': (a, b) => b.avgAccuracyPercent - a.avgAccuracyPercent,
@@ -141,7 +141,7 @@ try {
     const rec = item.recordCount;
     const var_ = item.variant.substring(0, 3);
     console.log(
-      `| ${fmt} | ${rec} | ${var_} | ${Math.round(item.readTokens)} | ${Math.round(item.avgReasoningTokens)} | ${Math.round(item.totalTokensUsed)} | ${item.charsPerToken.toFixed(2)} | ${item.avgAccuracyPercent.toFixed(1)}% | ${item.avgWeightedAccuracyPercent.toFixed(1)}% | ${item.informationValuePerToken.toFixed(3)} | ${Math.round(item.costOfInaccuracy)} | ${item.efficiencyScore.toFixed(1)} | ${item.weightedEfficiencyScore.toFixed(1)} |`
+      `| ${fmt} | ${rec} | ${var_} | ${Math.round(item.readTokens)} | ${Math.round(item.avgEstimatedReasoningTokens)} | ${Math.round(item.totalTokensUsed)} | ${item.charsPerToken.toFixed(2)} | ${item.avgAccuracyPercent.toFixed(1)}% | ${item.avgWeightedAccuracyPercent.toFixed(1)}% | ${item.informationValuePerToken.toFixed(3)} | ${Math.round(item.costOfInaccuracy)} | ${item.efficiencyScore.toFixed(1)} | ${item.weightedEfficiencyScore.toFixed(1)} |`
     );
   });
 
