@@ -374,5 +374,7 @@ export interface UserMetrics {
   readDurationInMilliseconds: number;
   readTokens: number;
   reasoningDurationInMilliseconds: number;
-  reasoningTokens: number;
+  estimatedReasoningTokens: number;
+  estimatedFileTokens: number;
+  outputTokens: number;
 }

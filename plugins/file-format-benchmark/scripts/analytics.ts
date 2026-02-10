@@ -25,9 +25,9 @@ interface TestMetrics {
   readTokensPerMillisecond: number;
   
   // Full test extraction script result
-  avgReasoningTokens: number;
-  avgReasoningDurationInMilliseconds: number;
-  avgReasoningTokensPerMillisecond: number;
+  avgEstimatedReasoningTokens: number;
+  avgEstimatedReasoningDurationInMilliseconds: number;
+  avgEstimatedReasoningTokensPerMillisecond: number;
 
   // Validation script result
   totalQuestions: number;
@@ -46,7 +46,7 @@ interface TestMetrics {
   // Information efficiency: tokens needed per object. Lower is better - accounts for structural overhead.
   tokensPerObject: number; 
   // Reasoning cost per question answered. Indicates how complex the reasoning task is for this format
-  avgReasoningTokensPerAnswer: number;
+  avgEstimatedReasoningTokensPerAnswer: number;
   // Represents information density: how much accuracy per token consumed. Higher values indicate more information delivered per token.
   informationValuePerToken: number;
   // Tokens wasted on inaccurate output that increases context pollution. Higher values indicate format reliability risk.
@@ -224,7 +224,7 @@ class BenchmarkAnalytics {
     
     const minMaxRecordCount:Map<number, {min:number, max:number}> = new Map();
     for (const userMetric of userMetrics) {
-      const tokens = userMetric.readTokens + userMetric.reasoningTokens;
+      const tokens = userMetric.readTokens + userMetric.estimatedReasoningTokens;
       const entry = minMaxRecordCount.get(userMetric.recordCount);
       if(!entry){
         minMaxRecordCount.set(userMetric.recordCount, {min: tokens, max: tokens});
@@ -251,7 +251,7 @@ class BenchmarkAnalytics {
       }
 
       const entry = minMaxRecordCount.get(userMetric.recordCount);
-      const totalTokensUsed = userMetric.readTokens + userMetric.reasoningTokens;
+      const totalTokensUsed = userMetric.readTokens + userMetric.estimatedReasoningTokens;
       const normalizedAmountScore = this.normalizedAmountScore(entry.min-10, entry.max+10, totalTokensUsed);
       metrics.push({
         testCase: userMetric.testCase,
@@ -266,9 +266,9 @@ class BenchmarkAnalytics {
         readDurationInMilliseconds: userMetric.readDurationInMilliseconds,
         readTokensPerMillisecond: parseFloat((userMetric.readTokens / userMetric.readDurationInMilliseconds).toFixed(3)),
 
-        avgReasoningTokens: userMetric.reasoningTokens,
-        avgReasoningDurationInMilliseconds: userMetric.reasoningDurationInMilliseconds,
-        avgReasoningTokensPerMillisecond: parseFloat((userMetric.reasoningTokens / userMetric.reasoningDurationInMilliseconds).toFixed(3)),
+        avgEstimatedReasoningTokens: userMetric.estimatedReasoningTokens,
+        avgEstimatedReasoningDurationInMilliseconds: userMetric.reasoningDurationInMilliseconds,
+        avgEstimatedReasoningTokensPerMillisecond: parseFloat((userMetric.estimatedReasoningTokens / userMetric.reasoningDurationInMilliseconds).toFixed(3)),
 
         totalQuestions: validation.totalQuestions,
         avgNoAnswers: validation.totalQuestions - validation.accuracy.correct - validation.accuracy.incorrect,
@@ -280,7 +280,7 @@ class BenchmarkAnalytics {
         charsPerToken: parseFloat((datasetInfo.characterCount / userMetric.readTokens).toFixed(3)),
         tokensPerValue: parseFloat((userMetric.readTokens / datasetInfo.totalValues).toFixed(3)),
         tokensPerObject: parseFloat((userMetric.readTokens / datasetInfo.recordCount).toFixed(3)),
-        avgReasoningTokensPerAnswer: parseFloat((userMetric.reasoningTokens / validation.totalQuestions).toFixed(3)),        
+        avgEstimatedReasoningTokensPerAnswer: parseFloat((userMetric.estimatedReasoningTokens / validation.totalQuestions).toFixed(3)),        
         informationValuePerToken: parseFloat(((validation.accuracy.accuracyPercent / totalTokensUsed) * 100).toFixed(3)),
         costOfInaccuracy: parseFloat((totalTokensUsed * (1 - (validation.accuracy.accuracyPercent / 100))).toFixed(3)),
         totalTokensUsed: totalTokensUsed,
