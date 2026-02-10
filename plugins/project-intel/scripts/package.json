@@ -1,29 +1,36 @@
 {
     "name": "project-intel",
     "version": "1.5.1.0",
-    "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
+    "license": "MIT",
+    "author": "Thore Höltig",
+    "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",   
+    "keywords": [
+        "context",
+        "knowledge",
+        "scan",
+        "project",
+        "files",
+        "llm"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thoeltig/claude-code-toolkit.git"
+    },
+    "bugs": {
+        "url": "https://github.com/thoeltig/claude-code-toolkit/issues"
+    },
     "main": "dist/ctx.js",
     "bin": {
         "ctx": "./dist/ctx.js"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "typescript": "^5.3.0"
     },
     "scripts": {
         "build": "tsc",
         "watch": "tsc --watch",
         "dev": "tsc && node dist/ctx.js"
-    },
-    "keywords": [
-        "claude",
-        "knowledge",
-        "scan",
-        "project",
-        "files",
-        "ai"
-    ],
-    "author": "Thore Höltig",
-    "license": "MIT",
-    "dependencies": {},
-    "devDependencies": {
-        "@types/node": "^20.10.0",
-        "typescript": "^5.3.0"
     }
 }

@@ -102,4 +102,3 @@ function mergeSummaries(knowledgeDir, partialSummaries) {
     writeSummaries(knowledgeDir, summaries);
     return summaries;
 }
-//# sourceMappingURL=summary-merger.js.map
