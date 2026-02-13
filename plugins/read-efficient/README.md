@@ -31,12 +31,14 @@ Context is precious. Every character you read costs tokens. By minifying files -
 
 The tool automatically:
 
-1. **Detects file format** - JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, plaintext, code by file extension
+1. **Detects file format** by extension (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, Log files, SQL, plaintext, code)
 2. **Minifies content** - Removes redundant whitespace and formatting noise
 3. **Parses structure** - Converts files to minified JSON:
    - JSON files become structured objects for easier analysis
    - CSV/YAML/INI/XML/HTML files convert to structured JSON
    - Markdown converts to block-level JSON (headings, lists, code blocks, tables)
+   - Log files auto-detect format and parse to structured arrays
+   - SQL parses INSERT/SELECT/UPDATE/DELETE/CREATE with full statement support
    - NDJSON processes line-by-line JSON
 4. **Gracefully falls back** - If parsing fails, returns minified plaintext instead
 5. **Caches results** (optional) - Reuse minified versions to avoid re-processing
@@ -91,7 +93,9 @@ The tool automatically:
 - **YAML files**: Minified JSON with nested structure preserved
 - **INI files**: Minified JSON with sections as nested objects
 - **NDJSON files**: Minified JSON array of parsed objects
-- **Markdown files**: Minified JSON with block elements (headings, lists, code blocks, tables) with anchor_line extraction for key elements to improve original file query
+- **Markdown files**: Minified JSON with block elements (headings, lists, code blocks, tables) with anchor_line extraction
+- **Log files**: Structured JSON array with auto-detected format (Apache/Nginx/RFC 3164/RFC 5424 Syslog)
+- **SQL files**: Structured objects with parsed statements (INSERT/SELECT/UPDATE/DELETE/CREATE/ALTER/DROP/TRUNCATE/GRANT/REVOKE/Transaction control)
 - **Code/text**: Minified plaintext (whitespace removed, content intact)
 - **Multiple files**: One line per file (NDJSON format), auto-detected format per file
 - **Parsing fails**: Gracefully degrades to minified plaintext (never errors)
@@ -108,28 +112,9 @@ By minifying and converting to structured JSON:
 
 ## Output Limits & Auto-Caching
 
-### Limitations
+The `/read-efficient` slash command is preconfigured with `--max-output=29900` and fallback logic if output exceeds Claude Code's ~30,000 character slash command limit.
 
-Claude Code has two output limits that affect `/read-efficient`:
-
-1. **Bash Output Limit** (`BASH_MAX_OUTPUT_LENGTH`): Default 100,000 characters
-   - Configured via: `BASH_MAX_OUTPUT_LENGTH` environment variable
-   - Location: `.claude/settings.json` or `~/.claude/settings.json`
-
-2. **SlashCommand Output Limit**: ~30,000 characters
-   - Hardcoded limit in Claude Code for slash command display output
-   - Cannot be configured, but can be worked around
-
-### Configuration for SlashCommand
-
-The `/read-efficient` slash command is preconfigured with `--max-output=29900` and a defined fallback logic if truncation is detected.
-
-If output exceeds the slash command limit then call the Node script with a custom / configured bash output limit:
-  ```bash
-  !node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/index.js $ARGUMENTS --max-output=100000
-  ```
-
-If output is also exceeds the bash output limit then you need to override this:
+If you need to process larger files:
 - **Increase bash output limit** in `.claude/settings.json`:
   ```json
   {
@@ -139,108 +124,64 @@ If output is also exceeds the bash output limit then you need to override this:
   }
   ```
 
-## Technical Details
+For complete configuration details and auto-caching behavior, see [SPECS.md](./SPECS.md#output-limits--auto-caching).
+
+## Supported File Formats
+
+| Extension | Type | Output Format | Behavior |
+|-----------|------|---------------|----------|
+| `.json` | JSON | ✓ Native | Parse and minify; fallback to plaintext on error |
+| `.csv`, `.tsv` | CSV | ✓ Array of objects | Parse with intelligent delimiter detection |
+| `.yaml`, `.yml` | YAML | ✓ Parsed structure | Parse indentation-based nesting |
+| `.ini`, `.conf`, `.cfg`, `.properties` | INI | ✓ Parsed sections | Parse key=value with section support |
+| `.ndjson`, `.jsonl` | NDJSON | ✓ Array of objects | Parse line-by-line JSON |
+| `.md`, `.markdown` | Markdown | ✓ Block structure | Parse to JSON with heading hierarchy, lists, code blocks, tables |
+| `.xml` | XML | ✓ Element structure | Parse with attributes, namespaces, CDATA |
+| `.html`, `.htm` | HTML | ✓ Semantic structure | Strip visual tags, preserve semantic elements |
+| `.log` | Log files | ✓ Structured array | Apache/Nginx/RFC 3164/RFC 5424 formats auto-detected |
+| `.sql` | SQL dumps | ✓ Structured objects | Parse INSERT/SELECT/UPDATE/DELETE/CREATE with full statement support |
+| `.txt`, `.text` | Plain text | ✗ As-is | Minify whitespace only |
+| `.py`, `.js`, `.go`, etc. | Code (unknown) | ✗ As-is | Treat as plaintext; minify whitespace |
+| Unknown | Plaintext | ✗ As-is | Minify whitespace only |
+
+## Technical Overview
 
 The tool is a standalone TypeScript/Node.js package with:
-- Zero external dependencies
-- 9 file format handlers (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, SQL, plaintext)
-- Batch processing support for multiple mixed-format files
-- Smart format detection with graceful fallback to plaintext
-- Optional disk caching
-- 544 passing tests, 78.68% statement coverage, 90.69% function coverage
-- Processes 10+ files per second
+- **9 file format handlers** (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, SQL, plaintext)
+- **Batch processing** support for multiple mixed-format files
+- **Smart format detection** with graceful fallback to plaintext
+- **Optional disk caching** with conflict resolution and manifest generation
+- **Zero external dependencies** - pure TypeScript/Node.js implementation
+- **544 passing tests** with 78.79% statement coverage and 90.69% function coverage
+- **Performance**: Processes 10+ files per second, minification reduces file size by 20-70%
 
-## Completed in v0.2.0.0
+### Command Flags
 
-- ✅ CSV parsing and minification (with delimiter detection)
-- ✅ YAML support (with nesting and lists)
-- ✅ INI/properties files (with sections)
-- ✅ NDJSON streaming JSON parsing
-- ✅ Markdown structured parsing (block-level elements)
-- ✅ 266 passing tests with 88%+ coverage
+```bash
+/read-efficient <path1> [path2 path3 ...] [flags]
+```
 
-## Completed in v0.3.0.0
+- `--minify` (default: true) - Remove redundant whitespace
+- `--to-json` - Convert to minified JSON format
+- `--cache` - Save optimized file to disk
+- `--overwrite` - Replace existing cache files
+- `--no-output` - Return manifest instead of file content
+- `--max-output=<number>` - Auto-switch to caching if output exceeds limit
 
-- ✅ **XML to JSON** - Parse XML with flattened attributes (`attribute_` prefix), namespaces, CDATA
-- ✅ Full semantic preservation with 60-70% token efficiency vs nested format
-- ✅ 60 comprehensive XML test cases
-- ✅ 326 total tests with 88.98% statement coverage, 96.84% function coverage
-
-## Completed in v0.4.0.0
-
-- ✅ **HTML format handler** - Parse HTML with visual tag stripping and semantic structure preservation
-  - Strip presentation tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>`, `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
-  - Preserve informational tags: `<code>`, `<pre>`, `<kbd>`, and elements with semantic attributes
-  - Auto-close unclosed HTML tags (browser-compatible)
-  - Optimized semantic structures: lists `{ordered, list}`, tables `{headers, rows}`
-- ✅ 61 comprehensive HTML test cases
-- ✅ 378 total tests with 88.98% statement coverage, 96.84% function coverage
-
-## Completed in v0.6.0.0
-
-- ✅ **Log file parsing** - Pattern-based parsing for common log formats:
-  - Apache/Nginx Combined Format (space-delimited with quoted fields)
-  - RFC 3164 Syslog (traditional format)
-  - RFC 5424 Syslog (modern cloud format)
-  - Auto-detection from first line pattern
-  - 25 comprehensive tests, all passing
-- ✅ **SQL INSERT statement parsing** - Parse SQL dumps and INSERT statements:
-  - Extract table name, columns, row data with type awareness
-  - Handle multiple statements, quoted fields, NULL values, escaped quotes
-  - 31 comprehensive tests, all passing
-- ✅ 434 total tests with 89%+ statement coverage, 96.84%+ function coverage
-
-## Completed in v0.7.0.0
-
-- ✅ **Extended SQL Statement Parsing** - Support for additional statement types:
-  - ALTER TABLE statements with ADD COLUMN and constraint tracking
-  - GRANT & REVOKE statements for permission management
-  - Transaction Control (BEGIN, COMMIT, ROLLBACK)
-  - CREATE INDEX statements
-  - DROP statements with IF EXISTS support
-  - TRUNCATE statements
-- ✅ **Improved SELECT Parsing** - Fixed parsing logic for basic SELECT statements with edge cases
-- ✅ **Fallback Mechanism** - Zero-information-loss strategy for complex patterns
-- ✅ **Edge Case Testing** - Comprehensive tests for unparseable, edge case, and real-world SQL patterns
-- ✅ **Benchmark Generation** - Performance analysis script for SQL statement parsing
-
-## Completed in v0.8.0.0
-
-- ✅ **Comprehensive SQL statement parsing** - Full support for all major SQL operations:
-  - SELECT with aliases, JOINs (INNER/LEFT/RIGHT/FULL OUTER/CROSS), GROUP BY, HAVING, UNION/INTERSECT/EXCEPT
-  - INSERT/UPDATE/DELETE with complex conditions
-  - CREATE/ALTER/DROP TABLE with schema extraction
-  - Subqueries, CASE statements, aggregate functions
-  - Transaction control (BEGIN, COMMIT, ROLLBACK)
-  - Zero information loss via unparsedContent fallback for complex patterns
-- ✅ **Test suite restructuring** - Replaced 976 shallow tests with 70 comprehensive tests:
-  - 26 non-overlapping statement tests validating complete parsing
-  - 44 real-world edge case tests
-  - Each test asserts 15-20+ parsed fields (vs previous 2-3 assertions)
-  - 10x faster test execution (~2 seconds)
-- ✅ 544 total tests with 78.68% statement coverage, 90.69% function coverage
-
-## Planned for Phase 7+ (v0.9.0.0+)
-
-- **Window Functions** - PARTITION BY, ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD
-- **CTEs (Common Table Expressions)** - Full WITH clause parsing
-- **Complex Subqueries** - Nested subquery resolution
-- **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
-
----
+For detailed technical specifications, architecture, format-specific parsing rules, and extensibility details, see [SPECS.md](./SPECS.md).
 
 ## Version History
 
-See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history and release notes.
+
+## Contributing & Support
+
+- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
+- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
 
 ## License
 
 See root [LICENSE](../../LICENSE) for details.
-
-## Support
-
-- **Issues**: [Report bugs or request features](https://github.com/thoeltig/claude-code-toolkit/issues)
-- **Repository**: [claude-code-toolkit](https://github.com/thoeltig/claude-code-toolkit)
 
 ---
 
