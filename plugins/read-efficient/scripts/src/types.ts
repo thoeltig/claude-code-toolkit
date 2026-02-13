@@ -5,16 +5,25 @@ export interface ReadMinifiedOptions {
     overwrite: boolean;
     noOutput: boolean;
     maxOutput?: number;
+    noAnchorLines?: boolean;
+}
+
+export interface FileInfo {
+    original_path: string;
+    format: string;
+    original_size: number;
+    minified_size: number;
 }
 
 export interface ProcessedFile {
     file: string;
-    originalSize:number;
-    newSize:number;   
+    originalSize: number;
+    newSize: number;
     content?: any;
     error?: string;
     cached: boolean;
     cachedPath?: string;
+    minificationNote?: string;
 }
 
 export interface MinifyOptions {

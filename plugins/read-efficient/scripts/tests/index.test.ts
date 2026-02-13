@@ -1,5 +1,7 @@
-import { parseArguments } from '../src/index';
+import { parseArguments, processFile } from '../src/index';
 import { formatOutput } from '../src/utils/outputFormatter';
+import { writeFileSync, mkdirSync, rmSync } from 'fs';
+import { join } from 'path';
 describe('CLI and Orchestration', () => {
     describe('parseArguments', () => {
         test('should parse file paths', () => {
@@ -62,6 +64,29 @@ describe('CLI and Orchestration', () => {
             expect(options.overwrite).toBe(false);
             expect(options.noOutput).toBe(false);
         });
+        test('should parse --no-anchor-lines flag', () => {
+            const args = ['file.md', '--no-anchor-lines'];
+            const { options } = parseArguments(args);
+            expect(options.noAnchorLines).toBe(true);
+        });
+        test('should parse --max-output flag with value', () => {
+            const args = ['file.json', '--max-output=50000'];
+            const { options } = parseArguments(args);
+            expect(options.maxOutput).toBe(50000);
+        });
+        test('should ignore invalid --max-output values', () => {
+            const args = ['file.json', '--max-output=invalid'];
+            const { options } = parseArguments(args);
+            expect(options.maxOutput).toBeUndefined();
+        });
+        test('should combine --no-anchor-lines with other flags', () => {
+            const args = ['file.md', '--no-anchor-lines', '--cache', '--to-json'];
+            const { paths, options } = parseArguments(args);
+            expect(paths).toEqual(['file.md']);
+            expect(options.noAnchorLines).toBe(true);
+            expect(options.cache).toBe(true);
+            expect(options.toJson).toBe(true);
+        });
     });
     describe('formatOutput', () => {
         test('should format single file as raw content without cache', () => {
@@ -114,6 +139,140 @@ describe('CLI and Orchestration', () => {
             const output = formatOutput(files, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false });
             const lines = output.trim().split('\n');
             expect(lines).toHaveLength(3);
+        });
+        test('should include minification_note in output for format-safe minification', () => {
+            const files = [{ file: 'config.yaml', content: 'minified:', minificationNote: 'YAML minified without --to-json (structure-aware conversion skipped)', cached: false, originalSize: 0, newSize: 0 }];
+            const output = formatOutput(files, { minify: true, toJson: false, cache: false, overwrite: false, noOutput: false });
+            const parsed = JSON.parse(output);
+            expect(parsed).toHaveProperty('minification_note');
+            expect(parsed.minification_note).toContain('YAML minified');
+        });
+    });
+    describe('Edge Cases - New Features', () => {
+        const testDir = 'tests/test-edge-cases';
+
+        beforeAll(() => {
+            mkdirSync(testDir, { recursive: true });
+        });
+
+        afterAll(() => {
+            rmSync(testDir, { recursive: true, force: true });
+        });
+
+        test('should add minification_note for YAML minified without --to-json', async () => {
+            const filePath = join(testDir, 'test.yaml');
+            writeFileSync(filePath, 'key: value\nnested:\n  inner: data');
+
+            const result = await processFile(filePath, { minify: true, toJson: false, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.minificationNote).toBeDefined();
+            expect(result.minificationNote).toContain('YAML minified without --to-json');
+        });
+
+        test('should add minification_note for INI minified without --to-json', async () => {
+            const filePath = join(testDir, 'test.ini');
+            writeFileSync(filePath, '[section]\nkey=value');
+
+            const result = await processFile(filePath, { minify: true, toJson: false, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.minificationNote).toBeDefined();
+            expect(result.minificationNote).toContain('INI minified without --to-json');
+        });
+
+        test('should NOT add minification_note for JSON minified', async () => {
+            const filePath = join(testDir, 'test.json');
+            writeFileSync(filePath, '{\n  "key": "value"\n}');
+
+            const result = await processFile(filePath, { minify: true, toJson: false, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.minificationNote).toBeUndefined();
+        });
+
+        test('should handle NDJSON as minified JSON (no format handler)', async () => {
+            const filePath = join(testDir, 'test.ndjson');
+            writeFileSync(filePath, '{"id":1,"name":"Alice"}\n{"id":2,"name":"Bob"}');
+
+            const result = await processFile(filePath, { minify: true, toJson: false, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            // Should be minified directly, not formatted as JSON array
+            expect(typeof result.content).toBe('string');
+            expect(result.content).toContain('Alice');
+        });
+
+        test('should remove anchor_line fields when --no-anchor-lines is used', async () => {
+            const filePath = join(testDir, 'test.md');
+            writeFileSync(filePath, '# Title\nSome text\n## Section\nMore text');
+
+            const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: true }, 0);
+
+            const contentStr = JSON.stringify(result.content);
+            expect(contentStr).not.toContain('anchor_line');
+        });
+
+        test('should preserve anchor_line by default in Markdown', async () => {
+            const filePath = join(testDir, 'test2.md');
+            writeFileSync(filePath, '# Title\nSome text');
+
+            const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            const contentObj = result.content.content || result.content;
+            const contentStr = JSON.stringify(contentObj);
+            expect(contentStr).toContain('anchor_line');
+        });
+
+        test('should add file_info for converted formats (CSV)', async () => {
+            const filePath = join(testDir, 'test.csv');
+            writeFileSync(filePath, 'name,age\nAlice,30\nBob,25');
+
+            const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.content).toHaveProperty('file_info');
+            expect(result.content.file_info).toHaveProperty('format', 'csv');
+            expect(result.content.file_info).toHaveProperty('original_path');
+            expect(result.content.file_info).toHaveProperty('original_size');
+            expect(result.content.file_info).toHaveProperty('minified_size');
+        });
+
+        test('should NOT add file_info for JSON format', async () => {
+            const filePath = join(testDir, 'test-nofinfo.json');
+            writeFileSync(filePath, '{"data":"value"}');
+
+            const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.content).not.toHaveProperty('file_info');
+            expect(result.content).toEqual({ data: 'value' });
+        });
+
+        test('should add file_info for XML with proper conversion', async () => {
+            const filePath = join(testDir, 'test.xml');
+            writeFileSync(filePath, '<root><item>value</item></root>');
+
+            const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.content).toHaveProperty('file_info');
+            expect(result.content.file_info.format).toBe('xml');
+            expect(result.content).toHaveProperty('content');
+        });
+
+        test('should include file_info in cached output for converted formats', async () => {
+            const filePath = join(testDir, 'test-cached.yaml');
+            writeFileSync(filePath, 'database: postgres\nport: 5432');
+
+            const result = await processFile(filePath, { minify: true, toJson: true, cache: true, overwrite: true, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.cached).toBe(true);
+            expect(result.content).toHaveProperty('file_info');
+            expect(result.content.file_info.format).toBe('yaml');
+        });
+
+        test('should handle minification_note with caching', async () => {
+            const filePath = join(testDir, 'test-minify-note.ini');
+            writeFileSync(filePath, '[config]\nvalue=test');
+
+            const result = await processFile(filePath, { minify: true, toJson: false, cache: true, overwrite: true, noOutput: false, noAnchorLines: false }, 0);
+
+            expect(result.minificationNote).toBeDefined();
+            expect(result.cached).toBe(true);
         });
     });
 });

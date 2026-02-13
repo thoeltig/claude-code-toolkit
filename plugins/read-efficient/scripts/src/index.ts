@@ -7,7 +7,6 @@ import { formatOutput } from './utils/outputFormatter';
 import { formatCsv } from './formats/csv';
 import { formatYaml } from './formats/yaml';
 import { formatIni } from './formats/ini';
-import { formatNdjson } from './formats/ndjson';
 import { formatMarkdown } from './formats/markdown';
 import { formatXml } from './formats/xml';
 import { formatHtml } from './formats/html';
@@ -18,7 +17,7 @@ export function parseArguments(args: string[]): {
     paths: string[];
     options: ReadMinifiedOptions
 } {
-    const options: ReadMinifiedOptions = { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false };
+    const options: ReadMinifiedOptions = { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false };
     const paths: string[] = [];
     for (const arg of args) {
         if (arg.startsWith('--')) {
@@ -29,6 +28,7 @@ export function parseArguments(args: string[]): {
             else if (flag === 'cache') options.cache = true;
             else if (flag === 'overwrite') options.overwrite = true;
             else if (flag === 'no-output') options.noOutput = true;
+            else if (flag === 'no-anchor-lines') options.noAnchorLines = true;
             else if (flag.startsWith('max-output=')) {
                 const value = parseInt(flag.split('=')[1], 10);
                 if (!isNaN(value)) options.maxOutput = value;
@@ -36,21 +36,33 @@ export function parseArguments(args: string[]): {
         } else {
             paths.push(arg);
         }
-    } 
-    
+    }
+
     return { paths, options };
 }
 
 export async function processFile(filePath: string, options: ReadMinifiedOptions, currentOutputSize: number): Promise<ProcessedFile> {
     try {
         let content = await readFile(filePath);
-        const minifiedContent = options.minify ? minifyWhitespace(content) : content;
         const format = detectFormat(filePath);
+
+        // Format-safe minification: warn if minifying format-dependent formats without JSON conversion
+        const structureDependentFormats = ['yaml', 'ini'];
+        let minificationNote: string | undefined;
+        if (options.minify && !options.toJson && structureDependentFormats.includes(format)) {
+            minificationNote = `${format.toUpperCase()} minified without --to-json (structure-aware conversion skipped)`;
+        }
+
+        const minifiedContent = options.minify ? minifyWhitespace(content) : content;
         let processedContent: any;
         let cacheContent: string;
         try {
             if (format === 'json') {
                 processedContent = JSON.parse(minifiedContent);
+                cacheContent = minifiedContent;
+            } else if (format === 'ndjson') {
+                // NDJSON is already JSON - only minify, don't use format handler
+                processedContent = minifiedContent;
                 cacheContent = minifiedContent;
             } else if (format === 'csv' && options.toJson) {
                 const csvJson = formatCsv(minifiedContent, { minify: true });
@@ -64,12 +76,14 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 const iniJson = formatIni(minifiedContent, { minify: true });
                 processedContent = JSON.parse(iniJson);
                 cacheContent = iniJson;
-            } else if (format === 'ndjson' && options.toJson) {
-                const ndjsonJson = formatNdjson(minifiedContent, { minify: true });
-                processedContent = JSON.parse(ndjsonJson);
-                cacheContent = ndjsonJson;
             } else if (format === 'markdown' && options.toJson) {
-                const markdownJson = formatMarkdown(minifiedContent, { minify: true });
+                let markdownJson = formatMarkdown(minifiedContent, { minify: true });
+                // Remove anchor_line if requested
+                if (options.noAnchorLines) {
+                    const parsed = JSON.parse(markdownJson);
+                    removeAnchorLines(parsed);
+                    markdownJson = JSON.stringify(parsed);
+                }
                 processedContent = JSON.parse(markdownJson);
                 cacheContent = markdownJson;
             } else if (format === 'xml' && options.toJson) {
@@ -95,15 +109,35 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
         } catch (parseErr) {
             processedContent = minifiedContent;
             cacheContent = minifiedContent;
-        } 
-        
-        const result: ProcessedFile = { 
-            file: filePath, 
+        }
+
+        // Add file info node when --to-json is used for converted formats (not JSON/plaintext)
+        let finalContent = processedContent;
+        const convertedFormats = ['csv', 'yaml', 'ini', 'markdown', 'xml', 'html', 'log', 'sql'];
+        if (options.toJson && convertedFormats.includes(format) && typeof processedContent === 'object' && processedContent !== null) {
+            finalContent = {
+                file_info: {
+                    original_path: filePath,
+                    format: format,
+                    original_size: content.length,
+                    minified_size: cacheContent.length
+                },
+                content: processedContent
+            };
+            cacheContent = JSON.stringify(finalContent);
+        }
+
+        const result: ProcessedFile = {
+            file: filePath,
             originalSize: content.length,
             newSize: cacheContent.length,
-            content: processedContent, 
+            content: finalContent,
             cached: false,
-         };
+        };
+
+        if (minificationNote) {
+            result.minificationNote = minificationNote;
+        }
 
         // If output limit is provided and exceeded switch automatically to caching
         if(options.maxOutput && (currentOutputSize + result.newSize >= options.maxOutput)){
@@ -117,11 +151,21 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
                 result.cached = true;
                 result.cachedPath = cacheResult.path;
             }
-        } 
+        }
 
         return result;
     } catch (err) {
         return { file: filePath, error: `${err}`, cached: false, originalSize: 0, newSize: 0 };
+    }
+}
+
+// Helper function to remove anchor_line from all objects recursively
+function removeAnchorLines(obj: any): void {
+    if (Array.isArray(obj)) {
+        obj.forEach(item => removeAnchorLines(item));
+    } else if (typeof obj === 'object' && obj !== null) {
+        delete obj.anchor_line;
+        Object.values(obj).forEach(val => removeAnchorLines(val));
     }
 }
 

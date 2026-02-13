@@ -21,7 +21,11 @@ function formatSingleFileOutput(file: ProcessedFile, options: ReadMinifiedOption
 function formatRawSingleFileOutput(file: ProcessedFile): string {
     if (file.error) {
         return JSON.stringify({ error: file.error, file: file.file });
-    } 
+    }
+
+    if (file.minificationNote) {
+        return JSON.stringify({ content: file.content, minification_note: file.minificationNote });
+    }
 
     return JSON.stringify(file.content);
 } 
@@ -30,7 +34,10 @@ function formatSingleFileWithCache(file: ProcessedFile): string {
     const wrapper: any = { content: file.content, cached: file.cached, cachedPath: file.cachedPath || null };
     if (file.error) {
         wrapper.error = file.error;
-    } 
+    }
+    if (file.minificationNote) {
+        wrapper.minification_note = file.minificationNote;
+    }
 
     return JSON.stringify(wrapper);
 } 
@@ -48,7 +55,12 @@ function formatMultipleFilesOutput(files: ProcessedFile[], options: ReadMinified
 function formatRawMultipleFileOutput(file: ProcessedFile): string {
     if (file.error) {
         return JSON.stringify({ file: file.file, error: file.error });
-    } 
+    }
+
+    // For raw output (no cache), wrap only if minificationNote is present
+    if (file.minificationNote) {
+        return JSON.stringify({ content: file.content, minification_note: file.minificationNote });
+    }
 
     return JSON.stringify(file.content);
 } 
@@ -57,7 +69,10 @@ function formatMultipleFileWithCache(file: ProcessedFile): string {
     const wrapper: any = { file: file.file, content: file.content, cached: file.cached, cachedPath: file.cachedPath || null };
     if (file.error) {
         wrapper.error = file.error;
-    } 
+    }
+    if (file.minificationNote) {
+        wrapper.minification_note = file.minificationNote;
+    }
 
     return JSON.stringify(wrapper);
 }       
