@@ -55,10 +55,6 @@ interface ReasoningMetricsFile {
   recordCount: number;
   testRuns: number;
   durationMs: number;
-  // output tokens - estimated file tokens = estimated reasoning tokens
-  estimatedReasoningTokens: number;
-  // Output compact JSON file characters / 3 = estimated tokens (json compact ~3 chars/token) 
-  estimatedFileTokens: number;
   // Output tokens contain the tokens generated for the output of the LLM and include the reasoning tokens
   outputTokens: number;
 }
@@ -79,10 +75,8 @@ interface CombinedMetrics {
     summary: {
       totalTestCases: number;
       totalDurationMs: number;
-      totalEstimatedReasoningTokens: number;
       totalOutputTokens: number;
       averageDurationMs: number;
-      averageEstimatedReasoningTokens: number;
       averageOutputTokens: number;
     };
   };
@@ -475,8 +469,6 @@ class MetricsExtraction {
           recordCount: entry.recordCount,
           testRuns: 0, // Will be set during aggregation
           durationMs: metrics.duration_ms || 0,
-          estimatedReasoningTokens: metrics.estimatedReasoningTokens,
-          estimatedFileTokens: metrics.estimatedFileTokens,
           outputTokens: metrics.output_tokens,
         });
       }
@@ -487,8 +479,6 @@ class MetricsExtraction {
 
   private extractFullTestMetrics(jsonlPath: string): {
     duration_ms: number | null;
-    estimatedReasoningTokens: number;
-    estimatedFileTokens: number;
     output_tokens: number;
   } | null {
     try {
@@ -496,7 +486,6 @@ class MetricsExtraction {
 
       // Find the first Write tool_use to know when to stop tracking
       let first_write_timestamp: string | null = null;
-      let resultOutputCharacterCount = 0;
 
       for (const line of lines) {
         if (!line.trim()) continue;
@@ -508,13 +497,7 @@ class MetricsExtraction {
             const content = msg.content;
             if (Array.isArray(content)) {
               for (const item of content) {
-                if (item && item.type === "tool_use" && item.name === "Write") {
-                  if(item.input && item.input.content) {
-                    const resultOutputJson: string = item.input.content;
-                    const obj = JSON.parse(resultOutputJson);
-                    resultOutputCharacterCount = obj.data.length;
-                  }
-
+                if (item && item.type === "tool_use" && item.name === "Write") {                  
                   first_write_timestamp = data.timestamp;
                   break;
                 }
@@ -531,7 +514,6 @@ class MetricsExtraction {
       // Second pass: accumulate metrics only until first Write tool call
       let first_timestamp: string | null = null;
       let last_timestamp: string | null = null;
-      let total_input_tokens = 0;
       let total_output_tokens = 0;
       let message_count = 0;
 
@@ -559,13 +541,9 @@ class MetricsExtraction {
           if (data.type === "assistant") {
             const msg = data.message || {};
             if (msg && msg.usage) {
-              const usage = msg.usage;
-              // Count actual input tokens (not cache tokens)
-              const input = usage.input_tokens || 0;
-              const output = usage.output_tokens || 0;
+              const output = msg.usage.output_tokens || 0;
 
               if (output > 0) {
-                total_input_tokens += input;
                 total_output_tokens += output;
                 message_count++;
               }
@@ -588,15 +566,9 @@ class MetricsExtraction {
         }
       }
 
-      // Output compact JSON file characters / 3 = estimated tokens (json compact ~3 chars/token) 
-      const estimatedFileTokens = resultOutputCharacterCount / 3;
-      const estimatedReasoningTokens = (total_output_tokens + total_input_tokens) - estimatedFileTokens;
-
       if (first_timestamp && message_count > 0) {
         return {
           duration_ms,
-          estimatedReasoningTokens: estimatedReasoningTokens > 0 ? estimatedReasoningTokens : 0,
-          estimatedFileTokens: estimatedFileTokens,
           output_tokens: total_output_tokens,
         };
       }
@@ -616,8 +588,6 @@ class MetricsExtraction {
 
       if (metricsFilesCount > 0) {
         const avg_duration = metrics.reduce((sum, m) => sum + m.durationMs, 0) / metricsFilesCount;
-        const avg_estimatedReasoning = metrics.reduce((sum, m) => sum + m.estimatedReasoningTokens, 0) / metricsFilesCount;
-        const avg_estimatedFile = metrics.reduce((sum, m) => sum + m.estimatedFileTokens, 0) / metricsFilesCount;
         const avg_output = metrics.reduce((sum, m) => sum + m.outputTokens, 0) / metricsFilesCount;
         const firstMetric = metrics[0];
 
@@ -628,8 +598,6 @@ class MetricsExtraction {
           recordCount: firstMetric.recordCount,
           testRuns: metricsFilesCount,
           durationMs: parseFloat(avg_duration.toFixed(3)),
-          estimatedReasoningTokens: parseFloat(avg_estimatedReasoning.toFixed(3)),
-          estimatedFileTokens:  parseFloat(avg_estimatedFile.toFixed(3)),
           outputTokens: parseFloat(avg_output.toFixed(3)),
         });
       }
@@ -640,7 +608,6 @@ class MetricsExtraction {
     const total_read_duration = readMetrics.reduce((sum, m) => sum + m.readDurationMs, 0);
 
     const total_duration = reasoningFiles.reduce((sum, m) => sum + m.durationMs, 0);
-    const total_estimatedReasoning = reasoningFiles.reduce((sum, m) => sum + m.estimatedReasoningTokens, 0);
     const total_output = reasoningFiles.reduce((sum, m) => sum + m.outputTokens, 0);
     
     const reasoningFilesCount = reasoningFiles.length;
@@ -662,10 +629,8 @@ class MetricsExtraction {
         summary: {
           totalTestCases: reasoningFilesCount,
           totalDurationMs: parseFloat(total_duration.toFixed(3)),
-          totalEstimatedReasoningTokens: parseFloat(total_estimatedReasoning.toFixed(3)),
           totalOutputTokens: parseFloat(total_output.toFixed(3)),
           averageDurationMs: reasoningFilesCount > 0 ? parseFloat((total_duration / reasoningFilesCount).toFixed(3)) : 0,
-          averageEstimatedReasoningTokens: reasoningFilesCount > 0 ? parseFloat((total_estimatedReasoning / reasoningFilesCount).toFixed(3)) : 0,
           averageOutputTokens: reasoningFilesCount > 0 ? parseFloat((total_output / reasoningFilesCount).toFixed(3)) : 0,
         },
       },
@@ -709,9 +674,9 @@ class MetricsExtraction {
             console.error(`  - ${r.format}_${r.structure}_${r.variant}_${r.recordCount}: ${r.readTokens} tokens`);
           });
         }
-        console.error(`\nAvailable reasoning test cases (${combinedMetrics.reasoning.files.length}):`);
+        console.error(`\nAvailable reasoning output test cases (${combinedMetrics.reasoning.files.length}):`);
         combinedMetrics.reasoning.files.forEach(r => {
-          console.error(`  - ${r.format}_${r.structure}_${r.variant}_${r.recordCount}: ${r.estimatedReasoningTokens} tokens`);
+          console.error(`  - ${r.format}_${r.structure}_${r.variant}_${r.recordCount}: ${r.outputTokens} tokens`);
         });
         throw new Error(`No read data found for ${key}`);
       }
@@ -726,8 +691,6 @@ class MetricsExtraction {
         readDurationInMilliseconds: readData.readDurationMs,
         readTokens: readData.readTokens,
         reasoningDurationInMilliseconds: reasoning.durationMs,
-        estimatedReasoningTokens: reasoning.estimatedReasoningTokens,
-        estimatedFileTokens: reasoning.estimatedFileTokens,
         outputTokens: reasoning.outputTokens,
       });
     }
