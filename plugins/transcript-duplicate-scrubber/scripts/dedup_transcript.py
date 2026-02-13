@@ -285,9 +285,13 @@ def apply_deduplication(
 def generate_report(
     duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp]]],
     total_bytes: int,
-    dry_run: bool = False
+    dry_run: bool = False,
+    short_output: bool = False
 ) -> str:
     """Generate a report of deduplication"""
+    if short_output:
+        return f"Savings: {total_bytes} bytes"
+
     report_lines = []
 
     if dry_run:
@@ -358,6 +362,7 @@ def parse_hook_message(hook_json: str) -> dict:
 
 def main():
     dry_run = '--dry-run' in sys.argv
+    short_output = '--dry-run-short' in sys.argv
     session_id = None
     transcript_file = None
 
@@ -389,7 +394,7 @@ def main():
     # CLI mode: use command-line argument
     if transcript_file is None:
         if len(sys.argv) < 2:
-            print("Usage: python dedup_transcript.py <transcript_file> [--dry-run]")
+            print("Usage: python dedup_transcript.py <transcript_file> [--dry-run] [--dry-run-short]")
             sys.exit(1)
         transcript_file = sys.argv[1]
         session_id = None
@@ -399,8 +404,8 @@ def main():
         print(f"Error: File not found: {transcript_file}")
         sys.exit(1)
 
-    # Verbosity based on mode
-    verbose = dry_run or session_id is None  # Verbose in CLI mode or dry-run
+    # Verbosity based on mode (suppress for short output)
+    verbose = (dry_run or session_id is None) and not short_output
 
     if verbose:
         print(f"Loading transcript: {transcript_file}")
@@ -430,9 +435,11 @@ def main():
 
     # Generate report
     total_bytes = sum(len(read_op.content.encode('utf-8')) for read_op, _, _ in duplicates)
-    report = generate_report(duplicates, total_bytes, dry_run=dry_run)
+    report = generate_report(duplicates, total_bytes, dry_run=dry_run, short_output=short_output)
     if verbose:
         print("\n" + report)
+    elif short_output:
+        print(report)
 
     # Apply deduplication if not dry-run
     if not dry_run and duplicates:
