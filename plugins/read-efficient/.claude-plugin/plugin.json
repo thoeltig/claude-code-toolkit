@@ -1,7 +1,7 @@
 {
   "name": "read-efficient",
   "description": "Convert files to compact JSON for token efficient file reading.",
-  "version": "0.8.0",
+  "version": "0.9.0.0",
   "author": {
     "name": "Thore Höltig",
     "url": "https://github.com/thoeltig/claude-code-toolkit"

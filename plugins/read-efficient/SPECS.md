@@ -468,6 +468,96 @@ Format Output (JSON/NDJSON/Manifest)
 
 ---
 
+## New Features (Recent Additions)
+
+### Format-Safe Minification
+
+**Problem**: Minifying structure-dependent formats (YAML, INI) without converting to JSON loses semantic meaning (indentation-based nesting, implicit typing).
+
+**Solution**:
+- Detect when `--minify` is used without `--to-json` for YAML/INI
+- Add `minification_note` field to output warning user
+- Example:
+  ```bash
+  /read-efficient config.yaml --minify --no-to-json
+  # Output: {"content": "key:value", "minification_note": "YAML minified without --to-json..."}
+  ```
+
+**Formats Protected**:
+- YAML (`.yaml`, `.yml`)
+- INI (`.ini`, `.conf`, `.cfg`, `.properties`)
+
+### NDJSON Special Handling
+
+**Optimization**: NDJSON is already JSON (newline-delimited), so doesn't need format handler.
+
+**Behavior**:
+- NDJSON minified directly like JSON
+- Skip redundant `formatNdjson` handler
+- `--to-json` flag ignored (silent, no warning)
+- Minified output: single-line NDJSON with no extra formatting
+
+**Implementation**: Detected before format handlers, treated as native JSON format.
+
+### `--no-anchor-lines` Flag
+
+**Purpose**: Remove navigation metadata from Markdown output.
+
+**Use Cases**:
+- Users wanting parsed Markdown structure without position markers
+- Reducing output size when anchor_line fields not needed
+- API responses where navigation metadata is unnecessary
+
+**Behavior**:
+- Removes all `anchor_line` fields recursively from content
+- Only applies to Markdown (other formats don't have anchor_line)
+- Default: preserves anchor_lines (backward compatible)
+
+**Example**:
+```bash
+# With anchor_line (default)
+/read-efficient doc.md --to-json
+# Returns: [{"type": "heading", "level": 1, "content": "Title", "anchor_line": 1}, ...]
+
+# Without anchor_line
+/read-efficient doc.md --to-json --no-anchor-lines
+# Returns: [{"type": "heading", "level": 1, "content": "Title"}, ...]
+```
+
+### File Info Node
+
+**Purpose**: Add context metadata to converted formats.
+
+**When Applied**: Only for converted formats with `--to-json`:
+- ✅ Applied: CSV, YAML, INI, Markdown, XML, HTML, Log files, SQL
+- ❌ Not applied: JSON, NDJSON, plaintext (already have clear structure)
+
+**Structure**:
+```json
+{
+  "fileInfo": {
+    "originalPath": "config.yaml",
+    "format": "yaml",
+    "originalSize": 1024,
+    "minifiedSize": 512
+  },
+  "content": {...parsed content...}
+}
+```
+
+**Benefits**:
+- Clear source document reference
+- Format identification (useful in batch operations)
+- Compression statistics (original vs minified size)
+- Helps users understand conversion context
+
+**Not Applied When**:
+- `--to-json` is false (minified plaintext only)
+- Format is JSON/NDJSON/plaintext (already unambiguous)
+- Processing multiple files without cache (NDJSON output per line)
+
+---
+
 ## Output Limits & Auto-Caching
 
 ### Slash Command Limit
@@ -625,9 +715,10 @@ Created `src/formats/csv.ts` with:
 ## Test Coverage
 
 ### Test Statistics
-- **Total tests**: 544 passing
-- **Test suites**: 21 comprehensive suites
-- **Code coverage**: 78.79% statements, 78.58% lines, 90.69% functions, 68.84% branches
+- **Total tests**: 536 passing (8 NDJSON formatter tests consolidated into edge cases)
+- **Test suites**: 20 comprehensive suites
+- **Code coverage**: 79.75% statements, 79.55% lines, 90.64% functions, 70.53% branches
+- **New edge case tests**: 11 comprehensive tests for new features
 
 ### Test Organization
 ```

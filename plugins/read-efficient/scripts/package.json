@@ -1,6 +1,6 @@
 {
     "name": "convert-to-compact-json",
-    "version": "0.8.0.0",
+    "version": "0.9.0.0",
     "license": "MIT",
     "author": "Thore Höltig",
     "description": "Convert files to compact JSON for efficient token usage",

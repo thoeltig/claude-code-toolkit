@@ -7,6 +7,45 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.9.0.0] - 2025-12-11
+
+### Added
+
+- **Format-Safe Minification** - Warnings when minifying structure-dependent formats without JSON conversion:
+  - YAML minified without `--to-json` shows warning (structure would be lost)
+  - INI minified without `--to-json` shows warning
+  - Output includes `minification_note` field to inform user
+- **NDJSON Special Handling** - Treat NDJSON like JSON:
+  - Skip format handler for NDJSON (already JSON, newline-delimited)
+  - Minify directly without redundant conversion
+  - Behavior identical to JSON handling
+- **`--no-anchor-lines` Flag** - Optional removal of navigation metadata:
+  - Remove all `anchor_line` fields from Markdown output
+  - Useful for users wanting parsed structure without positional metadata
+  - Default: preserves anchor_lines (current behavior maintained)
+- **File Info Node** - Context metadata for converted formats:
+  - Added to CSV/YAML/INI/Markdown/XML/HTML/Log/SQL conversions (when `--to-json` used)
+  - Contains: `originalPath`, `format`, `originalSize`, `minifiedSize`
+  - Not added to JSON/NDJSON/plaintext (already have clear structure)
+  - Helps understand conversion source and compression ratio
+
+### Changed
+
+- **NDJSON Formatter Removed** - `src/formats/ndjson.ts` removed:
+  - NDJSON now handled identically to JSON (minify directly)
+  - Eliminates redundant format handler for line-delimited JSON
+  - Tests consolidated into `index.test.ts` edge cases
+
+### Test Coverage
+
+- **Total tests**: 536 passing (was 544, NDJSON formatter tests consolidated)
+- **Code coverage**: 79.75% statements, 79.55% lines, 90.64% functions (↑ improved)
+- **New edge cases**: 11 comprehensive tests for new features in `index.test.ts`
+  - Format-safe minification warnings (YAML, INI)
+  - NDJSON minification handling
+  - Anchor line removal flag
+  - File info node for converted formats
+
 ### Planned: Phase 7+ (Window Functions, CTEs, Advanced Subqueries)
 
 - **SQL Window Functions** - Advanced PARTITION BY and aggregate functions
@@ -294,7 +333,8 @@ _First release: Foundation for token-efficient file reading._
 - Processes 10+ files per second
 - No artificial limits: handles arbitrarily large files
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.8.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.9.0.0...HEAD
+[0.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.8.0.0...ClaudeCodeTools_v0.9.0.0
 [0.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.7.0.0...ClaudeCodeTools_v0.8.0.0
 [0.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.6.0.0...ClaudeCodeTools_v0.7.0.0
 [0.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.5.0.0...ClaudeCodeTools_v0.6.0.0

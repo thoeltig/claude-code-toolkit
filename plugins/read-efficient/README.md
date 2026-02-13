@@ -33,15 +33,17 @@ The tool automatically:
 
 1. **Detects file format** by extension (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, Log files, SQL, plaintext, code)
 2. **Minifies content** - Removes redundant whitespace and formatting noise
+   - Format-safe: Warns if minifying structure-dependent formats without JSON conversion
 3. **Parses structure** - Converts files to minified JSON:
    - JSON files become structured objects for easier analysis
-   - CSV/YAML/INI/XML/HTML files convert to structured JSON
-   - Markdown converts to block-level JSON (headings, lists, code blocks, tables)
+   - CSV/YAML/INI/XML/HTML files convert to structured JSON with file context metadata
+   - Markdown converts to block-level JSON (headings, lists, code blocks, tables) with navigation anchors
    - Log files auto-detect format and parse to structured arrays
    - SQL parses INSERT/SELECT/UPDATE/DELETE/CREATE with full statement support
-   - NDJSON processes line-by-line JSON
+   - NDJSON minified efficiently (treated as native JSON format)
 4. **Gracefully falls back** - If parsing fails, returns minified plaintext instead
 5. **Caches results** (optional) - Reuse minified versions to avoid re-processing
+6. **Adds context** - File info node for converted formats shows original path, format, and compression ratio
 
 ## How It Works
 
@@ -161,12 +163,16 @@ The tool is a standalone TypeScript/Node.js package with:
 /read-efficient <path1> [path2 path3 ...] [flags]
 ```
 
-- `--minify` (default: true) - Remove redundant whitespace
-- `--to-json` - Convert to minified JSON format
+**Default Behavior** (always applied):
+- Minify whitespace (use `--no-minify` to disable)
+- Convert to JSON format (use `--no-to-json` to disable)
+
+**Optional Flags**:
 - `--cache` - Save optimized file to disk
 - `--overwrite` - Replace existing cache files
 - `--no-output` - Return manifest instead of file content
 - `--max-output=<number>` - Auto-switch to caching if output exceeds limit
+- `--no-anchor-lines` - Remove `anchor_line` fields from Markdown output
 
 For detailed technical specifications, architecture, format-specific parsing rules, and extensibility details, see [SPECS.md](./SPECS.md).
 
