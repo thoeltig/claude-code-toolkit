@@ -9,10 +9,10 @@ export interface ReadMinifiedOptions {
 }
 
 export interface FileInfo {
-    original_path: string;
+    originalPath: string;
     format: string;
-    original_size: number;
-    minified_size: number;
+    originalSize: number;
+    minifiedSize: number;
 }
 
 export interface ProcessedFile {

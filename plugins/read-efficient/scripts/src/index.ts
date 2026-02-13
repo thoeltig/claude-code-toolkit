@@ -116,11 +116,11 @@ export async function processFile(filePath: string, options: ReadMinifiedOptions
         const convertedFormats = ['csv', 'yaml', 'ini', 'markdown', 'xml', 'html', 'log', 'sql'];
         if (options.toJson && convertedFormats.includes(format) && typeof processedContent === 'object' && processedContent !== null) {
             finalContent = {
-                file_info: {
-                    original_path: filePath,
+                fileInfo: {
+                    originalPath: filePath,
                     format: format,
-                    original_size: content.length,
-                    minified_size: cacheContent.length
+                    originalSize: content.length,
+                    minifiedSize: cacheContent.length
                 },
                 content: processedContent
             };

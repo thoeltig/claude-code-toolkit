@@ -220,49 +220,49 @@ describe('CLI and Orchestration', () => {
             expect(contentStr).toContain('anchor_line');
         });
 
-        test('should add file_info for converted formats (CSV)', async () => {
+        test('should add fileInfo for converted formats (CSV)', async () => {
             const filePath = join(testDir, 'test.csv');
             writeFileSync(filePath, 'name,age\nAlice,30\nBob,25');
 
             const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
 
-            expect(result.content).toHaveProperty('file_info');
-            expect(result.content.file_info).toHaveProperty('format', 'csv');
-            expect(result.content.file_info).toHaveProperty('original_path');
-            expect(result.content.file_info).toHaveProperty('original_size');
-            expect(result.content.file_info).toHaveProperty('minified_size');
+            expect(result.content).toHaveProperty('fileInfo');
+            expect(result.content.fileInfo).toHaveProperty('format', 'csv');
+            expect(result.content.fileInfo).toHaveProperty('originalPath');
+            expect(result.content.fileInfo).toHaveProperty('originalSize');
+            expect(result.content.fileInfo).toHaveProperty('minifiedSize');
         });
 
-        test('should NOT add file_info for JSON format', async () => {
+        test('should NOT add fileInfo for JSON format', async () => {
             const filePath = join(testDir, 'test-nofinfo.json');
             writeFileSync(filePath, '{"data":"value"}');
 
             const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
 
-            expect(result.content).not.toHaveProperty('file_info');
+            expect(result.content).not.toHaveProperty('fileInfo');
             expect(result.content).toEqual({ data: 'value' });
         });
 
-        test('should add file_info for XML with proper conversion', async () => {
+        test('should add fileInfo for XML with proper conversion', async () => {
             const filePath = join(testDir, 'test.xml');
             writeFileSync(filePath, '<root><item>value</item></root>');
 
             const result = await processFile(filePath, { minify: true, toJson: true, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
 
-            expect(result.content).toHaveProperty('file_info');
-            expect(result.content.file_info.format).toBe('xml');
+            expect(result.content).toHaveProperty('fileInfo');
+            expect(result.content.fileInfo.format).toBe('xml');
             expect(result.content).toHaveProperty('content');
         });
 
-        test('should include file_info in cached output for converted formats', async () => {
+        test('should include fileInfo in cached output for converted formats', async () => {
             const filePath = join(testDir, 'test-cached.yaml');
             writeFileSync(filePath, 'database: postgres\nport: 5432');
 
             const result = await processFile(filePath, { minify: true, toJson: true, cache: true, overwrite: true, noOutput: false, noAnchorLines: false }, 0);
 
             expect(result.cached).toBe(true);
-            expect(result.content).toHaveProperty('file_info');
-            expect(result.content.file_info.format).toBe('yaml');
+            expect(result.content).toHaveProperty('fileInfo');
+            expect(result.content.fileInfo.format).toBe('yaml');
         });
 
         test('should handle minification_note with caching', async () => {
