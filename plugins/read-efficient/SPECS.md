@@ -805,3 +805,66 @@ npm run dev -- file.json
 - **Complex Subquery Resolution**: Detected but full nested resolution pending
 
 All limitations use graceful fallback - `unparsedContent` preserves original text for recovery.
+
+---
+
+## Planned Architecture Optimizations (v0.10.0.0+)
+
+### Performance Improvements
+
+**Current Issues:**
+- Minify entire file first, then convert to JSON (redundant)
+- Handle anchor lines after conversion (two-pass processing)
+- No type-aware string minification in JSON values
+- Minify whole file even when converting to JSON (already produces minified output)
+
+**Proposed Solutions:**
+
+#### 1. Single-Pass Processing Order
+```
+Read → Detect Format → Convert (with minify flag) → JSON.stringify
+```
+- Remove initial file minification step
+- Format handlers control minification during parsing
+
+#### 2. Minify Flag Per Format Handler
+Pass `minify` option to each format handler:
+```typescript
+interface FormatOptions {
+  minify: boolean;
+  noAnchorLines?: boolean; // Markdown only
+}
+```
+
+During parsing, handlers check `minify` flag:
+- If `true`: Minify string values
+  - Multiple consecutive spaces → single space
+  - Multiple consecutive newlines → single newline
+- If `false`: Keep string values as-is
+- Only strings minified (numbers/booleans/null unchanged)
+
+#### 3. Anchor Line Handling (Markdown Only)
+- Add `noAnchorLines` parameter during parsing
+- Skip generating anchor_line fields if flag set
+- Other formats: Don't add anchor_line (not applicable)
+
+#### 4. Conditional JSON Output Formatting
+```typescript
+const jsonOutput = minify
+  ? JSON.stringify(data)           // Compact/minified
+  : JSON.stringify(data, null, 2); // Pretty with 2-space indent
+```
+- Unified approach for minify true/false cases
+- Applied consistently across all converted formats
+- Handles all minification scenarios
+
+#### 5. Plaintext Minification
+- Keep as-is: Minify whole file only for plaintext/non-JSON output
+- Only when `--no-to-json` is used or format is plaintext
+
+**Expected Benefits:**
+- 🚀 **Performance**: Single-pass processing (no redundant minification)
+- 📉 **Efficiency**: Type-aware minification (strings only)
+- 💾 **Output**: More compact when minified, readable when pretty
+- ⚡ **Architecture**: Cleaner separation of concerns
+- 🎯 **Consistency**: Unified minify handling across all formats
