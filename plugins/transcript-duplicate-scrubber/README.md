@@ -20,13 +20,17 @@ This plugin removes those duplicates by keeping only the latest read (or the Wri
 ## When to Use This
 
 **This helps if you:**
-- Frequently use `/resume` to continue previous sessions
-- Work with long sessions that have heavy file reading
-- Want to reduce token costs and context bloat
+- Work with long sessions that have heavy file reading and editing
+- Want to reduce token costs and reduce hallucination risk from context bloat
+- Use `/resume` frequently - cleaned transcript cuts reconstruction costs per resume
+- Go idle >5 minutes during work - cache validator hook blocks input and shows token savings, encouraging optimal resume workflow
 
-**This won't help if you:**
-- Don't use `/resume` (run new sessions each time)
-- Have short, one-off sessions
+**Even helps if you:**
+- Don't manually use `/resume` - deduplication benefits eventual resumes (immediate or weeks later) with lower reconstruction costs
+- Prefer starting fresh sessions - any future resume of that session will have a smaller, cleaner transcript
+
+**Won't help much if you:**
+- Have very short, one-off sessions - minimal duplicate reads occur
 
 ## Installation
 
