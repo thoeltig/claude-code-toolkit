@@ -116,7 +116,7 @@ def extract_token_ratio_for_file(messages: list[dict], filepath: str) -> float |
     for cache_tokens, char_count in candidates:
         if char_count > 0:
             ratio = cache_tokens / char_count
-            if 0.5 < ratio < 5:
+            if 0.25 < ratio < 5:
                 return ratio
 
     return None
@@ -279,62 +279,239 @@ def extract_reads(messages: list[dict]) -> dict[str, list[ReadOp]]:
 
     return reads_by_path
 
+def find_line_differences(content1: str, content2: str) -> list[tuple[int, int]]:
+    """Find line ranges where content1 and content2 differ.
+
+    Args:
+        content1: First content (Read1)
+        content2: Second content (Read2)
+
+    Returns:
+        List of (start_line, end_line) tuples (0-indexed, exclusive end) for continuous blocks where lines differ
+    """
+    lines1 = content1.split('\n')
+    lines2 = content2.split('\n')
+
+    max_lines = max(len(lines1), len(lines2))
+    differences = []
+    in_diff_block = False
+    diff_start = 0
+
+    for i in range(max_lines):
+        line1 = lines1[i] if i < len(lines1) else None
+        line2 = lines2[i] if i < len(lines2) else None
+
+        if line1 != line2:
+            if not in_diff_block:
+                diff_start = i
+                in_diff_block = True
+        else:
+            if in_diff_block:
+                differences.append((diff_start, i))
+                in_diff_block = False
+
+    # Close any open diff block
+    if in_diff_block:
+        differences.append((diff_start, max_lines))
+
+    return differences
+
+def apply_context_margin(diff_ranges: list[tuple[int, int]], total_lines: int, margin: int = 3) -> list[tuple[int, int]]:
+    """Apply context margin around difference ranges and return ranges to keep.
+
+    Args:
+        diff_ranges: List of (start, end) tuples for lines that differ
+        total_lines: Total number of lines in content
+        margin: Number of lines to include as context on each side
+
+    Returns:
+        List of (start, end) tuples for ranges to KEEP (merged and bounded)
+    """
+    if not diff_ranges:
+        return []
+
+    # Expand each range with margin
+    expanded = []
+    for start, end in diff_ranges:
+        expanded_start = max(0, start - margin)
+        expanded_end = min(total_lines, end + margin)
+        expanded.append((expanded_start, expanded_end))
+
+    # Merge overlapping ranges
+    expanded.sort()
+    merged = [expanded[0]]
+
+    for current_start, current_end in expanded[1:]:
+        last_start, last_end = merged[-1]
+        if current_start <= last_end:
+            # Overlapping, merge
+            merged[-1] = (last_start, max(last_end, current_end))
+        else:
+            # Non-overlapping, add new range
+            merged.append((current_start, current_end))
+
+    return merged
+
+def create_partial_dedup_content(content: str, kept_ranges: list[tuple[int, int]]) -> tuple[str, int]:
+    """Replace lines outside kept_ranges with placeholders. Only create placeholders for omitted blocks >= 3 lines.
+
+    Args:
+        content: Original content
+        kept_ranges: List of (start, end) tuples (0-indexed, exclusive end) to keep
+
+    Returns:
+        Tuple of (modified_content, bytes_omitted)
+    """
+    lines = content.split('\n')
+    result_lines = []
+    total_bytes_omitted = 0
+    current_pos = 0
+
+    for keep_start, keep_end in kept_ranges:
+        # Add placeholder for lines between current_pos and keep_start if >= 3 lines
+        if keep_start - current_pos >= 3:
+            omitted_lines = lines[current_pos:keep_start]
+            block_bytes = sum(len(line.encode('utf-8')) + 1 for line in omitted_lines)  # +1 for newline
+            total_bytes_omitted += block_bytes
+            placeholder = f"<DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:{block_bytes}>"
+            result_lines.append(placeholder)
+        elif keep_start > current_pos:
+            # Less than 3 lines, keep as-is
+            result_lines.extend(lines[current_pos:keep_start])
+
+        # Add kept lines
+        result_lines.extend(lines[keep_start:keep_end])
+        current_pos = keep_end
+
+    # Handle remaining lines at the end
+    if current_pos < len(lines):
+        remaining = lines[current_pos:]
+        if len(remaining) >= 3:
+            block_bytes = sum(len(line.encode('utf-8')) + 1 for line in remaining)
+            total_bytes_omitted += block_bytes
+            placeholder = f"<DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:{block_bytes}>"
+            result_lines.append(placeholder)
+        else:
+            result_lines.extend(remaining)
+
+    modified_content = '\n'.join(result_lines)
+
+    return modified_content, total_bytes_omitted
+
 def find_duplicates(
     writes_by_path: dict[str, list[WriteOp]],
     reads_by_path: dict[str, list[ReadOp]]
-) -> list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp]]]:
+) -> list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]]:
     """
-    Find duplicate reads - keep latest read per content hash, mark earlier ones as duplicates.
-    Exception: If a Write has a content hash, deduplicate all Reads with that hash (Write is the source).
-    This preserves the most recent (highest priority) context while removing older redundant reads.
+    Find duplicate reads using two strategies in priority order:
+
+    1. Line-level detection (primary - handles consecutive reads with partial changes):
+       - Compare reads sequentially, find line-by-line differences
+       - Apply ±3 line context margin around changes
+       - Replace unchanged lines with placeholders
+       - Handles cases where edits occur between reads
+
+    2. Hash-based detection (secondary - read-after-write only):
+       - If a Write has same content hash, mark remaining Reads with that hash
+       - Only applied to unprocessed reads (not caught by line-level)
+
+    Skip files with < 3 total lines. Only create placeholders for omitted blocks >= 3 lines.
 
     Returns:
-        List of (read_op, write_op_if_read_after_write, prev_read_op_if_duplicate_read)
-        - If write_op is set: Read was deduplicated because Write has same content
-        - If prev_read_op is set: Read was deduplicated because earlier Read has same content
+        List of (read_op, write_op, prev_read_op, partial_dedup_data)
     """
     duplicates = []
+    processed_reads = set()  # Track reads already marked
 
     for filepath, reads in reads_by_path.items():
+        # Skip files with < 3 lines
+        if all(len(read.content.split('\n')) < 3 for read in reads):
+            continue
+
+        sorted_reads = sorted(reads, key=lambda r: r.message_position)
+
+        # PHASE 1: Line-level deduplication (partial dedup for reads with changes)
+        for i, read_current in enumerate(sorted_reads):
+            if id(read_current) in processed_reads:
+                continue
+
+            for j in range(i):
+                read_prev = sorted_reads[j]
+                if id(read_prev) in processed_reads:
+                    continue
+
+                # Skip if file has < 3 lines
+                if len(read_current.content.split('\n')) < 3:
+                    continue
+
+                # Line-level comparison (works for both identical and partial content)
+                diff_ranges = find_line_differences(read_prev.content, read_current.content)
+
+                # If no differences, apply full dedup as placeholder
+                if not diff_ranges:
+                    # Fully identical - replace entire read with placeholder
+                    bytes_count = len(read_prev.content.encode('utf-8'))
+                    modified_content = f"<DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
+                    duplicates.append((read_prev, None, None, (modified_content, bytes_count)))
+                    processed_reads.add(id(read_prev))
+                    break
+
+                # Perform partial dedup for reads with differences
+                # Apply context margin
+                total_lines = len(read_current.content.split('\n'))
+                kept_ranges = apply_context_margin(diff_ranges, total_lines, margin=3)
+
+                # Check if we would omit any lines >= 3
+                would_omit = False
+                for k, (keep_start, keep_end) in enumerate(kept_ranges):
+                    if k > 0:
+                        prev_end = kept_ranges[k-1][1]
+                        if keep_start - prev_end >= 3:
+                            would_omit = True
+                            break
+                    if k == 0 and keep_start >= 3:
+                        would_omit = True
+                        break
+                if not would_omit and total_lines - kept_ranges[-1][1] >= 3:
+                    would_omit = True
+
+                # Apply partial dedup if worthwhile
+                if would_omit:
+                    modified_content, bytes_omitted = create_partial_dedup_content(read_prev.content, kept_ranges)
+                    duplicates.append((read_prev, None, None, (modified_content, bytes_omitted)))
+                    processed_reads.add(id(read_prev))
+                    break
+
+        # PHASE 2: Hash-based deduplication (read-after-write only, on unprocessed reads)
         writes = writes_by_path.get(filepath, [])
-        write_hashes = {w.content_hash: w for w in writes}  # Map hash to write
+        write_hashes = {w.content_hash: w for w in writes}
 
-        # Group reads by content hash
-        by_hash: dict[str, list[ReadOp]] = {}
-        for read in reads:
-            by_hash.setdefault(read.content_hash, []).append(read)
+        for read in sorted_reads:
+            if id(read) in processed_reads:
+                continue
 
-        # For each content hash, apply deduplication logic
-        for content_hash, reads_with_hash in by_hash.items():
-            if content_hash in write_hashes:
-                # If a Write has this hash, deduplicate ALL reads with that hash
-                write_op = write_hashes[content_hash]
-                for read in reads_with_hash:
-                    duplicates.append((read, write_op, None))
-            elif len(reads_with_hash) > 1:
-                # No matching write: keep only the latest read, mark earlier ones as duplicates
-                sorted_reads = sorted(reads_with_hash, key=lambda r: r.message_position)
-                # Mark all but the latest (last element) as duplicates
-                for read in sorted_reads[:-1]:
-                    duplicates.append((read, None, None))
+            # Check if this read matches any Write
+            if read.content_hash in write_hashes:
+                write_op = write_hashes[read.content_hash]
+                duplicates.append((read, write_op, None, None))
+                processed_reads.add(id(read))
 
     return duplicates
 
 def apply_deduplication(
     messages: list[dict],
-    duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp]]]
+    duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]]
 ) -> tuple[list[dict], int]:
     """
-    Apply deduplication by replacing Read tool_result content with markers.
-    Uses different markers based on deduplication reason:
-    - DEDUPLICATION_READ_AFTER_WRITE_MARKER: Read deduplicated due to Write with same content
-    - DEDUPLICATION_MULTIPLE_READS_MARKER: Read deduplicated due to earlier Read with same content
+    Apply deduplication by replacing Read tool_result content with modified content or markers.
+    Handles partial deduplication (line-level) and full deduplication.
 
     Returns modified messages and total bytes omitted
     """
     total_bytes = 0
-    # Build lookup map: tool_use_id -> (read_op, write_op, prev_read_op)
-    dedup_lookup = {read.tool_use_id: (read, write, prev_read) for read, write, prev_read in duplicates}
+    # Build lookup map: tool_use_id -> (read_op, write_op, prev_read_op, partial_dedup_data)
+    dedup_lookup = {read.tool_use_id: (read, write, prev_read, partial_data)
+                   for read, write, prev_read, partial_data in duplicates}
 
     for msg in messages:
         if msg.get('type') != 'user':
@@ -351,22 +528,29 @@ def apply_deduplication(
                 tool_use_id = item.get('tool_use_id')
 
                 if tool_use_id in dedup_lookup:
-                    read_op, write_op, prev_read_op = dedup_lookup[tool_use_id]
+                    read_op, write_op, prev_read_op, partial_data = dedup_lookup[tool_use_id]
                     original_content = item.get('content', '')
                     bytes_count = len(original_content.encode('utf-8'))
-                    total_bytes += bytes_count
 
-                    # Choose marker based on deduplication reason
-                    if write_op:
-                        marker = f"<DEDUPLICATION_READ_AFTER_WRITE_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
+                    # Apply partial deduplication if applicable
+                    if partial_data:
+                        modified_content, bytes_omitted = partial_data
+                        item['content'] = modified_content
+                        total_bytes += bytes_omitted
                     else:
-                        marker = f"<DEDUPLICATION_MULTIPLE_READS_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
-                    item['content'] = marker
+                        # Full-content deduplication (legacy hash-based, kept for compatibility)
+                        total_bytes += bytes_count
+                        # Choose marker based on deduplication reason
+                        if write_op:
+                            marker = f"<DEDUPLICATION_READ_AFTER_WRITE_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
+                        else:
+                            marker = f"<DEDUPLICATION_MULTIPLE_READS_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
+                        item['content'] = marker
 
     return messages, total_bytes
 
 def generate_report(
-    duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp]]],
+    duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]],
     total_bytes: int,
     dry_run: bool = False,
     short_output: bool = False,
@@ -396,19 +580,23 @@ def generate_report(
 
     # Group by file
     by_file = {}
-    for read_op, write_op, prev_read_op in duplicates:
+    for read_op, write_op, prev_read_op, partial_data in duplicates:
         filepath = read_op.filepath
         if filepath not in by_file:
             by_file[filepath] = []
-        by_file[filepath].append((read_op, write_op, prev_read_op))
+        by_file[filepath].append((read_op, write_op, prev_read_op, partial_data))
 
     if duplicates:
         report_lines.append("\n--- Duplicates by file ---")
         for filepath, ops in sorted(by_file.items()):
             report_lines.append(f"\n{filepath}:")
-            for i, (read_op, write_op, prev_read_op) in enumerate(ops, 1):
+            for i, (read_op, write_op, prev_read_op, partial_data) in enumerate(ops, 1):
                 bytes_count = len(read_op.content.encode('utf-8'))
-                if write_op:
+                if partial_data:
+                    _, bytes_omitted = partial_data
+                    report_lines.append(f"  {i}. Read (id:{read_op.tool_use_id[:8]}...) partial deduplication (line-level)")
+                    report_lines.append(f"     Bytes: {bytes_count} | Omitted: {bytes_omitted}")
+                elif write_op:
                     report_lines.append(f"  {i}. Read (id:{read_op.tool_use_id[:8]}...) deduplicated with Write (id:{write_op.uuid[:8]}...)")
                     report_lines.append(f"     Hash: {read_op.content_hash[:8]}... | Bytes: {bytes_count}")
                 elif prev_read_op:
@@ -526,23 +714,42 @@ def main():
         print(f"Found {len(duplicates)} duplicate reads")
 
     # Calculate total bytes and estimate tokens per file
-    total_bytes = sum(len(read_op.content.encode('utf-8')) for read_op, _, _ in duplicates)
+    total_bytes = 0
     estimated_tokens = None
 
     if duplicates:
-        # Group duplicates by file and calculate per-file tokens
-        files_with_duplicates = {}
-        for read_op, _, _ in duplicates:
+        # Group duplicates by file - track full content size and omitted bytes separately
+        files_with_duplicates = {}  # filepath -> {full_size, omitted_bytes}
+        for read_op, _, _, partial_data in duplicates:
             if read_op.filepath not in files_with_duplicates:
-                files_with_duplicates[read_op.filepath] = 0
-            files_with_duplicates[read_op.filepath] += len(read_op.content.encode('utf-8'))
+                files_with_duplicates[read_op.filepath] = {'full_size': 0, 'omitted_bytes': 0}
 
-        # Calculate tokens for each file
+            full_size = len(read_op.content.encode('utf-8'))
+            files_with_duplicates[read_op.filepath]['full_size'] += full_size
+
+            if partial_data:
+                _, bytes_omitted = partial_data
+                total_bytes += bytes_omitted
+                files_with_duplicates[read_op.filepath]['omitted_bytes'] += bytes_omitted
+            else:
+                # Full dedup: entire file omitted
+                total_bytes += full_size
+                files_with_duplicates[read_op.filepath]['omitted_bytes'] += full_size
+
+        # Calculate tokens for each file based on percentage of content omitted
         total_estimated_tokens = 0
-        for filepath, file_bytes in files_with_duplicates.items():
+        for filepath, info in files_with_duplicates.items():
             ratio = extract_token_ratio_for_file(messages, filepath)
             if ratio and ratio > 0:
-                total_estimated_tokens += int(file_bytes * ratio)
+                full_size = info['full_size']
+                omitted_bytes = info['omitted_bytes']
+
+                if full_size > 0:
+                    # Calculate tokens for full file, then apply percentage omitted
+                    full_file_tokens = int(full_size * ratio)
+                    omitted_percentage = omitted_bytes / full_size
+                    omitted_tokens = int(full_file_tokens * omitted_percentage)
+                    total_estimated_tokens += omitted_tokens
 
         estimated_tokens = total_estimated_tokens if total_estimated_tokens > 0 else None
 

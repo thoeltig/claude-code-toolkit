@@ -98,38 +98,57 @@ python dedup_transcript.py <transcript_file>
 
 ## How It Works
 
-The plugin detects reads with duplicate content hashes and applies two deduplication rules:
+The plugin uses unified line-level deduplication to intelligently remove redundant file reads:
 
-**Rule 1: Write has priority**
-If a Write operation has content hash X, all Reads with that same hash are marked redundant (the Write already has the content):
+**Line-by-Line Comparison:**
+When two reads of the same file are detected, the plugin compares them line-by-line to find what changed:
 ```
-Write file.txt → "content X"
-[Messages exchanged]
-Read file.txt → "content X"  ← Marked as DEDUPLICATION_READ_AFTER_WRITE_MARKER (redundant)
-```
+Read 1: lines 1-50 identical
+        lines 51-60 changed (edited)
+        lines 61-100 identical
 
-**Rule 2: Keep latest read**
-If no Write has that hash, keep only the latest Read and mark all earlier reads with the same hash as redundant:
-```
-Read file.txt → "content X" (first)  ← Marked as DEDUPLICATION_MULTIPLE_READS_MARKER (older)
-[Messages exchanged]
-Read file.txt → "content X" (latest)  ← Kept (newest tokens, higher priority)
+Read 2: lines 1-50 identical
+        lines 51-60 different
+        lines 61-100 identical
 ```
 
-**Different content is always kept:**
+**Context-Aware Deduplication:**
+The plugin applies a ±3 line context margin around changes to preserve editing context (matches Claude Code's edit tool):
 ```
-Read file.txt → "content X"
-[Edit happens]
-Read file.txt → "content Y"  ← Different hash, both kept
-```
-
-For each redundant read, the plugin replaces the content with a marker. Two marker types indicate the deduplication reason:
-```
-<DEDUPLICATION_READ_AFTER_WRITE_MARKER|OMITTED_CHARS_COUNT:2847>
-<DEDUPLICATION_MULTIPLE_READS_MARKER|OMITTED_CHARS_COUNT:2847>
+Changed lines:     51-60
+Context margin:    ±3 lines
+Kept range:        48-63 (includes context)
+Replaced:          1-47, 64-100
 ```
 
-All intervening messages are preserved—only the duplicate file content is removed.
+**Marker Replacement:**
+Lines outside the context range are replaced with placeholders:
+```
+lines 1-47:      <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:2847>
+lines 48-63:     (original unchanged content kept for context)
+lines 64-100:    <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:1529>
+```
+
+This preserves the file structure (one placeholder per omitted block) while removing token-wasting redundant content.
+
+**Two-Phase Deduplication Strategy:**
+
+Phase 1: Line-level comparison (primary)
+- Compares each read with previous reads to find line-by-line differences
+- Detects both fully-identical reads and partial changes
+- Handles reads separated by edits
+
+Phase 2: Hash-based read-after-write (secondary)
+- Only processes reads not caught by phase 1
+- Identifies explicit Write→Read relationships
+- Ensures write operations aren't duplicated by subsequent reads
+
+**Smart Thresholds:**
+- Skips files with fewer than 3 total lines (defer to character-level dedup later)
+- Only creates placeholders for omitted blocks ≥ 3 lines
+- Small unchanged sections between edits are kept as-is to maintain readability
+
+All intervening messages are preserved—only truly redundant file content is removed.
 
 ## Token Estimation
 
@@ -139,7 +158,7 @@ The plugin estimates token savings for each deduplicated file using per-file cac
 - Extracts token/character ratio from each file's first cache write in the transcript
 - Uses `cache_creation_input_tokens` from the assistant message following a Read/Write operation
 - Applies ratio only to files that actually have duplicates being removed
-- Valid ratio range: 0.5 - 5 tokens/character (rejects invalid cache data)
+- Valid ratio range: 0.25 - 5 tokens/character (rejects invalid cache data)
 
 **Example calculation:**
 ```

@@ -7,6 +7,55 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.2.0.0] - 2026-02-14
+
+_Line-level partial deduplication for smarter duplicate detection._
+
+### Added
+
+**Unified Line-Level Deduplication (Primary) + Hash-Based Read-After-Write (Secondary)**:
+- Phase 1: Line-by-line comparison for all reads
+  * Detects fully-identical reads and replaces with single placeholder
+  * Detects partially-identical reads with line-level differences
+  * Applies ±3 line context margin around changes (matches Claude Code edit tool)
+  * Handles reads separated by edits
+- Phase 2: Hash-based read-after-write detection (secondary, only remaining reads)
+  * Identifies reads matching Write operations
+  * Applied after line-level to avoid double-processing
+- Correct order ensures consecutive reads are caught by line-level dedup first
+
+**Partial Deduplication Markers**:
+- New marker type: `DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:bytes`
+- Separate placeholders for each omitted block maintain file structure
+- Only creates placeholders for omitted blocks ≥ 3 lines
+
+**Smart Filtering**:
+- Skips files with < 3 total lines (defers to character-level dedup later)
+- Skips partial omits for blocks < 3 lines (keeps small unchanged sections)
+
+**Improved Token Calculation**:
+- Token estimation now based on file percentage omitted
+- Calculates full-file tokens, then applies percentage of omitted content
+- Lower token ratio threshold: 0.25 - 5 tokens/character (was 0.5)
+- Enables token estimates for more file types
+
+### Changed
+
+- Deduplication strategy: Phase 1 line-level (primary), Phase 2 hash-based read-after-write (secondary)
+- Threshold values: ±3 line context margin, skip files < 3 lines, placeholders ≥ 3 lines (changed from 5)
+- Token ratio validation range: 0.25 < ratio < 5 (lowered from 0.5 for better cache token support)
+- Documentation updated to reflect correct phase order and line-level dedup strategy
+
+### Implementation Details
+
+- Phase 1 (line-level): Processes all reads sequentially, catches most duplicates
+- Phase 2 (hash-based): Only processes reads not caught by phase 1
+- Context margin (±3 lines) prevents losing important surrounding code
+- Margin size matches Claude Code's built-in edit tool context
+- Bytes omitted calculated per placeholder for accuracy
+- Token estimation applies file-percentage approach for partial dedup
+- Read-after-write detection ensures explicit Write→Read relationships are honored
+
 ## [1.1.0.0] - 2026-02-14
 
 _Cache validation and token estimation features._
