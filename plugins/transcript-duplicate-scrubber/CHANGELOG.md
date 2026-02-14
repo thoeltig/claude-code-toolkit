@@ -7,6 +7,39 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.1.0.0] - 2026-02-14
+
+_Cache validation and token estimation features._
+
+### Added
+
+**UserPromptSubmit Hook - Cache Validator**:
+- Pre-prompt validation hook that detects stale transcripts (> 5 minutes idle)
+- Blocks user prompt submission if transcript is stale AND deduplication would save bytes
+- Displays estimated token savings alongside byte savings
+- Exit code 2 prevents prompt submission with user-friendly message
+- Helps users resume sessions instead of continuing stale conversations
+
+**Token Estimation**:
+- Per-file token/character ratio extraction from transcript cache writes
+- Rolling search through cache_creation_input_tokens to find valid ratios
+- Ratio validation: 0.5 < ratio < 5 tokens/character (rejects invalid cache data)
+- Calculates total estimated token savings per deduplicated file
+- Token estimates shown in all outputs: `Total bytes omitted: XXX (~YYY tokens)`
+
+**Enhanced Reporting**:
+- New `--dry-run-short` flag for compact output format
+- Token estimates in all modes: --dry-run, --dry-run-short, normal run, and hook messages
+- Format: `Savings: XXX bytes (~YYY tokens)` for easier parsing and display
+
+### Implementation Details
+
+- Cache validator checks: (1) transcript age, (2) deduplication savings, (3) per-file token ratios
+- Token extraction uses cache_creation_input_tokens from assistant message following Read/Write
+- Only calculates tokens for files with actual duplicates being removed
+- Graceful fallback when token ratio unavailable (shows bytes only)
+- Default cache duration: 5 minutes (hardcoded for now, configurable in future)
+
 ## [1.0.0.0] - 2026-02-08
 
 _First release of transcript deduplication plugin._

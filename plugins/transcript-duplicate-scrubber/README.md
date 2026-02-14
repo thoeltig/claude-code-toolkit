@@ -32,7 +32,7 @@ This plugin removes those duplicates by keeping only the latest read (or the Wri
 
 **Requirements:** Python 3.X (developed with 3.1.3)
 
-The plugin automatically registers and runs on session resume. No configuration needed.
+The plugin automatically registers and runs on session end and pre-prompt. No configuration needed.
 
 ## Usage
 
@@ -52,12 +52,44 @@ Deduplicated 12 file reads with same content from conversation which cleared up 
 
 The cleaned transcript benefits all future resumes of that session.
 
+### Cache Validator (Pre-Prompt Hook)
+
+The plugin also validates transcript freshness before you submit each prompt:
+
+```
+[You type a prompt after 6+ minutes of idle time]
+# Plugin detects stale cache and blocks submission:
+Cache invalidated and conversation contains duplicate file reads.
+Exit and resume session to clear 15422 bytes (~14457 tokens) from context.
+```
+
+**What triggers validation:**
+- Transcript is stale (> 5 minutes since last Claude message)
+- Deduplication would save bytes
+- Both conditions met → prompt blocked with savings estimate
+
+**Token estimates shown:**
+- Calculated per-file using cache write token ratios
+- Format: `XXX bytes (~YYY tokens)`
+- Helps you understand the benefit of resuming
+
+This prevents wasted conversation on stale transcripts and encourages resume-based workflows for cost efficiency.
+
 ### Manual (CLI Mode)
 
-Preview what would be removed:
+Preview what would be removed (detailed report):
 ```bash
 python dedup_transcript.py <transcript_file> --dry-run
 ```
+
+Output includes per-file deduplication details with byte and token savings.
+
+Quick savings summary only:
+```bash
+python dedup_transcript.py <transcript_file> --dry-run-short
+```
+
+Output: `Savings: 15422 bytes (~14457 tokens)`
 
 Apply deduplication:
 ```bash
@@ -98,6 +130,29 @@ For each redundant read, the plugin replaces the content with a marker. Two mark
 ```
 
 All intervening messages are preserved—only the duplicate file content is removed.
+
+## Token Estimation
+
+The plugin estimates token savings for each deduplicated file using per-file cache write information:
+
+**How it works:**
+- Extracts token/character ratio from each file's first cache write in the transcript
+- Uses `cache_creation_input_tokens` from the assistant message following a Read/Write operation
+- Applies ratio only to files that actually have duplicates being removed
+- Valid ratio range: 0.5 - 5 tokens/character (rejects invalid cache data)
+
+**Example calculation:**
+```
+README.md: 9,266 chars with ratio 1.56 tokens/char
+  → 2 reads × 9,266 chars × 1.56 tokens/char ≈ 28,900 tokens saved
+```
+
+Token estimates appear in:
+- Cache validator message: `clear 15422 bytes (~14457 tokens)`
+- CLI reports: `Total bytes omitted: 15422 (~14457 tokens)`
+- Dry-run output: Full details per file
+
+If token ratio cannot be reliably extracted, the plugin shows bytes only.
 
 ## Example Workflow
 
