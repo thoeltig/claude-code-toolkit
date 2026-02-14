@@ -386,7 +386,10 @@ def generate_report(
         report_lines.append("=== DEDUPLICATION REPORT ===")
 
     report_lines.append(f"\nTotal duplicates found: {len(duplicates)}")
-    report_lines.append(f"Total bytes omitted: {total_bytes}")
+    if token_ratio and token_ratio > 0:
+        report_lines.append(f"Total bytes omitted: {total_bytes} (~{token_ratio} tokens)")
+    else:
+        report_lines.append(f"Total bytes omitted: {total_bytes}")
 
     # Group by file
     by_file = {}
@@ -523,7 +526,7 @@ def main():
     total_bytes = sum(len(read_op.content.encode('utf-8')) for read_op, _, _ in duplicates)
     estimated_tokens = None
 
-    if short_output and duplicates:
+    if duplicates:
         # Group duplicates by file and calculate per-file tokens
         files_with_duplicates = {}
         for read_op, _, _ in duplicates:
