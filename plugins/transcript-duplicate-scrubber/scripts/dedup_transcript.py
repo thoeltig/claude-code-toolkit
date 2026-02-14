@@ -403,98 +403,96 @@ def find_duplicates(
     reads_by_path: dict[str, list[ReadOp]]
 ) -> list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]]:
     """
-    Find duplicate reads using two strategies in priority order:
+    Find duplicate reads by backward iteration: for each read, check what comes BEFORE.
 
-    1. Line-level detection (primary - handles consecutive reads with partial changes):
-       - Compare reads sequentially, find line-by-line differences
-       - Apply ±3 line context margin around changes
-       - Replace unchanged lines with placeholders
-       - Handles cases where edits occur between reads
-
-    2. Hash-based detection (secondary - read-after-write only):
-       - If a Write has same content hash, mark remaining Reads with that hash
-       - Only applied to unprocessed reads (not caught by line-level)
-
-    Skip files with < 3 total lines. Only create placeholders for omitted blocks >= 3 lines.
+    - Previous Read with SAME content → Mark previous for full dedup
+    - Previous Read with DIFFERENT content → Mark previous for partial dedup
+    - Previous Write with SAME content → Mark current read for full dedup
 
     Returns:
         List of (read_op, write_op, prev_read_op, partial_dedup_data)
     """
     duplicates = []
-    processed_reads = set()  # Track reads already marked
 
     for filepath, reads in reads_by_path.items():
         # Skip files with < 3 lines
         if all(len(read.content.split('\n')) < 3 for read in reads):
             continue
 
-        sorted_reads = sorted(reads, key=lambda r: r.message_position)
-
-        # PHASE 1: Line-level deduplication (partial dedup for reads with changes)
-        for i, read_current in enumerate(sorted_reads):
-            if id(read_current) in processed_reads:
-                continue
-
-            for j in range(i):
-                read_prev = sorted_reads[j]
-                if id(read_prev) in processed_reads:
-                    continue
-
-                # Skip if file has < 3 lines
-                if len(read_current.content.split('\n')) < 3:
-                    continue
-
-                # Line-level comparison (works for both identical and partial content)
-                diff_ranges = find_line_differences(read_prev.content, read_current.content)
-
-                # If no differences, apply full dedup as placeholder
-                if not diff_ranges:
-                    # Fully identical - replace entire read with placeholder
-                    bytes_count = len(read_prev.content.encode('utf-8'))
-                    modified_content = f"<DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
-                    duplicates.append((read_prev, None, None, (modified_content, bytes_count)))
-                    processed_reads.add(id(read_prev))
-                    break
-
-                # Perform partial dedup for reads with differences
-                # Apply context margin
-                total_lines = len(read_current.content.split('\n'))
-                kept_ranges = apply_context_margin(diff_ranges, total_lines, margin=3)
-
-                # Check if we would omit any lines >= 3
-                would_omit = False
-                for k, (keep_start, keep_end) in enumerate(kept_ranges):
-                    if k > 0:
-                        prev_end = kept_ranges[k-1][1]
-                        if keep_start - prev_end >= 3:
-                            would_omit = True
-                            break
-                    if k == 0 and keep_start >= 3:
-                        would_omit = True
-                        break
-                if not would_omit and total_lines - kept_ranges[-1][1] >= 3:
-                    would_omit = True
-
-                # Apply partial dedup if worthwhile
-                if would_omit:
-                    modified_content, bytes_omitted = create_partial_dedup_content(read_prev.content, kept_ranges)
-                    duplicates.append((read_prev, None, None, (modified_content, bytes_omitted)))
-                    processed_reads.add(id(read_prev))
-                    break
-
-        # PHASE 2: Hash-based deduplication (read-after-write only, on unprocessed reads)
         writes = writes_by_path.get(filepath, [])
-        write_hashes = {w.content_hash: w for w in writes}
+
+        # Iterate backwards by message position (newest to oldest)
+        sorted_reads = sorted(reads, key=lambda r: r.message_position, reverse=True)
+
+        # Track which reads have been processed to avoid revisiting
+        processed_reads = set()
 
         for read in sorted_reads:
-            if id(read) in processed_reads:
+            if read.tool_use_id in processed_reads:
                 continue
 
-            # Check if this read matches any Write
-            if read.content_hash in write_hashes:
-                write_op = write_hashes[read.content_hash]
-                duplicates.append((read, write_op, None, None))
-                processed_reads.add(id(read))
+            processed_reads.add(read.tool_use_id)
+
+            # Follow the chain backward: if we find a duplicate, continue from that read
+            current = read
+
+            while True:
+                # Find what comes BEFORE current read (previous operations by position)
+                prev_reads = [r for r in reads if r.message_position < current.message_position]
+                prev_writes = [w for w in writes if w.message_position < current.message_position]
+
+                # Prioritize read comparison over write comparison
+                if prev_reads:
+                    # Get the nearest previous read
+                    prev_read = max(prev_reads, key=lambda r: r.message_position)
+
+                    if current.content_hash == prev_read.content_hash:
+                        # Same content: previous read is fully redundant
+                        duplicates.append((prev_read, None, None, None))
+                        processed_reads.add(prev_read.tool_use_id)
+                        # Continue checking from prev_read
+                        current = prev_read
+                    else:
+                        # Different content: previous read is partially redundant
+                        if len(prev_read.content.split('\n')) >= 3:
+                            diff_ranges = find_line_differences(prev_read.content, current.content)
+
+                            if diff_ranges:  # Has differences
+                                total_lines = len(prev_read.content.split('\n'))
+                                kept_ranges = apply_context_margin(diff_ranges, total_lines, margin=3)
+
+                                # Check if we would omit any lines >= 3
+                                would_omit = False
+                                for k, (keep_start, keep_end) in enumerate(kept_ranges):
+                                    if k > 0:
+                                        prev_end = kept_ranges[k-1][1]
+                                        if keep_start - prev_end >= 3:
+                                            would_omit = True
+                                            break
+                                    if k == 0 and keep_start >= 3:
+                                        would_omit = True
+                                        break
+                                if not would_omit and total_lines - kept_ranges[-1][1] >= 3:
+                                    would_omit = True
+
+                                if would_omit:
+                                    modified_content, bytes_omitted = create_partial_dedup_content(prev_read.content, kept_ranges)
+                                    duplicates.append((prev_read, None, None, (modified_content, bytes_omitted)))
+                        # Stop on content difference
+                        break
+
+                elif prev_writes:
+                    # Only check write if there's no previous read
+                    prev_write = max(prev_writes, key=lambda w: w.message_position)
+
+                    if current.content_hash == prev_write.content_hash:
+                        # Current read matches previous write: current read is redundant
+                        duplicates.append((current, prev_write, None, None))
+                    # Stop on write comparison
+                    break
+                else:
+                    # No previous operations
+                    break
 
     return duplicates
 
