@@ -83,7 +83,7 @@
       "name": "transcript-duplicate-scrubber",
       "source": "./plugins/transcript-duplicate-scrubber",
       "description": "Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk and preserve context priority when resuming sessions.",
-      "version": "1.0.0.0",
+      "version": "1.3.0.0",
       "author": {
         "name": "Thore Höltig"
       },

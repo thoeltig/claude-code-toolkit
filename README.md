@@ -28,7 +28,7 @@ Then install any plugin:
 | **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
-| **[transcript-duplicate-scrubber](./plugins/transcript-duplicate-scrubber/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.0.0.0 |
+| **[transcript-duplicate-scrubber](./plugins/transcript-duplicate-scrubber/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.3.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -91,10 +91,12 @@ Get alerted when Claude Code tasks complete or hook events occur with native sys
 ### Transcript Duplicate Scrubber
 During development you naturally read the same file multiple times to keep important context "fresh" (higher priority). But when resuming a session Claude Code reconstructs the entire conversation from the transcript including all file reads which waste tokens without adding new information.
 
-This plugin automatically deduplicates as your session ends, removing redundant reads using intelligent deduplication:
-- **Write priority**: If a Write has content, all Reads with that content are removed
-- **Keep latest**: For multiple Reads of the same content, keep only the most recent (highest token priority)
-- **Preserve changes**: Different content is always kept (edits create different hashes)
+This plugin automatically deduplicates as your session ends, removing redundant reads using intelligent backward-iterating chain-following:
+- **Backward iteration**: Processes reads from newest to oldest, catching cascading duplicates efficiently
+- **Chain following**: When duplicates found, continues checking from that read to catch transitive chains (Read A = B = C)
+- **Partial dedup**: When content differs, keeps only changed lines with ±3 line context margin (matching Claude Code's edit tool)
+- **Write awareness**: Detects reads matching previous Write operations and marks them redundant
+- **Cache validator hook**: Blocks input if transcript is stale (>5 min idle) and duplicates exist, showing token savings to encourage resuming instead
 
 The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.
 

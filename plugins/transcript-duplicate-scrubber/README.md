@@ -20,19 +20,23 @@ This plugin removes those duplicates by keeping only the latest read (or the Wri
 ## When to Use This
 
 **This helps if you:**
-- Frequently use `/resume` to continue previous sessions
-- Work with long sessions that have heavy file reading
-- Want to reduce token costs and context bloat
+- Work with long sessions that have heavy file reading and editing
+- Want to reduce token costs and reduce hallucination risk from context bloat
+- Use `/resume` frequently - cleaned transcript cuts reconstruction costs per resume
+- Go idle >5 minutes during work - cache validator hook blocks input and shows token savings, encouraging optimal resume workflow
 
-**This won't help if you:**
-- Don't use `/resume` (run new sessions each time)
-- Have short, one-off sessions
+**Even helps if you:**
+- Don't manually use `/resume` - deduplication benefits eventual resumes (immediate or weeks later) with lower reconstruction costs
+- Prefer starting fresh sessions - any future resume of that session will have a smaller, cleaner transcript
+
+**Won't help much if you:**
+- Have very short, one-off sessions - minimal duplicate reads occur
 
 ## Installation
 
 **Requirements:** Python 3.X (developed with 3.1.3)
 
-The plugin automatically registers and runs on session resume. No configuration needed.
+The plugin automatically registers and runs on session end and pre-prompt. No configuration needed.
 
 ## Usage
 
@@ -52,12 +56,44 @@ Deduplicated 12 file reads with same content from conversation which cleared up 
 
 The cleaned transcript benefits all future resumes of that session.
 
+### Cache Validator (Pre-Prompt Hook)
+
+The plugin also validates transcript freshness before you submit each prompt:
+
+```
+[You type a prompt after 6+ minutes of idle time]
+# Plugin detects stale cache and blocks submission:
+Cache invalidated and conversation contains duplicate file reads.
+Exit and resume session to clear 15422 bytes (~14457 tokens) from context.
+```
+
+**What triggers validation:**
+- Transcript is stale (> 5 minutes since last Claude message)
+- Deduplication would save bytes
+- Both conditions met → prompt blocked with savings estimate
+
+**Token estimates shown:**
+- Calculated per-file using cache write token ratios
+- Format: `XXX bytes (~YYY tokens)`
+- Helps you understand the benefit of resuming
+
+This prevents wasted conversation on stale transcripts and encourages resume-based workflows for cost efficiency.
+
 ### Manual (CLI Mode)
 
-Preview what would be removed:
+Preview what would be removed (detailed report):
 ```bash
 python dedup_transcript.py <transcript_file> --dry-run
 ```
+
+Output includes per-file deduplication details with byte and token savings.
+
+Quick savings summary only:
+```bash
+python dedup_transcript.py <transcript_file> --dry-run-short
+```
+
+Output: `Savings: 15422 bytes (~14457 tokens)`
 
 Apply deduplication:
 ```bash
@@ -66,38 +102,77 @@ python dedup_transcript.py <transcript_file>
 
 ## How It Works
 
-The plugin detects reads with duplicate content hashes and applies two deduplication rules:
+The plugin uses backward-iterating chain-following deduplication to intelligently remove redundant file reads:
 
-**Rule 1: Write has priority**
-If a Write operation has content hash X, all Reads with that same hash are marked redundant (the Write already has the content):
-```
-Write file.txt → "content X"
-[Messages exchanged]
-Read file.txt → "content X"  ← Marked as DEDUPLICATION_READ_AFTER_WRITE_MARKER (redundant)
-```
+**Backward Iteration with Chain Following:**
+Starting from the newest read and working backward, the plugin:
+1. Compares each read to the previous operation (earlier read or write)
+2. If the previous read has **same content** → marks it for dedup and continues checking from that read
+3. If the previous read has **different content** → applies partial dedup with line-level comparison
+4. If no previous read but **previous write matches** → marks current read for dedup
 
-**Rule 2: Keep latest read**
-If no Write has that hash, keep only the latest Read and mark all earlier reads with the same hash as redundant:
-```
-Read file.txt → "content X" (first)  ← Marked as DEDUPLICATION_MULTIPLE_READS_MARKER (older)
-[Messages exchanged]
-Read file.txt → "content X" (latest)  ← Kept (newest tokens, higher priority)
-```
+This chain-following approach efficiently catches transitive duplicates (Read A = Read B = Read C) in a single pass.
 
-**Different content is always kept:**
+**Line-by-Line Comparison:**
+When two reads of the same file differ, the plugin compares them line-by-line to find what changed:
 ```
-Read file.txt → "content X"
-[Edit happens]
-Read file.txt → "content Y"  ← Different hash, both kept
+Read 1: lines 1-50 identical
+        lines 51-60 changed (edited)
+        lines 61-100 identical
+
+Read 2: lines 1-50 identical
+        lines 51-60 different
+        lines 61-100 identical
 ```
 
-For each redundant read, the plugin replaces the content with a marker. Two marker types indicate the deduplication reason:
+**Context-Aware Deduplication:**
+The plugin applies a ±3 line context margin around changes to preserve editing context (matches Claude Code's edit tool):
 ```
-<DEDUPLICATION_READ_AFTER_WRITE_MARKER|OMITTED_CHARS_COUNT:2847>
-<DEDUPLICATION_MULTIPLE_READS_MARKER|OMITTED_CHARS_COUNT:2847>
+Changed lines:     51-60
+Context margin:    ±3 lines
+Kept range:        48-63 (includes context)
+Replaced:          1-47, 64-100
 ```
 
-All intervening messages are preserved—only the duplicate file content is removed.
+**Marker Replacement:**
+Lines outside the context range are replaced with placeholders:
+```
+lines 1-47:      <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:2847>
+lines 48-63:     (original unchanged content kept for context)
+lines 64-100:    <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:1529>
+```
+
+This preserves the file structure (one placeholder per omitted block) while removing token-wasting redundant content.
+
+**Smart Thresholds:**
+- Skips files with fewer than 3 total lines (defer to character-level dedup later)
+- Only creates placeholders for omitted blocks ≥ 3 lines
+- Small unchanged sections between edits are kept as-is to maintain readability
+
+All intervening messages are preserved—only truly redundant file content is removed.
+
+## Token Estimation
+
+The plugin estimates token savings for each deduplicated file using per-file cache write information:
+
+**How it works:**
+- Extracts token/character ratio from each file's first cache write in the transcript
+- Uses `cache_creation_input_tokens` from the assistant message following a Read/Write operation
+- Applies ratio only to files that actually have duplicates being removed
+- Valid ratio range: 0.25 - 5 tokens/character (rejects invalid cache data)
+
+**Example calculation:**
+```
+README.md: 9,266 chars with ratio 1.56 tokens/char
+  → 2 reads × 9,266 chars × 1.56 tokens/char ≈ 28,900 tokens saved
+```
+
+Token estimates appear in:
+- Cache validator message: `clear 15422 bytes (~14457 tokens)`
+- CLI reports: `Total bytes omitted: 15422 (~14457 tokens)`
+- Dry-run output: Full details per file
+
+If token ratio cannot be reliably extracted, the plugin shows bytes only.
 
 ## Example Workflow
 
