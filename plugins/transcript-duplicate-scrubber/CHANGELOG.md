@@ -7,6 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.3.0.0] - 2026-02-14
+
+_Backward-iterating chain-following algorithm for improved duplicate detection._
+
+### Changed
+
+**Deduplication Algorithm Redesign**:
+- Replaced two-phase approach with backward-iterating chain-following
+- Iterates from newest to oldest read, checking each read against previous operations
+- When duplicate found: marks previous read and continues chain from it
+- Enables transitive deduplication in single pass (Read A = B = C all caught efficiently)
+- When content differs: applies partial dedup with line-level comparison
+
+**Algorithm Details**:
+- Backward iteration ensures newest reads (higher priority) remain when duplicates exist
+- Chain following catches cascading duplicates without separate phases
+- Prioritizes previous read over write for comparison (read-to-read before read-to-write)
+- Processes reads in reverse order for context-aware duplicate detection
+
+### Implementation
+
+- Single-pass backward iteration: O(n) complexity maintained
+- Chain continuation: When same content found, previous read marked and becomes new current
+- Partial dedup fallback: When content differs, applies line-level comparison with ±3 margin
+- Write fallback: Only checks previous write if no previous read exists
+- Transitive chain example: Read5→Read4→Read3 all marked in one iteration of Read5
+
 ## [1.2.0.0] - 2026-02-14
 
 _Line-level partial deduplication for smarter duplicate detection._
@@ -135,6 +162,8 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.1.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.3.0.0...HEAD
+[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.2.0.0...TranscriptDuplicateScrubber_v1.3.0.0
+[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.1.0.0...TranscriptDuplicateScrubber_v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.0.0.0...TranscriptDuplicateScrubber_v1.1.0.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/TranscriptDuplicateScrubber_v1.0.0.0

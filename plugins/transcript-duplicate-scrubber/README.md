@@ -98,10 +98,19 @@ python dedup_transcript.py <transcript_file>
 
 ## How It Works
 
-The plugin uses unified line-level deduplication to intelligently remove redundant file reads:
+The plugin uses backward-iterating chain-following deduplication to intelligently remove redundant file reads:
+
+**Backward Iteration with Chain Following:**
+Starting from the newest read and working backward, the plugin:
+1. Compares each read to the previous operation (earlier read or write)
+2. If the previous read has **same content** → marks it for dedup and continues checking from that read
+3. If the previous read has **different content** → applies partial dedup with line-level comparison
+4. If no previous read but **previous write matches** → marks current read for dedup
+
+This chain-following approach efficiently catches transitive duplicates (Read A = Read B = Read C) in a single pass.
 
 **Line-by-Line Comparison:**
-When two reads of the same file are detected, the plugin compares them line-by-line to find what changed:
+When two reads of the same file differ, the plugin compares them line-by-line to find what changed:
 ```
 Read 1: lines 1-50 identical
         lines 51-60 changed (edited)
@@ -130,18 +139,6 @@ lines 64-100:    <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:1529>
 ```
 
 This preserves the file structure (one placeholder per omitted block) while removing token-wasting redundant content.
-
-**Two-Phase Deduplication Strategy:**
-
-Phase 1: Line-level comparison (primary)
-- Compares each read with previous reads to find line-by-line differences
-- Detects both fully-identical reads and partial changes
-- Handles reads separated by edits
-
-Phase 2: Hash-based read-after-write (secondary)
-- Only processes reads not caught by phase 1
-- Identifies explicit Write→Read relationships
-- Ensures write operations aren't duplicated by subsequent reads
 
 **Smart Thresholds:**
 - Skips files with fewer than 3 total lines (defer to character-level dedup later)
