@@ -86,5 +86,6 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.0.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.1.0.0...HEAD
+[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.0.0.0...TranscriptDuplicateScrubber_v1.1.0.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/TranscriptDuplicateScrubber_v1.0.0.0
