@@ -28,60 +28,54 @@ def parse_hook_message(hook_json: str) -> dict:
     return hook_data
 
 
-def load_transcript(filepath: str) -> list[dict]:
-    """Load transcript file (handles minified JSONL and pretty-printed JSON)."""
-    messages = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
+def get_last_claude_message_time(transcript_path: str) -> datetime | None:
+    """Extract timestamp of last Claude assistant message by reading from file end.
 
-    # Try as single JSON array first
-    if content.strip().startswith('['):
-        try:
-            messages = json.loads(content)
-            return messages
-        except json.JSONDecodeError:
-            pass
-
-    # Parse as newline-delimited JSON objects
-    lines = content.split('\n')
-    current_obj = []
-    brace_count = 0
-
-    for line in lines:
-        current_obj.append(line)
-        brace_count += line.count('{') - line.count('}')
-
-        if brace_count == 0 and current_obj and any('{' in l for l in current_obj):
-            obj_str = '\n'.join(current_obj).strip()
-            if obj_str:
-                try:
-                    messages.append(json.loads(obj_str))
-                    current_obj = []
-                except json.JSONDecodeError:
-                    pass
-
-    return messages
-
-
-def get_last_claude_message_time(messages: list[dict]) -> datetime | None:
-    """Extract timestamp of last Claude assistant message.
+    Reads from end of file backwards until finding an assistant message.
+    Minimal memory usage - stops as soon as message found.
 
     Returns None if no Claude message found or timestamp missing.
     """
-    for msg in reversed(messages):
-        if msg.get('type') != 'assistant':
-            continue
+    try:
+        with open(transcript_path, 'r', encoding='utf-8') as f:
+            f.seek(0, 2)
+            file_size = f.tell()
+            position = file_size
+            chunk_size = 4096
+            buffer = ''
 
-        msg_obj = msg.get('message', {})
-        if msg_obj.get('role') != 'assistant':
-            continue
+            # Read backwards in chunks until finding assistant message
+            while position > 0:
+                read_size = min(chunk_size, position)
+                position -= read_size
+                f.seek(position)
+                chunk = f.read(read_size)
+                buffer = chunk + buffer
 
-        timestamp_str = msg.get('timestamp')
-        if timestamp_str:
-            try:
-                return datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-            except (ValueError, AttributeError):
-                continue
+                # Try to find assistant message in buffer
+                lines = buffer.split('\n')
+                for line in reversed(lines[:-1]):  # Skip incomplete last line
+                    if not line.strip():
+                        continue
+
+                    try:
+                        msg = json.loads(line)
+                        if msg.get('type') == 'assistant':
+                            msg_obj = msg.get('message', {})
+                            if msg_obj.get('role') == 'assistant':
+                                timestamp_str = msg.get('timestamp')
+                                if timestamp_str:
+                                    return datetime.fromisoformat(
+                                        timestamp_str.replace('Z', '+00:00')
+                                    )
+                    except (json.JSONDecodeError, ValueError, AttributeError):
+                        continue
+
+                # Keep incomplete last line for next iteration
+                buffer = lines[-1]
+
+    except (IOError, OSError):
+        pass
 
     return None
 
@@ -144,9 +138,8 @@ def main():
         if not Path(transcript_path).exists():
             sys.exit(0)
 
-        # Load and check transcript
-        messages = load_transcript(transcript_path)
-        last_message_time = get_last_claude_message_time(messages)
+        # Get last Claude message timestamp (reads file backwards efficiently)
+        last_message_time = get_last_claude_message_time(transcript_path)
 
         if not last_message_time:
             sys.exit(0)
