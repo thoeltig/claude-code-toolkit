@@ -38,6 +38,89 @@ def hash_content(content: str) -> str:
     """Generate SHA256 hash of content"""
     return hashlib.sha256(content.encode()).hexdigest()
 
+def extract_token_ratio_for_file(messages: list[dict], filepath: str) -> float | None:
+    """Extract token/character ratio for a specific file using rolling search.
+
+    Finds cache_creation_input_tokens from the assistant message following a Read/Write
+    of the given filepath. Calculates ratio until finding a valid one (0 < ratio < 5).
+
+    Args:
+        messages: List of transcript messages
+        filepath: File path to find ratio for
+
+    Returns:
+        Token ratio (tokens per character) if valid, otherwise None
+    """
+    candidates = []
+
+    # Find Write operations for this filepath
+    for i, msg in enumerate(messages):
+        if msg.get('type') != 'assistant':
+            continue
+
+        msg_obj = msg.get('message', {})
+        if msg_obj.get('role') != 'assistant':
+            continue
+
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_use' and item.get('name') == 'Write':
+                if item.get('input', {}).get('file_path') == filepath:
+                    file_content = item.get('input', {}).get('content')
+                    if file_content:
+                        # Look for cache tokens in following assistant message
+                        for j in range(i + 1, len(messages)):
+                            next_msg = messages[j]
+                            if next_msg.get('type') == 'assistant':
+                                usage = next_msg.get('message', {}).get('usage', {})
+                                cache_tokens = usage.get('cache_creation_input_tokens')
+                                if cache_tokens:
+                                    candidates.append((cache_tokens, len(file_content)))
+                                break
+
+    # Find Read operations for this filepath
+    for i, msg in enumerate(messages):
+        if msg.get('type') != 'user':
+            continue
+
+        msg_obj = msg.get('message', {})
+        message_content = msg_obj.get('content', [])
+
+        if not isinstance(message_content, list):
+            continue
+
+        # Get toolUseResult metadata to match filepath
+        tool_use_result = msg.get('toolUseResult', {})
+        if isinstance(tool_use_result, dict):
+            result_filepath = tool_use_result.get('file', {}).get('filePath')
+            result_content = tool_use_result.get('file', {}).get('content')
+        else:
+            result_filepath = None
+            result_content = None
+
+        if result_filepath == filepath and result_content:
+            # Look for cache tokens in following assistant message
+            for j in range(i + 1, len(messages)):
+                next_msg = messages[j]
+                if next_msg.get('type') == 'assistant':
+                    usage = next_msg.get('message', {}).get('usage', {})
+                    cache_tokens = usage.get('cache_creation_input_tokens')
+                    if cache_tokens:
+                        candidates.append((cache_tokens, len(result_content)))
+                    break
+
+    # Rolling search through candidates
+    for cache_tokens, char_count in candidates:
+        if char_count > 0:
+            ratio = cache_tokens / char_count
+            if 0.5 < ratio < 5:
+                return ratio
+
+    return None
+
 def load_transcript(filepath: str, dry_run: bool = False) -> list[dict]:
     """Load transcript file (handles minified JSONL and pretty-printed JSON).
 
@@ -286,10 +369,13 @@ def generate_report(
     duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp]]],
     total_bytes: int,
     dry_run: bool = False,
-    short_output: bool = False
+    short_output: bool = False,
+    token_ratio: Optional[int] = None
 ) -> str:
     """Generate a report of deduplication"""
     if short_output:
+        if token_ratio and token_ratio > 0:
+            return f"Savings: {total_bytes} bytes (~{token_ratio} tokens)"
         return f"Savings: {total_bytes} bytes"
 
     report_lines = []
@@ -433,9 +519,29 @@ def main():
     if verbose:
         print(f"Found {len(duplicates)} duplicate reads")
 
-    # Generate report
+    # Calculate total bytes and estimate tokens per file
     total_bytes = sum(len(read_op.content.encode('utf-8')) for read_op, _, _ in duplicates)
-    report = generate_report(duplicates, total_bytes, dry_run=dry_run, short_output=short_output)
+    estimated_tokens = None
+
+    if short_output and duplicates:
+        # Group duplicates by file and calculate per-file tokens
+        files_with_duplicates = {}
+        for read_op, _, _ in duplicates:
+            if read_op.filepath not in files_with_duplicates:
+                files_with_duplicates[read_op.filepath] = 0
+            files_with_duplicates[read_op.filepath] += len(read_op.content.encode('utf-8'))
+
+        # Calculate tokens for each file
+        total_estimated_tokens = 0
+        for filepath, file_bytes in files_with_duplicates.items():
+            ratio = extract_token_ratio_for_file(messages, filepath)
+            if ratio and ratio > 0:
+                total_estimated_tokens += int(file_bytes * ratio)
+
+        estimated_tokens = total_estimated_tokens if total_estimated_tokens > 0 else None
+
+    # Generate report
+    report = generate_report(duplicates, total_bytes, dry_run=dry_run, short_output=short_output, token_ratio=estimated_tokens)
     if verbose:
         print("\n" + report)
     elif short_output:

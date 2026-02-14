@@ -93,10 +93,10 @@ def is_stale(last_message_time: datetime) -> bool:
     return age_minutes > CACHE_DURATION_MINUTES
 
 
-def get_savings(transcript_path: str) -> int | None:
-    """Run dedup with --dry-run-short and extract savings bytes.
+def get_savings(transcript_path: str) -> str | None:
+    """Run dedup with --dry-run-short and extract savings message.
 
-    Returns bytes saved, or None if dedup script fails.
+    Returns savings message (e.g., "15422 bytes (~12 tokens)") or None if fails.
     """
     script_path = Path(__file__).parent.parent / 'scripts' / 'dedup_transcript.py'
 
@@ -113,11 +113,8 @@ def get_savings(transcript_path: str) -> int | None:
 
         output = result.stdout.strip()
         if output.startswith('Savings: '):
-            bytes_str = output.replace('Savings: ', '').replace(' bytes', '').strip()
-            try:
-                return int(bytes_str)
-            except ValueError:
-                return None
+            # Extract just the savings part: "15422 bytes (~12 tokens)" or "15422 bytes"
+            return output.replace('Savings: ', '').strip()
 
     except (subprocess.TimeoutExpired, Exception):
         return None
@@ -159,10 +156,10 @@ def main():
             sys.exit(0)
 
         # Stale - check for savings
-        savings = get_savings(transcript_path)
+        savings_msg = get_savings(transcript_path)
 
-        if savings and savings > 0:
-            error_msg = f"Cache invalidated and conversation contains duplicate file reads. Exit and resume session to clear {savings} bytes from context."
+        if savings_msg:
+            error_msg = f"Cache invalidated and conversation contains duplicate file reads. Exit and resume session to clear {savings_msg} from context."
             print(error_msg, file=sys.stderr)
             sys.exit(2)
 
