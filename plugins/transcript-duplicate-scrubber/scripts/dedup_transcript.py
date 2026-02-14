@@ -374,6 +374,9 @@ def generate_report(
 ) -> str:
     """Generate a report of deduplication"""
     if short_output:
+        if total_bytes == 0:
+            return ""
+
         if token_ratio and token_ratio > 0:
             return f"Savings: {total_bytes} bytes (~{token_ratio} tokens)"
         return f"Savings: {total_bytes} bytes"
