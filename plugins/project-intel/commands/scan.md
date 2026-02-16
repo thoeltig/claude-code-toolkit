@@ -153,15 +153,25 @@ Next step: Use /query "keyword" to search file summaries
 **File Analysis Output Structure:**
 ```json
 {
-  "files": {
-    "path/to/file.ts": {
-      "summary": "One sentence describing file",
-      "purpose": "1-2 sentences explaining role",
+  "directories": [
+    {
+      "path": "path/to",
+      "summary": "One sentence describing what the directory contains",
+      "purpose": "1-2 sentences explaining the directory's role and purpose in the project",
+      "technologies": ["usedTechnology1", "usedTechnology2"]
+    }
+  ],
+  "files": [
+    {
+      "path": "path/to/file.ts",
+      "summary": "One sentence describing what the file contains",
+      "purpose": "1-2 sentences explaining the file's role and purpose in the project",
       "role": "implementation|documentation|configuration|test|build|script",
+      "technologies": ["usedTechnology1"],
       "exports": ["export1", "export2"],
       "imports": ["dep1", "dep2"]
     }
-  }
+  ]
 }
 ```
 

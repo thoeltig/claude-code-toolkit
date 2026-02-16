@@ -23,7 +23,7 @@
       "name": "project-intel",
       "source": "./plugins/project-intel",
       "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
-      "version": "1.5.1.0",
+      "version": "1.5.2.0",
       "author": {
         "name": "Thore Höltig"
       },
