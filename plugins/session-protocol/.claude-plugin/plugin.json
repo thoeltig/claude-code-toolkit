@@ -1,10 +1,16 @@
 {
-  "name": "session-protocol",
   "description": "Save your active tasks between sessions for seamless continuity and never loss context again.",
   "version": "1.2.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
+    "url": "https://github.com/thoeltig"
   },
-  "hooks": "./hooks/hooks.json"
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/session-protocol",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "category": "tools",
+  "keywords": ["session", "continuity", "context", "state", "tasks"],
+  "tags": ["session-management", "continuity", "context"],
+  "hooks": "./hooks/hooks.json",
+  "skills": "./skills/"
 }

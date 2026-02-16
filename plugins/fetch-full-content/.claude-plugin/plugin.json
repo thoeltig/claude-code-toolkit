@@ -1,9 +1,15 @@
 {
-  "name": "fetch-full-content",
-  "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Applies basic filtering to remove hidden content injection but this is NO prompt injection detection or guard. Should only be used on official and trusted sources like documentations.",
+  "description": "Download and cache full page content from URLs for complete information retrieval without summarization loss. Removes only simple hidden content but has NO prompt injection detection or guard. Should only be used on official and trusted sources like documentations.",
   "version": "1.2.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit/plugins/fetch-full-content"
-  }
+    "url": "https://github.com/thoeltig"
+  },
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/fetch-full-content",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "category": "tools",
+  "keywords": ["content-retrieval", "scraping", "caching", "urls"],
+  "tags": ["fetching", "caching", "content"],
+  "commands": "./commands/"
 }

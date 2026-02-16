@@ -1,9 +1,15 @@
 {
-  "name": "documentation",
-  "description": "Comprehensive skill for creating, updating, and maintaining high-quality project documentation",
+  "description": "Professional documentation management following industry best practices for clarity, accessibility, and inclusivity.",
   "version": "1.0.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
-  }
+    "url": "https://github.com/thoeltig"
+  },
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/documentation",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "category": "development",
+  "keywords": ["documentation", "writing", "quality", "accessibility"],
+  "tags": ["documentation", "quality", "standards"],
+  "skills": "./skills/"
 }

@@ -1,9 +1,15 @@
 {
-  "name": "claude-code-capabilities",
   "description": "Comprehensive management of Claude Code features including skills, slash commands, hooks, MCPs, subagents, and prompts. Create, analyze, and improve Claude Code capabilities with official documentation guidance.",
   "version": "1.8.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
-  }
+    "url": "https://github.com/thoeltig"
+  },
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/claude-code-capabilities",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "category": "development",
+  "keywords": ["claude", "skills", "hooks", "commands", "plugins", "mcps"],
+  "tags": ["framework", "automation", "claude-code"],
+  "skills": "./skills/"
 }
