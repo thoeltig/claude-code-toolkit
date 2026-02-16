@@ -92,7 +92,7 @@ def get_savings(transcript_path: str) -> str | None:
 
     Returns savings message (e.g., "15422 bytes (~12 tokens)") or None if fails.
     """
-    script_path = Path(__file__).parent.parent / 'scripts' / 'dedup_transcript.py'
+    script_path = Path(__file__).parent.parent / 'scripts' / 'cleanup_conversation.py'
 
     try:
         result = subprocess.run(

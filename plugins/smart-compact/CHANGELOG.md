@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the transcript-duplicate-scrubber plugin documented here.
+All notable changes to the smart-compact plugin documented here.
 
 Format: [Common Changelog](https://common-changelog.org) + [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
@@ -162,8 +162,8 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.3.0.0...HEAD
-[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.2.0.0...TranscriptDuplicateScrubber_v1.3.0.0
-[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.1.0.0...TranscriptDuplicateScrubber_v1.2.0.0
-[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.0.0.0...TranscriptDuplicateScrubber_v1.1.0.0
-[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/TranscriptDuplicateScrubber_v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.3.0.0...HEAD
+[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.2.0.0...SmartCompact_v1.3.0.0
+[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.1.0.0...SmartCompact_v1.2.0.0
+[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.0.0.0...SmartCompact_v1.1.0.0
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v1.0.0.0

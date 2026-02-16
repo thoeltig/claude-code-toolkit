@@ -15,7 +15,7 @@ _Marketplace release with transcript deduplication plugin._
 
 ### Added
 
-- **transcript-duplicate-scrubber plugin** ([v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/TranscriptDuplicateScrubber_v1.0.0.0)): New plugin for automatic transcript deduplication
+- **smart-compact plugin** ([v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v1.0.0.0)): New plugin for automatic transcript deduplication
   - Hash-based duplicate detection (SHA256) for file content comparison
   - Two-level deduplication strategy: Write priority (Rule 1) and token priority for Reads (Rule 2)
   - Integration modes: Automatic via SessionEnd hook or manual CLI with `--dry-run` preview

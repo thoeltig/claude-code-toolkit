@@ -8,7 +8,7 @@ Detects and marks redundant Reads that:
 - Match a previous Read operation (same file, same content)
 
 Usage:
-    python dedup_transcript.py <transcript.json> [--dry-run]
+    python cleanup_conversation.py <transcript.json> [--dry-run]
 """
 
 import json
@@ -672,7 +672,7 @@ def main():
     # CLI mode: use command-line argument
     if transcript_file is None:
         if len(sys.argv) < 2:
-            print("Usage: python dedup_transcript.py <transcript_file> [--dry-run] [--dry-run-short]")
+            print("Usage: python cleanup_conversation.py <transcript_file> [--dry-run] [--dry-run-short]")
             sys.exit(1)
         transcript_file = sys.argv[1]
         session_id = None

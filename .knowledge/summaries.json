@@ -426,8 +426,8 @@
       ],
       "lastUpdated": "2026-02-06T02:15:32.687Z"
     },
-    "plugins/transcript-duplicate-scrubber": {
-      "path": "plugins/transcript-duplicate-scrubber",
+    "plugins/smart-compact": {
+      "path": "plugins/smart-compact",
       "summary": "Plugin directory containing transcript deduplication functionality for reducing token waste in Claude Code sessions.",
       "purpose": "Provides automatic deduplication of file reads from transcripts using hash-based detection to lower token costs and hallucination risk when resuming sessions.",
       "technologies": [
@@ -437,17 +437,17 @@
       ],
       "lastUpdated": "2026-02-08T20:43:03.685Z"
     },
-    "plugins/transcript-duplicate-scrubber/.claude-plugin": {
-      "path": "plugins/transcript-duplicate-scrubber/.claude-plugin",
-      "summary": "Plugin metadata and configuration directory for the transcript-duplicate-scrubber plugin.",
+    "plugins/smart-compact/.claude-plugin": {
+      "path": "plugins/smart-compact/.claude-plugin",
+      "summary": "Plugin metadata and configuration directory for the smart-compact plugin.",
       "purpose": "Contains plugin manifest and hook configuration files required by Claude Code to register and execute the plugin.",
       "technologies": [
         "JSON"
       ],
       "lastUpdated": "2026-02-08T20:43:03.685Z"
     },
-    "plugins/transcript-duplicate-scrubber/hooks": {
-      "path": "plugins/transcript-duplicate-scrubber/hooks",
+    "plugins/smart-compact/hooks": {
+      "path": "plugins/smart-compact/hooks",
       "summary": "Hook configuration directory defining when and how the deduplication script executes.",
       "purpose": "Specifies SessionEnd hook that triggers automatic deduplication as sessions close.",
       "technologies": [
@@ -455,8 +455,8 @@
       ],
       "lastUpdated": "2026-02-08T20:43:03.685Z"
     },
-    "plugins/transcript-duplicate-scrubber/scripts": {
-      "path": "plugins/transcript-duplicate-scrubber/scripts",
+    "plugins/smart-compact/scripts": {
+      "path": "plugins/smart-compact/scripts",
       "summary": "Scripts directory containing the main deduplication implementation logic.",
       "purpose": "Houses the Python implementation for detecting and removing duplicate file reads from Claude Code transcripts.",
       "technologies": [
@@ -3520,9 +3520,9 @@
       ],
       "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
-    "plugins/transcript-duplicate-scrubber/.claude-plugin/plugin.json": {
-      "path": "plugins/transcript-duplicate-scrubber/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest defining transcript-duplicate-scrubber metadata, version, author, and hooks reference.",
+    "plugins/smart-compact/.claude-plugin/plugin.json": {
+      "path": "plugins/smart-compact/.claude-plugin/plugin.json",
+      "summary": "Plugin manifest defining smart-compact metadata, version, author, and hooks reference.",
       "purpose": "Registers the plugin with Claude Code and points to the hooks configuration file for plugin initialization.",
       "role": "configuration",
       "technologies": [
@@ -3537,9 +3537,9 @@
       ],
       "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
-    "plugins/transcript-duplicate-scrubber/CHANGELOG.md": {
-      "path": "plugins/transcript-duplicate-scrubber/CHANGELOG.md",
-      "summary": "Complete version history documenting the transcript-duplicate-scrubber plugin from initial release v1.0.0.0.",
+    "plugins/smart-compact/CHANGELOG.md": {
+      "path": "plugins/smart-compact/CHANGELOG.md",
+      "summary": "Complete version history documenting the smart-compact plugin from initial release v1.0.0.0.",
       "purpose": "Tracks all changes, additions, and implementation details using Common Changelog and Semantic Versioning standards for transparency and feature documentation.",
       "role": "documentation",
       "technologies": [
@@ -3547,9 +3547,9 @@
       ],
       "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
-    "plugins/transcript-duplicate-scrubber/README.md": {
-      "path": "plugins/transcript-duplicate-scrubber/README.md",
-      "summary": "Comprehensive user documentation for the transcript-duplicate-scrubber plugin covering installation, usage, how it works, and technical explanation.",
+    "plugins/smart-compact/README.md": {
+      "path": "plugins/smart-compact/README.md",
+      "summary": "Comprehensive user documentation for the smart-compact plugin covering installation, usage, how it works, and technical explanation.",
       "purpose": "Provides installation instructions, usage examples (hook and CLI modes), algorithm explanation with deduplication rules, known limitations, and cost-benefit analysis for users.",
       "role": "documentation",
       "technologies": [
@@ -3557,9 +3557,9 @@
       ],
       "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
-    "plugins/transcript-duplicate-scrubber/hooks/hooks.json": {
-      "path": "plugins/transcript-duplicate-scrubber/hooks/hooks.json",
-      "summary": "Hook configuration file specifying SessionEnd hook triggers for the dedup_transcript.py script.",
+    "plugins/smart-compact/hooks/hooks.json": {
+      "path": "plugins/smart-compact/hooks/hooks.json",
+      "summary": "Hook configuration file specifying SessionEnd hook triggers for the cleanup_conversation.py script.",
       "purpose": "Defines when the deduplication script executes (on session end) and the command to invoke the Python script.",
       "role": "configuration",
       "technologies": [
@@ -3571,8 +3571,8 @@
       ],
       "lastUpdated": "2026-02-08T20:43:03.686Z"
     },
-    "plugins/transcript-duplicate-scrubber/scripts/dedup_transcript.py": {
-      "path": "plugins/transcript-duplicate-scrubber/scripts/dedup_transcript.py",
+    "plugins/smart-compact/scripts/cleanup_conversation.py": {
+      "path": "plugins/smart-compact/scripts/cleanup_conversation.py",
       "summary": "Python script implementing hash-based duplicate detection and removal from Claude Code JSONL transcripts with hook and CLI modes.",
       "purpose": "Core implementation that extracts Read/Write operations, detects content duplicates using SHA256 hashing, applies two-level deduplication rules, and replaces redundant content with transparency markers.",
       "role": "implementation",

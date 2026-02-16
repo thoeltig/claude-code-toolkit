@@ -28,7 +28,7 @@ Then install any plugin:
 | **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
-| **[transcript-duplicate-scrubber](./plugins/transcript-duplicate-scrubber/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.3.0.0 |
+| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.3.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -100,7 +100,7 @@ This plugin automatically deduplicates as your session ends, removing redundant 
 
 The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.
 
-**Install:** `/plugin install transcript-duplicate-scrubber@claude-code-toolkit`
+**Install:** `/plugin install smart-compact@claude-code-toolkit`
 
 ## 📚 Documentation
 

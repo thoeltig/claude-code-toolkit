@@ -38,8 +38,8 @@
       "source": "./plugins/cross-platform-notification"
     },
     {
-      "name": "transcript-duplicate-scrubber",
-      "source": "./plugins/transcript-duplicate-scrubber"
+      "name": "smart-compact",
+      "source": "./plugins/smart-compact"
     }
   ]
 }

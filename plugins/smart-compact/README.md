@@ -83,21 +83,21 @@ This prevents wasted conversation on stale transcripts and encourages resume-bas
 
 Preview what would be removed (detailed report):
 ```bash
-python dedup_transcript.py <transcript_file> --dry-run
+python cleanup_conversation.py <transcript_file> --dry-run
 ```
 
 Output includes per-file deduplication details with byte and token savings.
 
 Quick savings summary only:
 ```bash
-python dedup_transcript.py <transcript_file> --dry-run-short
+python cleanup_conversation.py <transcript_file> --dry-run-short
 ```
 
 Output: `Savings: 15422 bytes (~14457 tokens)`
 
 Apply deduplication:
 ```bash
-python dedup_transcript.py <transcript_file>
+python cleanup_conversation.py <transcript_file>
 ```
 
 ## How It Works
