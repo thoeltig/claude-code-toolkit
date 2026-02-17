@@ -38,6 +38,24 @@ This plugin removes those duplicates by keeping only the latest read (or the Wri
 
 The plugin automatically registers and runs on session end and pre-prompt. No configuration needed.
 
+## Configuration
+
+### Cache Duration Threshold
+
+The cache validator uses **5 minutes** as the default staleness threshold, matching Claude's default prompt cache window. If you have Claude configured with the optional 1-hour cache window, you can override this:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_CACHE_DURATION_MINUTES": "60"
+  }
+}
+```
+
+This example sets the threshold to 60 minutes for the extended cache window. The value must be a positive integer. If not set or invalid, it defaults to 5 minutes.
+
 ## Usage
 
 ### Automatic (Hook Mode)

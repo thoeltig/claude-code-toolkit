@@ -12,10 +12,36 @@ If both conditions met, blocks user prompt with savings info.
 import json
 import sys
 import subprocess
+import os
 from pathlib import Path
 from datetime import datetime, timezone
 
-CACHE_DURATION_MINUTES = 5
+
+def get_cache_duration_minutes() -> int:
+    """Get cache duration from environment variable or use default.
+
+    Reads SMART_COMPACT_CACHE_DURATION_MINUTES environment variable.
+    Falls back to 5 minutes if not set or invalid.
+
+    Returns cache duration in minutes as integer.
+    """
+    default_duration = 5
+    env_value = os.getenv('SMART_COMPACT_CACHE_DURATION_MINUTES')
+
+    if env_value is None:
+        return default_duration
+
+    try:
+        duration = int(env_value)
+        if duration > 0:
+            return duration
+    except (ValueError, TypeError):
+        pass
+
+    return default_duration
+
+
+CACHE_DURATION_MINUTES = get_cache_duration_minutes()
 
 
 def parse_hook_message(hook_json: str) -> dict:
