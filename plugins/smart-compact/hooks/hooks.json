@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/block_user_on_idle_session.py\""
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/block_idle_session.py\""
           }
         ]
       }
