@@ -12,11 +12,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 
 **Duplicate Tokens Notification Hook**:
-- New `Notification` hook with `idle_prompt` matcher triggers when user input is awaited
+- New `Stop` hook triggers when assistant finishes response and user input is awaited
 - Shows duplicate information with human-readable formatting: `Duplication in conversation: 15.4K characters (14.5K tokens, 7.2% of total context window)`
 - Configurable threshold via `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT` env var (default 15% of context window)
 - Smart threshold behavior: notifies only if duplicates exceed threshold, always notifies if tokens unavailable
 - Calls cross-platform-notification plugin for system notifications across Windows, macOS, Linux
+- Minimal hook overhead: only runs on Stop (assistant finished), not on every prompt submission
 
 **Configurable Environment Variables**:
 - `SMART_COMPACT_CACHE_DURATION_MINUTES`: Override cache staleness threshold (default 5 min, matches default prompt cache)
@@ -38,7 +39,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Helper functions: `get_context_window_bytes()`, `get_notification_threshold()`, `get_cache_validator_threshold()`, `format_bytes()`, `format_tokens()`
 - Notification threshold logic: Only notifies if (duplicates_percentage ≥ threshold) OR (tokens unavailable)
 - Cache validator threshold logic: Only blocks if (duplicates_percentage ≥ threshold) - default 0% blocks for any duplicates
-- Hook registration: Updated `hooks.json` with `Notification` event and `idle_prompt` matcher
+- Hook registration: Updated `hooks.json` with `Stop` hook instead of `Notification` event
 
 ## [1.3.0.0] - 2026-02-14
 
