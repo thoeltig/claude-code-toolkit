@@ -1,4 +1,5 @@
 {
+  "name": "smart-compact",
   "description": "Remove duplicate file reads from Claude Code transcripts to reduce token waste and lower hallucination risk when resuming sessions.",
   "version": "1.3.0.0",
   "author": {
@@ -8,8 +9,5 @@
   "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/smart-compact",
   "repository": "https://github.com/thoeltig/claude-code-toolkit",
   "license": "MIT",
-  "category": "tools",
-  "keywords": ["deduplication", "transcript", "tokens", "optimization"],
-  "tags": ["optimization", "tokens", "transcripts"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": ["tools", "compact", "deduplication", "transcript", "context", "tokens", "optimization"]
 }

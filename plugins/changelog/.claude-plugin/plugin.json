@@ -1,4 +1,5 @@
 {
+  "name": "changelog",
   "description": "Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards",
   "version": "1.1.0",
   "author": {
@@ -8,8 +9,5 @@
   "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/changelog",
   "repository": "https://github.com/thoeltig/claude-code-toolkit",
   "license": "MIT",  
-  "category": "development", 
-  "keywords": ["changelog", "release"], 
-  "tags": ["versioning", "documentation"],
-  "skills": "./skills/"
+  "keywords": ["development", "changelog", "release", "versioning", "documentation"]
 }
