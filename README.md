@@ -98,6 +98,7 @@ This plugin automatically deduplicates as your session ends, removing redundant 
 - **Write awareness**: Detects reads matching previous Write operations and marks them redundant
 - **Cache validator hook**: Blocks input if transcript is stale and duplicates exist, showing token savings to encourage resuming
 - **Duplicate tokens notification**: Shows notification when user input awaited, with configurable threshold to reduce notification fatigue
+- **Self-documenting deduplication markers**: Clear, human-readable markers (`[...Duplicate read omitted - latest version contains complete content...]`) that help AI assistants understand deduplication without requiring domain knowledge
 - **Configurable thresholds**: Customize cache duration, context window size, and notification trigger percentage via environment variables
 
 The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.

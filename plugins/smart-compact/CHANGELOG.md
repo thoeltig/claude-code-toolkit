@@ -19,6 +19,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Calls cross-platform-notification plugin for system notifications across Windows, macOS, Linux
 - Minimal hook overhead: only runs on Stop (assistant finished), not on every prompt submission
 
+**Self-Documenting Deduplication Markers**:
+- Updated all deduplication markers to be self-explanatory without domain knowledge
+- Markers use consistent pattern: `[...Description - version contains complete content...]`
+- Three marker types:
+  - `[...Duplicate read omitted - latest version contains complete content...]` (multiple reads)
+  - `[...Duplicate read omitted - earlier version contains complete content...]` (read after write)
+  - `[...Partial duplicate read omitted - latest version contains complete content...]` (partial dedup after edit)
+- Markers designed to help LLM reasoning: temporal language ("latest"/"earlier"), explicit completeness ("contains complete content")
+
 **Configurable Environment Variables**:
 - `SMART_COMPACT_CACHE_DURATION_MINUTES`: Override cache staleness threshold (default 5 min, matches default prompt cache)
 - `SMART_COMPACT_CONTEXT_WINDOW_BYTES`: Set context window size for percentage calculations (200000 default, 1000000 available)
@@ -36,6 +45,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - New script: `notify_about_compaction.py` - queries duplicates, calculates percentage, sends cross-platform notification
 - Updated script: `block_idle_session.py` - now checks cache validator threshold before blocking
+- Updated markers: Changed from `DEDUPLICATION_*_MARKER|OMITTED_CHARS_COUNT:` format to natural language markers
 - Helper functions: `get_context_window_bytes()`, `get_notification_threshold()`, `get_cache_validator_threshold()`, `format_bytes()`, `format_tokens()`
 - Notification threshold logic: Only notifies if (duplicates_percentage ≥ threshold) OR (tokens unavailable)
 - Cache validator threshold logic: Only blocks if (duplicates_percentage ≥ threshold) - default 0% blocks for any duplicates

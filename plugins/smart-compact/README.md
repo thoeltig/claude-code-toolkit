@@ -221,14 +221,28 @@ Replaced:          1-47, 64-100
 ```
 
 **Marker Replacement:**
-Lines outside the context range are replaced with placeholders:
+Lines outside the context range are replaced with clear, self-documenting markers:
+
+For partial deduplication (read before and after edit):
 ```
-lines 1-47:      <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:2847>
+lines 1-47:      [...Partial duplicate read omitted - latest version contains complete content...]
 lines 48-63:     (original unchanged content kept for context)
-lines 64-100:    <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:1529>
+lines 64-100:    [...Partial duplicate read omitted - latest version contains complete content...]
 ```
 
+For full deduplication, markers indicate which version is preserved:
+- Multiple reads: `[...Duplicate read omitted - latest version contains complete content...]`
+- Read after write: `[...Duplicate read omitted - earlier version contains complete content...]`
+
 This preserves the file structure (one placeholder per omitted block) while removing token-wasting redundant content.
+
+**Why These Markers Work for AI Reasoning:**
+The markers use self-documenting language that helps LLMs (like Claude) understand deduplication without requiring domain knowledge:
+- **"contains complete content"** signals that the indicated version has everything needed - nothing is lost, just consolidated
+- **"latest version"** vs **"earlier version"** uses temporal language that's unambiguous regardless of message processing direction
+- **Consistent pattern** trains intuitive understanding: each marker type clearly states which version is authoritative
+- This works because deduplication aligns with trained behavior: LLMs naturally prioritize newer content in context, so markers encouraging reference to "latest/earlier" versions fits natural reasoning patterns
+- The markers convey intent (deduplication for tokens/hallucination reduction) without metadata overhead
 
 **Smart Thresholds:**
 - Skips files with fewer than 3 total lines (defer to character-level dedup later)

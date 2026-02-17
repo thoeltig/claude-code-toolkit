@@ -373,7 +373,7 @@ def create_partial_dedup_content(content: str, kept_ranges: list[tuple[int, int]
             omitted_lines = lines[current_pos:keep_start]
             block_bytes = sum(len(line.encode('utf-8')) + 1 for line in omitted_lines)  # +1 for newline
             total_bytes_omitted += block_bytes
-            placeholder = f"<DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:{block_bytes}>"
+            placeholder = "[...Partial duplicate read omitted - latest version contains complete content...]"
             result_lines.append(placeholder)
         elif keep_start > current_pos:
             # Less than 3 lines, keep as-is
@@ -389,7 +389,7 @@ def create_partial_dedup_content(content: str, kept_ranges: list[tuple[int, int]
         if len(remaining) >= 3:
             block_bytes = sum(len(line.encode('utf-8')) + 1 for line in remaining)
             total_bytes_omitted += block_bytes
-            placeholder = f"<DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:{block_bytes}>"
+            placeholder = "[...Partial duplicate read omitted - latest version contains complete content...]"
             result_lines.append(placeholder)
         else:
             result_lines.extend(remaining)
@@ -540,9 +540,9 @@ def apply_deduplication(
                         total_bytes += bytes_count
                         # Choose marker based on deduplication reason
                         if write_op:
-                            marker = f"<DEDUPLICATION_READ_AFTER_WRITE_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
+                            marker = "[...Duplicate read omitted - earlier version contains complete content...]"
                         else:
-                            marker = f"<DEDUPLICATION_MULTIPLE_READS_MARKER|OMITTED_CHARS_COUNT:{bytes_count}>"
+                            marker = "[...Duplicate read omitted - latest version contains complete content...]"
                         item['content'] = marker
 
     return messages, total_bytes
