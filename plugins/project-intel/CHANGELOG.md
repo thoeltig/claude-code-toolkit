@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.5.2.0] - 2026-02-16
+
+### Fixed
+
+- **Scan output in slash command**: Adjusted the example scan output of the subagents in `/scan`. Sometimes the main agent provides the scan output as an example to the subagents which results in the wrong output format because the invocation prompt takes priority over the subagent prompt.
+
 ## [1.5.1.0] - 2026-02-06
 
 ### Fixed
@@ -132,7 +138,8 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.1.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.2.0...HEAD
+[1.5.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.1.0...ProjectIntel_v1.5.2.0
 [1.5.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.0.0...ProjectIntel_v1.5.1.0
 [1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.4.0.0...ProjectIntel_v1.5.0.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.3.0.0...ProjectIntel_v1.4.0.0

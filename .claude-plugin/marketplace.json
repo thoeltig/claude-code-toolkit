@@ -2,92 +2,44 @@
   "name": "claude-code-toolkit",
   "owner": {
     "name": "Thore Höltig",
-    "email": "[email protected]"
+    "url": "https://github.com/thoeltig"
   },
   "metadata": {
     "description": "A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.",
-    "version": "1.15.0.0"
+    "version": "1.16.0.0"
   },
   "plugins": [
     {
       "name": "session-protocol",
-      "source": "./plugins/session-protocol",
-      "description": "Save your active tasks between sessions for seamless continuity and never loss context again.",
-      "version": "1.2.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/session-protocol"
     },
     {
       "name": "project-intel",
-      "source": "./plugins/project-intel",
-      "description": "Lightweight reconnaissance system that provides direction before exploration. Query for relevant files before reading them - avoid expensive blind exploration and context pollution.",
-      "version": "1.5.1.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/project-intel"
     },
     {
       "name": "fetch-full-content",
-      "source": "./plugins/fetch-full-content",
-      "description": "Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Applies basic filtering to remove hidden content injection but this is NO prompt injection detection or guard. Should only be used on official and trusted sources like documentations.",
-      "version": "1.2.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/fetch-full-content"
     },
     {
       "name": "changelog",
-      "source": "./plugins/changelog",
-      "description": "CHANGELOG.md management following Keep a Changelog format",
-      "version": "1.1.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/changelog"
     },
     {
       "name": "documentation",
-      "source": "./plugins/documentation",
-      "description": "Comprehensive skill for creating, updating, and maintaining high-quality project documentation",
-      "version": "1.0.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/documentation"
     },
     {
       "name": "claude-code-capabilities",
-      "source": "./plugins/claude-code-capabilities",
-      "description": "Comprehensive management of Claude Code features including skills, commands, hooks, MCPs, prompts, and subagents",
-      "version": "1.8.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/claude-code-capabilities"
     },
     {
       "name": "cross-platform-notification",
-      "source": "./plugins/cross-platform-notification",
-      "description": "A Claude Code plugin with a hook that sends native system notifications for Claude Code notifications.",
-      "version": "1.0.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
-    },
-    {
-      "name": "transcript-duplicate-scrubber",
-      "source": "./plugins/transcript-duplicate-scrubber",
-      "description": "Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk and preserve context priority when resuming sessions.",
-      "version": "1.3.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/cross-platform-notification"
+    },  
+    {  
+      "name": "smart-compact",
+      "source": "./plugins/smart-compact"
     },
     {
       "name": "read-efficient",
@@ -108,6 +60,6 @@
         "name": "Thore Höltig"
       },
       "strict": false
-    }    
+    }
   ]
 }

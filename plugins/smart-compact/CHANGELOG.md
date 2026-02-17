@@ -1,11 +1,77 @@
 # Changelog
 
-All notable changes to the transcript-duplicate-scrubber plugin documented here.
+All notable changes to the smart-compact plugin documented here.
 
 Format: [Common Changelog](https://common-changelog.org) + [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
+
+## [1.4.1.0] - 2026-02-17
+
+### Fixed
+
+**Token Estimation Accuracy**:
+- Fixed inflated token estimates from cleanup_conversation.py (calculation with cache_creation_input_tokens was wrong)
+- Now uses standard ~4 bytes ≈ 1 token conversion for accurate estimates
+- Token percentages now correctly reflect actual context window usage
+
+**Duplicate Byte Count**:
+- Previously duplicate bytes were counted on the original string which lead to reoccuring duplicate byte warnings in resumed sessions and wrong overall number
+- Now uses content which is actually in the message provided to the model which makes it a bit more accurate and also reduces the count on second pass in resumed session
+
+**Cross-Platform Notification Path Resolution**:
+- Fixed path resolution for cross-platform-notification plugin in cached plugin directories
+- Now uses glob pattern `cross-platform-notification/*/scripts/claude_code_notifier.py` to handle version directories
+- Previously failed to find notifier script when plugin was installed in plugin cache
+
+**Configuration Variable Naming**:
+- Renamed `SMART_COMPACT_CONTEXT_WINDOW_BYTES` → `SMART_COMPACT_CONTEXT_WINDOW_TOKENS` for clarity
+- Updated to reflect token-based calculations instead of byte-based
+
+## [1.4.0.0] - 2026-02-17
+
+### Added
+
+**Duplicate Tokens Notification Hook**:
+- New `Stop` hook triggers when assistant finishes response and user input is awaited
+- Shows duplicate information with human-readable formatting: `Duplication in conversation: 15.4K characters (14.5K tokens, 7.2% of total context window)`
+- Configurable threshold via `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT` env var (default 15% of context window)
+- Smart threshold behavior: notifies only if duplicates exceed threshold, always notifies if tokens unavailable
+- Calls cross-platform-notification plugin for system notifications across Windows, macOS, Linux
+- Minimal hook overhead: only runs on Stop (assistant finished), not on every prompt submission
+
+**Self-Documenting Deduplication Markers**:
+- Updated all deduplication markers to be self-explanatory without domain knowledge
+- Markers use consistent pattern: `[...Description - version contains complete content...]`
+- Three marker types:
+  - `[...Duplicate read omitted - latest version contains complete content...]` (multiple reads)
+  - `[...Duplicate read omitted - earlier version contains complete content...]` (read after write)
+  - `[...Partial duplicate read omitted - latest version contains complete content...]` (partial dedup after edit)
+- Markers designed to help LLM reasoning: temporal language ("latest"/"earlier"), explicit completeness ("contains complete content")
+
+**Configurable Environment Variables**:
+- `SMART_COMPACT_CACHE_DURATION_MINUTES`: Override cache staleness threshold (default 5 min, matches default prompt cache)
+- `SMART_COMPACT_CONTEXT_WINDOW_BYTES`: Set context window size for percentage calculations (200000 default, 1000000 available)
+- `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT`: Set minimum duplicate percentage to trigger notification (0-100, default 15%)
+- `SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT`: Set minimum duplicate percentage to block prompt input (0-100, default 0% for always block)
+
+### Changed
+
+**Message Formatting**:
+- Bytes formatted as human-readable (KB, MB) for sizes ≥ 1000 bytes
+- Tokens formatted as K for sizes ≥ 1000 tokens
+- Unified notification message format: `Duplication in conversation: X characters (Y tokens, Z% of total context window)`
+
+### Implementation Details
+
+- New script: `notify_about_compaction.py` - queries duplicates, calculates percentage, sends cross-platform notification
+- Updated script: `block_idle_session.py` - now checks cache validator threshold before blocking
+- Updated markers: Changed from `DEDUPLICATION_*_MARKER|OMITTED_CHARS_COUNT:` format to natural language markers
+- Helper functions: `get_context_window_bytes()`, `get_notification_threshold()`, `get_cache_validator_threshold()`, `format_bytes()`, `format_tokens()`
+- Notification threshold logic: Only notifies if (duplicates_percentage ≥ threshold) OR (tokens unavailable)
+- Cache validator threshold logic: Only blocks if (duplicates_percentage ≥ threshold) - default 0% blocks for any duplicates
+- Hook registration: Updated `hooks.json` with `Stop` hook instead of `Notification` event
 
 ## [1.3.0.0] - 2026-02-14
 
@@ -162,8 +228,10 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.3.0.0...HEAD
-[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.2.0.0...TranscriptDuplicateScrubber_v1.3.0.0
-[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.1.0.0...TranscriptDuplicateScrubber_v1.2.0.0
-[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/TranscriptDuplicateScrubber_v1.0.0.0...TranscriptDuplicateScrubber_v1.1.0.0
-[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/TranscriptDuplicateScrubber_v1.0.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.1.0...HEAD
+[1.4.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0
+[1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.3.0.0...SmartCompact_v1.4.0.0
+[1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.2.0.0...SmartCompact_v1.3.0.0
+[1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.1.0.0...SmartCompact_v1.2.0.0
+[1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.0.0.0...SmartCompact_v1.1.0.0
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v1.0.0.0

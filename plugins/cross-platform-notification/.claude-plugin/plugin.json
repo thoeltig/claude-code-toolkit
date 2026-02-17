@@ -1,9 +1,13 @@
 {
   "name": "cross-platform-notification",
-  "description": "A Claude Code plugin with a hook that sends native system notifications for Claude Code notifications.",
+  "description": "A Claude Code notification hook with cross-platform support on Windows, macOS, and Linux.",
   "version": "1.0.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
-  }
+    "url": "https://github.com/thoeltig"
+  },
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/cross-platform-notification",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "keywords": ["integration", "notification", "automation", "alerts", "desktop", "system"]
 }

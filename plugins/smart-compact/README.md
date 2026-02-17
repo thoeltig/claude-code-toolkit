@@ -1,4 +1,4 @@
-# Transcript Duplicate Scrubber Plugin
+# Smart Compact Plugin
 
 Remove duplicate file reads from Claude Code transcripts to reduce token waste and lower hallucination risk when resuming sessions.
 
@@ -37,6 +37,72 @@ This plugin removes those duplicates by keeping only the latest read (or the Wri
 **Requirements:** Python 3.X (developed with 3.1.3)
 
 The plugin automatically registers and runs on session end and pre-prompt. No configuration needed.
+
+## Configuration
+
+### Cache Duration Threshold
+
+The cache validator uses **5 minutes** as the default staleness threshold, matching Claude's default prompt cache window. If you have Claude configured with the optional 1-hour cache window, you can override this:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_CACHE_DURATION_MINUTES": "60"
+  }
+}
+```
+
+This example sets the threshold to 60 minutes for the extended cache window. The value must be a positive integer. If not set or invalid, it defaults to 5 minutes.
+
+### Cache Validator Block Threshold
+
+By default, the cache validator blocks your input whenever the transcript is stale and duplicates exist. If you only want to block when duplicates are significant, set a minimum percentage:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT": "5"
+  }
+}
+```
+
+This example only blocks if duplicates exceed 5% of your context window. Valid values: 0-100 percent (default 0%, which blocks for any duplicates). Set to 100 to disable blocking entirely.
+
+### Context Window Size (Duplicate Notification)
+
+The duplicate tokens notification uses your context window size (in tokens) to calculate what percentage of your context contains duplicates. By default it uses **200k tokens** (Claude's standard context). If you have the extended **1 million tokens context**, configure it:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_CONTEXT_WINDOW_TOKENS": "1000000"
+  }
+}
+```
+
+Valid values: 200000 (default, 200k tokens) or 1000000 (1M tokens). Any other value falls back to default.
+
+### Notification Threshold
+
+By default, you only receive duplicate notifications when duplicates exceed **15% of your context window**. You can customize this threshold:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT": "10"
+  }
+}
+```
+
+This example notifies at 10% instead of 15%. Valid values: 0-100 percent. If tokens cannot be calculated, notifications are always sent regardless of threshold.
 
 ## Usage
 
@@ -79,25 +145,54 @@ Exit and resume session to clear 15422 bytes (~14457 tokens) from context.
 
 This prevents wasted conversation on stale transcripts and encourages resume-based workflows for cost efficiency.
 
+### Duplicate Tokens Notification
+
+The plugin sends a notification when you're idle and awaiting input (Stop hook), if duplicates exceed your threshold:
+
+```
+Duplication in conversation: 150.1K characters (37.5K tokens, 18.76% of context window)
+```
+
+**What the notification shows (when tokens are available):**
+- Characters of duplicate content (formatted as K/M)
+- Estimated tokens using standard conversion (~4 bytes ≈ 1 token)
+- Percentage of your total context window
+
+**Simplified message (when tokens cannot be calculated):**
+```
+Duplication in conversation: 150.1K characters
+```
+
+**Threshold behavior:**
+- Only notifies if duplicates exceed threshold (default 15%)
+- If tokens cannot be calculated, always notifies (no threshold check)
+- Customize threshold via `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT` in settings
+
+**Token estimation:**
+- Uses standard conversion: ~4 bytes ≈ 1 token (for English text)
+- This is an estimate; actual token count varies by content
+
+This helps you quickly decide if it's worth resuming the session to clean up duplicates before they waste more context.
+
 ### Manual (CLI Mode)
 
 Preview what would be removed (detailed report):
 ```bash
-python dedup_transcript.py <transcript_file> --dry-run
+python cleanup_conversation.py <transcript_file> --dry-run
 ```
 
 Output includes per-file deduplication details with byte and token savings.
 
 Quick savings summary only:
 ```bash
-python dedup_transcript.py <transcript_file> --dry-run-short
+python cleanup_conversation.py <transcript_file> --dry-run-short
 ```
 
 Output: `Savings: 15422 bytes (~14457 tokens)`
 
 Apply deduplication:
 ```bash
-python dedup_transcript.py <transcript_file>
+python cleanup_conversation.py <transcript_file>
 ```
 
 ## How It Works
@@ -135,14 +230,28 @@ Replaced:          1-47, 64-100
 ```
 
 **Marker Replacement:**
-Lines outside the context range are replaced with placeholders:
+Lines outside the context range are replaced with clear, self-documenting markers:
+
+For partial deduplication (read before and after edit):
 ```
-lines 1-47:      <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:2847>
+lines 1-47:      [...Partial duplicate read omitted - latest version contains complete content...]
 lines 48-63:     (original unchanged content kept for context)
-lines 64-100:    <DEDUPLICATION_PARTIAL_READ_MARKER|OMITTED_CHARS_COUNT:1529>
+lines 64-100:    [...Partial duplicate read omitted - latest version contains complete content...]
 ```
 
+For full deduplication, markers indicate which version is preserved:
+- Multiple reads: `[...Duplicate read omitted - latest version contains complete content...]`
+- Read after write: `[...Duplicate read omitted - earlier version contains complete content...]`
+
 This preserves the file structure (one placeholder per omitted block) while removing token-wasting redundant content.
+
+**Why These Markers Work for AI Reasoning:**
+The markers use self-documenting language that helps LLMs (like Claude) understand deduplication without requiring domain knowledge:
+- **"contains complete content"** signals that the indicated version has everything needed - nothing is lost, just consolidated
+- **"latest version"** vs **"earlier version"** uses temporal language that's unambiguous regardless of message processing direction
+- **Consistent pattern** trains intuitive understanding: each marker type clearly states which version is authoritative
+- This works because deduplication aligns with trained behavior: LLMs naturally prioritize newer content in context, so markers encouraging reference to "latest/earlier" versions fits natural reasoning patterns
+- The markers convey intent (deduplication for tokens/hallucination reduction) without metadata overhead
 
 **Smart Thresholds:**
 - Skips files with fewer than 3 total lines (defer to character-level dedup later)
@@ -156,23 +265,19 @@ All intervening messages are preserved—only truly redundant file content is re
 The plugin estimates token savings for each deduplicated file using per-file cache write information:
 
 **How it works:**
-- Extracts token/character ratio from each file's first cache write in the transcript
-- Uses `cache_creation_input_tokens` from the assistant message following a Read/Write operation
-- Applies ratio only to files that actually have duplicates being removed
-- Valid ratio range: 0.25 - 5 tokens/character (rejects invalid cache data)
+- Extracts character from each file read in the transcript
+- Estimated tokens using standard conversion (~4 bytes ≈ 1 token)
 
 **Example calculation:**
 ```
-README.md: 9,266 chars with ratio 1.56 tokens/char
-  → 2 reads × 9,266 chars × 1.56 tokens/char ≈ 28,900 tokens saved
+README.md: 9,266 chars with ratio 4 char/token
+  → 2 reads × 9,266 chars / 4 ≈ 4,633 tokens saved
 ```
 
 Token estimates appear in:
-- Cache validator message: `clear 15422 bytes (~14457 tokens)`
-- CLI reports: `Total bytes omitted: 15422 (~14457 tokens)`
+- Cache validator message: `clear 15422 bytes (~3,855 tokens)`
+- CLI reports: `Total bytes omitted: 15422 (~3,855 tokens)`
 - Dry-run output: Full details per file
-
-If token ratio cannot be reliably extracted, the plugin shows bytes only.
 
 ## Example Workflow
 
@@ -191,7 +296,7 @@ Session 2: /resume → Load cleaned transcript
 
 ### Top-Level Context Percentage Lags (But Token Savings Are Visible)
 
-Token savings **are immediately visible**, but appear in different places within `/context`:
+When called directly after resume token savings **are immediately visible**, but appear in different places within `/context`:
 
 **✅ Already Updated (Real Savings Shown):**
 - Messages section: Drops from higher to lower count (e.g., 47.9k → 17.3k)
@@ -199,21 +304,11 @@ Token savings **are immediately visible**, but appear in different places within
 
 **⚠️ Lags Behind:**
 - Top-level percentage: Still shows pre-deduplication value (e.g., stays at 35%) until cache invalidates
+- Percentage will update after first user message when the cache is created again
 
 **Why this split happens:**
 
 The top-level percentage is calculated from `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` which contains the cached token values from the current prompt cache. Since deduplication modified the persisted transcript and not the prompt cache these cached values don't update immediately. The messages and free space sections recalculate differently and reflect the actual smaller transcript right away.
-
-When the prompt cache invalidates (by default after 5 minutes), it tokenizes the deduplicated transcript and the top-level percentage updates to match.
-
-**Practical benefit when approaching context limits:**
-
-The real token savings are **already usable** via the messages and free space readings. If you're near capacity:
-- Messages section shows actual savings (real context available)
-- Free space shows accurate headroom
-- You can confidently stay under limits based on these numbers
-
-If you want the top-level percentage updated immediately, exit and wait for cache invalidation, then resume—the deduplicated transcript reloads fresh.
 
 ---
 
