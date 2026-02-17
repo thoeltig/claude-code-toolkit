@@ -229,7 +229,7 @@ _First release of transcript deduplication plugin._
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
 [unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.1.0...HEAD
-[1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0
+[1.4.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.3.0.0...SmartCompact_v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.2.0.0...SmartCompact_v1.3.0.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.1.0.0...SmartCompact_v1.2.0.0

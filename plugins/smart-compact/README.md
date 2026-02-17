@@ -1,4 +1,4 @@
-# Transcript Duplicate Scrubber Plugin
+# Smart Compact Plugin
 
 Remove duplicate file reads from Claude Code transcripts to reduce token waste and lower hallucination risk when resuming sessions.
 
@@ -265,23 +265,19 @@ All intervening messages are preserved—only truly redundant file content is re
 The plugin estimates token savings for each deduplicated file using per-file cache write information:
 
 **How it works:**
-- Extracts token/character ratio from each file's first cache write in the transcript
-- Uses `cache_creation_input_tokens` from the assistant message following a Read/Write operation
-- Applies ratio only to files that actually have duplicates being removed
-- Valid ratio range: 0.25 - 5 tokens/character (rejects invalid cache data)
+- Extracts character from each file read in the transcript
+- Estimated tokens using standard conversion (~4 bytes ≈ 1 token)
 
 **Example calculation:**
 ```
-README.md: 9,266 chars with ratio 1.56 tokens/char
-  → 2 reads × 9,266 chars × 1.56 tokens/char ≈ 28,900 tokens saved
+README.md: 9,266 chars with ratio 4 char/token
+  → 2 reads × 9,266 chars / 4 ≈ 4,633 tokens saved
 ```
 
 Token estimates appear in:
-- Cache validator message: `clear 15422 bytes (~14457 tokens)`
-- CLI reports: `Total bytes omitted: 15422 (~14457 tokens)`
+- Cache validator message: `clear 15422 bytes (~3,855 tokens)`
+- CLI reports: `Total bytes omitted: 15422 (~3,855 tokens)`
 - Dry-run output: Full details per file
-
-If token ratio cannot be reliably extracted, the plugin shows bytes only.
 
 ## Example Workflow
 
@@ -300,7 +296,7 @@ Session 2: /resume → Load cleaned transcript
 
 ### Top-Level Context Percentage Lags (But Token Savings Are Visible)
 
-Token savings **are immediately visible**, but appear in different places within `/context`:
+When called directly after resume token savings **are immediately visible**, but appear in different places within `/context`:
 
 **✅ Already Updated (Real Savings Shown):**
 - Messages section: Drops from higher to lower count (e.g., 47.9k → 17.3k)
@@ -308,21 +304,11 @@ Token savings **are immediately visible**, but appear in different places within
 
 **⚠️ Lags Behind:**
 - Top-level percentage: Still shows pre-deduplication value (e.g., stays at 35%) until cache invalidates
+- Percentage will update after first user message when the cache is created again
 
 **Why this split happens:**
 
 The top-level percentage is calculated from `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` which contains the cached token values from the current prompt cache. Since deduplication modified the persisted transcript and not the prompt cache these cached values don't update immediately. The messages and free space sections recalculate differently and reflect the actual smaller transcript right away.
-
-When the prompt cache invalidates (by default after 5 minutes), it tokenizes the deduplicated transcript and the top-level percentage updates to match.
-
-**Practical benefit when approaching context limits:**
-
-The real token savings are **already usable** via the messages and free space readings. If you're near capacity:
-- Messages section shows actual savings (real context available)
-- Free space shows accurate headroom
-- You can confidently stay under limits based on these numbers
-
-If you want the top-level percentage updated immediately, exit and wait for cache invalidation, then resume—the deduplicated transcript reloads fresh.
 
 ---
 

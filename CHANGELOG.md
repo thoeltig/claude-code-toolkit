@@ -9,6 +9,34 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.16.0.0] - 2026-02-17
+
+_Marketplace release with smart-compact notification system, plugin infrastructure refinements, and project-intel scan fixes._
+
+### Added
+
+- **smart-compact plugin** (evolved from [v1.0.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v1.0.0.0) to [v1.4.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v1.4.1.0)): Major improvements to deduplication and user notifications
+  - User notification system: Stop hook displays duplicate summaries (e.g., "Duplication in conversation: 15.4K characters (14.5K tokens, 7.2% of total context window)")
+  - Configurable notification and cache validation thresholds via environment variables
+  - Cross-platform system notifications via cross-platform-notification plugin (Windows, macOS, Linux)
+  - Self-documenting deduplication markers for better LLM understanding
+  - Human-readable formatting for bytes (KB, MB) and tokens (K)
+  - Token estimation calculations improved (now uses standard ~4 bytes ≈ 1 token conversion)
+  - Byte counting for resumed sessions now uses actual message content for accuracy
+
+### Changed
+
+- Plugin infrastructure and configuration
+  - Updated all plugin.json files and cleaned up marketplace.json for consistency
+  - Fixed tsConfig in project-intel project for proper build configuration
+
+### Fixed
+
+- **project-intel plugin** ([v1.5.2.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.5.2.0)): Scan command refinement
+  - Fixed scan output example format in `/scan` slash command (prevented example output from overriding subagent format)
+
+---
+
 ## [1.15.0.0] - 2026-02-08
 
 _Marketplace release with transcript deduplication plugin._
@@ -365,7 +393,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.15.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.16.0.0...HEAD
+[1.16.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.15.0.0...v1.16.0.0
 [1.15.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.14.0.0...v1.15.0.0
 [1.14.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.13.0.0...v1.14.0.0
 [1.13.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.12.0.0...v1.13.0.0
