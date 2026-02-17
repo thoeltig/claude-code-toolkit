@@ -7,6 +7,24 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.4.1.0] - 2026-02-17
+
+### Fixed
+
+**Token Estimation Accuracy**:
+- Fixed inflated token estimates from cleanup_conversation.py (was using cache_creation_input_tokens ratio)
+- Now uses standard ~4 bytes ≈ 1 token conversion for accurate estimates
+- Token percentages now correctly reflect actual context window usage
+
+**Cross-Platform Notification Path Resolution**:
+- Fixed path resolution for cross-platform-notification plugin in cached plugin directories
+- Now uses glob pattern `cross-platform-notification/*/scripts/claude_code_notifier.py` to handle version directories
+- Previously failed to find notifier script when plugin was installed in plugin cache
+
+**Configuration Variable Naming**:
+- Renamed `SMART_COMPACT_CONTEXT_WINDOW_BYTES` → `SMART_COMPACT_CONTEXT_WINDOW_TOKENS` for clarity
+- Updated to reflect token-based calculations instead of byte-based
+
 ## [1.4.0.0] - 2026-02-17
 
 ### Added
@@ -206,7 +224,8 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.1.0...HEAD
+[1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.3.0.0...SmartCompact_v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.2.0.0...SmartCompact_v1.3.0.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.1.0.0...SmartCompact_v1.2.0.0

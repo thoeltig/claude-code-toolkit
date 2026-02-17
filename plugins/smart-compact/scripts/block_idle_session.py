@@ -41,18 +41,18 @@ def get_cache_duration_minutes() -> int:
     return default_duration
 
 
-def get_context_window_bytes() -> int:
+def get_context_window_tokens() -> int:
     """Get context window size from environment variable or use default.
 
-    Reads SMART_COMPACT_CONTEXT_WINDOW_BYTES environment variable.
-    Falls back to 200k (200,000 bytes) if not set or invalid.
-    Valid range: 200k to 1M bytes.
+    Reads SMART_COMPACT_CONTEXT_WINDOW_TOKENS environment variable.
+    Falls back to 200k (200,000 tokens) if not set or invalid.
+    Valid range: 200k to 1M tokens.
 
-    Returns context window size in bytes as integer.
+    Returns context window size in tokens as integer.
     """
     default_size = 200_000
     max_size = 1_000_000
-    env_value = os.getenv('SMART_COMPACT_CONTEXT_WINDOW_BYTES')
+    env_value = os.getenv('SMART_COMPACT_CONTEXT_WINDOW_TOKENS')
 
     if env_value is None:
         return default_size
@@ -240,7 +240,7 @@ def main():
 
         # Check threshold: only block if savings exceed threshold
         threshold = get_cache_validator_threshold()
-        context_window = get_context_window_bytes()
+        context_window = get_context_window_tokens()
         percentage = (bytes_saved / context_window) * 100
 
         if percentage >= threshold:

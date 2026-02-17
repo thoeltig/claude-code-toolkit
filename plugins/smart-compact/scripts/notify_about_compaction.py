@@ -18,25 +18,26 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 
-def get_context_window_bytes() -> int:
-    """Get context window size from environment variable or use default.
+def get_context_window_tokens() -> int:
+    """Get context window size in tokens from environment variable or use default.
 
-    Reads SMART_COMPACT_CONTEXT_WINDOW_BYTES environment variable.
-    Falls back to 200k (200,000 bytes) if not set or invalid.
-    Valid range: 200k to 1M bytes.
+    Reads SMART_COMPACT_CONTEXT_WINDOW_TOKENS environment variable.
+    Falls back to 200k (200,000 tokens) if not set or invalid.
+    Valid range: 50k to 2M tokens.
 
-    Returns context window size in bytes as integer.
+    Returns context window size in tokens as integer.
     """
     default_size = 200_000
-    max_size = 1_000_000
-    env_value = os.getenv('SMART_COMPACT_CONTEXT_WINDOW_BYTES')
+    min_size = 50_000
+    max_size = 2_000_000
+    env_value = os.getenv('SMART_COMPACT_CONTEXT_WINDOW_TOKENS')
 
     if env_value is None:
         return default_size
 
     try:
         size = int(env_value)
-        if default_size <= size <= max_size:
+        if min_size <= size <= max_size:
             return size
     except (ValueError, TypeError):
         pass
@@ -143,17 +144,12 @@ def get_duplicate_info(transcript_path: str) -> tuple[int, int | None]:
         except ValueError:
             return 0, None
 
-        # Extract tokens if present
-        tokens = None
-        if '(~' in savings_part:
-            token_start = savings_part.index('(~') + 2
-            token_end = savings_part.index(' tokens', token_start)
-            try:
-                tokens = int(savings_part[token_start:token_end])
-            except ValueError:
-                pass
+        # Calculate tokens using standard conversion (~4 bytes ≈ 1 token)
+        # Ignore the cleanup script's estimate as it's inflated by caching overhead
+        # This is an estimate; actual token count varies by content type
+        estimated_tokens = bytes_saved // 4
 
-        return bytes_saved, tokens
+        return bytes_saved, estimated_tokens
 
     except (subprocess.TimeoutExpired, Exception):
         return 0, None
@@ -168,10 +164,14 @@ def send_notification(message: str) -> bool:
     Returns:
         True if notification sent successfully, False otherwise
     """
-    notifier_script = Path(__file__).parent.parent.parent / 'cross-platform-notification' / 'scripts' / 'claude_code_notifier.py'
+    # Find notifier script using glob to handle version directories
+    cache_dir = Path(__file__).parent.parent.parent.parent
+    notifier_patterns = list(cache_dir.glob('cross-platform-notification/*/scripts/claude_code_notifier.py'))
 
-    if not notifier_script.exists():
+    if not notifier_patterns:
         return False
+
+    notifier_script = notifier_patterns[0]
 
     try:
         notification_data = json.dumps({'message': message})
@@ -214,29 +214,33 @@ def main():
         if bytes_saved == 0:
             sys.exit(0)
 
-        # Get context window size and calculate percentage
-        context_window = get_context_window_bytes()
-        percentage = (bytes_saved / context_window) * 100
-
-        # Check threshold: only notify if above threshold, unless tokens were not calculated
+        # Calculate percentage and threshold check only if tokens are available
         threshold = get_notification_threshold()
-        should_notify = True
+        should_notify = False
+        percentage = None
 
         if estimated_tokens is not None:
-            # Tokens were calculated, check against threshold
+            # Tokens available: calculate percentage from tokens
+            context_window_tokens = get_context_window_tokens()
+            percentage = (estimated_tokens / context_window_tokens) * 100
             should_notify = percentage >= threshold
+        else:
+            # No tokens: always notify (user's call to look at it)
+            should_notify = True
 
         if not should_notify:
             sys.exit(0)
 
-        # Format message with human-readable sizes
+        # Format message
         formatted_bytes = format_bytes(bytes_saved)
 
-        if estimated_tokens:
+        if estimated_tokens is not None and percentage is not None:
+            # Show detailed format with tokens and percentage
             formatted_tokens = format_tokens(estimated_tokens)
-            message = f"Duplication in conversation: {formatted_bytes} characters ({formatted_tokens} tokens, {percentage:.1f}% of total context window)"
+            message = f"Duplication in conversation: {formatted_bytes} characters ({formatted_tokens} tokens, {percentage:.1f}% of context window)"
         else:
-            message = f"Duplication in conversation: {formatted_bytes} characters ({percentage:.1f}% of total context window)"
+            # Show simple format with just characters
+            message = f"Duplication in conversation: {formatted_bytes} characters"
 
         # Send notification
         send_notification(message)

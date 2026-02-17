@@ -74,19 +74,19 @@ This example only blocks if duplicates exceed 5% of your context window. Valid v
 
 ### Context Window Size (Duplicate Notification)
 
-The duplicate tokens notification uses your context window size to calculate what percentage of your context contains duplicates. By default it uses **200k bytes** (Claude's standard context). If you have the extended **1 million bytes context**, configure it:
+The duplicate tokens notification uses your context window size (in tokens) to calculate what percentage of your context contains duplicates. By default it uses **200k tokens** (Claude's standard context). If you have the extended **1 million tokens context**, configure it:
 
 Add to your `~/.claude/settings.json`:
 
 ```json
 {
   "env": {
-    "SMART_COMPACT_CONTEXT_WINDOW_BYTES": "1000000"
+    "SMART_COMPACT_CONTEXT_WINDOW_TOKENS": "1000000"
   }
 }
 ```
 
-Valid values: 200000 (default) or 1000000. Any other value falls back to default.
+Valid values: 200000 (default, 200k tokens) or 1000000 (1M tokens). Any other value falls back to default.
 
 ### Notification Threshold
 
@@ -147,21 +147,30 @@ This prevents wasted conversation on stale transcripts and encourages resume-bas
 
 ### Duplicate Tokens Notification
 
-The plugin sends a notification when you're idle and awaiting input, if duplicates exceed your threshold:
+The plugin sends a notification when you're idle and awaiting input (Stop hook), if duplicates exceed your threshold:
 
 ```
-Duplication in conversation: 15.4K characters (14.5K tokens, 7.2% of total context window)
+Duplication in conversation: 150.1K characters (37.5K tokens, 18.76% of context window)
 ```
 
-**What the notification shows:**
+**What the notification shows (when tokens are available):**
 - Characters of duplicate content (formatted as K/M)
-- Estimated tokens (formatted as K)
+- Estimated tokens using standard conversion (~4 bytes ≈ 1 token)
 - Percentage of your total context window
+
+**Simplified message (when tokens cannot be calculated):**
+```
+Duplication in conversation: 150.1K characters
+```
 
 **Threshold behavior:**
 - Only notifies if duplicates exceed threshold (default 15%)
 - If tokens cannot be calculated, always notifies (no threshold check)
 - Customize threshold via `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT` in settings
+
+**Token estimation:**
+- Uses standard conversion: ~4 bytes ≈ 1 token (for English text)
+- This is an estimate; actual token count varies by content
 
 This helps you quickly decide if it's worth resuming the session to clean up duplicates before they waste more context.
 
