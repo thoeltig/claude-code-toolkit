@@ -56,6 +56,38 @@ Add to your `~/.claude/settings.json`:
 
 This example sets the threshold to 60 minutes for the extended cache window. The value must be a positive integer. If not set or invalid, it defaults to 5 minutes.
 
+### Context Window Size (Duplicate Notification)
+
+The duplicate tokens notification uses your context window size to calculate what percentage of your context contains duplicates. By default it uses **200k bytes** (Claude's standard context). If you have the extended **1 million bytes context**, configure it:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_CONTEXT_WINDOW_BYTES": "1000000"
+  }
+}
+```
+
+Valid values: 200000 (default) or 1000000. Any other value falls back to default.
+
+### Notification Threshold
+
+By default, you only receive duplicate notifications when duplicates exceed **15% of your context window**. You can customize this threshold:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT": "10"
+  }
+}
+```
+
+This example notifies at 10% instead of 15%. Valid values: 0-100 percent. If tokens cannot be calculated, notifications are always sent regardless of threshold.
+
 ## Usage
 
 ### Automatic (Hook Mode)
@@ -96,6 +128,26 @@ Exit and resume session to clear 15422 bytes (~14457 tokens) from context.
 - Helps you understand the benefit of resuming
 
 This prevents wasted conversation on stale transcripts and encourages resume-based workflows for cost efficiency.
+
+### Duplicate Tokens Notification
+
+The plugin sends a notification when you're idle and awaiting input, if duplicates exceed your threshold:
+
+```
+Duplication in conversation: 15.4K characters (14.5K tokens, 7.2% of total context window)
+```
+
+**What the notification shows:**
+- Characters of duplicate content (formatted as K/M)
+- Estimated tokens (formatted as K)
+- Percentage of your total context window
+
+**Threshold behavior:**
+- Only notifies if duplicates exceed threshold (default 15%)
+- If tokens cannot be calculated, always notifies (no threshold check)
+- Customize threshold via `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT` in settings
+
+This helps you quickly decide if it's worth resuming the session to clean up duplicates before they waste more context.
 
 ### Manual (CLI Mode)
 
