@@ -1,4 +1,4 @@
-# Transcript Duplicate Scrubber Plugin
+# Smart Compact Plugin
 
 Remove duplicate file reads from Claude Code transcripts to reduce token waste and lower hallucination risk when resuming sessions.
 
