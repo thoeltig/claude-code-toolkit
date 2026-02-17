@@ -33,6 +33,7 @@ class ReadOp:
     content: str
     content_hash: str
     message_position: int
+    formatted_content: Optional[str] = None  # For byte calculations (with line numbers)
 
 def hash_content(content: str) -> str:
     """Generate SHA256 hash of content"""
@@ -255,14 +256,14 @@ def extract_reads(messages: list[dict]) -> dict[str, list[ReadOp]]:
                 if tool_use_id in read_map:
                     filepath, tooluse_position = read_map[tool_use_id]
 
-                    # Use toolUseResult.content if available (raw file content)
+                    # Get formatted content from message (what's actually in transcript with line numbers)
+                    formatted_content = item.get('content', '')
+
+                    # Use toolUseResult.content if available (raw file content for hashing)
                     # Otherwise use the formatted content from message
                     if result_content and result_filepath == filepath:
                         content = result_content
                     else:
-                        # Fallback: extract from formatted content (with line numbers)
-                        # This is less reliable but works as fallback
-                        formatted_content = item.get('content', '')
                         content = formatted_content
 
                     if content:
@@ -272,7 +273,8 @@ def extract_reads(messages: list[dict]) -> dict[str, list[ReadOp]]:
                             filepath=filepath,
                             content=content,
                             content_hash=content_hash,
-                            message_position=position
+                            message_position=position,
+                            formatted_content=formatted_content if formatted_content else None
                         )
 
                         reads_by_path.setdefault(filepath, []).append(read_op)
@@ -589,7 +591,7 @@ def generate_report(
         for filepath, ops in sorted(by_file.items()):
             report_lines.append(f"\n{filepath}:")
             for i, (read_op, write_op, prev_read_op, partial_data) in enumerate(ops, 1):
-                bytes_count = len(read_op.content.encode('utf-8'))
+                bytes_count = len(read_op.formatted_content.encode('utf-8'))
                 if partial_data:
                     _, bytes_omitted = partial_data
                     report_lines.append(f"  {i}. Read (id:{read_op.tool_use_id[:8]}...) partial deduplication (line-level)")
@@ -722,34 +724,37 @@ def main():
             if read_op.filepath not in files_with_duplicates:
                 files_with_duplicates[read_op.filepath] = {'full_size': 0, 'omitted_bytes': 0}
 
-            full_size = len(read_op.content.encode('utf-8'))
-            files_with_duplicates[read_op.filepath]['full_size'] += full_size
-
             if partial_data:
                 _, bytes_omitted = partial_data
                 total_bytes += bytes_omitted
                 files_with_duplicates[read_op.filepath]['omitted_bytes'] += bytes_omitted
-            else:
+            else:                
+                # Use formatted_content for byte counting (what's actually in transcript)
+                # Fall back to raw content if formatted not available
+                size_content = read_op.formatted_content if read_op.formatted_content else read_op.content
+                full_size = len(size_content.encode('utf-8'))
+
                 # Full dedup: entire file omitted
                 total_bytes += full_size
                 files_with_duplicates[read_op.filepath]['omitted_bytes'] += full_size
 
         # Calculate tokens for each file based on percentage of content omitted
-        total_estimated_tokens = 0
-        for filepath, info in files_with_duplicates.items():
-            ratio = extract_token_ratio_for_file(messages, filepath)
-            if ratio and ratio > 0:
-                full_size = info['full_size']
-                omitted_bytes = info['omitted_bytes']
-
-                if full_size > 0:
-                    # Calculate tokens for full file, then apply percentage omitted
-                    full_file_tokens = int(full_size * ratio)
-                    omitted_percentage = omitted_bytes / full_size
-                    omitted_tokens = int(full_file_tokens * omitted_percentage)
-                    total_estimated_tokens += omitted_tokens
-
-        estimated_tokens = total_estimated_tokens if total_estimated_tokens > 0 else None
+        #total_estimated_tokens = 0
+        #for filepath, info in files_with_duplicates.items():
+        #    ratio = extract_token_ratio_for_file(messages, filepath)
+        #    if ratio and ratio > 0:
+        #        full_size = info['full_size']
+        #        omitted_bytes = info['omitted_bytes']
+        #
+        #        if full_size > 0:
+        #            # Calculate tokens for full file, then apply percentage omitted
+        #            full_file_tokens = int(full_size * ratio)
+        #            omitted_percentage = omitted_bytes / full_size
+        #            omitted_tokens = int(full_file_tokens * omitted_percentage)
+        #            total_estimated_tokens += omitted_tokens
+        #
+        #estimated_tokens = total_estimated_tokens if total_estimated_tokens > 0 else None
+        estimated_tokens = total_bytes // 4
 
     # Generate report
     report = generate_report(duplicates, total_bytes, dry_run=dry_run, short_output=short_output, token_ratio=estimated_tokens)

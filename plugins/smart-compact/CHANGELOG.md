@@ -12,9 +12,13 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 
 **Token Estimation Accuracy**:
-- Fixed inflated token estimates from cleanup_conversation.py (was using cache_creation_input_tokens ratio)
+- Fixed inflated token estimates from cleanup_conversation.py (calculation with cache_creation_input_tokens was wrong)
 - Now uses standard ~4 bytes ≈ 1 token conversion for accurate estimates
 - Token percentages now correctly reflect actual context window usage
+
+**Duplicate Byte Count**:
+- Previously duplicate bytes were counted on the original string which lead to reoccuring duplicate byte warnings in resumed sessions and wrong overall number
+- Now uses content which is actually in the message provided to the model which makes it a bit more accurate and also reduces the count on second pass in resumed session
 
 **Cross-Platform Notification Path Resolution**:
 - Fixed path resolution for cross-platform-notification plugin in cached plugin directories

@@ -144,10 +144,21 @@ def get_duplicate_info(transcript_path: str) -> tuple[int, int | None]:
         except ValueError:
             return 0, None
 
-        # Calculate tokens using standard conversion (~4 bytes ≈ 1 token)
-        # Ignore the cleanup script's estimate as it's inflated by caching overhead
-        # This is an estimate; actual token count varies by content type
-        estimated_tokens = bytes_saved // 4
+        # Extract tokens if present
+        estimated_tokens = None
+        if '(~' in savings_part and ' tokens' in savings_part:
+            try:
+                token_start = savings_part.index('(~') + 2
+                token_end = savings_part.index(' tokens', token_start)
+                estimated_tokens = int(savings_part[token_start:token_end])
+            except (ValueError, IndexError):
+                pass
+            
+        if estimated_tokens is None:
+            # Calculate tokens using standard conversion (~4 bytes ≈ 1 token)
+            # Ignore the cleanup script's estimate as it's inflated by caching overhead
+            # This is an estimate; actual token count varies by content type
+            estimated_tokens = bytes_saved // 4
 
         return bytes_saved, estimated_tokens
 
