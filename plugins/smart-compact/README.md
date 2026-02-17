@@ -56,6 +56,22 @@ Add to your `~/.claude/settings.json`:
 
 This example sets the threshold to 60 minutes for the extended cache window. The value must be a positive integer. If not set or invalid, it defaults to 5 minutes.
 
+### Cache Validator Block Threshold
+
+By default, the cache validator blocks your input whenever the transcript is stale and duplicates exist. If you only want to block when duplicates are significant, set a minimum percentage:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT": "5"
+  }
+}
+```
+
+This example only blocks if duplicates exceed 5% of your context window. Valid values: 0-100 percent (default 0%, which blocks for any duplicates). Set to 100 to disable blocking entirely.
+
 ### Context Window Size (Duplicate Notification)
 
 The duplicate tokens notification uses your context window size to calculate what percentage of your context contains duplicates. By default it uses **200k bytes** (Claude's standard context). If you have the extended **1 million bytes context**, configure it:
