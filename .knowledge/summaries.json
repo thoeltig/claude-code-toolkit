@@ -1,24 +1,27 @@
 {
-  "generated": "2026-02-08T20:43:03.686Z",
+  "generated": "2026-02-17T22:46:48.875Z",
   "directories": {
     "plugins/project-intel/commands": {
       "path": "plugins/project-intel/commands",
-      "summary": "Contains command documentation for the project-intel plugin.",
-      "purpose": "Documents the scan command interface, parameters, and usage patterns for end users and developers.",
+      "summary": "Contains command documentation and implementation guides for project-intel plugin operations.",
+      "purpose": "Defines slash command workflows for scanning projects and analyzing files to build searchable semantic knowledge bases.",
       "technologies": [
-        "Markdown"
+        "Markdown",
+        "Bash",
+        "Node.js"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/scripts": {
       "path": "plugins/project-intel/scripts",
-      "summary": "Command-line entry point and utility scripts for scanning projects and querying accumulated knowledge.",
-      "purpose": "Main interface for the project-intel plugin, coordinating scan operations, summary merging, and knowledge queries through CLI commands.",
+      "summary": "Build and configuration directory for project-intel plugin containing TypeScript compilation setup and package configuration.",
+      "purpose": "Orchestrates the build process for the project-intel reconnaissance system which provides semantic direction through file scanning and querying capabilities. Contains all necessary build scripts and type definitions for compilation to JavaScript distribution.",
       "technologies": [
         "TypeScript",
-        "Node.js"
+        "Node.js",
+        "npm"
       ],
-      "lastUpdated": "2026-02-06T17:23:18.785Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/scripts/lib": {
       "path": "plugins/project-intel/scripts/lib",
@@ -46,22 +49,22 @@
     },
     ".claude-plugin": {
       "path": ".claude-plugin",
-      "summary": "Plugin marketplace configuration directory at root level.",
-      "purpose": "Contains marketplace metadata and plugin registry for the entire Claude Code Toolkit marketplace.",
+      "summary": "Root plugin configuration directory containing marketplace registration metadata.",
+      "purpose": "Stores the central marketplace.json that defines the Claude Code Toolkit and registers all included plugins for discovery and installation.",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.685Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/.claude-plugin": {
       "path": "plugins/project-intel/.claude-plugin",
-      "summary": "Plugin metadata and hook configuration for project-intel.",
-      "purpose": "Defines the plugin manifest and event handlers for project-intel integration with Claude Code. Specifies plugin name, version, description, author, and hook integration points.",
+      "summary": "Contains plugin configuration metadata for the project reconnaissance system.",
+      "purpose": "Registers the lightweight reconnaissance plugin with marketplace for semantic file and directory analysis and querying.",
       "technologies": [
         "JSON",
-        "Claude Code"
+        "Claude Code Plugin"
       ],
-      "lastUpdated": "2026-02-06T17:10:34.047Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "": {
       "path": "",
@@ -76,14 +79,13 @@
     },
     "plugins/changelog": {
       "path": "plugins/changelog",
-      "summary": "Changelog plugin providing professional changelog management tools following industry-standard formats.",
-      "purpose": "Delivers comprehensive changelog creation and maintenance capabilities for projects, supporting both Common Changelog and Keep a Changelog standards with validation and prerelease promotion workflows. Enables structured version history documentation aligned with Semantic Versioning.",
+      "summary": "Plugin for creating and maintaining CHANGELOG.md files following standardized formatting conventions.",
+      "purpose": "Enables automated changelog management following Keep a Changelog and Common Changelog standards, supporting semantic versioning and release documentation for projects.",
       "technologies": [
         "Markdown",
-        "JSON",
-        "YAML"
+        "semantic versioning"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/changelog/skills/managing-changelog": {
       "path": "plugins/changelog/skills/managing-changelog",
@@ -226,17 +228,13 @@
     },
     "plugins/claude-code-capabilities": {
       "path": "plugins/claude-code-capabilities",
-      "summary": "Plugin providing comprehensive management skills for Claude Code features including agent skills, hooks, plugins, prompts, slash commands, subagents, and MCPs.",
-      "purpose": "Central hub for Claude Code capability management offering production-ready skills that guide users through creating, analyzing, updating and improving various Claude Code features. Includes all supporting documentation and examples sourced from official Anthropic documentation.",
+      "summary": "Plugin for managing all Claude Code framework features including skills, hooks, commands, MCPs, and prompts.",
+      "purpose": "Provides comprehensive tooling for creating, analyzing, and improving Claude Code capabilities with structured management of extensions, automation features, and plugin documentation.",
       "technologies": [
-        "Claude Code",
-        "Model Context Protocol",
-        "YAML",
-        "Markdown",
-        "Python",
-        "JavaScript"
+        "Claude Code framework",
+        "JSON configuration"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/claude-code-capabilities/skills/managing-agent-skills": {
       "path": "plugins/claude-code-capabilities/skills/managing-agent-skills",
@@ -360,30 +358,33 @@
     },
     "plugins/cross-platform-notification/.claude-plugin": {
       "path": "plugins/cross-platform-notification/.claude-plugin",
-      "summary": "Contains plugin metadata for the cross-platform-notification plugin.",
-      "purpose": "Defines configuration and metadata for the notification plugin that sends native system notifications from Claude Code.",
+      "summary": "Contains plugin configuration metadata for the cross-platform notification system.",
+      "purpose": "Defines the plugin structure, version, author, and keywords for Claude Code marketplace integration of the notification system.",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code Plugin"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/documentation/.claude-plugin": {
       "path": "plugins/documentation/.claude-plugin",
-      "summary": "Contains plugin configuration metadata for the documentation skill plugin.",
-      "purpose": "Defines the documentation plugin configuration including name, version, and author information used by the Claude Code plugin system.",
+      "summary": "Contains plugin configuration metadata for the documentation management plugin.",
+      "purpose": "Configures plugin properties and marketplace metadata for documentation best practices enforcement and management workflows.",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code Plugin"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/fetch-full-content/.claude-plugin": {
       "path": "plugins/fetch-full-content/.claude-plugin",
-      "summary": "Contains plugin configuration metadata for the fetch-full-content plugin.",
-      "purpose": "Defines plugin metadata including name, version, security warnings and author information for the full content fetcher.",
+      "summary": "Contains plugin configuration metadata for the web content fetching and caching system.",
+      "purpose": "Defines plugin structure and marketplace registration for complete web page content retrieval without summarization loss.",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code Plugin"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/fetch-full-content": {
       "path": "plugins/fetch-full-content",
@@ -409,12 +410,13 @@
     },
     "plugins/session-protocol/.claude-plugin": {
       "path": "plugins/session-protocol/.claude-plugin",
-      "summary": "Plugin configuration directory for the session-protocol plugin.",
-      "purpose": "Contains metadata and hook definitions for the session continuity management plugin.",
+      "summary": "Contains plugin configuration metadata for session continuity management.",
+      "purpose": "Configures the session protocol plugin for marketplace to enable task and context preservation across Claude Code sessions.",
       "technologies": [
-        "JSON"
+        "JSON",
+        "Claude Code Plugin"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "root": {
       "path": "root",
@@ -426,57 +428,59 @@
       ],
       "lastUpdated": "2026-02-06T02:15:32.687Z"
     },
-    "plugins/transcript-duplicate-scrubber": {
-      "path": "plugins/transcript-duplicate-scrubber",
-      "summary": "Plugin directory containing transcript deduplication functionality for reducing token waste in Claude Code sessions.",
-      "purpose": "Provides automatic deduplication of file reads from transcripts using hash-based detection to lower token costs and hallucination risk when resuming sessions.",
+    "plugins/smart-compact": {
+      "path": "plugins/smart-compact",
+      "summary": "Plugin for automatic transcript deduplication to reduce token costs and preserve context by removing duplicate file reads.",
+      "purpose": "Provides intelligent deduplication of Claude Code transcripts using backward-iterating chain-following algorithms to detect and mark redundant file reads, with cache validation and user notifications to optimize context window usage.",
       "technologies": [
         "Python",
         "JSON",
-        "SHA256 Hashing"
+        "SHA256",
+        "JSONL"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.685Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
-    "plugins/transcript-duplicate-scrubber/.claude-plugin": {
-      "path": "plugins/transcript-duplicate-scrubber/.claude-plugin",
-      "summary": "Plugin metadata and configuration directory for the transcript-duplicate-scrubber plugin.",
+    "plugins/smart-compact/.claude-plugin": {
+      "path": "plugins/smart-compact/.claude-plugin",
+      "summary": "Plugin metadata and configuration directory for the smart-compact plugin.",
       "purpose": "Contains plugin manifest and hook configuration files required by Claude Code to register and execute the plugin.",
       "technologies": [
         "JSON"
       ],
       "lastUpdated": "2026-02-08T20:43:03.685Z"
     },
-    "plugins/transcript-duplicate-scrubber/hooks": {
-      "path": "plugins/transcript-duplicate-scrubber/hooks",
-      "summary": "Hook configuration directory defining when and how the deduplication script executes.",
-      "purpose": "Specifies SessionEnd hook that triggers automatic deduplication as sessions close.",
+    "plugins/smart-compact/hooks": {
+      "path": "plugins/smart-compact/hooks",
+      "summary": "Defines hook configurations that trigger deduplication scripts at specific lifecycle events.",
+      "purpose": "Registers Python scripts as hooks for SessionEnd, UserPromptSubmit, and Stop events, enabling automatic and interactive deduplication workflows within the Claude Code plugin system.",
       "technologies": [
+        "JSON configuration"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/scripts": {
+      "path": "plugins/smart-compact/scripts",
+      "summary": "Contains Python scripts for transcript deduplication, cache validation, and duplicate detection notifications.",
+      "purpose": "Implements the core deduplication and monitoring logic that detects duplicate file reads in transcripts, validates cache staleness, and notifies users about context window usage. These scripts operate as hooks triggered by session events and user prompt submissions.",
+      "technologies": [
+        "Python",
+        "subprocess",
         "JSON"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.685Z"
-    },
-    "plugins/transcript-duplicate-scrubber/scripts": {
-      "path": "plugins/transcript-duplicate-scrubber/scripts",
-      "summary": "Scripts directory containing the main deduplication implementation logic.",
-      "purpose": "Houses the Python implementation for detecting and removing duplicate file reads from Claude Code transcripts.",
-      "technologies": [
-        "Python"
-      ],
-      "lastUpdated": "2026-02-08T20:43:03.685Z"
+      "lastUpdated": "2026-02-17T22:46:48.874Z"
     }
   },
   "files": {
     "plugins/project-intel/CHANGELOG.md": {
       "path": "plugins/project-intel/CHANGELOG.md",
-      "summary": "Documents all notable changes, bug fixes, improvements, and features added across project-intel plugin versions 1.0.0.0 through 1.5.1.0.",
-      "purpose": "Maintains project history and communicates feature additions, stability improvements, and breaking changes to users. Tracks evolution from initial reconnaissance system through git integration, query optimization, and automatic knowledge maintenance.",
+      "summary": "Changelog specifically for project-intel plugin tracking versions v1.0.0.0 through v1.5.2.0 with all improvements and fixes.",
+      "purpose": "Documents project-intel plugin evolution including scan optimization, query refinements, session automation, incremental processing, and bug fixes since initial v1.0.0.0 release.",
       "role": "documentation",
       "technologies": [
         "Markdown",
-        "Semantic Versioning",
-        "Changelog Format"
+        "Semantic Versioning"
       ],
-      "lastUpdated": "2026-02-06T17:23:18.785Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/README.md": {
       "path": "plugins/project-intel/README.md",
@@ -568,47 +572,35 @@
     },
     ".claude-plugin/marketplace.json": {
       "path": ".claude-plugin/marketplace.json",
-      "summary": "Marketplace configuration file defining the Claude Code Toolkit with 8 plugins including their names, versions, descriptions, sources, and authors.",
-      "purpose": "Registers the marketplace with Claude Code and describes all available plugins for discovery and installation.",
+      "summary": "Root marketplace configuration registering the Claude Code Toolkit with 8 plugins including smart-compact, session-protocol, project-intel, and others.",
+      "purpose": "Serves as the central plugin registry that defines the toolkit name, owner, version, description, and lists all included plugins with their source locations for discovery and installation by Claude Code.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "exports": [
-        "name",
-        "owner",
-        "metadata",
-        "plugins"
-      ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/.claude-plugin/plugin.json": {
       "path": "plugins/project-intel/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest for project-intel specifying name, version, description, author and hooks configuration file.",
-      "purpose": "Claude Code plugin descriptor defining project-intel metadata (v1.5.1.0), author information, and reference to hooks.json for event handlers. Enables Claude Code platform to recognize and load the plugin.",
+      "summary": "Plugin configuration defining project reconnaissance system as lightweight semantic analysis tool.",
+      "purpose": "Registers project-intel plugin v1.5.2.0 for marketplace as a query-first reconnaissance system for directed code exploration without blind exploration.",
       "role": "configuration",
       "technologies": [
-        "JSON",
-        "Claude Code"
+        "JSON"
       ],
-      "exports": [
-        "name",
-        "version",
-        "description",
-        "author",
-        "hooks"
-      ],
-      "lastUpdated": "2026-02-06T17:10:34.047Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "CHANGELOG.md": {
       "path": "CHANGELOG.md",
-      "summary": "Complete changelog documenting all releases of the Claude Code Toolkit marketplace from v1.0.0.0 to v1.15.0.0 with detailed version histories.",
-      "purpose": "Tracks marketplace and plugin releases, features, changes, and bug fixes across all versions using Common Changelog and Semantic Versioning standards.",
+      "summary": "Comprehensive changelog documenting all Claude Code Toolkit marketplace releases, plugins, and feature improvements from v1.0.0.0 through v1.16.0.0.",
+      "purpose": "Documents all marketplace releases, major features, bug fixes, and breaking changes across the toolkit and all plugins using Common Changelog and Keep a Changelog standards. Tracks evolution of smart-compact, project-intel, session-protocol, fetch-full-content, documentation, and cross-platform-notification plugins.",
       "role": "documentation",
       "technologies": [
-        "Markdown"
+        "Markdown",
+        "Semantic Versioning",
+        "Common Changelog"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "CODE_OF_CONDUCT.md": {
       "path": "CODE_OF_CONDUCT.md",
@@ -1439,24 +1431,22 @@
     },
     "plugins/project-intel/scripts/package.json": {
       "path": "plugins/project-intel/scripts/package.json",
-      "summary": "NPM package configuration for project-intel scripts with TypeScript build setup and CLI entrypoint.",
-      "purpose": "Defines build and runtime configuration for the project-intel CLI tool. Specifies ctx as the executable binary, TypeScript compilation scripts, and development dependencies for building the Node.js application.",
+      "summary": "Package manifest for project-intel plugin defining dependencies, build scripts, and project metadata.",
+      "purpose": "Specifies project-intel as a lightweight reconnaissance system with build targets and development dependencies for TypeScript compilation. Enables distribution as npm package with bin entry point for CLI usage.",
       "role": "configuration",
       "technologies": [
-        "JSON",
-        "TypeScript",
-        "Node.js"
+        "npm",
+        "Node.js",
+        "TypeScript"
       ],
       "exports": [
-        "scripts",
-        "dependencies",
-        "bin"
+        "ctx"
       ],
       "imports": [
         "@types/node",
         "typescript"
       ],
-      "lastUpdated": "2026-02-06T17:10:34.047Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/session-protocol/CHANGELOG.md": {
       "path": "plugins/session-protocol/CHANGELOG.md",
@@ -3306,71 +3296,53 @@
     },
     "plugins/changelog/.claude-plugin/plugin.json": {
       "path": "plugins/changelog/.claude-plugin/plugin.json",
-      "summary": "Plugin configuration for the changelog plugin managing CHANGELOG.md files.",
-      "purpose": "Defines metadata for the changelog plugin including name, version (1.1.0), description, and author information. Enables plugin registration and discovery in the marketplace.",
+      "summary": "Plugin metadata for the changelog plugin defining its name, description, version, author, repository, and searchable keywords.",
+      "purpose": "Provides plugin metadata following Claude Code plugin standards, enabling plugin discovery with description of changelog management capabilities and licensing information.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "exports": [
-        "name",
-        "description",
-        "version",
-        "author"
-      ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/claude-code-capabilities/.claude-plugin/plugin.json": {
       "path": "plugins/claude-code-capabilities/.claude-plugin/plugin.json",
-      "summary": "Plugin configuration for comprehensive Claude Code capabilities management including skills, commands, hooks, MCPs, and subagents.",
-      "purpose": "Defines metadata for the main capabilities plugin (version 1.8.0.0) that manages Claude Code features. Enables marketplace registration and identification of the plugin's purpose and functionality.",
+      "summary": "Plugin metadata for claude-code-capabilities plugin describing comprehensive Claude Code feature management with version 1.8.0.0.",
+      "purpose": "Registers plugin metadata for the capabilities management plugin, enabling discovery of tools for managing skills, hooks, commands, MCPs, subagents, and prompts within Claude Code framework.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "exports": [
-        "name",
-        "description",
-        "version",
-        "author"
-      ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/cross-platform-notification/.claude-plugin/plugin.json": {
       "path": "plugins/cross-platform-notification/.claude-plugin/plugin.json",
-      "summary": "Plugin configuration for native system notification functionality in Claude Code.",
-      "purpose": "Defines metadata for the cross-platform notification plugin (version 1.0.0.0) with hook support for system notifications. Enables marketplace registration and plugin discovery.",
+      "summary": "Plugin configuration defining cross-platform notification system metadata and marketplace registration.",
+      "purpose": "Registers the cross-platform-notification plugin v1.0.0.0 with Claude Code marketplace, specifying author, homepage, and keywords for discovery.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "exports": [
-        "name",
-        "description",
-        "version",
-        "author"
-      ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/documentation/.claude-plugin/plugin.json": {
       "path": "plugins/documentation/.claude-plugin/plugin.json",
-      "summary": "Plugin configuration file declaring the documentation skill with metadata and author information.",
-      "purpose": "Registers the documentation plugin in the Claude Code ecosystem with version control and author attribution.",
+      "summary": "Plugin configuration defining documentation management plugin metadata for marketplace registration.",
+      "purpose": "Configures the documentation plugin v1.0.0.0 for Claude Code marketplace with professional documentation standards and best practices guidelines.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/fetch-full-content/.claude-plugin/plugin.json": {
       "path": "plugins/fetch-full-content/.claude-plugin/plugin.json",
-      "summary": "Plugin configuration declaring fetch-full-content with security warnings and version metadata.",
-      "purpose": "Registers the fetch-full-content plugin with security disclaimers about prompt injection risks and recommended usage on trusted sources only.",
+      "summary": "Plugin configuration for web content fetching tool with caching and security warnings.",
+      "purpose": "Registers fetch-full-content plugin v1.2.0.0 with marketplace, documenting full-page retrieval capabilities and security limitations regarding prompt injection.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-06T02:15:32.687Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/fetch-full-content/CHANGELOG.md": {
       "path": "plugins/fetch-full-content/CHANGELOG.md",
@@ -3426,13 +3398,29 @@
     },
     "plugins/project-intel/commands/scan.md": {
       "path": "plugins/project-intel/commands/scan.md",
-      "summary": "Comprehensive documentation for the scan command including parameters, usage examples, process flow, and technical implementation details.",
-      "purpose": "Guides users and developers on how to use the scan command for analyzing projects. Documents the multi-wave Haiku batch processing orchestration, error handling, and output structures.",
+      "summary": "Complete documentation of the /scan command workflow including parameters, usage examples, implementation steps, and technical specifications.",
+      "purpose": "Provides comprehensive guide for executing project scans with wave-based Haiku agent parallel processing, file batching strategies, error handling patterns, and JSON output structure validation. Documents the complete orchestration flow from scanning through merging of file analysis results.",
       "role": "documentation",
       "technologies": [
-        "Markdown"
+        "Markdown",
+        "Bash",
+        "Node.js",
+        "JSON",
+        "Task Tool"
       ],
-      "lastUpdated": "2026-02-06T02:41:41.093Z"
+      "exports": [
+        "scan command",
+        "wave-based invocation",
+        "file batching",
+        "merge command"
+      ],
+      "imports": [
+        "Task tool",
+        "Read tool",
+        "Write tool",
+        "Bash node"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/hooks/hooks.json": {
       "path": "plugins/project-intel/hooks/hooks.json",
@@ -3469,30 +3457,45 @@
     },
     "plugins/project-intel/scripts/tsconfig.json": {
       "path": "plugins/project-intel/scripts/tsconfig.json",
-      "summary": "TypeScript compiler configuration for the project-intel scripts with strict type checking and ES2023 target.",
-      "purpose": "Defines compilation options for converting TypeScript source files to CommonJS JavaScript with declaration files, source maps, and strict type safety for the project-intel CLI tool.",
+      "summary": "TypeScript compiler configuration for project-intel scripts targeting ES2023 with strict type checking.",
+      "purpose": "Configures TypeScript compilation to CommonJS modules with strict type safety, source maps disabled for distribution, and incremental builds for performance. Includes lib/, types/, utils/ directories and main entry points for semantic scanning functionality.",
       "role": "configuration",
-      "lastUpdated": "2026-02-06T02:15:32.688Z"
+      "technologies": [
+        "TypeScript",
+        "ES2023"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/session-protocol/.claude-plugin/plugin.json": {
       "path": "plugins/session-protocol/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest for the session-protocol plugin with metadata and hook configuration.",
-      "purpose": "Defines the session-protocol plugin's name, version, author, and points to its hooks configuration file.",
+      "summary": "Plugin configuration for session continuity management system enabling cross-session context preservation.",
+      "purpose": "Registers session-protocol plugin v1.2.0.0 with marketplace for seamless task and context continuity between Claude Code sessions.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-06T16:43:35.148Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "README.md": {
       "path": "README.md",
-      "summary": "Main marketplace documentation describing the Claude Code Toolkit as a plugin marketplace with 8 available plugins.",
-      "purpose": "Provides overview of the toolkit's purpose, quick start installation, plugin catalog with descriptions, plugin highlights, and contribution guidelines.",
+      "summary": "Main marketplace documentation describing Claude Code Toolkit and all available plugins with features, installation, and usage guidelines.",
+      "purpose": "Central documentation hub introducing Claude Code Toolkit as a marketplace cutting token costs while extending Claude with intelligent project exploration, workflow automation, and development standards. Provides quick start, plugin directory with descriptions and install commands, highlights, and project governance information.",
       "role": "documentation",
       "technologies": [
-        "Markdown"
+        "Markdown",
+        "Claude Code"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
+      "exports": [
+        "session-protocol",
+        "project-intel",
+        "fetch-full-content",
+        "changelog",
+        "documentation",
+        "claude-code-capabilities",
+        "cross-platform-notification",
+        "smart-compact"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
     "plugins/project-intel/scripts/types.ts": {
       "path": "plugins/project-intel/scripts/types.ts",
@@ -3520,73 +3523,81 @@
       ],
       "lastUpdated": "2026-02-06T16:43:35.148Z"
     },
-    "plugins/transcript-duplicate-scrubber/.claude-plugin/plugin.json": {
-      "path": "plugins/transcript-duplicate-scrubber/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest defining transcript-duplicate-scrubber metadata, version, author, and hooks reference.",
-      "purpose": "Registers the plugin with Claude Code and points to the hooks configuration file for plugin initialization.",
+    "plugins/smart-compact/.claude-plugin/plugin.json": {
+      "path": "plugins/smart-compact/.claude-plugin/plugin.json",
+      "summary": "Plugin manifest for smart-compact plugin declaring metadata, version, and licensing information.",
+      "purpose": "Registers smart-compact as a Claude Code plugin for deduplicating transcript reads with version 1.4.1.0. Provides author attribution, repository references, and keyword metadata for marketplace discovery and plugin system integration.",
+      "role": "configuration",
+      "technologies": [
+        "Claude Code",
+        "JSON"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/CHANGELOG.md": {
+      "path": "plugins/smart-compact/CHANGELOG.md",
+      "summary": "Comprehensive changelog documenting all releases of the smart-compact plugin from v1.0.0.0 to v1.4.1.0 with feature descriptions and implementation details.",
+      "purpose": "Provides transparent version history, tracking deduplication algorithm improvements, cache validation features, token estimation accuracy fixes, and configuration enhancements across 5 major releases with semantic versioning and changelog standards compliance.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown",
+        "semantic versioning",
+        "Keep a Changelog"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/README.md": {
+      "path": "plugins/smart-compact/README.md",
+      "summary": "Comprehensive documentation for smart-compact plugin explaining transcript deduplication mechanics, configuration, usage modes, and token optimization strategy.",
+      "purpose": "Guides users through installation, configuration, and operation of smart-compact which removes duplicate file reads from Claude Code transcripts to reduce token waste and hallucination risk. Explains backward-iterating chain-following deduplication algorithm, cache validator hook, notification thresholds, and technical implementation details with real-world cost-benefit examples.",
+      "role": "documentation",
+      "technologies": [
+        "Python",
+        "Claude Code",
+        "Markdown"
+      ],
+      "exports": [
+        "cleanup_conversation",
+        "cache_validator",
+        "duplicate_tokens_notification"
+      ],
+      "imports": [
+        "SessionEnd hook",
+        "Stop hook"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/hooks/hooks.json": {
+      "path": "plugins/smart-compact/hooks/hooks.json",
+      "summary": "Hook registration configuration defining three lifecycle hooks for SessionEnd, UserPromptSubmit, and Stop events.",
+      "purpose": "Registers Python scripts as command hooks to trigger deduplication on session end, validate cache on prompt submission, and notify users on conversation completion within the Claude Code plugin system.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "exports": [
-        "name",
-        "description",
-        "version",
-        "author",
-        "hooks"
-      ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     },
-    "plugins/transcript-duplicate-scrubber/CHANGELOG.md": {
-      "path": "plugins/transcript-duplicate-scrubber/CHANGELOG.md",
-      "summary": "Complete version history documenting the transcript-duplicate-scrubber plugin from initial release v1.0.0.0.",
-      "purpose": "Tracks all changes, additions, and implementation details using Common Changelog and Semantic Versioning standards for transparency and feature documentation.",
-      "role": "documentation",
-      "technologies": [
-        "Markdown"
-      ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
-    },
-    "plugins/transcript-duplicate-scrubber/README.md": {
-      "path": "plugins/transcript-duplicate-scrubber/README.md",
-      "summary": "Comprehensive user documentation for the transcript-duplicate-scrubber plugin covering installation, usage, how it works, and technical explanation.",
-      "purpose": "Provides installation instructions, usage examples (hook and CLI modes), algorithm explanation with deduplication rules, known limitations, and cost-benefit analysis for users.",
-      "role": "documentation",
-      "technologies": [
-        "Markdown"
-      ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
-    },
-    "plugins/transcript-duplicate-scrubber/hooks/hooks.json": {
-      "path": "plugins/transcript-duplicate-scrubber/hooks/hooks.json",
-      "summary": "Hook configuration file specifying SessionEnd hook triggers for the dedup_transcript.py script.",
-      "purpose": "Defines when the deduplication script executes (on session end) and the command to invoke the Python script.",
-      "role": "configuration",
-      "technologies": [
-        "JSON"
-      ],
-      "exports": [
-        "hooks",
-        "SessionEnd"
-      ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
-    },
-    "plugins/transcript-duplicate-scrubber/scripts/dedup_transcript.py": {
-      "path": "plugins/transcript-duplicate-scrubber/scripts/dedup_transcript.py",
-      "summary": "Python script implementing hash-based duplicate detection and removal from Claude Code JSONL transcripts with hook and CLI modes.",
-      "purpose": "Core implementation that extracts Read/Write operations, detects content duplicates using SHA256 hashing, applies two-level deduplication rules, and replaces redundant content with transparency markers.",
+    "plugins/smart-compact/scripts/cleanup_conversation.py": {
+      "path": "plugins/smart-compact/scripts/cleanup_conversation.py",
+      "summary": "Core deduplication engine that removes duplicate file reads from Claude Code transcripts using backward-iterating chain-following and line-level partial deduplication.",
+      "purpose": "Provides both hook-based automatic cleanup on session end and CLI-based manual deduplication with dry-run preview, detecting read-after-write and read-after-read duplicates while preserving file modification history and providing token estimates for context optimization.",
       "role": "implementation",
       "technologies": [
         "Python",
-        "SHA256",
         "JSON",
-        "Dataclasses"
+        "SHA256",
+        "JSONL",
+        "dataclasses"
       ],
       "exports": [
         "hash_content",
+        "extract_token_ratio_for_file",
         "load_transcript",
         "extract_writes",
         "extract_reads",
+        "find_line_differences",
+        "apply_context_margin",
+        "create_partial_dedup_content",
         "find_duplicates",
         "apply_deduplication",
         "generate_report",
@@ -3600,9 +3611,68 @@
         "sys",
         "pathlib.Path",
         "typing.Optional",
-        "dataclasses.dataclass"
+        "dataclasses"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.686Z"
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/scripts/block_idle_session.py": {
+      "path": "plugins/smart-compact/scripts/block_idle_session.py",
+      "summary": "Validates transcript cache staleness and blocks user prompts if duplicates exceed a configurable threshold, enabling intelligent session resumption.",
+      "purpose": "Acts as UserPromptSubmit hook to detect when transcripts are stale (>5 minutes idle) and prevents prompt submission if deduplication would recover significant context, encouraging users to resume sessions instead of continuing in cache-invalidated conversations.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "subprocess",
+        "JSON",
+        "datetime"
+      ],
+      "exports": [
+        "get_cache_duration_minutes",
+        "get_context_window_tokens",
+        "get_cache_validator_threshold",
+        "is_stale",
+        "get_savings",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "subprocess",
+        "os",
+        "pathlib.Path",
+        "datetime"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/scripts/notify_about_compaction.py": {
+      "path": "plugins/smart-compact/scripts/notify_about_compaction.py",
+      "summary": "Analyzes transcript duplicates and sends cross-platform system notifications showing context usage and deduplication savings.",
+      "purpose": "Runs as Stop hook to notify users when duplicate content is detected in their conversation, formatting byte/token savings as human-readable metrics and displaying percentage of context window consumed by duplicates.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "subprocess",
+        "JSON",
+        "pathlib"
+      ],
+      "exports": [
+        "get_context_window_tokens",
+        "get_notification_threshold",
+        "format_bytes",
+        "format_tokens",
+        "get_duplicate_info",
+        "send_notification",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "subprocess",
+        "os",
+        "pathlib.Path",
+        "datetime"
+      ],
+      "lastUpdated": "2026-02-17T22:46:48.875Z"
     }
   }
 }

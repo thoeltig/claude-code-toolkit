@@ -104,4 +104,3 @@ function main() {
     }
 }
 main();
-//# sourceMappingURL=sessionstart-knowledge-check.js.map

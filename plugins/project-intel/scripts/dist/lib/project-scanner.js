@@ -305,4 +305,3 @@ async function scanProject(location, knowledgeDir) {
     }
     return createOutput([...files.new, ...files.modified], filesInSummary, knowledgeDir);
 }
-//# sourceMappingURL=project-scanner.js.map

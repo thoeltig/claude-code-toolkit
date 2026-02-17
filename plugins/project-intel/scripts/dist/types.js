@@ -7,4 +7,3 @@ exports.SCAN_FILE = 'scan.json';
 exports.FORMAT_FLAT = 'flat';
 exports.FORMAT_GROUPED = 'grouped';
 exports.QUERY_RESULT_MAX = 25;
-//# sourceMappingURL=types.js.map
