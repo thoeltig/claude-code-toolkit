@@ -28,7 +28,7 @@ Then install any plugin:
 | **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
-| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.3.0.0 |
+| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 1.4.0.0 |
 
 ## 🎯 Plugin Highlights
 
@@ -96,7 +96,9 @@ This plugin automatically deduplicates as your session ends, removing redundant 
 - **Chain following**: When duplicates found, continues checking from that read to catch transitive chains (Read A = B = C)
 - **Partial dedup**: When content differs, keeps only changed lines with ±3 line context margin (matching Claude Code's edit tool)
 - **Write awareness**: Detects reads matching previous Write operations and marks them redundant
-- **Cache validator hook**: Blocks input if transcript is stale (>5 min idle) and duplicates exist, showing token savings to encourage resuming instead
+- **Cache validator hook**: Blocks input if transcript is stale and duplicates exist, showing token savings to encourage resuming
+- **Duplicate tokens notification**: Shows notification when user input awaited, with configurable threshold to reduce notification fatigue
+- **Configurable thresholds**: Customize cache duration, context window size, and notification trigger percentage via environment variables
 
 The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.
 
