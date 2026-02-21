@@ -10,8 +10,8 @@
   },
   "plugins": [
     {
-      "name": "session-protocol",
-      "source": "./plugins/session-protocol"
+      "name": "smart-compact",
+      "source": "./plugins/smart-compact"
     },
     {
       "name": "project-intel",
@@ -20,6 +20,10 @@
     {
       "name": "fetch-full-content",
       "source": "./plugins/fetch-full-content"
+    },
+    {
+      "name": "session-protocol",
+      "source": "./plugins/session-protocol"
     },
     {
       "name": "changelog",
@@ -36,10 +40,6 @@
     {
       "name": "cross-platform-notification",
       "source": "./plugins/cross-platform-notification"
-    },
-    {
-      "name": "smart-compact",
-      "source": "./plugins/smart-compact"
     }
   ]
 }

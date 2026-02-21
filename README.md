@@ -21,21 +21,33 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| **[session-protocol](./plugins/session-protocol/)** | Save your active tasks between sessions and never loss context again | 1.2.0.0 |
+| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 2.0.0.0 |
 | **[project-intel](./plugins/project-intel/)** | Lightweight reconnaissance system that provides semantic direction before code exploration with persistent knowledge across sessions | 1.5.2.0 |
 | **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.2.0.0 |
+| **[session-protocol](./plugins/session-protocol/)** | Save your active tasks between sessions and never loss context again | 1.2.0.0 |
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
 | **[documentation](./plugins/documentation/)** | Create and maintain high-quality project documentation with quality validation, style guides, and inclusive language standards | 1.0.0.0 |
 | **[claude-code-capabilities](./plugins/claude-code-capabilities/)** | Comprehensive management of Claude Code features including skills, commands, hooks, prompts, subagents, and MCPs | 1.8.0.0 |
 | **[cross-platform-notification](./plugins/cross-platform-notification/)** | Send native system notifications for Claude Code hook events across Windows, macOS, and Linux | 1.0.0.0 |
-| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 2.0.0.0 |
 
 ## 🎯 Plugin Highlights
 
-### Session Protocol
-Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
+### Smart Compact
+During development you naturally read the same file multiple times to keep important context "fresh" (higher priority). But when resuming a session Claude Code reconstructs the entire conversation from the transcript including all file reads which waste tokens without adding new information.
 
-**Install:** `/plugin install session-protocol@claude-code-toolkit`
+This plugin automatically deduplicates as your session ends, removing redundant reads using intelligent backward-iterating chain-following:
+- **Backward iteration**: Processes reads from newest to oldest, catching cascading duplicates efficiently
+- **Chain following**: When duplicates found, continues checking from that read to catch transitive chains (Read A = B = C)
+- **Partial dedup**: When content differs, keeps only changed lines with ±3 line context margin (matching Claude Code's edit tool)
+- **Write awareness**: Detects reads matching previous Write operations and marks them redundant
+- **Cache validator hook**: Blocks input if transcript is stale and duplicates exist, showing token savings to encourage resuming
+- **Duplicate tokens notification**: Shows notification when user input awaited, with configurable threshold to reduce notification fatigue
+- **Self-documenting deduplication markers**: Clear, human-readable markers (`[...Duplicate read omitted - latest version contains complete content...]`) that help AI assistants understand deduplication without requiring domain knowledge
+- **Configurable thresholds**: Customize cache duration, context window size, and notification trigger percentage via environment variables
+
+The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.
+
+**Install:** `/plugin install smart-compact@claude-code-toolkit`
 
 ### Project Intel
 Lightweight reconnaissance system that provides semantic direction before expensive code exploration. Query first to get a ranked list of relevant files - saves exploration tokens and reduces context pollution.
@@ -60,6 +72,11 @@ Download complete page content as markdown to filesystem for repeated analysis a
 Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
 
 **Install:** `/plugin install changelog@claude-code-toolkit`
+
+### Session Protocol
+Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
+
+**Install:** `/plugin install session-protocol@claude-code-toolkit`
 
 ### Documentation
 Create and maintain high-quality project documentation with comprehensive validation and style guidance. Ensure clarity, accessibility, and inclusive language across all documentation types.
@@ -87,23 +104,6 @@ The most comprehensive toolkit for working with Claude Code's extensibility feat
 Get alerted when Claude Code tasks complete or hook events occur with native system notifications. Works seamlessly on Windows, macOS, and Linux with automatic fallback to console output.
 
 **Install:** `/plugin install cross-platform-notification@claude-code-toolkit`
-
-### Smart Compact
-During development you naturally read the same file multiple times to keep important context "fresh" (higher priority). But when resuming a session Claude Code reconstructs the entire conversation from the transcript including all file reads which waste tokens without adding new information.
-
-This plugin automatically deduplicates as your session ends, removing redundant reads using intelligent backward-iterating chain-following:
-- **Backward iteration**: Processes reads from newest to oldest, catching cascading duplicates efficiently
-- **Chain following**: When duplicates found, continues checking from that read to catch transitive chains (Read A = B = C)
-- **Partial dedup**: When content differs, keeps only changed lines with ±3 line context margin (matching Claude Code's edit tool)
-- **Write awareness**: Detects reads matching previous Write operations and marks them redundant
-- **Cache validator hook**: Blocks input if transcript is stale and duplicates exist, showing token savings to encourage resuming
-- **Duplicate tokens notification**: Shows notification when user input awaited, with configurable threshold to reduce notification fatigue
-- **Self-documenting deduplication markers**: Clear, human-readable markers (`[...Duplicate read omitted - latest version contains complete content...]`) that help AI assistants understand deduplication without requiring domain knowledge
-- **Configurable thresholds**: Customize cache duration, context window size, and notification trigger percentage via environment variables
-
-The cleaned transcript benefits every future resume—lower cost, reduced hallucination risk from context bloat.
-
-**Install:** `/plugin install smart-compact@claude-code-toolkit`
 
 ## 📚 Documentation
 
