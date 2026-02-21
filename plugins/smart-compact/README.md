@@ -40,6 +40,59 @@ The plugin automatically registers and runs on session end and pre-prompt. No co
 
 ## Configuration
 
+### Deduplication Thresholds & Context Margins
+
+Three environment variables control compression aggressiveness:
+
+Add to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "SMART_COMPACT_DEDUP_MIN_BYTES": "100",
+    "SMART_COMPACT_MULTILINE_CONTEXT_LINES": "1",
+    "SMART_COMPACT_SINGLELINE_CONTEXT_CHARS": "10"
+  }
+}
+```
+
+**Dedup Size Threshold** (`SMART_COMPACT_DEDUP_MIN_BYTES`):
+- Only replaces omitted content if larger than this threshold
+- Default: 1 byte (replace almost everything)
+- Examples:
+  - `1`: Maximum compression (replace all)
+  - `100`: Only replace if > 100 bytes
+  - `1000`: Only replace large blocks
+
+**Multiline Context** (`SMART_COMPACT_MULTILINE_CONTEXT_LINES`):
+- Lines to keep around changed lines in markdown/code files
+- Default: 1 line (±1 around changes)
+- Examples:
+  - `0`: No context, only keep changed lines (aggressive)
+  - `1`: ±1 line context (default, balanced)
+  - `3`: ±3 line context (more context preserved)
+
+**Single-Line Context** (`SMART_COMPACT_SINGLELINE_CONTEXT_CHARS`):
+- Characters to keep around changed region in JSON/compact formats
+- Default: 10 characters (±10 around changes)
+- Examples:
+  - `0`: No context, only keep changed chars (aggressive)
+  - `10`: ±10 char context (default, balanced)
+  - `20`: ±20 char context (more context preserved)
+
+**Compression Trade-offs:**
+- Margins=0 → Maximum bytes saved (aggressive)
+- Margins=1/10 → Balanced (default, good readability)
+- Margins=3/20 → Minimal markers, more context kept
+
+**Edge Case - JSONL Format:**
+JSONL files (JSON Lines: one JSON object per line) are detected as multiline and use line-based comparison. This is appropriate because:
+- Each line is independent JSON
+- Line-based dedup prevents breaking the format
+- Character-based dedup could split lines incorrectly
+
+If you have very compact JSONL with long lines, consider increasing `SMART_COMPACT_MULTILINE_CONTEXT_LINES` to preserve context around changes.
+
 ### Cache Duration Threshold
 
 The cache validator uses **5 minutes** as the default staleness threshold, matching Claude's default prompt cache window. If you have Claude configured with the optional 1-hour cache window, you can override this:
@@ -197,36 +250,89 @@ python cleanup_conversation.py <transcript_file>
 
 ## How It Works
 
-The plugin uses backward-iterating chain-following deduplication to intelligently remove redundant file reads:
+The plugin uses **forward-chaining deduplication** to intelligently remove redundant file reads. This is a complete rewrite from v1.x for cleaner logic and better convergence.
 
-**Backward Iteration with Chain Following:**
-Starting from the newest read and working backward, the plugin:
-1. Compares each read to the previous operation (earlier read or write)
-2. If the previous read has **same content** → marks it for dedup and continues checking from that read
-3. If the previous read has **different content** → applies partial dedup with line-level comparison
-4. If no previous read but **previous write matches** → marks current read for dedup
+**Forward-Chaining Algorithm:**
+Processing reads in order (oldest to newest), the plugin:
+1. Tracks `previous_state` = content from the previous read
+2. For each read:
+   - If identical to `previous_state` → mark for full dedup
+   - If different and NOT the last read → apply partial dedup (line/char comparison)
+   - If it's the last read → always keep full content (represents current state)
+   - Update `previous_state` to current read's content
+3. This chains changes naturally: Read1→(edit)→Read2→(edit)→Read3
+4. Each dedup pass further compresses already-compressed files
 
-This chain-following approach efficiently catches transitive duplicates (Read A = Read B = Read C) in a single pass.
+**Key Advantage:** Last read in each file always keeps full content, so the "current state" is always preserved. On resumed sessions, the second dedup run further compresses.
 
-**Line-by-Line Comparison:**
-When two reads of the same file differ, the plugin compares them line-by-line to find what changed:
+**Dual-Mode Content Parsing:**
+The plugin automatically detects content type based on newlines:
+
+*Single-Line Content* (no newlines):
+- True single-line format: `{"key":"value"}`
+- Compares character-by-character
+- Finds start/end of changed region
+- Applies ±10 character context margins (configurable)
+- Only replaces if omitted region > threshold
+
+*Multiline Content* (contains newlines):
+- Normal readable files: markdown, code, text
+- Compact multi-line: JSON with newlines, JSONL format
+- Compares line-by-line
+- Finds changed line ranges
+- Applies ±1 line context margins (configurable)
+- Only replaces if omitted block > threshold
+
+Examples:
+
+**Single-line JSON:**
 ```
-Read 1: lines 1-50 identical
-        lines 51-60 changed (edited)
-        lines 61-100 identical
+Original: {"debug":false,...settings...}
+Changed:  {"debug":true,...settings...}
+          → Char-based: keep changed region + ±10 chars
+```
 
-Read 2: lines 1-50 identical
-        lines 51-60 different
-        lines 61-100 identical
+**Multi-line JSON (with newlines):**
+```
+Original:
+{
+  "debug": false,
+  "logLevel": "info"
+}
+
+Changed:
+{
+  "debug": true,
+  "logLevel": "debug"
+}
+          → Line-based: keep changed lines + ±1 line context
 ```
 
 **Context-Aware Deduplication:**
-The plugin applies a ±3 line context margin around changes to preserve editing context (matches Claude Code's edit tool):
+The plugin applies context margins around changes to preserve editing context:
+
+*Multiline:* ±3 line margin (matches Claude Code's edit tool)
 ```
 Changed lines:     51-60
 Context margin:    ±3 lines
 Kept range:        48-63 (includes context)
 Replaced:          1-47, 64-100
+```
+
+*Single-line:* ±20 character margin
+```
+Changed chars:     120-135
+Context margin:    ±20 chars
+Kept range:        100-155 (includes context)
+Replaced:          0-99, 156+
+```
+
+**Write → Read Edge Case:**
+When a file is created (Write) and immediately read (Read), the plugin compares the write's raw content against the read's raw content from toolUseResult. If they match, the redundant read is deduplicated:
+```
+Write: Creates file with content X
+Read:  Immediately reads file → gets X (formatted in transcript)
+Result: Read is marked for dedup (same content as Write)
 ```
 
 **Marker Replacement:**

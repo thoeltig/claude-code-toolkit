@@ -7,6 +7,103 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Planned
+
+**Bash and Grep Output Deduplication** (v2.1.0.0):
+- Extend forward-chaining algorithm to handle Bash command outputs
+- Detect and deduplicate identical Bash command executions
+- Compare Grep search results against file content reads
+- Replace redundant tool outputs with dedup markers
+- See [BASH_GREP_EXTENSION_PLAN.md](./BASH_GREP_EXTENSION_PLAN.md) for detailed design
+
+## [2.0.0.0] - 2026-02-21
+
+_Complete rewrite with forward-chaining algorithm, dual-mode parsing, and configurable thresholds._
+
+### Changed (Breaking)
+
+**Core Algorithm Rewrite - Forward-Chaining**:
+- Replaced backward-iterating algorithm with forward-chaining for cleaner logic
+- Processes reads in order (oldest→newest), tracking previous state
+- Each read compares to previous read's actual content (not original)
+- Changes compound naturally: Read1→Read2→Read3 chain creates diff-based compression
+- Last read in file always keeps full content (represents current state)
+- Second dedup runs further compress already-compressed files (converges toward minimal)
+
+**Content Type Auto-Detection**:
+- Simple newline-based detection: No newlines → single-line (char-based), Has newlines → multiline (line-based)
+- Works for both readable (markdown, code) and compact multi-line formats (compact JSON with newlines, JSONL)
+- Single-line: Character-level diff with configurable context (default ±10 chars)
+- Multiline: Line-by-line diff with configurable context (default ±1 line)
+- Smart threshold: Only replaces omitted content if larger than threshold (saves space)
+
+**Write → Read Edge Case**:
+- Added raw_content extraction from toolUseResult.file.content
+- First read after write compared against write's raw content
+- If identical: marks read for full dedup (even though formatted differs)
+- Handles write-then-immediate-read scenarios
+
+**Configurable Dedup Threshold & Margins**:
+- New env vars:
+  - `SMART_COMPACT_DEDUP_MIN_BYTES`: Minimum bytes to replace (default: 1)
+  - `SMART_COMPACT_MULTILINE_CONTEXT_LINES`: Context lines around changes (default: 1)
+  - `SMART_COMPACT_SINGLELINE_CONTEXT_CHARS`: Context characters around changes (default: 10)
+- Byte threshold: Omitted content must exceed threshold to be replaced with marker
+- Margin values: Set to 0 for maximum compression, higher for more context preservation
+- Examples:
+  - `DEDUP_MIN_BYTES=100`: Only replace if > 100 bytes
+  - `MULTILINE_CONTEXT_LINES=0`: No context around line changes (aggressive)
+  - `SINGLELINE_CONTEXT_CHARS=0`: No context around char changes (aggressive)
+
+**Output Format Updates**:
+- Short format: `Savings: 219 bytes (~54 tokens)` (for hooks, backward compatible)
+- Normal format: `Found 5 duplicate reads, 219 bytes (54 tokens)` (for CLI)
+- Both modes support `--dry-run` flag for preview
+
+### Improved
+
+**Script Refactoring**:
+- Reduced complexity by focusing on pure deduplication (removed dead token extraction code)
+- Cleaner separation: extraction, dedup detection, application
+- Better logging with `--debug` flag for troubleshooting
+- Removed dependency on inflated cache token calculations
+
+**Implicit Tracking**:
+- Dedup state tracked via markers in transcript (no cache file needed)
+- Already-deduplicated reads contain marker text
+- Subsequent runs naturally process marker content differently
+- Enables convergence: each pass compresses further
+
+**Test Coverage**:
+- Tested multiline content (markdown with multiple edits)
+- Tested single-line content (compact JSON with settings changes)
+- Tested Write→Read edge case (file creation then immediate read)
+- Tested configurable thresholds (verified filtering works correctly)
+
+### Implementation Details
+
+- **Content type detection**: Simple newline-based heuristic
+  - Single-line: No newline characters (char-based comparison)
+  - Multiline: Contains newlines (line-based comparison, works for both readable and compact formats)
+  - Note: Compact JSON with newlines (JSONL) uses line-based; documented edge case
+- **Forward iteration**: `for read in sorted_reads`, track `previous_state = read.content`
+- **Line diffs**: `find_line_differences()` returns ranges of differing lines
+- **Char diffs**: `find_character_diff()` returns byte range of first and last difference
+- **Context margins**: `apply_context_margin()` adds ±N lines (configurable) or ±N chars (configurable)
+  - Default multiline: ±1 line (configurable via `SMART_COMPACT_MULTILINE_CONTEXT_LINES`)
+  - Default single-line: ±10 chars (configurable via `SMART_COMPACT_SINGLELINE_CONTEXT_CHARS`)
+  - Can set to 0 for aggressive compression (no context)
+- **Byte threshold**: Only replaces omitted blocks if > `SMART_COMPACT_DEDUP_MIN_BYTES`
+- **Byte counting**: Only counts content actually replaced (not marker size)
+- **Token estimation**: Simple /4 conversion (one token ≈ 4 bytes) for clarity
+
+### Migration
+
+- Old script: `cleanup_conversation.py` (backward-iterating algorithm, v1.4.1.0)
+- New script: `cleanup_conversation.py` (v2.0.0.0, replaces old)
+- Backward compatible: `--dry-run-short` flag supported for existing hooks
+- Hook scripts (notify_about_compaction.py, block_idle_session.py) work unchanged
+
 ## [1.4.1.0] - 2026-02-17
 
 ### Fixed
@@ -228,7 +325,8 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.1.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.0.0.0...HEAD
+[2.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v2.0.0.0
 [1.4.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.3.0.0...SmartCompact_v1.4.0.0
 [1.3.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.2.0.0...SmartCompact_v1.3.0.0

@@ -1,295 +1,142 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Transcript deduplication script.
+"""Transcript deduplication script - Forward-chaining diff algorithm.
 
-Removes duplicate Read tool results from Claude Code JSONL transcripts.
-Detects and marks redundant Reads that:
-- Match a previous Write operation (same file, same content)
-- Match a previous Read operation (same file, same content)
+Removes duplicate file reads by comparing each read to the previous state
+and keeping only the changed content + context. Last read in each file
+keeps full content (represents current state).
 
 Usage:
-    python cleanup_conversation.py <transcript.json> [--dry-run]
+    python cleanup_conversation_v2.py <transcript.json> [--dry-run] [--debug]
+
+Environment variables:
+    SMART_COMPACT_DEDUP_MIN_BYTES: Minimum bytes to replace with marker
+        (omitted content must be > this threshold). Default: 1
+        Example: Set to 100 to only replace if content is larger than 100 bytes
+    SMART_COMPACT_MULTILINE_CONTEXT_LINES: Context lines around changes (default: 1)
+        Example: Set to 3 for ±3 line context, or 0 for no context
+    SMART_COMPACT_SINGLELINE_CONTEXT_CHARS: Context characters around changes (default: 10)
+        Example: Set to 20 for ±20 char context, or 0 for no context
 """
 
 import json
 import hashlib
 import sys
+import os
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass
+from enum import Enum
+
+
+class ContentType(Enum):
+    """Content type for smart parsing."""
+    MULTILINE = "multiline"  # Markdown, code, etc - process line by line
+    SINGLELINE = "singleline"  # Compact JSON, single long string
+
 
 @dataclass
-class WriteOp:
-    uuid: str
+class FileOperation:
+    """Represents a Write or Read operation."""
+    op_type: str  # "write" or "read"
+    tool_use_id: str  # For reads; for writes this is the uuid
     filepath: str
-    content: str
-    content_hash: str
+    content: str  # Actual content from item['content'] in transcript
     message_position: int
+    content_type: ContentType  # Detected content type
+    raw_content: Optional[str] = None  # For reads: content from toolUseResult.file.content (raw file content)
+
 
 @dataclass
-class ReadOp:
+class DedupAction:
+    """Action to take for a read operation."""
     tool_use_id: str
-    filepath: str
-    content: str
-    content_hash: str
-    message_position: int
-    formatted_content: Optional[str] = None  # For byte calculations (with line numbers)
+    action: str  # "full_dedup", "partial_dedup", or "keep"
+    replacement: Optional[str] = None  # For partial dedup
+    bytes_removed: int = 0
 
-def hash_content(content: str) -> str:
-    """Generate SHA256 hash of content"""
-    return hashlib.sha256(content.encode()).hexdigest()
 
-def extract_token_ratio_for_file(messages: list[dict], filepath: str) -> float | None:
-    """Extract token/character ratio for a specific file using rolling search.
+def get_min_dedup_bytes() -> int:
+    """Get minimum bytes threshold for replacements from environment variable.
 
-    Finds cache_creation_input_tokens from the assistant message following a Read/Write
-    of the given filepath. Calculates ratio until finding a valid one (0 < ratio < 5).
-
-    Args:
-        messages: List of transcript messages
-        filepath: File path to find ratio for
-
-    Returns:
-        Token ratio (tokens per character) if valid, otherwise None
+    SMART_COMPACT_DEDUP_MIN_BYTES: Minimum bytes (default 1)
+    Omitted content must be > this many bytes to be replaced with marker.
     """
-    candidates = []
+    default_bytes = 1
+    try:
+        min_bytes_str = os.getenv('SMART_COMPACT_DEDUP_MIN_BYTES', '1')
+        min_bytes = int(min_bytes_str)
+        if min_bytes < 0:
+            return default_bytes
+        return min_bytes
+    except (ValueError, TypeError):
+        return default_bytes
 
-    # Find Write operations for this filepath
-    for i, msg in enumerate(messages):
-        if msg.get('type') != 'assistant':
-            continue
 
-        msg_obj = msg.get('message', {})
-        if msg_obj.get('role') != 'assistant':
-            continue
+def get_multiline_context_lines() -> int:
+    """Get context lines for multiline content from environment variable.
 
-        content = msg_obj.get('content', [])
-        if not isinstance(content, list):
-            continue
-
-        for item in content:
-            if item.get('type') == 'tool_use' and item.get('name') == 'Write':
-                if item.get('input', {}).get('file_path') == filepath:
-                    file_content = item.get('input', {}).get('content')
-                    if file_content:
-                        # Look for cache tokens in following assistant message
-                        for j in range(i + 1, len(messages)):
-                            next_msg = messages[j]
-                            if next_msg.get('type') == 'assistant':
-                                usage = next_msg.get('message', {}).get('usage', {})
-                                cache_tokens = usage.get('cache_creation_input_tokens')
-                                if cache_tokens:
-                                    candidates.append((cache_tokens, len(file_content)))
-                                break
-
-    # Find Read operations for this filepath
-    for i, msg in enumerate(messages):
-        if msg.get('type') != 'user':
-            continue
-
-        msg_obj = msg.get('message', {})
-        message_content = msg_obj.get('content', [])
-
-        if not isinstance(message_content, list):
-            continue
-
-        # Get toolUseResult metadata to match filepath
-        tool_use_result = msg.get('toolUseResult', {})
-        if isinstance(tool_use_result, dict):
-            result_filepath = tool_use_result.get('file', {}).get('filePath')
-            result_content = tool_use_result.get('file', {}).get('content')
-        else:
-            result_filepath = None
-            result_content = None
-
-        if result_filepath == filepath and result_content:
-            # Look for cache tokens in following assistant message
-            for j in range(i + 1, len(messages)):
-                next_msg = messages[j]
-                if next_msg.get('type') == 'assistant':
-                    usage = next_msg.get('message', {}).get('usage', {})
-                    cache_tokens = usage.get('cache_creation_input_tokens')
-                    if cache_tokens:
-                        candidates.append((cache_tokens, len(result_content)))
-                    break
-
-    # Rolling search through candidates
-    for cache_tokens, char_count in candidates:
-        if char_count > 0:
-            ratio = cache_tokens / char_count
-            if 0.25 < ratio < 5:
-                return ratio
-
-    return None
-
-def load_transcript(filepath: str, dry_run: bool = False) -> list[dict]:
-    """Load transcript file (handles minified JSONL and pretty-printed JSON).
-
-    Args:
-        filepath: Path to transcript file
-        dry_run: If True, log JSON parsing errors to stderr
-
-    Returns:
-        List of message dictionaries
+    SMART_COMPACT_MULTILINE_CONTEXT_LINES: Context lines (default 1)
+    Applied as ±N lines around changed lines (0 = no context).
     """
-    messages = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
+    default_lines = 1
+    try:
+        lines_str = os.getenv('SMART_COMPACT_MULTILINE_CONTEXT_LINES', '1')
+        lines = int(lines_str)
+        if lines < 0:
+            return default_lines
+        return lines
+    except (ValueError, TypeError):
+        return default_lines
 
-    # Try as single JSON array first
-    if content.strip().startswith('['):
-        try:
-            messages = json.loads(content)
-            return messages
-        except json.JSONDecodeError as e:
-            if dry_run:
-                print(f"Warning: Failed to parse transcript as JSON array: {e}", file=sys.stderr)
 
-    # Parse as newline-delimited JSON objects (may be pretty-printed)
-    lines = content.split('\n')
-    current_obj = []
-    brace_count = 0
+def get_singleline_context_chars() -> int:
+    """Get context characters for single-line content from environment variable.
 
-    for line in lines:
-        current_obj.append(line)
-        brace_count += line.count('{') - line.count('}')
+    SMART_COMPACT_SINGLELINE_CONTEXT_CHARS: Context characters (default 10)
+    Applied as ±N characters around changed region (0 = no context).
+    """
+    default_chars = 10
+    try:
+        chars_str = os.getenv('SMART_COMPACT_SINGLELINE_CONTEXT_CHARS', '10')
+        chars = int(chars_str)
+        if chars < 0:
+            return default_chars
+        return chars
+    except (ValueError, TypeError):
+        return default_chars
 
-        # When braces are balanced and non-zero, we have a complete object
-        if brace_count == 0 and current_obj and any('{' in l for l in current_obj):
-            obj_str = '\n'.join(current_obj).strip()
-            if obj_str:
-                try:
-                    messages.append(json.loads(obj_str))
-                    current_obj = []
-                except json.JSONDecodeError as e:
-                    if dry_run:
-                        print(f"Warning: Skipping malformed JSON object: {e}", file=sys.stderr)
 
-    return messages
+class Logger:
+    """Simple debug logger."""
 
-def extract_writes(messages: list[dict]) -> dict[str, list[WriteOp]]:
-    """Extract Write operations indexed by file path"""
-    writes_by_path = {}
+    def __init__(self, debug: bool = False):
+        self.debug = debug
 
-    for position, msg in enumerate(messages):
-        if msg.get('type') != 'assistant':
-            continue
+    def log(self, msg: str):
+        """Print debug message if debug mode enabled."""
+        if self.debug:
+            print(f"[DEBUG] {msg}", file=sys.stderr)
 
-        msg_obj = msg.get('message', {})
-        if msg_obj.get('role') != 'assistant':
-            continue
 
-        content = msg_obj.get('content', [])
-        if not isinstance(content, list):
-            continue
+def detect_content_type(content: str) -> ContentType:
+    """Detect if content should be processed line-by-line or character-by-character.
 
-        for item in content:
-            if item.get('type') == 'tool_use' and item.get('name') == 'Write':
-                filepath = item.get('input', {}).get('file_path')
-                file_content = item.get('input', {}).get('content')
+    Simple heuristic: if content contains no newlines, use character-based.
+    Otherwise use line-based (works for both readable and compact multi-line formats).
+    """
+    # True single-line: no newline characters
+    if '\n' not in content:
+        return ContentType.SINGLELINE
 
-                if filepath and file_content is not None:
-                    content_hash = hash_content(file_content)
-                    write_op = WriteOp(
-                        uuid=item.get('id'),
-                        filepath=filepath,
-                        content=file_content,
-                        content_hash=content_hash,
-                        message_position=position
-                    )
+    # Everything with newlines uses line-based comparison
+    return ContentType.MULTILINE
 
-                    writes_by_path.setdefault(filepath, []).append(write_op)
-
-    return writes_by_path
-
-def extract_reads(messages: list[dict]) -> dict[str, list[ReadOp]]:
-    """Extract Read operations indexed by file path"""
-    reads_by_path = {}
-    read_map = {}  # tool_use_id -> (filepath, position)
-
-    # First pass: map Read tool_use to filepaths
-    for position, msg in enumerate(messages):
-        if msg.get('type') != 'assistant':
-            continue
-
-        msg_obj = msg.get('message', {})
-        if msg_obj.get('role') != 'assistant':
-            continue
-
-        content = msg_obj.get('content', [])
-        if not isinstance(content, list):
-            continue
-
-        for item in content:
-            if item.get('type') == 'tool_use' and item.get('name') == 'Read':
-                tool_use_id = item.get('id')
-                filepath = item.get('input', {}).get('file_path')
-                if tool_use_id and filepath:
-                    read_map[tool_use_id] = (filepath, position)
-
-    # Second pass: extract Read results from user messages
-    for position, msg in enumerate(messages):
-        if msg.get('type') != 'user':
-            continue
-
-        msg_obj = msg.get('message', {})
-        if msg_obj.get('role') != 'user':
-            continue
-
-        message_content = msg_obj.get('content', [])
-        if not isinstance(message_content, list):
-            continue
-
-        # Get toolUseResult metadata
-        tool_use_result = msg.get('toolUseResult', {})
-        if isinstance(tool_use_result, dict):
-            result_filepath = tool_use_result.get('file', {}).get('filePath')
-            result_content = tool_use_result.get('file', {}).get('content')
-        else:
-            result_filepath = None
-            result_content = None
-
-        for item in message_content:
-            if item.get('type') == 'tool_result':
-                tool_use_id = item.get('tool_use_id')
-
-                if tool_use_id in read_map:
-                    filepath, tooluse_position = read_map[tool_use_id]
-
-                    # Get formatted content from message (what's actually in transcript with line numbers)
-                    formatted_content = item.get('content', '')
-
-                    # Use toolUseResult.content if available (raw file content for hashing)
-                    # Otherwise use the formatted content from message
-                    if result_content and result_filepath == filepath:
-                        content = result_content
-                    else:
-                        content = formatted_content
-
-                    if content:
-                        content_hash = hash_content(content)
-                        read_op = ReadOp(
-                            tool_use_id=tool_use_id,
-                            filepath=filepath,
-                            content=content,
-                            content_hash=content_hash,
-                            message_position=position,
-                            formatted_content=formatted_content if formatted_content else None
-                        )
-
-                        reads_by_path.setdefault(filepath, []).append(read_op)
-
-    return reads_by_path
 
 def find_line_differences(content1: str, content2: str) -> list[tuple[int, int]]:
     """Find line ranges where content1 and content2 differ.
 
-    Args:
-        content1: First content (Read1)
-        content2: Second content (Read2)
-
-    Returns:
-        List of (start_line, end_line) tuples (0-indexed, exclusive end) for continuous blocks where lines differ
+    Returns list of (start_line, end_line) tuples (0-indexed, exclusive end).
     """
     lines1 = content1.split('\n')
     lines2 = content2.split('\n')
@@ -312,27 +159,19 @@ def find_line_differences(content1: str, content2: str) -> list[tuple[int, int]]
                 differences.append((diff_start, i))
                 in_diff_block = False
 
-    # Close any open diff block
     if in_diff_block:
         differences.append((diff_start, max_lines))
 
     return differences
 
-def apply_context_margin(diff_ranges: list[tuple[int, int]], total_lines: int, margin: int = 3) -> list[tuple[int, int]]:
-    """Apply context margin around difference ranges and return ranges to keep.
 
-    Args:
-        diff_ranges: List of (start, end) tuples for lines that differ
-        total_lines: Total number of lines in content
-        margin: Number of lines to include as context on each side
-
-    Returns:
-        List of (start, end) tuples for ranges to KEEP (merged and bounded)
-    """
+def apply_context_margin(
+    diff_ranges: list[tuple[int, int]], total_lines: int, margin: int
+) -> list[tuple[int, int]]:
+    """Apply context margin around differences and return ranges to keep."""
     if not diff_ranges:
         return []
 
-    # Expand each range with margin
     expanded = []
     for start, end in diff_ranges:
         expanded_start = max(0, start - margin)
@@ -346,434 +185,493 @@ def apply_context_margin(diff_ranges: list[tuple[int, int]], total_lines: int, m
     for current_start, current_end in expanded[1:]:
         last_start, last_end = merged[-1]
         if current_start <= last_end:
-            # Overlapping, merge
             merged[-1] = (last_start, max(last_end, current_end))
         else:
-            # Non-overlapping, add new range
             merged.append((current_start, current_end))
 
     return merged
 
-def create_partial_dedup_content(content: str, kept_ranges: list[tuple[int, int]]) -> tuple[str, int]:
-    """Replace lines outside kept_ranges with placeholders. Only create placeholders for omitted blocks >= 3 lines.
 
-    Args:
-        content: Original content
-        kept_ranges: List of (start, end) tuples (0-indexed, exclusive end) to keep
+def create_partial_dedup_multiline(
+    content: str, kept_ranges: list[tuple[int, int]], min_dedup_bytes: int = 1
+) -> tuple[str, int]:
+    """Replace lines outside kept_ranges with placeholder for multiline content.
 
-    Returns:
-        Tuple of (modified_content, bytes_omitted)
+    Only creates placeholder if omitted content is larger than min_dedup_bytes threshold.
+    Returns (modified_content, bytes_removed).
     """
+    MARKER = "[...Partial duplicate omitted - latest version contains complete content...]"
+    MIN_BYTES = min_dedup_bytes
+
     lines = content.split('\n')
     result_lines = []
-    total_bytes_omitted = 0
+    total_bytes_removed = 0
     current_pos = 0
 
     for keep_start, keep_end in kept_ranges:
-        # Add placeholder for lines between current_pos and keep_start if >= 3 lines
-        if keep_start - current_pos >= 3:
+        # Check omitted lines before this range
+        if keep_start > current_pos:
             omitted_lines = lines[current_pos:keep_start]
             block_bytes = sum(len(line.encode('utf-8')) + 1 for line in omitted_lines)  # +1 for newline
-            total_bytes_omitted += block_bytes
-            placeholder = "[...Partial duplicate read omitted - latest version contains complete content...]"
-            result_lines.append(placeholder)
-        elif keep_start > current_pos:
-            # Less than 3 lines, keep as-is
-            result_lines.extend(lines[current_pos:keep_start])
+
+            if block_bytes > MIN_BYTES:
+                # Worth replacing with marker
+                result_lines.append(MARKER)
+                total_bytes_removed += block_bytes
+            else:
+                # Too small, keep as-is
+                result_lines.extend(omitted_lines)
 
         # Add kept lines
         result_lines.extend(lines[keep_start:keep_end])
         current_pos = keep_end
 
-    # Handle remaining lines at the end
+    # Handle remaining lines
     if current_pos < len(lines):
         remaining = lines[current_pos:]
-        if len(remaining) >= 3:
-            block_bytes = sum(len(line.encode('utf-8')) + 1 for line in remaining)
-            total_bytes_omitted += block_bytes
-            placeholder = "[...Partial duplicate read omitted - latest version contains complete content...]"
-            result_lines.append(placeholder)
+        block_bytes = sum(len(line.encode('utf-8')) + 1 for line in remaining)
+
+        if block_bytes > MIN_BYTES:
+            result_lines.append(MARKER)
+            total_bytes_removed += block_bytes
         else:
             result_lines.extend(remaining)
 
     modified_content = '\n'.join(result_lines)
+    return modified_content, total_bytes_removed
 
-    return modified_content, total_bytes_omitted
 
-def find_duplicates(
-    writes_by_path: dict[str, list[WriteOp]],
-    reads_by_path: dict[str, list[ReadOp]]
-) -> list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]]:
+def create_partial_dedup_singleline(
+    content: str, diff_start_char: int, diff_end_char: int, min_dedup_bytes: int, context_chars: int
+) -> tuple[str, int]:
+    """Replace characters outside diff range with placeholder for single-line content.
+
+    For compact JSON and similar single-line formats.
+    Only replaces if larger than min_dedup_bytes threshold.
+    Returns (modified_content, bytes_removed).
     """
-    Find duplicate reads by backward iteration: for each read, check what comes BEFORE.
+    MARKER = "[...Partial duplicate omitted - latest version contains complete content...]"
+    MIN_BYTES = min_dedup_bytes
+    context = context_chars
+    keep_start = max(0, diff_start_char - context)
+    keep_end = min(len(content), diff_end_char + context)
 
-    - Previous Read with SAME content → Mark previous for full dedup
-    - Previous Read with DIFFERENT content → Mark previous for partial dedup
-    - Previous Write with SAME content → Mark current read for full dedup
+    before = content[:keep_start]
+    kept = content[keep_start:keep_end]
+    after = content[keep_end:]
 
-    Returns:
-        List of (read_op, write_op, prev_read_op, partial_dedup_data)
+    bytes_before = len(before.encode('utf-8'))
+    bytes_after = len(after.encode('utf-8'))
+    total_bytes_removed = 0
+
+    result = ""
+
+    # Only add marker if section is larger than threshold
+    if bytes_before > MIN_BYTES:
+        result += MARKER + " "
+        total_bytes_removed += bytes_before
+    else:
+        result += before
+
+    result += kept
+
+    if bytes_after > MIN_BYTES:
+        result += " " + MARKER
+        total_bytes_removed += bytes_after
+    else:
+        result += after
+
+    return result, total_bytes_removed
+
+
+def find_character_diff(content1: str, content2: str) -> Optional[tuple[int, int]]:
+    """Find character range where content differs.
+
+    Returns (diff_start_char, diff_end_char) or None if identical.
     """
-    duplicates = []
+    if content1 == content2:
+        return None
 
-    for filepath, reads in reads_by_path.items():
-        # Skip files with < 3 lines
-        if all(len(read.content.split('\n')) < 3 for read in reads):
+    # Find first difference
+    for i in range(min(len(content1), len(content2))):
+        if content1[i] != content2[i]:
+            diff_start = i
+            break
+    else:
+        # One is longer than the other
+        diff_start = min(len(content1), len(content2))
+
+    # Find last difference (search backward)
+    for i in range(max(len(content1), len(content2)) - 1, -1, -1):
+        c1 = content1[i] if i < len(content1) else None
+        c2 = content2[i] if i < len(content2) else None
+        if c1 != c2:
+            diff_end = i + 1
+            break
+    else:
+        diff_end = diff_start
+
+    return (diff_start, diff_end)
+
+
+def load_transcript(filepath: str) -> list[dict]:
+    """Load transcript (handles minified JSONL and pretty-printed JSON)."""
+    messages = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Try as JSON array first
+    if content.strip().startswith('['):
+        try:
+            messages = json.loads(content)
+            return messages
+        except json.JSONDecodeError:
+            pass
+
+    # Parse as newline-delimited JSON
+    lines = content.split('\n')
+    current_obj = []
+    brace_count = 0
+
+    for line in lines:
+        current_obj.append(line)
+        brace_count += line.count('{') - line.count('}')
+
+        if brace_count == 0 and current_obj and any('{' in l for l in current_obj):
+            obj_str = '\n'.join(current_obj).strip()
+            if obj_str:
+                try:
+                    messages.append(json.loads(obj_str))
+                    current_obj = []
+                except json.JSONDecodeError:
+                    pass
+
+    return messages
+
+
+def extract_operations(messages: list[dict], logger: Logger) -> dict[str, list[FileOperation]]:
+    """Extract Write and Read operations indexed by filepath."""
+    ops_by_path = {}
+
+    # Extract Writes
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'assistant':
             continue
 
-        writes = writes_by_path.get(filepath, [])
+        msg_obj = msg.get('message', {})
+        if msg_obj.get('role') != 'assistant':
+            continue
 
-        # Iterate backwards by message position (newest to oldest)
-        sorted_reads = sorted(reads, key=lambda r: r.message_position, reverse=True)
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
 
-        # Track which reads have been processed to avoid revisiting
-        processed_reads = set()
+        for item in content:
+            if item.get('type') == 'tool_use' and item.get('name') == 'Write':
+                filepath = item.get('input', {}).get('file_path')
+                file_content = item.get('input', {}).get('content')
 
-        for read in sorted_reads:
-            if read.tool_use_id in processed_reads:
+                if filepath and file_content is not None:
+                    op = FileOperation(
+                        op_type='write',
+                        tool_use_id=item.get('id'),
+                        filepath=filepath,
+                        content=file_content,
+                        message_position=position,
+                        content_type=detect_content_type(file_content)
+                    )
+                    ops_by_path.setdefault(filepath, []).append(op)
+                    logger.log(f"Write: {filepath} ({len(file_content)} bytes)")
+
+    # Extract Reads - first pass: map Read tool_use to filepaths
+    read_map = {}
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'assistant':
+            continue
+
+        msg_obj = msg.get('message', {})
+        if msg_obj.get('role') != 'assistant':
+            continue
+
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_use' and item.get('name') == 'Read':
+                tool_use_id = item.get('id')
+                filepath = item.get('input', {}).get('file_path')
+                if tool_use_id and filepath:
+                    read_map[tool_use_id] = filepath
+
+    # Extract Reads - second pass: get content from tool_result and toolUseResult
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'user':
+            continue
+
+        msg_obj = msg.get('message', {})
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        # Get raw content from toolUseResult if available
+        tool_use_result = msg.get('toolUseResult', {})
+        result_raw_content = None
+        if isinstance(tool_use_result, dict):
+            result_raw_content = tool_use_result.get('file', {}).get('content')
+
+        for item in content:
+            if item.get('type') == 'tool_result':
+                tool_use_id = item.get('tool_use_id')
+                if tool_use_id in read_map:
+                    filepath = read_map[tool_use_id]
+                    result_content = item.get('content', '')
+
+                    if result_content:
+                        op = FileOperation(
+                            op_type='read',
+                            tool_use_id=tool_use_id,
+                            filepath=filepath,
+                            content=result_content,
+                            message_position=position,
+                            content_type=detect_content_type(result_content),
+                            raw_content=result_raw_content
+                        )
+                        ops_by_path.setdefault(filepath, []).append(op)
+                        logger.log(f"Read {tool_use_id[:8]}: {filepath} ({len(result_content)} bytes, {op.content_type.value})")
+
+    return ops_by_path
+
+
+def find_dedup_actions(
+    ops_by_path: dict[str, list[FileOperation]], logger: Logger, min_dedup_bytes: int,
+    multiline_context: int, singleline_context: int
+) -> list[DedupAction]:
+    """Find which reads should be deduplicated using forward-chaining algorithm.
+
+    Writes are kept (never deduplicated). Reads are chained against each other,
+    with each read comparing to the previous read's actual content.
+
+    Edge case: If a Read immediately follows a Write, check if the Read's
+    raw_content (from toolUseResult) matches the Write's content. If so,
+    mark the Read for dedup.
+    """
+    actions = []
+
+    for filepath, ops in ops_by_path.items():
+        logger.log(f"\nProcessing {filepath}:")
+
+        # Sort all ops by position to detect Write → Read
+        all_ops = sorted(ops, key=lambda x: x.message_position)
+
+        # Find the last Write (if any)
+        last_write = None
+        for op in all_ops:
+            if op.op_type == 'write':
+                last_write = op
+
+        # Extract only reads in order
+        reads = [op for op in ops if op.op_type == 'read']
+        reads.sort(key=lambda x: x.message_position)
+
+        if not reads:
+            logger.log("  No reads found")
+            continue
+
+        last_read_index = len(reads) - 1
+        previous_state = None
+        first_read_after_write = True if last_write else False
+
+        for read_idx, read_op in enumerate(reads):
+            is_last_read = (read_idx == last_read_index)
+
+            logger.log(f"  Read {read_op.tool_use_id[:8]} at pos {read_op.message_position}: {len(read_op.content)} bytes, is_last={is_last_read}")
+
+            # Check Write → Read edge case (only for first read after write)
+            if first_read_after_write and last_write and read_op.raw_content:
+                if read_op.raw_content == last_write.content:
+                    logger.log(f"    -> Raw content matches Write, FULL DEDUP (Write → Read edge case)")
+                    bytes_removed = len(read_op.content.encode('utf-8'))
+                    action = DedupAction(
+                        tool_use_id=read_op.tool_use_id,
+                        action='full_dedup',
+                        bytes_removed=bytes_removed
+                    )
+                    actions.append(action)
+                    first_read_after_write = False
+                    previous_state = read_op.content
+                    continue
+                else:
+                    logger.log(f"    -> Raw content differs from Write, proceed with normal chain")
+                    first_read_after_write = False
+
+            if previous_state is None:
+                # First read - keep full content and set as baseline
+                logger.log(f"    -> First read, keep full content")
+                previous_state = read_op.content
                 continue
 
-            processed_reads.add(read.tool_use_id)
+            # Compare to previous read state
+            if read_op.content == previous_state:
+                # Identical to previous read
+                logger.log(f"    -> Identical to previous read, FULL DEDUP")
+                bytes_removed = len(read_op.content.encode('utf-8'))
+                action = DedupAction(
+                    tool_use_id=read_op.tool_use_id,
+                    action='full_dedup',
+                    bytes_removed=bytes_removed
+                )
+                actions.append(action)
+                # previous_state unchanged
+            else:
+                # Different from previous read
+                if is_last_read:
+                    logger.log(f"    -> Different from previous but LAST READ, keep full content")
+                    previous_state = read_op.content
+                    continue
 
-            # Follow the chain backward: if we find a duplicate, continue from that read
-            current = read
+                # Do partial dedup based on content type
+                logger.log(f"    -> Different from previous, PARTIAL DEDUP")
 
-            while True:
-                # Find what comes BEFORE current read (previous operations by position)
-                prev_reads = [r for r in reads if r.message_position < current.message_position]
-                prev_writes = [w for w in writes if w.message_position < current.message_position]
+                if read_op.content_type == ContentType.MULTILINE:
+                    diff_ranges = find_line_differences(previous_state, read_op.content)
+                    logger.log(f"       Line diffs at: {diff_ranges}")
 
-                # Prioritize read comparison over write comparison
-                if prev_reads:
-                    # Get the nearest previous read
-                    prev_read = max(prev_reads, key=lambda r: r.message_position)
+                    if diff_ranges:
+                        total_lines = len(read_op.content.split('\n'))
+                        kept_ranges = apply_context_margin(diff_ranges, total_lines, margin=multiline_context)
+                        logger.log(f"       Kept ranges (with context): {kept_ranges}")
 
-                    if current.content_hash == prev_read.content_hash:
-                        # Same content: previous read is fully redundant
-                        duplicates.append((prev_read, None, None, None))
-                        processed_reads.add(prev_read.tool_use_id)
-                        # Continue checking from prev_read
-                        current = prev_read
-                    else:
-                        # Different content: previous read is partially redundant
-                        if len(prev_read.content.split('\n')) >= 3:
-                            diff_ranges = find_line_differences(prev_read.content, current.content)
+                        modified_content, bytes_removed = create_partial_dedup_multiline(
+                            read_op.content, kept_ranges, min_dedup_bytes
+                        )
+                        logger.log(f"       Removed: {bytes_removed} bytes")
 
-                            if diff_ranges:  # Has differences
-                                total_lines = len(prev_read.content.split('\n'))
-                                kept_ranges = apply_context_margin(diff_ranges, total_lines, margin=3)
-
-                                # Check if we would omit any lines >= 3
-                                would_omit = False
-                                for k, (keep_start, keep_end) in enumerate(kept_ranges):
-                                    if k > 0:
-                                        prev_end = kept_ranges[k-1][1]
-                                        if keep_start - prev_end >= 3:
-                                            would_omit = True
-                                            break
-                                    if k == 0 and keep_start >= 3:
-                                        would_omit = True
-                                        break
-                                if not would_omit and total_lines - kept_ranges[-1][1] >= 3:
-                                    would_omit = True
-
-                                if would_omit:
-                                    modified_content, bytes_omitted = create_partial_dedup_content(prev_read.content, kept_ranges)
-                                    duplicates.append((prev_read, None, None, (modified_content, bytes_omitted)))
-                        # Stop on content difference
-                        break
-
-                elif prev_writes:
-                    # Only check write if there's no previous read
-                    prev_write = max(prev_writes, key=lambda w: w.message_position)
-
-                    if current.content_hash == prev_write.content_hash:
-                        # Current read matches previous write: current read is redundant
-                        duplicates.append((current, prev_write, None, None))
-                    # Stop on write comparison
-                    break
+                        action = DedupAction(
+                            tool_use_id=read_op.tool_use_id,
+                            action='partial_dedup',
+                            replacement=modified_content,
+                            bytes_removed=bytes_removed
+                        )
+                        actions.append(action)
                 else:
-                    # No previous operations
-                    break
+                    # Single-line content
+                    diff_range = find_character_diff(previous_state, read_op.content)
+                    if diff_range:
+                        diff_start, diff_end = diff_range
+                        logger.log(f"       Char diff at {diff_start}-{diff_end}")
 
-    return duplicates
+                        modified_content, bytes_removed = create_partial_dedup_singleline(
+                            read_op.content, diff_start, diff_end, min_dedup_bytes, singleline_context
+                        )
+                        logger.log(f"       Removed: {bytes_removed} bytes")
 
-def apply_deduplication(
-    messages: list[dict],
-    duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]]
-) -> tuple[list[dict], int]:
-    """
-    Apply deduplication by replacing Read tool_result content with modified content or markers.
-    Handles partial deduplication (line-level) and full deduplication.
+                        action = DedupAction(
+                            tool_use_id=read_op.tool_use_id,
+                            action='partial_dedup',
+                            replacement=modified_content,
+                            bytes_removed=bytes_removed
+                        )
+                        actions.append(action)
 
-    Returns modified messages and total bytes omitted
-    """
-    total_bytes = 0
-    # Build lookup map: tool_use_id -> (read_op, write_op, prev_read_op, partial_dedup_data)
-    dedup_lookup = {read.tool_use_id: (read, write, prev_read, partial_data)
-                   for read, write, prev_read, partial_data in duplicates}
+            # Update previous state to current read's actual content
+            previous_state = read_op.content
+
+    return actions
+
+
+def apply_dedup(messages: list[dict], actions: list[DedupAction]) -> None:
+    """Apply deduplication to messages in-place."""
+    # Build lookup
+    action_lookup = {a.tool_use_id: a for a in actions}
 
     for msg in messages:
         if msg.get('type') != 'user':
             continue
 
         msg_obj = msg.get('message', {})
-        message_content = msg_obj.get('content', [])
-
-        if not isinstance(message_content, list):
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
             continue
 
-        for item in message_content:
+        for item in content:
             if item.get('type') == 'tool_result':
                 tool_use_id = item.get('tool_use_id')
+                if tool_use_id in action_lookup:
+                    action = action_lookup[tool_use_id]
 
-                if tool_use_id in dedup_lookup:
-                    read_op, write_op, prev_read_op, partial_data = dedup_lookup[tool_use_id]
-                    original_content = item.get('content', '')
-                    bytes_count = len(original_content.encode('utf-8'))
+                    if action.action == 'full_dedup':
+                        item['content'] = "[...Duplicate read omitted - latest version contains complete content...]"
+                    elif action.action == 'partial_dedup' and action.replacement:
+                        item['content'] = action.replacement
 
-                    # Apply partial deduplication if applicable
-                    if partial_data:
-                        modified_content, bytes_omitted = partial_data
-                        item['content'] = modified_content
-                        total_bytes += bytes_omitted
-                    else:
-                        # Full-content deduplication (legacy hash-based, kept for compatibility)
-                        total_bytes += bytes_count
-                        # Choose marker based on deduplication reason
-                        if write_op:
-                            marker = "[...Duplicate read omitted - earlier version contains complete content...]"
-                        else:
-                            marker = "[...Duplicate read omitted - latest version contains complete content...]"
-                        item['content'] = marker
-
-    return messages, total_bytes
-
-def generate_report(
-    duplicates: list[tuple[ReadOp, Optional[WriteOp], Optional[ReadOp], Optional[tuple]]],
-    total_bytes: int,
-    dry_run: bool = False,
-    short_output: bool = False,
-    token_ratio: Optional[int] = None
-) -> str:
-    """Generate a report of deduplication"""
-    if short_output:
-        if total_bytes == 0:
-            return ""
-
-        if token_ratio and token_ratio > 0:
-            return f"Savings: {total_bytes} bytes (~{token_ratio} tokens)"
-        return f"Savings: {total_bytes} bytes"
-
-    report_lines = []
-
-    if dry_run:
-        report_lines.append("=== DRY RUN REPORT ===")
-    else:
-        report_lines.append("=== DEDUPLICATION REPORT ===")
-
-    report_lines.append(f"\nTotal duplicates found: {len(duplicates)}")
-    if token_ratio and token_ratio > 0:
-        report_lines.append(f"Total bytes omitted: {total_bytes} (~{token_ratio} tokens)")
-    else:
-        report_lines.append(f"Total bytes omitted: {total_bytes}")
-
-    # Group by file
-    by_file = {}
-    for read_op, write_op, prev_read_op, partial_data in duplicates:
-        filepath = read_op.filepath
-        if filepath not in by_file:
-            by_file[filepath] = []
-        by_file[filepath].append((read_op, write_op, prev_read_op, partial_data))
-
-    if duplicates:
-        report_lines.append("\n--- Duplicates by file ---")
-        for filepath, ops in sorted(by_file.items()):
-            report_lines.append(f"\n{filepath}:")
-            for i, (read_op, write_op, prev_read_op, partial_data) in enumerate(ops, 1):
-                bytes_count = len(read_op.formatted_content.encode('utf-8'))
-                if partial_data:
-                    _, bytes_omitted = partial_data
-                    report_lines.append(f"  {i}. Read (id:{read_op.tool_use_id[:8]}...) partial deduplication (line-level)")
-                    report_lines.append(f"     Bytes: {bytes_count} | Omitted: {bytes_omitted}")
-                elif write_op:
-                    report_lines.append(f"  {i}. Read (id:{read_op.tool_use_id[:8]}...) deduplicated with Write (id:{write_op.uuid[:8]}...)")
-                    report_lines.append(f"     Hash: {read_op.content_hash[:8]}... | Bytes: {bytes_count}")
-                elif prev_read_op:
-                    report_lines.append(f"  {i}. Read (id:{read_op.tool_use_id[:8]}...) deduplicated with previous Read (id:{prev_read_op.tool_use_id[:8]}...)")
-                    report_lines.append(f"     Hash: {read_op.content_hash[:8]}... | Bytes: {bytes_count}")
-
-    if dry_run:
-        report_lines.append("\n[DRY RUN] No changes made. Run without --dry-run to apply deduplication.")
-    else:
-        if duplicates:
-            report_lines.append("\n[APPLIED] Transcript modified in-place.")
-        else:
-            report_lines.append("\n[APPLIED] No duplicates found, transcript unchanged.")
-
-    return "\n".join(report_lines)
 
 def save_transcript(messages: list[dict], filepath: str) -> None:
-    """Save transcript as minified JSONL"""
+    """Save transcript as minified JSONL."""
     with open(filepath, 'w', encoding='utf-8') as f:
         for msg in messages:
             f.write(json.dumps(msg, separators=(',', ':'), ensure_ascii=False) + '\n')
 
-def parse_hook_message(hook_json: str) -> dict:
-    """Parse SessionEnd hook message.
-
-    Args:
-        hook_json: JSON string containing hook event data
-
-    Returns:
-        Dictionary with parsed hook data (session_id, transcript_path, reason, etc.)
-
-    Raises:
-        json.JSONDecodeError: If hook_json is invalid JSON
-        KeyError: If required fields are missing
-    """
-    hook_data = json.loads(hook_json)
-    # Validate required fields
-    required = ['session_id', 'transcript_path']
-    missing = [f for f in required if f not in hook_data]
-    if missing:
-        raise KeyError(f"Missing required fields in hook message: {missing}")
-    return hook_data
 
 def main():
     dry_run = '--dry-run' in sys.argv
-    short_output = '--dry-run-short' in sys.argv
-    session_id = None
-    transcript_file = None
+    dry_run_short = '--dry-run-short' in sys.argv
+    debug = '--debug' in sys.argv
 
-    # Try hook mode first: read JSON from stdin with UTF-8 encoding
-    if not sys.stdin.isatty():
-        try:
-            # Ensure UTF-8 encoding for stdin
-            import io
-            if hasattr(sys.stdin, 'buffer'):
-                hook_json = sys.stdin.buffer.read().decode('utf-8')
-            else:
-                hook_json = sys.stdin.read()
-            if hook_json.strip():
-                hook_data = parse_hook_message(hook_json)
+    logger = Logger(debug=debug)
 
-                # Skip deduplication if session was cleared (no transcript to clean)
-                reason = hook_data.get('reason', '')
-                if reason == 'clear':
-                    # Session was cleared with /clear command, nothing to deduplicate
-                    sys.exit(0)
+    if len(sys.argv) < 2:
+        print("Usage: python cleanup_conversation.py <transcript.json> [--dry-run] [--dry-run-short] [--debug]")
+        sys.exit(1)
 
-                transcript_file = hook_data.get('transcript_path', '')
-                dry_run = False  # Never dry-run in hook mode
-                session_id = hook_data.get('session_id', 'unknown')
-        except (json.JSONDecodeError, KeyError):
-            # stdin exists but not valid JSON, fall through to CLI mode
-            pass
+    transcript_file = sys.argv[1]
 
-    # CLI mode: use command-line argument
-    if transcript_file is None:
-        if len(sys.argv) < 2:
-            print("Usage: python cleanup_conversation.py <transcript_file> [--dry-run] [--dry-run-short]")
-            sys.exit(1)
-        transcript_file = sys.argv[1]
-        session_id = None
-
-    # Verify file exists
     if not Path(transcript_file).exists():
         print(f"Error: File not found: {transcript_file}")
         sys.exit(1)
 
-    # Verbosity based on mode (suppress for short output)
-    verbose = (dry_run or session_id is None) and not short_output
+    logger.log(f"Loading transcript: {transcript_file}")
+    messages = load_transcript(transcript_file)
+    logger.log(f"Loaded {len(messages)} messages\n")
 
-    if verbose:
-        print(f"Loading transcript: {transcript_file}")
-    messages = load_transcript(transcript_file, dry_run=dry_run)
-    if verbose:
-        print(f"Loaded {len(messages)} messages")
+    min_dedup_bytes = get_min_dedup_bytes()
+    multiline_context = get_multiline_context_lines()
+    singleline_context = get_singleline_context_chars()
 
-    if verbose:
-        print("\nExtracting Write operations...")
-    writes_by_path = extract_writes(messages)
-    total_writes = sum(len(w) for w in writes_by_path.values())
-    if verbose:
-        print(f"Found {total_writes} Write operations")
+    logger.log(f"Min dedup bytes threshold: {min_dedup_bytes}")
+    logger.log(f"Multiline context: ±{multiline_context} lines")
+    logger.log(f"Single-line context: ±{singleline_context} chars")
 
-    if verbose:
-        print("Extracting Read operations...")
-    reads_by_path = extract_reads(messages)
-    total_reads = sum(len(r) for r in reads_by_path.values())
-    if verbose:
-        print(f"Found {total_reads} Read operations")
+    logger.log("Extracting operations...")
+    ops_by_path = extract_operations(messages, logger)
 
-    if verbose:
-        print("\nAnalyzing for duplicates...")
-    duplicates = find_duplicates(writes_by_path, reads_by_path)
-    if verbose:
-        print(f"Found {len(duplicates)} duplicate reads")
+    logger.log("\nFinding deduplication actions...")
+    actions = find_dedup_actions(ops_by_path, logger, min_dedup_bytes, multiline_context, singleline_context)
 
-    # Calculate total bytes and estimate tokens per file
-    total_bytes = 0
-    estimated_tokens = None
+    # Calculate summary
+    total_bytes = sum(a.bytes_removed for a in actions)
+    estimated_tokens = total_bytes // 4
 
-    if duplicates:
-        # Group duplicates by file - track full content size and omitted bytes separately
-        files_with_duplicates = {}  # filepath -> {full_size, omitted_bytes}
-        for read_op, _, _, partial_data in duplicates:
-            if read_op.filepath not in files_with_duplicates:
-                files_with_duplicates[read_op.filepath] = {'full_size': 0, 'omitted_bytes': 0}
+    # Output based on mode
+    if dry_run_short:
+        # Short format for external parsing (used by notify_about_compaction.py and block_idle_session.py)
+        if total_bytes > 0:
+            print(f"Savings: {total_bytes} bytes (~{estimated_tokens} tokens)")
+        else:
+            print("No duplicates found")
+    else:
+        # Normal format
+        if actions:
+            print(f"Found {len(actions)} duplicate reads, {total_bytes} bytes ({estimated_tokens} tokens)")
+        else:
+            print("No duplicates found")
 
-            if partial_data:
-                _, bytes_omitted = partial_data
-                total_bytes += bytes_omitted
-                files_with_duplicates[read_op.filepath]['omitted_bytes'] += bytes_omitted
-            else:                
-                # Use formatted_content for byte counting (what's actually in transcript)
-                # Fall back to raw content if formatted not available
-                size_content = read_op.formatted_content if read_op.formatted_content else read_op.content
-                full_size = len(size_content.encode('utf-8'))
+    if not dry_run and not dry_run_short and actions:
+        logger.log("\nApplying deduplication...")
+        apply_dedup(messages, actions)
+        save_transcript(messages, transcript_file)
+        logger.log("Transcript saved")
 
-                # Full dedup: entire file omitted
-                total_bytes += full_size
-                files_with_duplicates[read_op.filepath]['omitted_bytes'] += full_size
-
-        # Calculate tokens for each file based on percentage of content omitted
-        #total_estimated_tokens = 0
-        #for filepath, info in files_with_duplicates.items():
-        #    ratio = extract_token_ratio_for_file(messages, filepath)
-        #    if ratio and ratio > 0:
-        #        full_size = info['full_size']
-        #        omitted_bytes = info['omitted_bytes']
-        #
-        #        if full_size > 0:
-        #            # Calculate tokens for full file, then apply percentage omitted
-        #            full_file_tokens = int(full_size * ratio)
-        #            omitted_percentage = omitted_bytes / full_size
-        #            omitted_tokens = int(full_file_tokens * omitted_percentage)
-        #            total_estimated_tokens += omitted_tokens
-        #
-        #estimated_tokens = total_estimated_tokens if total_estimated_tokens > 0 else None
-        estimated_tokens = total_bytes // 4
-
-    # Generate report
-    report = generate_report(duplicates, total_bytes, dry_run=dry_run, short_output=short_output, token_ratio=estimated_tokens)
-    if verbose:
-        print("\n" + report)
-    elif short_output:
-        print(report)
-
-    # Apply deduplication if not dry-run
-    if not dry_run and duplicates:
-        if verbose:
-            print("\nApplying deduplication...")
-        messages_dedup, _ = apply_deduplication(messages, duplicates)
-        save_transcript(messages_dedup, transcript_file)
-        if verbose:
-            print(f"[OK] Saved deduplicated transcript")
-        elif session_id:
-            # Minimal output in hook mode
-            print(f"Deduplicated {len(duplicates)} file reads with same content from conversation which cleared up {total_bytes} wasted characters.")
 
 if __name__ == '__main__':
     main()
