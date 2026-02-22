@@ -327,8 +327,8 @@ Kept range:        100-155 (includes context)
 Replaced:          0-99, 156+
 ```
 
-**Bash Command Deduplication (v2.1.0.0+):**
-The plugin detects and deduplicates bash commands that read files (cat, head, tail):
+**Bash Command Deduplication (v2.1.1.0+):**
+The plugin detects and deduplicates bash commands that read files (cat, head, tail, wc):
 
 *Bash-to-Bash Chaining:*
 ```
@@ -351,27 +351,36 @@ Read2: reads config.json      → {"debug":false}  (identical to bash)
        → Read2 marked for FULL DEDUP (same as bash)
 ```
 
-**Grep Deduplication (v2.1.0.0+):**
-The plugin detects grep operations and deduplicates when later reads exist:
+**Grep Deduplication (v2.1.1.0+):**
+The plugin detects grep operations and deduplicates with smart line-overlap checking:
 
 *Grep-to-Read Pattern:*
 ```
-Grep:  grep "pattern" config.json  → [matched lines]
+Grep:  grep "pattern" config.json  → [matched lines from line X]
 Read:  reads config.json            → [full file content]
 
-If Read comes after Grep and no edits happened between:
-       → Grep marked for FULL DEDUP (read contains all grep results)
+If Read comes after Grep and no edits touched grep lines:
+       → Grep marked for FULL DEDUP (safe!)
 ```
 
-*Edit Safety Check:*
+*Smart Edit Overlap Detection:*
 ```
-Grep:  grep "debug" file.json
-Edit:  changes file.json
+Grep:  grep "timeout" file.json   (found on line 2)
+Edit1: changes line 1              (doesn't overlap with line 2)
 Read:  reads file.json
 
-Since Edit occurred between Grep and Read:
-       → Grep NOT deduplicated (file content may have changed)
-       → Conservative approach prevents data loss
+Edit doesn't touch grep lines:
+       → Grep marked for FULL DEDUP (safe - line 2 unchanged)
+
+---
+
+Grep:  grep "timeout" file.json   (found on line 2)
+Edit2: changes line 2              (overlaps with grep!)
+Read:  reads file.json
+
+Edit touches grep lines:
+       → Grep NOT deduplicated (line 2 may have changed)
+       → Smart overlap prevents data loss
 ```
 
 **Write → Read Edge Case:**
@@ -445,18 +454,47 @@ Session 2: /resume → Load cleaned transcript
 
 ---
 
-## Bash/Grep Deduplication Details (v2.1.0.0+)
+## Bash/Grep Deduplication Details (v2.1.1.0+)
 
-### Supported Bash Commands
+### Supported Bash Commands (Extended)
 
 The plugin detects file-reading bash commands via pattern matching:
 
+**cat - read entire file:**
 ```bash
-bash -c "cat /path/to/file"        # Single/multi-line files
-bash -c "cat file.json"            # With or without path
-bash -c "head -n 20 file.txt"      # Head with line count
-cat file.txt                        # Direct cat command
+cat /path/to/file
+cat file.json
+bash -c "cat config.json"
 ```
+
+**head - read first N lines:**
+```bash
+head file.txt                  # First 10 lines (default)
+head -n 20 file.txt            # First 20 lines
+head -20 file.txt              # Also supports -20 syntax
+bash -c "head -n 5 data.csv"   # In bash -c
+```
+
+**tail - read last N lines:**
+```bash
+tail file.txt                  # Last 10 lines (default)
+tail -n 20 file.txt            # Last 20 lines
+tail -f log.txt                # Follow mode (still detects read)
+bash -c "tail -f debug.log"    # In bash -c
+```
+
+**wc - word/line count (also reads file):**
+```bash
+wc file.txt                    # Count lines, words, bytes
+wc -l file.txt                 # Count lines only
+wc -w file.txt                 # Count words only
+bash -c "wc -c data.txt"       # Byte count in bash
+```
+
+**All patterns support:**
+- Pipes: `cat file.txt | grep pattern` (detects file.txt read)
+- Redirects: `cat file.txt > output.txt` (detects file.txt read)
+- Quoted paths: `bash -c "cat 'file with spaces.txt'"`
 
 Each command is parsed to extract the filepath, then the output is compared against subsequent reads like any other read operation.
 
@@ -500,22 +538,25 @@ When bash or grep output differs from the previous operation, the plugin applies
 
 ## Known Limitations
 
-### Bash/Grep (v2.1.0.0 MVP)
+### Bash/Grep (v2.1.1.0 Current)
 
 **Bash Command Detection**:
-- ✓ Supports: `cat`, `head -n N`, `tail` commands
-- ✗ Piped commands: `cat file | grep pattern` (skipped)
-- ✗ Command substitution: `$(cat file)` (skipped)
+- ✓ Supports: `cat`, `head`, `tail`, `wc` with flags
+- ✓ Works with pipes: `cat file | grep pattern`
+- ✓ Works with redirects: `cat file > output`
+- ✗ Command substitution: `$(cat file)` (deferred to v2.3.0)
 - ✗ Complex shell syntax (deferred to v2.3.0)
 
 **Grep Operations**:
-- ✓ Single file: `grep pattern file.txt`
+- ✓ Single file: `grep pattern file.txt` with line number extraction
+- ✓ Smart overlap: Only skip dedup if edits touch grep-found lines
 - ✗ Glob patterns: `grep pattern *.py` (deferred to v2.2.0)
-- ✗ Requires multi-file line matching (future enhancement)
+- ✗ Requires multi-file line matching (deferred feature)
 
-**Edit Safety**:
-- Current: Any edit between grep and read → skip dedup
-- Future (v2.2.0): Parse grep line numbers + edit ranges for accurate overlap
+**Future Enhancements** (v2.3.0+):
+- Bash script output dedup: `bash -c "python script.py"` with identical output
+- Piped command chains: Detect intermediate outputs
+- Complex command patterns: More shell syntax support
 
 ### Top-Level Context Percentage Lags (But Token Savings Are Visible)
 

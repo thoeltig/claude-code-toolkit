@@ -7,6 +7,56 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [2.1.1.0] - 2026-02-22
+
+### Added
+
+**Smart Edit Overlap Detection for Grep Operations**:
+- Enhanced grep deduplication with line-level overlap checking
+- Parse grep output to extract affected line numbers (supports `file:line:content` format)
+- Extract edit line ranges from structuredPatch in tool_result
+- Only skip grep dedup when edits actually touch grep-affected lines (not conservative "any edit = skip")
+- Safely deduplicate more grep operations without risking data loss
+
+**Extended Bash Pattern Detection**:
+- Detect and handle additional bash file-reading commands:
+  - `head [-n N] file` (with optional line count)
+  - `tail [-n N] file` / `tail -f file` (with follow flag)
+  - `wc [-lcw] file` (word count also reads file)
+  - All patterns work with pipes: `cat file | grep pattern`
+  - All patterns work with redirects: `cat file > output`
+  - All patterns work in bash -c: `bash -c "head file"`
+- Improved filepath extraction with robust flag parsing
+
+### Changed
+
+**Grep Deduplication Logic**:
+- From: Conservative approach (any edit between grep and read → skip)
+- To: Smart overlap checking (only skip if edit touches same lines as grep)
+- Result: Reduces false negatives, safely deduplicates more greps
+
+**Bash Detection**:
+- From: Simple patterns (cat, basic head/tail)
+- To: Comprehensive coverage of file-reading commands
+- Result: Better real-world coverage of bash operations
+
+### Implementation Details
+
+**Line Number Extraction**:
+- Grep pattern `file:line:content` parsed to extract line numbers
+- Supports formats: `filename:123:matched` and `123:matched`
+- Falls back gracefully if line numbers not in output
+
+**Edit Overlap Checking**:
+- Edit line range [start, start+count) compared against grep line set
+- Set intersection used for efficient overlap detection
+- Conservative fallback: if line numbers can't be parsed, edits prevent dedup
+
+**Bash Pattern Matching**:
+- Ordered patterns for specificity (specific bash -c first, then direct commands)
+- Flag validation: `-n`, `-f`, `-l`, `-w`, `-c` flags recognized
+- Filepath validation: rejects matches starting with `-` (prevents flag matching)
+
 ## [2.1.0.0] - 2026-02-22
 
 ### Added
@@ -400,7 +450,8 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.1.0...HEAD
+[2.1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.0.0...SmartCompact_v2.1.1.0
 [2.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.0.0.0...SmartCompact_v2.1.0.0
 [2.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v2.0.0.0
 [1.4.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0

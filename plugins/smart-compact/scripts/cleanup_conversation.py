@@ -70,6 +70,7 @@ class GrepOperation:
     content: str = ""  # Matched lines output
     message_position: int = 0
     content_type: ContentType = ContentType.MULTILINE
+    affected_lines: set = None  # Set of line numbers from grep output
 
 
 @dataclass
@@ -81,6 +82,8 @@ class EditOperation:
     old_string: str = ""
     new_string: str = ""
     message_position: int = 0
+    old_start_line: int = 0  # Line where change starts (1-indexed)
+    old_line_count: int = 0  # Number of lines affected
 
 
 @dataclass
@@ -350,26 +353,86 @@ def find_character_diff(content1: str, content2: str) -> Optional[tuple[int, int
     return (diff_start, diff_end)
 
 
-def extract_filepath_from_bash_command(command: str) -> Optional[str]:
-    """Extract filepath from bash cat/head/tail commands.
+def extract_line_numbers_from_grep(grep_output: str) -> set:
+    """Extract line numbers from grep output.
 
-    Matches patterns like:
-    - bash -c "cat /path/to/file"
-    - bash -c 'cat file.txt'
-    - cat file.txt
+    Handles patterns like:
+    - file.py:42:matched content
+    - 42:matched content
+    - filename:42:content
+    - Just content (no line numbers)
+
+    Returns set of affected line numbers, or empty set if not found.
     """
     import re
 
-    # Pattern 1: cat/head/tail in bash -c with quotes
+    lines = set()
+    # Try to match line:content or filename:line:content patterns
+    for line in grep_output.split('\n'):
+        if not line.strip():
+            continue
+
+        # Pattern: digits followed by colon (could be line number)
+        # Match file.txt:123:content or just 123:content
+        match = re.match(r'(?:[^:]+:)?(\d+):', line)
+        if match:
+            try:
+                line_num = int(match.group(1))
+                lines.add(line_num)
+            except (ValueError, IndexError):
+                pass
+
+    return lines
+
+
+def edit_overlaps_with_lines(edit_op: 'EditOperation', grep_lines: set) -> bool:
+    """Check if edit operation overlaps with grep-affected lines.
+
+    Edit spans lines [old_start_line, old_start_line + old_line_count).
+    Returns True if any grep line falls in this range.
+    """
+    if not grep_lines or edit_op.old_line_count == 0:
+        return False
+
+    edit_range = set(range(edit_op.old_start_line,
+                          edit_op.old_start_line + edit_op.old_line_count))
+
+    return bool(grep_lines & edit_range)  # Check intersection
+
+
+def extract_filepath_from_bash_command(command: str) -> Optional[str]:
+    """Extract filepath from bash file-reading commands.
+
+    Supports patterns for:
+    - cat file / cat /path/to/file
+    - head [-n N] file / tail [-n N] file / tail -f file
+    - wc [-lcw] file (word count - also reads file)
+    - Works with pipes and redirects: cat file | grep pattern
+    - Works in bash -c: bash -c "cat file"
+
+    Returns filepath or None if pattern not detected.
+    """
+    import re
+
+    # Patterns ordered by specificity (more specific first)
     patterns = [
-        r'bash\s+-c\s+["\'](?:cat|head|tail|head\s+-n\s+\d+)\s+([^"\'\s|>]+)',
-        r'(?:cat|head|tail)(?:\s+-n\s+\d+)?\s+([^\s|>]+)',
+        # bash -c "COMMAND [flags] file" (quoted versions)
+        r'bash\s+-c\s+["\'](?:cat|head|tail|wc)\s+(?:-[nf]+\s+\d+\s+)?([^"\'\s|>]+)',
+        r'bash\s+-c\s+["\'](?:head|tail)\s+-\d+\s+([^"\'\s|>]+)',
+
+        # Direct commands with flags (head -n 10 file)
+        r'(?:cat)\s+([^\s|>;]+)',
+        r'(?:head|tail)\s+(?:-n\s+\d+\s+|-\d+\s+|-f\s+)?([^\s|>;]+)',
+        r'(?:wc)\s+(?:-[lcw]+\s+)?([^\s|>;]+)',
     ]
 
     for pattern in patterns:
         match = re.search(pattern, command)
         if match:
-            return match.group(1)
+            filepath = match.group(1).strip('\'"')
+            # Only accept if it looks like a path (not a flag starting with -)
+            if filepath and not filepath.startswith('-'):
+                return filepath
 
     return None
 
@@ -617,6 +680,9 @@ def extract_grep_operations(messages: list[dict], logger: Logger) -> dict[str, l
                     result_content = item.get('content', '')
 
                     if result_content:
+                        # Extract line numbers from grep output for smart overlap checking
+                        affected_lines = extract_line_numbers_from_grep(result_content)
+
                         grep_op = GrepOperation(
                             tool_use_id=tool_use_id,
                             pattern=pattern,
@@ -624,9 +690,10 @@ def extract_grep_operations(messages: list[dict], logger: Logger) -> dict[str, l
                             content=result_content,
                             message_position=position,
                             content_type=detect_content_type(result_content),
+                            affected_lines=affected_lines,
                         )
                         ops_by_filepath.setdefault(filepath, []).append(grep_op)
-                        logger.log(f"Grep {tool_use_id[:8]}: {filepath} pattern '{pattern}' ({len(result_content)} bytes)")
+                        logger.log(f"Grep {tool_use_id[:8]}: {filepath} pattern '{pattern}' ({len(result_content)} bytes, lines: {sorted(affected_lines) if affected_lines else 'unknown'})")
 
     return ops_by_filepath
 
@@ -634,10 +701,13 @@ def extract_grep_operations(messages: list[dict], logger: Logger) -> dict[str, l
 def extract_edit_operations(messages: list[dict], logger: Logger) -> dict[str, list[EditOperation]]:
     """Extract Edit operations for edit-overlap detection.
 
+    Extracts line range info from structuredPatch in tool_result for smart overlap checking.
     Returns dict indexed by filepath.
     """
     ops_by_filepath = {}
 
+    # Map edit tool_use_id to filepath (from assistant message)
+    edit_map = {}
     for position, msg in enumerate(messages):
         if msg.get('type') != 'assistant':
             continue
@@ -657,16 +727,55 @@ def extract_edit_operations(messages: list[dict], logger: Logger) -> dict[str, l
                 old_string = item.get('input', {}).get('old_string', '')
                 new_string = item.get('input', {}).get('new_string', '')
 
-                if filepath:
-                    edit_op = EditOperation(
-                        tool_use_id=tool_use_id,
-                        filepath=filepath,
-                        old_string=old_string,
-                        new_string=new_string,
-                        message_position=position,
-                    )
-                    ops_by_filepath.setdefault(filepath, []).append(edit_op)
-                    logger.log(f"Edit {tool_use_id[:8]}: {filepath}")
+                if filepath and tool_use_id:
+                    edit_map[tool_use_id] = (filepath, old_string, new_string, position)
+
+    # Extract line ranges from tool_result's structuredPatch
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'user':
+            continue
+
+        # Check toolUseResult for structured patch info
+        tool_use_result = msg.get('toolUseResult', {})
+        if not tool_use_result or 'structuredPatch' not in tool_use_result:
+            continue
+
+        # Find the corresponding edit in this message's tool_results
+        msg_obj = msg.get('message', {})
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_result':
+                tool_use_id = item.get('tool_use_id')
+                if tool_use_id not in edit_map:
+                    continue
+
+                filepath, old_string, new_string, edit_position = edit_map[tool_use_id]
+
+                # Extract line range from structuredPatch
+                old_start_line = 0
+                old_line_count = 0
+
+                structured_patch = tool_use_result.get('structuredPatch', [])
+                if isinstance(structured_patch, list) and structured_patch:
+                    # Use first patch entry
+                    patch = structured_patch[0]
+                    old_start_line = patch.get('oldStart', 0)
+                    old_line_count = patch.get('oldLines', 0)
+
+                edit_op = EditOperation(
+                    tool_use_id=tool_use_id,
+                    filepath=filepath,
+                    old_string=old_string,
+                    new_string=new_string,
+                    message_position=edit_position,
+                    old_start_line=old_start_line,
+                    old_line_count=old_line_count,
+                )
+                ops_by_filepath.setdefault(filepath, []).append(edit_op)
+                logger.log(f"Edit {tool_use_id[:8]}: {filepath} lines [{old_start_line}-{old_start_line + old_line_count})")
 
     return ops_by_filepath
 
@@ -841,7 +950,7 @@ def find_dedup_actions(
 
             # Grep operations (special dedup logic)
             elif op.op_type == 'grep':
-                logger.log(f"  GREP {op.tool_use_id[:8]} at pos {op.message_position}: pattern '{op.pattern}'")
+                logger.log(f"  GREP {op.tool_use_id[:8]} at pos {op.message_position}: pattern '{op.pattern}' (lines: {sorted(op.affected_lines) if op.affected_lines else 'unknown'})")
 
                 # Find later Read/BashCat for same file
                 later_read_ops = [
@@ -853,14 +962,31 @@ def find_dedup_actions(
                     first_later_read = later_read_ops[0]
                     first_later_read_idx = all_ops.index(first_later_read)
 
-                    # Check for edits between grep and first later read
+                    # Check for edits between grep and first later read with smart overlap
                     edits_between = [
                         o for o in all_ops[idx + 1 : first_later_read_idx]
                         if o.op_type == 'edit'
                     ]
 
                     if edits_between:
-                        logger.log(f"    -> Edit between Grep and Read, skip dedup (conservative)")
+                        # Smart overlap check: only skip if edit actually touches grep lines
+                        overlapping_edits = [
+                            e for e in edits_between
+                            if edit_overlaps_with_lines(e, op.affected_lines)
+                        ]
+
+                        if overlapping_edits:
+                            logger.log(f"    -> Edit overlaps grep lines {op.affected_lines}, skip dedup")
+                        else:
+                            # Edit exists but doesn't touch grep lines - safe to dedup!
+                            logger.log(f"    -> Edit exists but no line overlap, FULL DEDUP")
+                            bytes_removed = len(op.content.encode('utf-8'))
+                            action = DedupAction(
+                                tool_use_id=op.tool_use_id,
+                                action='full_dedup',
+                                bytes_removed=bytes_removed,
+                            )
+                            actions.append(action)
                     else:
                         # Safe to deduplicate - no edits, later read exists
                         logger.log(f"    -> No edits between Grep and Read at {first_later_read_idx}, FULL DEDUP")
