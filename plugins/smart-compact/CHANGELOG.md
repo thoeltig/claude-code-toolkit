@@ -7,14 +7,89 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-### Planned
+## [2.1.0.0] - 2026-02-22
 
-**Bash and Grep Output Deduplication** (v2.1.0.0):
-- Extend forward-chaining algorithm to handle Bash command outputs
-- Detect and deduplicate identical Bash command executions
-- Compare Grep search results against file content reads
-- Replace redundant tool outputs with dedup markers
-- See [BASH_GREP_EXTENSION_PLAN.md](./BASH_GREP_EXTENSION_PLAN.md) for detailed design
+### Added
+
+**Bash and Grep Output Deduplication**:
+- Extended forward-chaining algorithm to handle Bash commands that read files (cat, head, tail)
+- Bash operations treated as read-like: identical outputs → full dedup, different outputs → partial dedup (line/char-based)
+- Grep operations deduplicated when later reads exist for same file with no intervening edits (conservative approach)
+- Both operation types use existing configurable thresholds (min bytes, context margins)
+
+**New Extraction Functions**:
+- `extract_bash_operations()`: Detects bash commands reading files via pattern matching
+  - Patterns: `bash -c "cat file"`, `cat file`, `head -n`, `tail` commands
+  - Extracts filepath and raw output for comparison
+- `extract_grep_operations()`: Extracts grep search operations (single files, MVP)
+  - Skip glob patterns (deferred to future release)
+  - Returns grep pattern, filepath, and matched lines
+- `extract_edit_operations()`: Captures edit operations for dedup safety checks
+  - Enables "edits between" validation for grep operations
+
+**Data Structures**:
+- `BashOperation`: Represents bash file-read operations with command, filepath, content, and detected type
+- `GrepOperation`: Represents grep search operations with pattern, filepath, and matched output
+- `EditOperation`: Represents file edits (tracked for preventing incorrect grep dedup)
+
+**Unified Operation Stream**:
+- All operation types (Read, Write, Bash, Grep, Edit) processed in chronological order per file
+- Forward-chaining applies to both Read and Bash: identical content → full dedup, different → partial
+- Grep uses "later read exists without intervening edits" check for safe dedup
+- Edits tracked but don't update dedup state (preserves dedup correctness)
+
+### Changed
+
+**Algorithm Enhancement**:
+- `find_dedup_actions()` now accepts bash/grep/edit operations as separate parameters
+- Operations combined into unified stream per filepath before dedup processing
+- Write → Read edge case still detected and handled (same logic)
+- Last operation (read/bash) always keeps full content (represents current state)
+
+**Backward Compatibility**:
+- All existing file dedup behavior preserved
+- Configuration inheritance: min bytes threshold, context margins apply to bash/grep
+- Graceful handling: operations without extracted filepaths are ignored
+
+### Implementation Details
+
+**Bash-to-Bash Dedup**:
+- First bash read: keep full content (baseline)
+- Subsequent bash identical: mark full dedup
+- Subsequent bash different: partial dedup with line/char comparison
+- Last bash: keep full (represents current state)
+
+**Grep-to-Read Dedup**:
+- Check if later Read/Bash exists for same file
+- If yes and no Edit between: mark grep full dedup (safe - read contains grep results)
+- If Edit exists between: skip dedup (conservative - file may have changed)
+- Future: Parse grep line numbers + edit ranges for smarter overlap detection
+
+**Content Comparison**:
+- Bash output compared using `raw_content` (stripped, no formatting)
+- Read output compared using `raw_content` from toolUseResult (avoids line number formatting)
+- Content type detected: multiline (line-based) vs single-line (char-based)
+
+### Testing
+
+- Backward compatibility verified: existing read/write/edit dedup unchanged
+- Bash dedup: identical bash commands deduplicated, different outputs use partial dedup
+- Grep dedup: detected and marked when later reads exist
+- Forward-chaining chains: bash-to-bash, read-to-bash, bash-to-read transitions work correctly
+- Edge cases: write→read, edits between operations, multiple alternation patterns
+
+### Known Limitations
+
+**MVP Limitations** (Acceptable for v2.1.0.0):
+1. Glob patterns in grep: Requires multi-file line matching (deferred to v2.2.0)
+2. Complex bash: Only simple cat/head/tail detected; piped commands and substitution skipped (deferred to v2.3.0)
+3. Edit overlap: Conservative approach (any edit = skip grep dedup); future will check line ranges
+
+### Performance
+
+- O(n) complexity maintained (single pass per filepath)
+- Hash-based lookups for operation grouping
+- No regression in speed or memory usage
 
 ## [2.0.0.0] - 2026-02-21
 
@@ -325,7 +400,8 @@ _First release of transcript deduplication plugin._
 - Respects token priority: Keeps latest reads (higher priority in context)
 - Write-aware: Recognizes Write operations as content sources, deduplicates redundant Reads
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.0.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.0.0...HEAD
+[2.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.0.0.0...SmartCompact_v2.1.0.0
 [2.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v2.0.0.0
 [1.4.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.4.0.0...SmartCompact_v1.4.1.0
 [1.4.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v1.3.0.0...SmartCompact_v1.4.0.0

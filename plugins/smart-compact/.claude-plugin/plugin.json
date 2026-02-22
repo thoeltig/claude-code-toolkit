@@ -1,7 +1,7 @@
 {
   "name": "smart-compact",
   "description": "Remove duplicate file reads from Claude Code transcripts to reduce token waste and lower hallucination risk when resuming sessions.",
-  "version": "2.0.0.0",
+  "version": "2.1.0.0",
   "author": {
     "name": "Thore Höltig",
     "url": "https://github.com/thoeltig"

@@ -250,10 +250,10 @@ python cleanup_conversation.py <transcript_file>
 
 ## How It Works
 
-The plugin uses **forward-chaining deduplication** to intelligently remove redundant file reads. This is a complete rewrite from v1.x for cleaner logic and better convergence.
+The plugin uses **forward-chaining deduplication** to intelligently remove redundant file operations (reads, bash, grep). This is a complete rewrite from v1.x for cleaner logic and better convergence.
 
-**Forward-Chaining Algorithm:**
-Processing reads in order (oldest to newest), the plugin:
+**Unified Forward-Chaining Algorithm (v2.1.0.0+):**
+Processing all operations in order (oldest to newest) per file, the plugin:
 1. Tracks `previous_state` = content from the previous read
 2. For each read:
    - If identical to `previous_state` → mark for full dedup
@@ -327,6 +327,53 @@ Kept range:        100-155 (includes context)
 Replaced:          0-99, 156+
 ```
 
+**Bash Command Deduplication (v2.1.0.0+):**
+The plugin detects and deduplicates bash commands that read files (cat, head, tail):
+
+*Bash-to-Bash Chaining:*
+```
+Bash 1: bash -c "cat config.json"  → {"debug":false}
+Bash 2: bash -c "cat config.json"  → {"debug":false}  (identical)
+        → Bash 2 marked for FULL DEDUP
+
+Bash 3: bash -c "cat config.json"  → {"debug":true}   (different)
+        → Bash 3 marked for PARTIAL DEDUP (char-level diff)
+        → Result: [prefix...changed..."debug":true...[...unchanged...]]
+```
+
+*Bash-Read Integration:*
+```
+Read:  reads config.json      → {"debug":false}
+Bash:  bash -c "cat ..."      → {"debug":false}  (identical)
+       → Bash marked for FULL DEDUP (same as read)
+
+Read2: reads config.json      → {"debug":false}  (identical to bash)
+       → Read2 marked for FULL DEDUP (same as bash)
+```
+
+**Grep Deduplication (v2.1.0.0+):**
+The plugin detects grep operations and deduplicates when later reads exist:
+
+*Grep-to-Read Pattern:*
+```
+Grep:  grep "pattern" config.json  → [matched lines]
+Read:  reads config.json            → [full file content]
+
+If Read comes after Grep and no edits happened between:
+       → Grep marked for FULL DEDUP (read contains all grep results)
+```
+
+*Edit Safety Check:*
+```
+Grep:  grep "debug" file.json
+Edit:  changes file.json
+Read:  reads file.json
+
+Since Edit occurred between Grep and Read:
+       → Grep NOT deduplicated (file content may have changed)
+       → Conservative approach prevents data loss
+```
+
 **Write → Read Edge Case:**
 When a file is created (Write) and immediately read (Read), the plugin compares the write's raw content against the read's raw content from toolUseResult. If they match, the redundant read is deduplicated:
 ```
@@ -398,7 +445,77 @@ Session 2: /resume → Load cleaned transcript
 
 ---
 
+## Bash/Grep Deduplication Details (v2.1.0.0+)
+
+### Supported Bash Commands
+
+The plugin detects file-reading bash commands via pattern matching:
+
+```bash
+bash -c "cat /path/to/file"        # Single/multi-line files
+bash -c "cat file.json"            # With or without path
+bash -c "head -n 20 file.txt"      # Head with line count
+cat file.txt                        # Direct cat command
+```
+
+Each command is parsed to extract the filepath, then the output is compared against subsequent reads like any other read operation.
+
+### Grep Pattern Matching
+
+The plugin extracts grep operations with pattern and filepath:
+
+```bash
+grep "pattern" config.json         # Exact file (MVP)
+grep "ERROR" logs.txt              # Any text file
+```
+
+**Current limitation**: Glob patterns like `grep pattern *.py` are skipped (requires multi-file line matching, deferred to v2.2.0).
+
+### Edit Safety
+
+To prevent incorrect deduplication, the plugin checks for edits between grep and read:
+
+```
+SAFE:   Grep → (no edit) → Read    ✓ Can deduplicate
+UNSAFE: Grep → (has edit) → Read   ✗ Skip (file changed)
+```
+
+This conservative approach ensures no data loss. Future versions will parse grep line numbers and edit ranges for smarter overlap detection.
+
+### Partial Dedup for Bash/Grep
+
+When bash or grep output differs from the previous operation, the plugin applies line/char-level comparison:
+
+*Multiline output (has newlines):*
+- Line-by-line diff detection
+- Replaced with markers + context (default ±1 line)
+- Configurable via `SMART_COMPACT_MULTILINE_CONTEXT_LINES`
+
+*Single-line output (no newlines):*
+- Character-level diff detection
+- Replaced with markers + context (default ±10 chars)
+- Configurable via `SMART_COMPACT_SINGLELINE_CONTEXT_CHARS`
+
+---
+
 ## Known Limitations
+
+### Bash/Grep (v2.1.0.0 MVP)
+
+**Bash Command Detection**:
+- ✓ Supports: `cat`, `head -n N`, `tail` commands
+- ✗ Piped commands: `cat file | grep pattern` (skipped)
+- ✗ Command substitution: `$(cat file)` (skipped)
+- ✗ Complex shell syntax (deferred to v2.3.0)
+
+**Grep Operations**:
+- ✓ Single file: `grep pattern file.txt`
+- ✗ Glob patterns: `grep pattern *.py` (deferred to v2.2.0)
+- ✗ Requires multi-file line matching (future enhancement)
+
+**Edit Safety**:
+- Current: Any edit between grep and read → skip dedup
+- Future (v2.2.0): Parse grep line numbers + edit ranges for accurate overlap
 
 ### Top-Level Context Percentage Lags (But Token Savings Are Visible)
 

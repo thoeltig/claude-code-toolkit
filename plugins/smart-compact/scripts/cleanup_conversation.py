@@ -48,6 +48,42 @@ class FileOperation:
 
 
 @dataclass
+class BashOperation:
+    """Represents a Bash command execution that reads content."""
+    op_type: str = "bash"
+    tool_use_id: str = ""
+    command: str = ""  # Full bash command
+    content: str = ""  # Output from tool_result
+    filepath: Optional[str] = None  # Extracted from cat/head/tail commands
+    message_position: int = 0
+    content_type: ContentType = ContentType.MULTILINE
+    raw_content: str = ""  # Raw output (without formatting)
+
+
+@dataclass
+class GrepOperation:
+    """Represents a Grep search operation."""
+    op_type: str = "grep"
+    tool_use_id: str = ""
+    pattern: str = ""
+    filepath: str = ""  # Single file for MVP (not glob patterns)
+    content: str = ""  # Matched lines output
+    message_position: int = 0
+    content_type: ContentType = ContentType.MULTILINE
+
+
+@dataclass
+class EditOperation:
+    """Represents an Edit operation (tracked for edit-overlap detection)."""
+    op_type: str = "edit"
+    tool_use_id: str = ""
+    filepath: str = ""
+    old_string: str = ""
+    new_string: str = ""
+    message_position: int = 0
+
+
+@dataclass
 class DedupAction:
     """Action to take for a read operation."""
     tool_use_id: str
@@ -314,6 +350,30 @@ def find_character_diff(content1: str, content2: str) -> Optional[tuple[int, int
     return (diff_start, diff_end)
 
 
+def extract_filepath_from_bash_command(command: str) -> Optional[str]:
+    """Extract filepath from bash cat/head/tail commands.
+
+    Matches patterns like:
+    - bash -c "cat /path/to/file"
+    - bash -c 'cat file.txt'
+    - cat file.txt
+    """
+    import re
+
+    # Pattern 1: cat/head/tail in bash -c with quotes
+    patterns = [
+        r'bash\s+-c\s+["\'](?:cat|head|tail|head\s+-n\s+\d+)\s+([^"\'\s|>]+)',
+        r'(?:cat|head|tail)(?:\s+-n\s+\d+)?\s+([^\s|>]+)',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, command)
+        if match:
+            return match.group(1)
+
+    return None
+
+
 def load_transcript(filepath: str) -> list[dict]:
     """Load transcript (handles minified JSONL and pretty-printed JSON)."""
     messages = []
@@ -443,11 +503,385 @@ def extract_operations(messages: list[dict], logger: Logger) -> dict[str, list[F
     return ops_by_path
 
 
+def extract_bash_operations(messages: list[dict], logger: Logger) -> dict[str, list[BashOperation]]:
+    """Extract Bash operations that read content (cat, head, tail).
+
+    Returns dict indexed by filepath extracted from bash command.
+    """
+    ops_by_filepath = {}
+
+    # Map bash tool_use_id to command
+    bash_map = {}
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'assistant':
+            continue
+
+        msg_obj = msg.get('message', {})
+        if msg_obj.get('role') != 'assistant':
+            continue
+
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_use' and item.get('name') == 'Bash':
+                tool_use_id = item.get('id')
+                command = item.get('input', {}).get('command', '')
+                if tool_use_id and command:
+                    bash_map[tool_use_id] = (command, position)
+
+    # Extract bash output from tool_result
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'user':
+            continue
+
+        msg_obj = msg.get('message', {})
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_result':
+                tool_use_id = item.get('tool_use_id')
+                if tool_use_id in bash_map:
+                    command, bash_position = bash_map[tool_use_id]
+                    filepath = extract_filepath_from_bash_command(command)
+
+                    # Only process if we detected a file read command
+                    if filepath:
+                        result_content = item.get('content', '')
+                        if result_content:
+                            bash_op = BashOperation(
+                                tool_use_id=tool_use_id,
+                                command=command,
+                                content=result_content,
+                                filepath=filepath,
+                                message_position=position,
+                                content_type=detect_content_type(result_content),
+                                raw_content=result_content.strip(),
+                            )
+                            ops_by_filepath.setdefault(filepath, []).append(bash_op)
+                            logger.log(f"Bash {tool_use_id[:8]}: {filepath} ({len(result_content)} bytes, {bash_op.content_type.value})")
+
+    return ops_by_filepath
+
+
+def extract_grep_operations(messages: list[dict], logger: Logger) -> dict[str, list[GrepOperation]]:
+    """Extract Grep search operations.
+
+    MVP: Only handles exact file paths (not glob patterns).
+    Returns dict indexed by filepath.
+    """
+    ops_by_filepath = {}
+
+    # Map grep tool_use_id to pattern and filepath
+    grep_map = {}
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'assistant':
+            continue
+
+        msg_obj = msg.get('message', {})
+        if msg_obj.get('role') != 'assistant':
+            continue
+
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_use' and item.get('name') == 'Grep':
+                tool_use_id = item.get('id')
+                pattern = item.get('input', {}).get('pattern', '')
+                filepath = item.get('input', {}).get('path')  # Single file path
+
+                # MVP: Skip glob patterns for now
+                if tool_use_id and pattern and filepath and '*' not in filepath:
+                    grep_map[tool_use_id] = (pattern, filepath, position)
+
+    # Extract grep output from tool_result
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'user':
+            continue
+
+        msg_obj = msg.get('message', {})
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_result':
+                tool_use_id = item.get('tool_use_id')
+                if tool_use_id in grep_map:
+                    pattern, filepath, grep_position = grep_map[tool_use_id]
+                    result_content = item.get('content', '')
+
+                    if result_content:
+                        grep_op = GrepOperation(
+                            tool_use_id=tool_use_id,
+                            pattern=pattern,
+                            filepath=filepath,
+                            content=result_content,
+                            message_position=position,
+                            content_type=detect_content_type(result_content),
+                        )
+                        ops_by_filepath.setdefault(filepath, []).append(grep_op)
+                        logger.log(f"Grep {tool_use_id[:8]}: {filepath} pattern '{pattern}' ({len(result_content)} bytes)")
+
+    return ops_by_filepath
+
+
+def extract_edit_operations(messages: list[dict], logger: Logger) -> dict[str, list[EditOperation]]:
+    """Extract Edit operations for edit-overlap detection.
+
+    Returns dict indexed by filepath.
+    """
+    ops_by_filepath = {}
+
+    for position, msg in enumerate(messages):
+        if msg.get('type') != 'assistant':
+            continue
+
+        msg_obj = msg.get('message', {})
+        if msg_obj.get('role') != 'assistant':
+            continue
+
+        content = msg_obj.get('content', [])
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
+            if item.get('type') == 'tool_use' and item.get('name') == 'Edit':
+                tool_use_id = item.get('id')
+                filepath = item.get('input', {}).get('file_path')
+                old_string = item.get('input', {}).get('old_string', '')
+                new_string = item.get('input', {}).get('new_string', '')
+
+                if filepath:
+                    edit_op = EditOperation(
+                        tool_use_id=tool_use_id,
+                        filepath=filepath,
+                        old_string=old_string,
+                        new_string=new_string,
+                        message_position=position,
+                    )
+                    ops_by_filepath.setdefault(filepath, []).append(edit_op)
+                    logger.log(f"Edit {tool_use_id[:8]}: {filepath}")
+
+    return ops_by_filepath
+
+
 def find_dedup_actions(
+    ops_by_path: dict[str, list[FileOperation]],
+    bash_ops_by_path: dict[str, list[BashOperation]],
+    grep_ops_by_path: dict[str, list[GrepOperation]],
+    edit_ops_by_path: dict[str, list[EditOperation]],
+    logger: Logger,
+    min_dedup_bytes: int,
+    multiline_context: int,
+    singleline_context: int,
+) -> list[DedupAction]:
+    """Find which operations should be deduplicated using unified forward-chaining.
+
+    Processes Read, BashCat, and Grep operations in chronological order per filepath.
+    - Writes are never deduplicated (represent current state)
+    - Read + BashCat: Forward-chaining like files (identical → full dedup)
+    - Grep: Deduplicate if later Read/BashCat exists for same file (without edits between)
+    - Edit: Tracked for dedup safety checks
+    """
+    actions = []
+
+    # Build unified operation stream per filepath (all types)
+    all_filepaths = set()
+    all_filepaths.update(ops_by_path.keys())
+    all_filepaths.update(bash_ops_by_path.keys())
+    all_filepaths.update(grep_ops_by_path.keys())
+    all_filepaths.update(edit_ops_by_path.keys())
+
+    for filepath in all_filepaths:
+        # Collect all operations for this filepath
+        all_ops = []
+
+        # Add file operations (Write, Read)
+        for op in ops_by_path.get(filepath, []):
+            all_ops.append(op)
+
+        # Add bash operations
+        for op in bash_ops_by_path.get(filepath, []):
+            all_ops.append(op)
+
+        # Add grep operations
+        for op in grep_ops_by_path.get(filepath, []):
+            all_ops.append(op)
+
+        # Add edit operations
+        for op in edit_ops_by_path.get(filepath, []):
+            all_ops.append(op)
+
+        if not all_ops:
+            continue
+
+        # Sort by message position to maintain chronological order
+        all_ops.sort(key=lambda x: x.message_position)
+
+        logger.log(f"\nProcessing {filepath} with {len(all_ops)} operations")
+
+        # Forward-chaining dedup
+        previous_state = None
+        last_read_idx = None
+
+        # Find last read-like operation index
+        for idx in range(len(all_ops) - 1, -1, -1):
+            if all_ops[idx].op_type in ['read', 'write', 'bash']:
+                last_read_idx = idx
+                break
+
+        for idx, op in enumerate(all_ops):
+            is_last_read = (idx == last_read_idx)
+
+            # Read-like operations (Read, Write, BashCat)
+            if op.op_type in ['read', 'write', 'bash']:
+                logger.log(f"  {op.op_type.upper()} {op.tool_use_id[:8]} at pos {op.message_position}: {len(op.content)} bytes, is_last={is_last_read}")
+
+                # Write → Read edge case (only for Read immediately after Write)
+                if op.op_type == 'read' and idx > 0 and all_ops[idx - 1].op_type == 'write':
+                    write_op = all_ops[idx - 1]
+                    if hasattr(op, 'raw_content') and op.raw_content == write_op.content:
+                        logger.log(f"    -> Raw content matches Write, FULL DEDUP (Write → Read edge case)")
+                        bytes_removed = len(op.content.encode('utf-8'))
+                        action = DedupAction(
+                            tool_use_id=op.tool_use_id,
+                            action='full_dedup',
+                            bytes_removed=bytes_removed,
+                        )
+                        actions.append(action)
+                        continue
+
+                # Skip writes in dedup logic
+                if op.op_type == 'write':
+                    if hasattr(op, 'content'):
+                        previous_state = op.content
+                    continue
+
+                # For read-like ops (read, bash), use raw_content for comparison
+                op_content = op.raw_content if hasattr(op, 'raw_content') and op.raw_content else op.content
+
+                if previous_state is None:
+                    logger.log(f"    -> First read, keep full content")
+                    previous_state = op_content
+                    continue
+
+                if op_content == previous_state:
+                    # Identical to previous read
+                    logger.log(f"    -> Identical to previous, FULL DEDUP")
+                    bytes_removed = len(op.content.encode('utf-8'))
+                    action = DedupAction(
+                        tool_use_id=op.tool_use_id,
+                        action='full_dedup',
+                        bytes_removed=bytes_removed,
+                    )
+                    actions.append(action)
+                else:
+                    # Different from previous
+                    if is_last_read:
+                        logger.log(f"    -> Different but LAST READ, keep full content")
+                        previous_state = op_content
+                        continue
+
+                    # Do partial dedup
+                    logger.log(f"    -> Different from previous, PARTIAL DEDUP")
+
+                    if op.content_type == ContentType.MULTILINE:
+                        diff_ranges = find_line_differences(previous_state, op_content)
+                        logger.log(f"       Line diffs at: {diff_ranges}")
+
+                        if diff_ranges:
+                            total_lines = len(op_content.split('\n'))
+                            kept_ranges = apply_context_margin(diff_ranges, total_lines, margin=multiline_context)
+                            logger.log(f"       Kept ranges (with context): {kept_ranges}")
+
+                            modified_content, bytes_removed = create_partial_dedup_multiline(
+                                op.content, kept_ranges, min_dedup_bytes
+                            )
+                            logger.log(f"       Removed: {bytes_removed} bytes")
+
+                            action = DedupAction(
+                                tool_use_id=op.tool_use_id,
+                                action='partial_dedup',
+                                replacement=modified_content,
+                                bytes_removed=bytes_removed,
+                            )
+                            actions.append(action)
+                    else:
+                        # Single-line content
+                        diff_range = find_character_diff(previous_state, op_content)
+                        if diff_range:
+                            diff_start, diff_end = diff_range
+                            logger.log(f"       Char diff at {diff_start}-{diff_end}")
+
+                            modified_content, bytes_removed = create_partial_dedup_singleline(
+                                op.content, diff_start, diff_end, min_dedup_bytes, singleline_context
+                            )
+                            logger.log(f"       Removed: {bytes_removed} bytes")
+
+                            action = DedupAction(
+                                tool_use_id=op.tool_use_id,
+                                action='partial_dedup',
+                                replacement=modified_content,
+                                bytes_removed=bytes_removed,
+                            )
+                            actions.append(action)
+
+                previous_state = op_content
+
+            # Edit operations (just track, don't update state)
+            elif op.op_type == 'edit':
+                logger.log(f"  EDIT at pos {op.message_position}: {filepath}")
+                # Don't change previous_state - edits don't represent "what we read"
+
+            # Grep operations (special dedup logic)
+            elif op.op_type == 'grep':
+                logger.log(f"  GREP {op.tool_use_id[:8]} at pos {op.message_position}: pattern '{op.pattern}'")
+
+                # Find later Read/BashCat for same file
+                later_read_ops = [
+                    o for o in all_ops[idx + 1 :]
+                    if o.op_type in ['read', 'bash'] and o.filepath == filepath
+                ]
+
+                if later_read_ops:
+                    first_later_read = later_read_ops[0]
+                    first_later_read_idx = all_ops.index(first_later_read)
+
+                    # Check for edits between grep and first later read
+                    edits_between = [
+                        o for o in all_ops[idx + 1 : first_later_read_idx]
+                        if o.op_type == 'edit'
+                    ]
+
+                    if edits_between:
+                        logger.log(f"    -> Edit between Grep and Read, skip dedup (conservative)")
+                    else:
+                        # Safe to deduplicate - no edits, later read exists
+                        logger.log(f"    -> No edits between Grep and Read at {first_later_read_idx}, FULL DEDUP")
+                        bytes_removed = len(op.content.encode('utf-8'))
+                        action = DedupAction(
+                            tool_use_id=op.tool_use_id,
+                            action='full_dedup',
+                            bytes_removed=bytes_removed,
+                        )
+                        actions.append(action)
+                else:
+                    logger.log(f"    -> No later Read/BashCat found, skip dedup")
+
+    return actions
+
+
+def find_dedup_actions_old(
     ops_by_path: dict[str, list[FileOperation]], logger: Logger, min_dedup_bytes: int,
     multiline_context: int, singleline_context: int
 ) -> list[DedupAction]:
-    """Find which reads should be deduplicated using forward-chaining algorithm.
+    """OLD VERSION: Kept for reference. Find which reads should be deduplicated using forward-chaining algorithm.
 
     Writes are kept (never deduplicated). Reads are chained against each other,
     with each read comparing to the previous read's actual content.
@@ -644,9 +1078,15 @@ def main():
 
     logger.log("Extracting operations...")
     ops_by_path = extract_operations(messages, logger)
+    bash_ops_by_path = extract_bash_operations(messages, logger)
+    grep_ops_by_path = extract_grep_operations(messages, logger)
+    edit_ops_by_path = extract_edit_operations(messages, logger)
 
     logger.log("\nFinding deduplication actions...")
-    actions = find_dedup_actions(ops_by_path, logger, min_dedup_bytes, multiline_context, singleline_context)
+    actions = find_dedup_actions(
+        ops_by_path, bash_ops_by_path, grep_ops_by_path, edit_ops_by_path,
+        logger, min_dedup_bytes, multiline_context, singleline_context
+    )
 
     # Calculate summary
     total_bytes = sum(a.bytes_removed for a in actions)
