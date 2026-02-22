@@ -47,16 +47,16 @@ def main():
     print("=" * 60)
 
     tests = [
-        # Test 1: Original backward compatibility
+        # Test 1: Script output deduplication
         {
-            "name": "Backward Compatibility (Read/Write/Edit)",
-            "file": "Claude_Temp_Files/test-transcript.json",
-            "keywords": ["WRITE", "READ", "EDIT", "FULL DEDUP", "PARTIAL DEDUP"]
+            "name": "Script Output Deduplication",
+            "file": "plugins/smart-compact/tests/test-script-output.json",
+            "keywords": ["BASH", "FULL DEDUP", "Savings:"]
         },
         # Test 2: Bash/Grep operations
         {
             "name": "Bash/Grep Deduplication",
-            "file": "Claude_Temp_Files/test-bash-grep.json",
+            "file": "plugins/smart-compact/tests/test-bash-grep.json",
             "keywords": ["BASH", "GREP", "FULL DEDUP", "Savings:"]
         },
     ]

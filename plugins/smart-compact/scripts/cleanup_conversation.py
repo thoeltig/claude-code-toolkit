@@ -93,6 +93,7 @@ class DedupAction:
     action: str  # "full_dedup", "partial_dedup", or "keep"
     replacement: Optional[str] = None  # For partial dedup
     bytes_removed: int = 0
+    op_type: str = ""  # "read", "bash" - for correct marker text
 
 
 def get_min_dedup_bytes() -> int:
@@ -437,6 +438,31 @@ def extract_filepath_from_bash_command(command: str) -> Optional[str]:
     return None
 
 
+def is_script_invocation(command: str) -> bool:
+    """Detect if bash command is a script execution (not file-read).
+
+    Recognizes: python, npm, node, dotnet, ruby, java, go run, etc.
+    Returns True if command appears to run a script (has output to capture).
+    """
+    import re
+
+    # Script runner patterns - order by priority
+    script_patterns = [
+        # Direct script runners
+        r'\b(?:python|python3|node|ruby|java|go|dotnet)\b',
+        # npm/npx commands
+        r'\b(?:npm|npx)\s+',
+        # bash -c "script command"
+        r'bash\s+-c\s+["\'](?:python|npm|node|dotnet|ruby|java|go)',
+    ]
+
+    for pattern in script_patterns:
+        if re.search(pattern, command, re.IGNORECASE):
+            return True
+
+    return False
+
+
 def load_transcript(filepath: str) -> list[dict]:
     """Load transcript (handles minified JSONL and pretty-printed JSON)."""
     messages = []
@@ -609,23 +635,41 @@ def extract_bash_operations(messages: list[dict], logger: Logger) -> dict[str, l
                 tool_use_id = item.get('tool_use_id')
                 if tool_use_id in bash_map:
                     command, bash_position = bash_map[tool_use_id]
-                    filepath = extract_filepath_from_bash_command(command)
+                    result_content = item.get('content', '')
 
-                    # Only process if we detected a file read command
+                    if not result_content:
+                        continue
+
+                    # Check if this is a script invocation or file-read command
+                    is_script = is_script_invocation(command)
+                    filepath = None
+
+                    if is_script:
+                        # Script execution - use special marker for deduplication
+                        filepath = "<script>"
+                        logger.log(f"Bash {tool_use_id[:8]}: [SCRIPT] {command[:50]} ({len(result_content)} bytes)")
+                    else:
+                        # Try to extract filepath for file-read commands
+                        filepath = extract_filepath_from_bash_command(command)
+                        if filepath:
+                            logger.log(f"Bash {tool_use_id[:8]}: {filepath} ({len(result_content)} bytes)")
+
+                    # Process if we identified it as script or file-read
                     if filepath:
-                        result_content = item.get('content', '')
-                        if result_content:
-                            bash_op = BashOperation(
-                                tool_use_id=tool_use_id,
-                                command=command,
-                                content=result_content,
-                                filepath=filepath,
-                                message_position=position,
-                                content_type=detect_content_type(result_content),
-                                raw_content=result_content.strip(),
-                            )
-                            ops_by_filepath.setdefault(filepath, []).append(bash_op)
-                            logger.log(f"Bash {tool_use_id[:8]}: {filepath} ({len(result_content)} bytes, {bash_op.content_type.value})")
+                        bash_op = BashOperation(
+                            tool_use_id=tool_use_id,
+                            command=command,
+                            content=result_content,
+                            filepath=filepath,
+                            message_position=position,
+                            content_type=detect_content_type(result_content),
+                            raw_content=result_content.strip(),
+                        )
+                        ops_by_filepath.setdefault(filepath, []).append(bash_op)
+                        if is_script:
+                            # Add content type for logging
+                            bash_op.content_type = detect_content_type(result_content)
+                            logger.log(f"  -> {bash_op.content_type.value} content")
 
     return ops_by_filepath
 
@@ -845,6 +889,13 @@ def find_dedup_actions(
                 last_read_idx = idx
                 break
 
+        # Build map of (content) -> last_occurrence_index for keep-last dedup
+        content_last_occurrence = {}
+        for idx, op in enumerate(all_ops):
+            if op.op_type in ['read', 'bash']:
+                op_content = op.raw_content if hasattr(op, 'raw_content') and op.raw_content else op.content
+                content_last_occurrence[op_content] = idx
+
         for idx, op in enumerate(all_ops):
             is_last_read = (idx == last_read_idx)
 
@@ -862,6 +913,7 @@ def find_dedup_actions(
                             tool_use_id=op.tool_use_id,
                             action='full_dedup',
                             bytes_removed=bytes_removed,
+                            op_type=op.op_type,
                         )
                         actions.append(action)
                         continue
@@ -875,30 +927,26 @@ def find_dedup_actions(
                 # For read-like ops (read, bash), use raw_content for comparison
                 op_content = op.raw_content if hasattr(op, 'raw_content') and op.raw_content else op.content
 
-                if previous_state is None:
-                    logger.log(f"    -> First read, keep full content")
+                # Check if this is the last occurrence of this content
+                is_last_occurrence = (content_last_occurrence.get(op_content) == idx)
+
+                if is_last_occurrence:
+                    # Keep last occurrence (don't mark for dedup)
+                    logger.log(f"    -> Last occurrence, keep full content")
                     previous_state = op_content
                     continue
-
-                if op_content == previous_state:
-                    # Identical to previous read
-                    logger.log(f"    -> Identical to previous, FULL DEDUP")
+                else:
+                    # Not last occurrence - mark as FULL DEDUP
+                    logger.log(f"    -> Earlier occurrence, FULL DEDUP (latest below)")
                     bytes_removed = len(op.content.encode('utf-8'))
                     action = DedupAction(
                         tool_use_id=op.tool_use_id,
                         action='full_dedup',
                         bytes_removed=bytes_removed,
+                        op_type=op.op_type,
                     )
                     actions.append(action)
-                else:
-                    # Different from previous
-                    if is_last_read:
-                        logger.log(f"    -> Different but LAST READ, keep full content")
-                        previous_state = op_content
-                        continue
-
-                    # Do partial dedup
-                    logger.log(f"    -> Different from previous, PARTIAL DEDUP")
+                    previous_state = op_content
 
                     if op.content_type == ContentType.MULTILINE:
                         diff_ranges = find_line_differences(previous_state, op_content)
@@ -919,6 +967,7 @@ def find_dedup_actions(
                                 action='partial_dedup',
                                 replacement=modified_content,
                                 bytes_removed=bytes_removed,
+                                op_type=op.op_type,
                             )
                             actions.append(action)
                     else:
@@ -938,6 +987,7 @@ def find_dedup_actions(
                                 action='partial_dedup',
                                 replacement=modified_content,
                                 bytes_removed=bytes_removed,
+                                op_type=op.op_type,
                             )
                             actions.append(action)
 
@@ -1161,7 +1211,12 @@ def apply_dedup(messages: list[dict], actions: list[DedupAction]) -> None:
                     action = action_lookup[tool_use_id]
 
                     if action.action == 'full_dedup':
-                        item['content'] = "[...Duplicate read omitted - latest version contains complete content...]"
+                        # Use contextual marker based on operation type
+                        if action.op_type == 'bash':
+                            marker = "[...Duplicate script output omitted - latest version below contains complete output...]"
+                        else:
+                            marker = "[...Duplicate read omitted - latest version below contains complete content...]"
+                        item['content'] = marker
                     elif action.action == 'partial_dedup' and action.replacement:
                         item['content'] = action.replacement
 
