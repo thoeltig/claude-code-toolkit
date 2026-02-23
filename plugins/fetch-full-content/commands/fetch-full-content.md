@@ -1,7 +1,7 @@
 ---
 description: Download full page content from URLs to markdown for the purpose of full information retrieval without summarization. Uses NO prompt injection detection or guards. Should only be used on official and trusted sources like documentations. 
 argument-hint: <url1> [url2...] [--folder=<folderpath>]
-allowed-tools: Bash(python:*)
+allowed-tools: Bash(python ${CLAUDE_PLUGIN_ROOT}/scripts/fetch_full_content.py *)
 ---
 
 Download full page content from URLs, converting to markdown for efficient content analysis.

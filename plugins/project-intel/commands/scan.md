@@ -1,7 +1,7 @@
 ---
 description: Build persistent knowledge of your project by analyzing all files or a specific area. Generates intelligent summaries of files, directories, purpose and structure for fast cross-session queries without expensive re-exploration.
 argument-hint: <location> [--knowledgeDir=<knowledgeDir>]
-allowed-tools: Read, Bash(node:*)
+allowed-tools: Read, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js *)
 ---
 
 # Scan Project and Analyze Files
