@@ -7,6 +7,59 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.17.0.0] - 2026-02-23
+
+_Marketplace release with smart-compact major algorithm improvements and code restructuring._
+
+### Added
+
+- **smart-compact plugin** evolved from [v1.4.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v1.4.1.0) to [v2.2.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v2.2.1.0):
+  - **v2.0.0.0**: Complete algorithm rewrite from backward-iterating to forward-chaining for improved clarity and efficiency
+    - Forward-chaining dedup: Processes reads chronologically per file for intuitive duplicate detection
+    - Keep-last strategy: Latest occurrence represents current state (aligns with LLM token reading preference)
+    - Content type auto-detection: Line-level diffing for multiline, character-level for single-line (JSON)
+    - Configurable thresholds: Min bytes, context margins via environment variables
+    - Raw content extraction: Detects Write → Read edge cases
+    - Improved output formats: Short format (`Savings: XXX bytes (~YYY tokens)`) and normal reporting
+  - **v2.1.0.0**: Extended deduplication to bash and grep operations
+    - Bash dedup: Treats file-reading commands (cat, head, tail, wc) like Read operations
+    - Grep dedup: Safely deduplicates grep searches when later reads exist
+    - Unified operation stream: Process all operations (Read, Write, Bash, Grep, Edit) chronologically
+    - Edit tracking: Validates dedup safety between grep and reads
+  - **v2.1.1.0**: Smart edit overlap detection and extended bash patterns
+    - Smart overlap: Only skip dedup if edits touch exact lines matched by grep (no false negatives)
+    - Extended patterns: Support head, tail, wc with flags; bash -c wrapped commands
+    - Line number extraction: Parse grep output to enable safe overlap checking
+  - **v2.2.0.0**: Bash script execution deduplication
+    - Script output dedup: Detect identical python, npm, node, dotnet, ruby, java, go outputs
+    - Keep-last for scripts: Earlier identical runs marked redundant, latest output kept
+    - Pattern recognition: Auto-identify script invocations (python script.py, npm test, etc.)
+    - Context-aware markers: Separate messages for file reads vs script outputs
+  - **v2.2.1.0**: Code restructuring and maintainability improvements
+    - Package refactoring: Split 1299-line monolithic script into focused Python package
+    - Modular structure: const_models_and_config, content, detection, extract, __init__ modules
+    - 72% complexity reduction in main script (1299 → 368 lines)
+    - Single responsibility per module: Easier to test, extend, understand
+    - Backward compatibility: All tests pass (edge cases, smart overlap, pattern matching)
+
+### Changed
+
+- **smart-compact internal structure**: Reorganized from monolithic script to modular package
+  - `const_models_and_config.py` (141 lines): Data models, enums, configuration, markers
+  - `content.py` (197 lines): Content type detection and diffing
+  - `detection.py` (106 lines): Pattern detection for grep, bash, edit operations
+  - `extract.py` (377 lines): Transcript I/O and operation extraction
+  - `__init__.py` (71 lines): Clean public API with __all__ exports
+  - Enhanced maintainability without changing external behavior or functionality
+
+- **Reduced allowed tools scope**: Restrict tools to minimum necessary for each skill/command
+  - **changelog plugin**: Removed `allowed-tools` from `managing-changelog` skill (informational only, auto-allows tools)
+  - **documentation plugin**: Removed `allowed-tools` from `managing-documentation` skill (informational only, auto-allows tools)
+  - **fetch-full-content plugin**: Restricted `Bash(python:*)` → `Bash(python ${CLAUDE_PLUGIN_ROOT}/scripts/fetch_full_content.py *)` (specific script only)
+  - **project-intel plugin**: Restricted `Bash(node:*)` → `Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js *)` (specific script only)
+  - **session-protocol plugin**: Restricted `Bash` → `Bash(git rev-parse *)` (git-only operations)
+  - Improved security and predictability by preventing unintended tool usage
+
 ---
 
 ## [1.16.0.0] - 2026-02-17
@@ -393,7 +446,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.16.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.17.0.0...HEAD
+[1.17.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.16.0.0...v1.17.0.0
 [1.16.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.15.0.0...v1.16.0.0
 [1.15.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.14.0.0...v1.15.0.0
 [1.14.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.13.0.0...v1.14.0.0
