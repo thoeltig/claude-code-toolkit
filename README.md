@@ -71,15 +71,15 @@ Download complete page content as markdown to filesystem for repeated analysis a
 
 **Install:** `/plugin install fetch-full-content@claude-code-toolkit`
 
-### Changelog
-Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
-
-**Install:** `/plugin install changelog@claude-code-toolkit`
-
 ### Session Protocol
 Never lose context again. Save your work state, git status, and active tasks between sessions for seamless continuity.
 
 **Install:** `/plugin install session-protocol@claude-code-toolkit`
+
+### Changelog
+Professional changelog management with automatic formatting, version tracking, and standards compliance validation.
+
+**Install:** `/plugin install changelog@claude-code-toolkit`
 
 ### Documentation
 Create and maintain high-quality project documentation with comprehensive validation and style guidance. Ensure clarity, accessibility, and inclusive language across all documentation types.
