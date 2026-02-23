@@ -1,350 +1,354 @@
 # Smart Compact Plugin
 
-Remove duplicate file reads from Claude Code transcripts to reduce token waste and lower hallucination risk when resuming sessions.
+Automatically remove duplicate file reads, script outputs, and grep results from Claude Code session transcripts. Uses **deterministic deduplication** (not LLM-based) to reduce token waste and lower hallucination risk when resuming sessions.
 
-## What It Does
+## Overview
 
-During development, you naturally read the same file multiple times:
-- Read file to understand it
-- Edit it
-- Read again to verify (duplicate - replace)
-- User and Model exchange messages
-- Read again as new starting point (duplicate - keep)
-- Edit again
-- Read again to confirm
+During typical Claude Code sessions, you naturally read the same files multiple times:
+- Read file to understand context
+- Make edits
+- Read again to verify changes (duplicate)
+- Exchange messages with Claude
+- Read again to refresh context (duplicate)
 
-Each read gets stored in the session transcript. When you use `/resume`, Claude Code reconstructs the entire conversation from the transcript. Duplicate reads waste tokens that don't add new information—they just repeat what Claude already saw.
+Each read creates a session transcript entry. When you `/resume`, Claude reconstructs the **entire conversation** from the transcript—expensive reconstruction that includes all those duplicate reads. The plugin removes exact duplicates while keeping intervening messages intact, resulting in a smaller transcript that costs fewer tokens to reconstruct on resume.
 
-This plugin removes those duplicates by keeping only the latest read (or the Write if one exists with the same content). The result is a smaller transcript that costs less to reconstruct on resume, preserving the most recent and highest-priority context.
+**Example:**
+```
+Session 1: Read config.json (57 bytes)
+           [Edit config.json]
+           Read config.json again (57 bytes, same content)
+           [Chat with Claude]
+           Read config.json once more (57 bytes, same content)
+
+Plugin removes: 2 duplicate reads = 114 bytes (~28 tokens)
+Result: Next /resume pays ~28 fewer tokens to reconstruct
+```
+
+The plugin uses **deterministic content matching** (comparing file hashes), never making LLM-based decisions. It's safe, reversible, and preserves all context except exact content duplicates.
+
+## What It Deduplicates
+
+The plugin intelligently removes three types of duplicate operations:
+
+### 1. File Reads
+Identical file content across multiple Read operations is deduplicated. The latest read is always kept (represents current state).
+
+```
+Read 1: config.json → {"debug": false}
+[... edits and messages ...]
+Read 2: config.json → {"debug": false}  (DUPLICATE - marked)
+[... more work ...]
+Read 3: config.json → {"debug": true}   (DIFFERENT - kept)
+```
+
+### 2. Bash Script Output
+Identical bash script execution outputs are deduplicated (python, npm, node, dotnet, ruby, java, go, and bash-wrapped variants).
+
+```
+Run 1: npm test → "PASS: 42 tests"
+Run 2: npm test → "PASS: 42 tests"      (DUPLICATE - marked)
+Run 3: npm test → "FAIL: 1 test"        (DIFFERENT - kept)
+```
+
+### 3. Grep Search Results
+When grep output appears before a later file read with no edits touching the grep-matched lines, the grep is safely deduplicated.
+
+### Smart Overlap Detection
+When you edit a file and then grep it, the plugin checks if the edit actually touched the grep-matched lines. Only exact line overlaps prevent dedup—edits to different lines don't block deduplication.
 
 ## When to Use This
 
-**This helps if you:**
-- Work with long sessions that have heavy file reading and editing
-- Want to reduce token costs and reduce hallucination risk from context bloat
-- Use `/resume` frequently - cleaned transcript cuts reconstruction costs per resume
-- Go idle >5 minutes during work - cache validator hook blocks input and shows token savings, encouraging optimal resume workflow
+**Most beneficial for:**
+- Long sessions with heavy file reading and editing
+- Frequent `/resume` workflows - each resume costs fewer tokens
+- Sessions that go idle >5 minutes - cache validator shows savings and suggests resume
+- Development workflows with repeated test/build runs
 
-**Even helps if you:**
-- Don't manually use `/resume` - deduplication benefits eventual resumes (immediate or weeks later) with lower reconstruction costs
-- Prefer starting fresh sessions - any future resume of that session will have a smaller, cleaner transcript
-
-**Won't help much if you:**
-- Have very short, one-off sessions - minimal duplicate reads occur
+**Still helps with:**
+- Short sessions - any future resume of the session will load a cleaner transcript
+- Fresh session workflows - reduced transcript size benefits any eventual resumption
 
 ## Installation
 
-**Requirements:** Python 3.X (developed with 3.1.3)
+**Requirements:** Python 3.X (developed with 3.13)
 
-The plugin automatically registers and runs on session end and pre-prompt. No configuration needed.
+The plugin automatically registers and runs on session end (cleans transcript) and pre-prompt (validates staleness). No configuration required—works with defaults.
 
 ## Configuration
 
-### Cache Duration Threshold
+The plugin is configurable via environment variables in `~/.claude/settings.json`. All settings are optional; defaults are balanced for typical workflows.
 
-The cache validator uses **5 minutes** as the default staleness threshold, matching Claude's default prompt cache window. If you have Claude configured with the optional 1-hour cache window, you can override this:
+### Compression Control (Three Variables)
 
-Add to your `~/.claude/settings.json`:
-
-```json
-{
-  "env": {
-    "SMART_COMPACT_CACHE_DURATION_MINUTES": "60"
-  }
-}
-```
-
-This example sets the threshold to 60 minutes for the extended cache window. The value must be a positive integer. If not set or invalid, it defaults to 5 minutes.
-
-### Cache Validator Block Threshold
-
-By default, the cache validator blocks your input whenever the transcript is stale and duplicates exist. If you only want to block when duplicates are significant, set a minimum percentage:
-
-Add to your `~/.claude/settings.json`:
+Add to your `~/.claude/settings.json` to customize deduplication aggressiveness:
 
 ```json
 {
   "env": {
-    "SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT": "5"
+    "SMART_COMPACT_DEDUP_MIN_BYTES": "1",
+    "SMART_COMPACT_MULTILINE_CONTEXT_LINES": "1",
+    "SMART_COMPACT_SINGLELINE_CONTEXT_CHARS": "10"
   }
 }
 ```
 
-This example only blocks if duplicates exceed 5% of your context window. Valid values: 0-100 percent (default 0%, which blocks for any duplicates). Set to 100 to disable blocking entirely.
+**`SMART_COMPACT_DEDUP_MIN_BYTES`** - Minimum bytes to replace with marker (default: `1`)
+- Only creates omission marker if removed content exceeds this threshold
+- `1`: Replace all duplicates (maximum compression)
+- `100`: Only replace if > 100 bytes
+- `1000`: Only replace large blocks
+- Use higher values to preserve more inline context, lower for aggressive compression
 
-### Context Window Size (Duplicate Notification)
+**`SMART_COMPACT_MULTILINE_CONTEXT_LINES`** - Context lines around changes in multiline files (default: `1`)
+- Applied as ±N lines around changed content
+- `0`: Only keep changed lines (most aggressive)
+- `1`: ±1 line context (balanced, default)
+- `3`: ±3 line context (preserves more surrounding code)
 
-The duplicate tokens notification uses your context window size (in tokens) to calculate what percentage of your context contains duplicates. By default it uses **200k tokens** (Claude's standard context). If you have the extended **1 million tokens context**, configure it:
+**`SMART_COMPACT_SINGLELINE_CONTEXT_CHARS`** - Context characters around changes in single-line files (default: `10`)
+- Applied as ±N characters around changed region
+- `0`: Only keep changed chars (most aggressive)
+- `10`: ±10 char context (balanced, default)
+- `20`: ±20 char context (preserves more structure)
 
-Add to your `~/.claude/settings.json`:
+**Trade-off Summary:**
+- Lower context margins (0) → More bytes saved, less readable context
+- Default margins (1/10) → Balanced compression and readability
+- Higher margins (3/20) → Minimal markers, more surrounding content visible
 
-```json
-{
-  "env": {
-    "SMART_COMPACT_CONTEXT_WINDOW_TOKENS": "1000000"
-  }
-}
-```
+**Note on JSONL format:** Files with one JSON object per line are detected as multiline and use line-based comparison, preventing format corruption. If you have compact JSONL with very long lines, increase `SMART_COMPACT_MULTILINE_CONTEXT_LINES` to preserve structure.
 
-Valid values: 200000 (default, 200k tokens) or 1000000 (1M tokens). Any other value falls back to default.
+### Optional: Cache and Notification Settings
 
-### Notification Threshold
+These settings are rarely needed; defaults work for most users:
 
-By default, you only receive duplicate notifications when duplicates exceed **15% of your context window**. You can customize this threshold:
+**`SMART_COMPACT_CACHE_DURATION_MINUTES`** - Cache staleness threshold (default: `5`)
+- When transcript exceeds this idle time, pre-prompt hook validates and suggests resume
+- Default 5 minutes matches Claude's prompt cache window
+- Set to 60 for extended 1-hour cache window
 
-Add to your `~/.claude/settings.json`:
+**`SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT`** - Minimum duplicate percentage to block input (default: `0`)
+- Only blocks prompt submission if duplicates exceed this percentage of context
+- `0`: Block for any duplicates (default)
+- `5`: Only block if >5% context is duplicates
+- `100`: Disable blocking entirely
 
-```json
-{
-  "env": {
-    "SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT": "10"
-  }
-}
-```
+**`SMART_COMPACT_CONTEXT_WINDOW_TOKENS`** - Your context window size (default: `200000`)
+- Used to calculate duplicate percentage in notifications
+- `200000`: Standard context (200k tokens)
+- `1000000`: Extended context (1M tokens)
 
-This example notifies at 10% instead of 15%. Valid values: 0-100 percent. If tokens cannot be calculated, notifications are always sent regardless of threshold.
+**`SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT`** - Minimum duplicate percentage to show notification (default: `15`)
+- Only shows duplicate notification when percentage exceeds this value
+- `0`: Always show (helpful during heavy editing)
+- `15`: Default (less frequent notifications)
+- `50`: Only show if duplicates exceed half your context
 
 ## Usage
 
-### Automatic (Hook Mode)
+The plugin works in three modes:
 
-The plugin runs automatically when you end a session:
+### 1. Automatic (Session End - Hook Mode)
+
+Runs automatically when you exit a session:
 
 ```bash
-[End session with /exit, Ctrl+C, or naturally]
-# Plugin cleans transcript as session closes
+[End session with /exit, Ctrl+C, or exit naturally]
+# Plugin cleans transcript before closing
 ```
 
-Output when duplicates are found:
+Output when duplicates found:
 ```
-Deduplicated 12 file reads with same content from conversation which cleared up 45230 wasted characters.
-```
-
-The cleaned transcript benefits all future resumes of that session.
-
-### Cache Validator (Pre-Prompt Hook)
-
-The plugin also validates transcript freshness before you submit each prompt:
-
-```
-[You type a prompt after 6+ minutes of idle time]
-# Plugin detects stale cache and blocks submission:
-Cache invalidated and conversation contains duplicate file reads.
-Exit and resume session to clear 15422 bytes (~14457 tokens) from context.
+Found 5 duplicate reads, 8,432 bytes (2,108 tokens)
 ```
 
-**What triggers validation:**
-- Transcript is stale (> 5 minutes since last Claude message)
-- Deduplication would save bytes
-- Both conditions met → prompt blocked with savings estimate
+### 2. Smart Validation (Pre-Prompt - Hook Mode)
 
-**Token estimates shown:**
-- Calculated per-file using cache write token ratios
-- Format: `XXX bytes (~YYY tokens)`
-- Helps you understand the benefit of resuming
-
-This prevents wasted conversation on stale transcripts and encourages resume-based workflows for cost efficiency.
-
-### Duplicate Tokens Notification
-
-The plugin sends a notification when you're idle and awaiting input (Stop hook), if duplicates exceed your threshold:
+Validates transcript freshness before each prompt:
 
 ```
-Duplication in conversation: 150.1K characters (37.5K tokens, 18.76% of context window)
+[You type after 6+ minutes idle]
+# Plugin detects stale cache + duplicates:
+Cache stale. Duplicates: 15,422 bytes (~3,855 tokens).
+/exit and /resume to clean context and save tokens.
 ```
 
-**What the notification shows (when tokens are available):**
-- Characters of duplicate content (formatted as K/M)
-- Estimated tokens using standard conversion (~4 bytes ≈ 1 token)
-- Percentage of your total context window
+Triggers when:
+- Transcript is idle >5 minutes (default)
+- Deduplication would save significant bytes
+- Both conditions met → shows savings estimate
 
-**Simplified message (when tokens cannot be calculated):**
+### 3. Duplicate Notification (While Idle - Hook Mode)
+
+Shows notification while awaiting input if duplicates exceed threshold:
+
 ```
-Duplication in conversation: 150.1K characters
+Duplication in conversation: 150.1K characters (37.5K tokens, 18.76% of context)
 ```
 
-**Threshold behavior:**
-- Only notifies if duplicates exceed threshold (default 15%)
-- If tokens cannot be calculated, always notifies (no threshold check)
-- Customize threshold via `SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT` in settings
-
-**Token estimation:**
-- Uses standard conversion: ~4 bytes ≈ 1 token (for English text)
-- This is an estimate; actual token count varies by content
-
-This helps you quickly decide if it's worth resuming the session to clean up duplicates before they waste more context.
+Helps you decide whether resuming now would be worthwhile.
 
 ### Manual (CLI Mode)
 
-Preview what would be removed (detailed report):
+For testing or direct transcript analysis:
+
 ```bash
-python cleanup_conversation.py <transcript_file> --dry-run
-```
+# See what would be removed (detailed):
+python cleanup_conversation.py <transcript.json> --dry-run
 
-Output includes per-file deduplication details with byte and token savings.
+# See summary only:
+python cleanup_conversation.py <transcript.json> --dry-run-short
+# Output: Savings: 15422 bytes (~3855 tokens)
 
-Quick savings summary only:
-```bash
-python cleanup_conversation.py <transcript_file> --dry-run-short
-```
+# Apply deduplication:
+python cleanup_conversation.py <transcript.json>
 
-Output: `Savings: 15422 bytes (~14457 tokens)`
-
-Apply deduplication:
-```bash
-python cleanup_conversation.py <transcript_file>
+# Debug mode (shows per-operation details):
+python cleanup_conversation.py <transcript.json> --debug
 ```
 
 ## How It Works
 
-The plugin uses backward-iterating chain-following deduplication to intelligently remove redundant file reads:
+The plugin uses **forward-chaining deduplication**, processing operations in chronological order and comparing each against the previous state. It keeps the latest version of each unique content and replaces earlier duplicates with clear markers.
 
-**Backward Iteration with Chain Following:**
-Starting from the newest read and working backward, the plugin:
-1. Compares each read to the previous operation (earlier read or write)
-2. If the previous read has **same content** → marks it for dedup and continues checking from that read
-3. If the previous read has **different content** → applies partial dedup with line-level comparison
-4. If no previous read but **previous write matches** → marks current read for dedup
-
-This chain-following approach efficiently catches transitive duplicates (Read A = Read B = Read C) in a single pass.
-
-**Line-by-Line Comparison:**
-When two reads of the same file differ, the plugin compares them line-by-line to find what changed:
+**Basic algorithm:**
 ```
-Read 1: lines 1-50 identical
-        lines 51-60 changed (edited)
-        lines 61-100 identical
-
-Read 2: lines 1-50 identical
-        lines 51-60 different
-        lines 61-100 identical
+For each file in the transcript:
+  1. Track previous_state = content from previous read
+  2. For each new read:
+     - If content matches previous_state → mark as duplicate
+     - If content differs → apply partial dedup (keep changes + context)
+     - Always keep the very last read (represents current state)
 ```
 
-**Context-Aware Deduplication:**
-The plugin applies a ±3 line context margin around changes to preserve editing context (matches Claude Code's edit tool):
-```
-Changed lines:     51-60
-Context margin:    ±3 lines
-Kept range:        48-63 (includes context)
-Replaced:          1-47, 64-100
-```
+**Content types:**
+- **Single-line** (no newlines): Character-based comparison with ±10 char context
+- **Multiline** (contains newlines): Line-based comparison with ±1 line context
+- Thresholds and margins are configurable via environment variables
 
-**Marker Replacement:**
-Lines outside the context range are replaced with clear, self-documenting markers:
-
-For partial deduplication (read before and after edit):
-```
-lines 1-47:      [...Partial duplicate read omitted - latest version contains complete content...]
-lines 48-63:     (original unchanged content kept for context)
-lines 64-100:    [...Partial duplicate read omitted - latest version contains complete content...]
-```
-
-For full deduplication, markers indicate which version is preserved:
-- Multiple reads: `[...Duplicate read omitted - latest version contains complete content...]`
-- Read after write: `[...Duplicate read omitted - earlier version contains complete content...]`
-
-This preserves the file structure (one placeholder per omitted block) while removing token-wasting redundant content.
-
-**Why These Markers Work for AI Reasoning:**
-The markers use self-documenting language that helps LLMs (like Claude) understand deduplication without requiring domain knowledge:
-- **"contains complete content"** signals that the indicated version has everything needed - nothing is lost, just consolidated
-- **"latest version"** vs **"earlier version"** uses temporal language that's unambiguous regardless of message processing direction
-- **Consistent pattern** trains intuitive understanding: each marker type clearly states which version is authoritative
-- This works because deduplication aligns with trained behavior: LLMs naturally prioritize newer content in context, so markers encouraging reference to "latest/earlier" versions fits natural reasoning patterns
-- The markers convey intent (deduplication for tokens/hallucination reduction) without metadata overhead
-
-**Smart Thresholds:**
-- Skips files with fewer than 3 total lines (defer to character-level dedup later)
-- Only creates placeholders for omitted blocks ≥ 3 lines
-- Small unchanged sections between edits are kept as-is to maintain readability
-
-All intervening messages are preserved—only truly redundant file content is removed.
-
-## Token Estimation
-
-The plugin estimates token savings for each deduplicated file using per-file cache write information:
-
-**How it works:**
-- Extracts character from each file read in the transcript
-- Estimated tokens using standard conversion (~4 bytes ≈ 1 token)
-
-**Example calculation:**
-```
-README.md: 9,266 chars with ratio 4 char/token
-  → 2 reads × 9,266 chars / 4 ≈ 4,633 tokens saved
-```
-
-Token estimates appear in:
-- Cache validator message: `clear 15422 bytes (~3,855 tokens)`
-- CLI reports: `Total bytes omitted: 15422 (~3,855 tokens)`
-- Dry-run output: Full details per file
-
-## Example Workflow
-
-```
-Session 1: Multiple edits with repeated file reads
-           [Plugin cleans duplicates on exit]
-                ↓
-Session 2: /resume → Load cleaned transcript
-           → Smaller file = fewer tokens to reconstruct
-           → Lower cost, lower hallucination risk
-```
-
----
+**Supported operations:**
+- **File Reads**: Via `Read` tool
+- **Bash**: `cat`, `head`, `tail`, `wc` commands that read files
+- **Grep**: Search operations with smart line-overlap detection for safety
 
 ## Known Limitations
 
-### Top-Level Context Percentage Lags (But Token Savings Are Visible)
+**Bash detection** (`cat`, `head`, `tail`, `wc`):
+- ✓ Direct commands: `cat file.txt`, `head -n 20 file`
+- ✓ Bash wrapper: `bash -c "cat config.json"`
+- ✗ Command substitution: `$(cat file)` (future)
+- ✗ Complex pipes: Already detected but not fully optimized (partial support)
 
-When called directly after resume token savings **are immediately visible**, but appear in different places within `/context`:
+**Grep operations**:
+- ✓ Single file: `grep pattern file.txt`
+- ✓ Smart overlap: Safely deduplicates when edits don't touch matched lines
+- ✗ Glob patterns: `grep pattern *.py` (requires multi-file support)
 
-**✅ Already Updated (Real Savings Shown):**
-- Messages section: Drops from higher to lower count (e.g., 47.9k → 17.3k)
-- Free space: Increases (e.g., 128k → 158k)
-
-**⚠️ Lags Behind:**
-- Top-level percentage: Still shows pre-deduplication value (e.g., stays at 35%) until cache invalidates
-- Percentage will update after first user message when the cache is created again
-
-**Why this split happens:**
-
-The top-level percentage is calculated from `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` which contains the cached token values from the current prompt cache. Since deduplication modified the persisted transcript and not the prompt cache these cached values don't update immediately. The messages and free space sections recalculate differently and reflect the actual smaller transcript right away.
+**Other edge cases**:
+- Context percentage in `/context` may lag briefly after dedup (cache updates on next message)
+- Symbolic links and file aliases treated as separate files (future unification)
 
 ---
 
-## Technical Explanation
+## Technical Deep-Dive
 
-**Why duplicate reads matter:**
+This section explains the plugin internals for those interested in how deduplication works.
 
-Claude prioritizes newer tokens over older ones during reasoning. This means older context gets deprioritized. During a session, you naturally re-read files to keep them "fresh" at the top of context:
-- Read file to understand logic
-- Exchange messages, discuss changes
-- Read file again (pushes it to newer tokens, higher priority)
-- Exchange more messages
-- Read file again (refreshes context, pushes it further up)
+### Forward-Chaining Algorithm
 
-This is intentional and helps during active work. But when you `/resume`, Claude reconstructs the entire conversation from the transcript, which costs tokens (~600k+ per large session) to rebuild all that history. The duplicate reads—same file, same content hash—don't add information value to the reconstruction. They just repeat what's already there.
+The core algorithm processes operations chronologically per file:
 
-The plugin removes those redundant reads while keeping intervening messages intact. This shrinks the transcript that needs reconstruction on resume, lowering the overhead cost.
+```python
+for each file:
+  previous_state = None
+  last_read_index = find_last_read(file)
 
-**How it differs from `/compact`:**
+  for each operation (oldest to newest):
+    if is_read(operation):
+      if operation_index == last_read_index:
+        keep full content (represents current state)
+      elif content == previous_state:
+        mark for full dedup
+      else:
+        mark for partial dedup (diff-based)
+      previous_state = content
+```
 
-`/compact` uses an LLM to summarize early conversation and remove detail. It's non-deterministic and can lose information. This plugin uses deterministic hash-based deduplication—it only removes exact duplicates of file content, never loses information, and never makes LLM-based decisions.
+**Key property:** The last read is always preserved. This ensures the "current state" of each file is always available, which is critical for resume accuracy.
 
-**When deduplication activates:**
+### Content Type Detection
 
-The plugin runs on session end (SessionEnd hook), not on resume. This is because:
-- **SessionStart (resume)** runs after the transcript is already loaded - deduplication would only help future resumes
-- **SessionEnd** runs as the session closes, modifying the persisted transcript before it's finalized
-- The next time you resume that session, it loads the cleaned transcript directly
-- Benefit accumulates: Each resume pays less reconstruction cost due to smaller base file
+The plugin automatically detects whether content should be compared line-by-line or character-by-character:
 
-**Example cost benefit:**
+- **Single-line content** (no newlines): `{"debug": true}`
+  - Character-by-character diff
+  - Context: ±10 characters (default)
+  - Efficient for compact formats
 
-If a session's transcript is 5MB with 200KB of duplicates:
-- Current `/resume`: Reconstructs full 5MB
-- After dedup: Reconstructs 4.8MB (~4% savings per resume)
-- Over 5 resumes: Saves ~250K reconstruction tokens total
+- **Multiline content** (contains newlines): Markdown, code, JSONL
+  - Line-by-line diff
+  - Context: ±1 line (default)
+  - Preserves file structure
+
+### Deduplication Markers
+
+When content is omitted, it's replaced with a self-documenting marker:
+
+```
+[...Duplicate read omitted - latest version contains complete content...]
+```
+
+The marker language helps LLMs understand:
+- **"Duplicate read"**: Type of operation removed
+- **"omitted"**: Content is gone but intentionally
+- **"latest version"**: Which version to reference (unambiguous temporal reference)
+- **"contains complete content"**: Nothing is lost, just consolidated
+
+### Smart Edit Overlap Detection
+
+For grep operations, the plugin checks if edits between the grep and a later read touch the lines grep matched:
+
+```
+Grep matches line 5
+Edit 1 changes line 1   → Safe (doesn't overlap)
+Edit 2 changes line 5   → Unsafe (overlaps)
+
+Only skip dedup if edits actually touch grep-matched lines
+```
+
+This allows safe deduplication in more cases than the conservative "any edit = skip" approach.
+
+### Context Window Impact
+
+When deduplication happens:
+- **On session end**: Transcript is smaller before being persisted
+- **On resume**: The `/resume` reconstruction costs fewer tokens (smaller input file)
+- **Each resume**: Gets cumulative benefit if more duplicates appear
+
+Example: Session with 250KB duplicates across 5 resumes = ~50KB saved per resume = ~12.5K tokens saved total.
+
+### Differences from `/compact`
+
+| Aspect | `/compact` | Smart Compact |
+|--------|-----------|---------------|
+| Method | LLM summarization | Deterministic deduplication |
+| Safety | Non-deterministic, can lose info | Deterministic, never loses info |
+| Speed | Slow (calls Claude) | Fast (local hashing) |
+| Use case | Shorten early conversation | Remove exact duplicates |
+
+---
+
+## Why This Matters
+
+**Token efficiency:** When you `/resume`, Claude reconstructs the entire transcript, including all duplicate reads. The reconstruction cost scales with transcript size. Removing exact content duplicates shrinks that cost without losing context.
+
+**Hallucination risk:** Smaller, focused context reduces hallucination risk by removing noise (duplicate content that doesn't add information).
+
+**Cost-effectiveness:** Especially valuable for:
+- Long-running sessions with heavy file editing
+- Workflows that frequently use `/resume`
+- Teams using Claude Code for extended development sessions
 
 ---
 

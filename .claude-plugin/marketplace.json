@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "A Claude Code marketplace that cuts token costs, preserves context across sessions, and extends Claude with intelligent project exploration, workflow automation, and development standards.",
-    "version": "1.16.0.0"
+    "version": "1.17.0.0"
   },
   "plugins": [
     {
-      "name": "session-protocol",
-      "source": "./plugins/session-protocol"
+      "name": "smart-compact",
+      "source": "./plugins/smart-compact"
     },
     {
       "name": "project-intel",
@@ -20,6 +20,10 @@
     {
       "name": "fetch-full-content",
       "source": "./plugins/fetch-full-content"
+    },
+    {
+      "name": "session-protocol",
+      "source": "./plugins/session-protocol"
     },
     {
       "name": "changelog",
