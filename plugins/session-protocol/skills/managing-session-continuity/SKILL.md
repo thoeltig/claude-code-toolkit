@@ -1,7 +1,7 @@
 ---
 name: managing-session-continuity
 description: Managing session continuity across Claude conversations by saving structured context (tasks, files, errors, git state) to JSON and loading in new sessions. Use when user asks how session continuity works, explaining session protocol functionality, understanding session state management, describing what gets saved in sessions, ending a session with unfinished work, starting a session with existing session-protocol.json, or when user mentions 'save progress', 'save session', 'save my work', 'continue later', 'session context', 'pick up where left off', 'load session', 'restore session', or explicitly invokes /save-session-protocol or /load-session-protocol commands.
-allowed-tools: Read, Write, Bash
+allowed-tools: Read, Write, Bash(git rev-parse *)
 ---
 
 # Managing Session Continuity

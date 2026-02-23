@@ -1,7 +1,6 @@
 ---
 name: managing-documentation
 description: Creates, updates, and maintains documentation for projects following best practices for clarity, accessibility, and inclusivity. Use when creating new docs, improving existing documentation, checking documentation standards, ensuring global audience compatibility, validating for inclusive language, or applying agile documentation principles. Handles guides, API documentation, README files, and internal documentation with emphasis on lean/agile practices, clarity for global audiences, and inclusive content.
-allowed-tools: Read, Write, Edit, Glob, Grep, Task
 ---
 
 # Managing Documentation
