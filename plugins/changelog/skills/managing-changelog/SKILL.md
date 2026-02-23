@@ -1,7 +1,6 @@
 ---
 name: managing-changelog
 description: Creates, updates, and maintains CHANGELOG.md files following Common Changelog and Keep a Changelog standards. Use when creating changelogs, adding release entries, updating unreleased sections, validating changelog format, or user mentions 'changelog', 'release notes', 'version history', 'add to changelog', 'update changelog', 'create changelog', 'change log format', or needs to document version changes.
-allowed-tools: Read, Write, Edit
 ---
 
 # Managing Changelog

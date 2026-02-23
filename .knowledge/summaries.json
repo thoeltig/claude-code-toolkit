@@ -1,16 +1,17 @@
 {
-  "generated": "2026-02-17T22:46:48.875Z",
+  "generated": "2026-02-23T01:14:17.963Z",
   "directories": {
     "plugins/project-intel/commands": {
       "path": "plugins/project-intel/commands",
-      "summary": "Contains command documentation and implementation guides for project-intel plugin operations.",
-      "purpose": "Defines slash command workflows for scanning projects and analyzing files to build searchable semantic knowledge bases.",
+      "summary": "Contains command documentation for scanning projects and querying project knowledge summaries.",
+      "purpose": "Defines CLI interfaces for analyzing project structure (scan), managing file summaries, and searching project metadata through semantic keyword queries. Core infrastructure for project understanding and cross-session navigation.",
       "technologies": [
-        "Markdown",
-        "Bash",
-        "Node.js"
+        "Node.js",
+        "TypeScript",
+        "JSON",
+        "Bash"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/project-intel/scripts": {
       "path": "plugins/project-intel/scripts",
@@ -49,12 +50,12 @@
     },
     ".claude-plugin": {
       "path": ".claude-plugin",
-      "summary": "Root plugin configuration directory containing marketplace registration metadata.",
-      "purpose": "Stores the central marketplace.json that defines the Claude Code Toolkit and registers all included plugins for discovery and installation.",
+      "summary": "Contains plugin marketplace configuration and metadata for the Claude Code Toolkit.",
+      "purpose": "Defines the marketplace structure, plugin registry, and toolkit versioning information for distribution and installation.",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/project-intel/.claude-plugin": {
       "path": "plugins/project-intel/.claude-plugin",
@@ -89,13 +90,15 @@
     },
     "plugins/changelog/skills/managing-changelog": {
       "path": "plugins/changelog/skills/managing-changelog",
-      "summary": "Core skill module implementing changelog creation, maintenance, and validation workflows.",
-      "purpose": "Houses the complete managing-changelog skill documentation providing 5 core workflows (WF1-WF5) for changelog operations including creation, adding releases, updating unreleased sections, format validation, and prerelease promotion with detailed reference specifications and examples.",
+      "summary": "Contains skill documentation for creating and maintaining CHANGELOG.md files following Common Changelog and Keep a Changelog standards.",
+      "purpose": "Defines workflows and best practices for managing project changelogs, including creation, release entry additions, unreleased updates, validation, and prerelease promotion. Ensures consistent, human-readable changelog maintenance across projects.",
       "technologies": [
         "Markdown",
-        "YAML"
+        "Common Changelog",
+        "Keep a Changelog",
+        "Semantic Versioning"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/claude-code-capabilities/skills/managing-slash-commands": {
       "path": "plugins/claude-code-capabilities/skills/managing-slash-commands",
@@ -156,25 +159,27 @@
     },
     "plugins/documentation/skills/managing-documentation": {
       "path": "plugins/documentation/skills/managing-documentation",
-      "summary": "Skill definition and documentation for the managing-documentation skill covering workflows and best practices.",
-      "purpose": "Defines a multi-workflow skill for creating, updating, and validating project documentation while ensuring global audience compatibility and inclusive content standards.",
+      "summary": "Contains skill documentation for creating, updating, and maintaining high-quality project documentation with emphasis on clarity, accessibility, and inclusivity.",
+      "purpose": "Comprehensive guide for managing all types of project documentation (guides, API docs, READMEs) with workflows for creation, updates, validation, and quality assurance. Ensures documentation is accessible to global audiences and follows agile/lean principles.",
       "technologies": [
         "Markdown",
-        "Documentation Standards",
-        "Workflow"
+        "Agile Documentation",
+        "Inclusive Language",
+        "Documentation Standards"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/fetch-full-content/commands": {
       "path": "plugins/fetch-full-content/commands",
-      "summary": "Command definition for downloading and converting full webpage content to markdown format.",
-      "purpose": "Provides web content fetching capabilities for importing external documentation and resources into the project knowledge base without summarization.",
+      "summary": "Contains command documentation for downloading and converting full web page content to markdown format.",
+      "purpose": "Provides CLI command interface for fetching complete page content from URLs without summarization, converting HTML to clean markdown for content analysis and knowledge extraction.",
       "technologies": [
+        "Bash",
+        "Python",
         "Markdown",
-        "Web Scraping",
-        "Python"
+        "Web Scraping"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.384Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/project-intel/agents": {
       "path": "plugins/project-intel/agents",
@@ -430,24 +435,24 @@
     },
     "plugins/smart-compact": {
       "path": "plugins/smart-compact",
-      "summary": "Plugin for automatic transcript deduplication to reduce token costs and preserve context by removing duplicate file reads.",
-      "purpose": "Provides intelligent deduplication of Claude Code transcripts using backward-iterating chain-following algorithms to detect and mark redundant file reads, with cache validation and user notifications to optimize context window usage.",
+      "summary": "Automatically deduplicates duplicate file reads, script outputs, and grep results from Claude Code session transcripts using deterministic algorithms.",
+      "purpose": "Reduces token waste and hallucination risk by removing exact content duplicates while preserving conversation integrity. Operates in three modes: automatic on session end, pre-prompt validation, and manual CLI analysis.",
       "technologies": [
         "Python",
         "JSON",
-        "SHA256",
-        "JSONL"
+        "Regex",
+        "Forward-chaining deduplication"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/smart-compact/.claude-plugin": {
       "path": "plugins/smart-compact/.claude-plugin",
-      "summary": "Plugin metadata and configuration directory for the smart-compact plugin.",
-      "purpose": "Contains plugin manifest and hook configuration files required by Claude Code to register and execute the plugin.",
+      "summary": "Plugin metadata configuration directory for Claude Code marketplace registration.",
+      "purpose": "Stores plugin manifest with name, version, author, license, and keywords for distribution via Claude Code marketplace.",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-08T20:43:03.685Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/smart-compact/hooks": {
       "path": "plugins/smart-compact/hooks",
@@ -468,6 +473,38 @@
         "JSON"
       ],
       "lastUpdated": "2026-02-17T22:46:48.874Z"
+    },
+    "plugins/smart-compact/scripts/cleanup": {
+      "path": "plugins/smart-compact/scripts/cleanup",
+      "summary": "Core deduplication logic modules handling operation detection, extraction, and content analysis from transcript messages.",
+      "purpose": "Implements specialized extraction and detection functions for various file operations (reads, bash, grep, edits) and provides utilities for parsing transcript formats and analyzing content changes.",
+      "technologies": [
+        "Python",
+        "Regex",
+        "Type hints"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/tests": {
+      "path": "plugins/smart-compact/tests",
+      "summary": "Contains test files for the smart-compact plugin's bash pattern detection and deduplication features.",
+      "purpose": "Validates pattern extraction logic for bash file-reading commands and edge cases to ensure deduplication works correctly across different command variations.",
+      "technologies": [
+        "Python",
+        "Pytest"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/session-protocol/skills/managing-session-continuity": {
+      "path": "plugins/session-protocol/skills/managing-session-continuity",
+      "summary": "Contains skill documentation for saving and restoring structured session context across Claude conversations.",
+      "purpose": "Defines workflows and JSON schema for capturing work state (tasks, files, errors, git context) at session end and restoring it in new sessions. Enables seamless continuation of unfinished work across conversations.",
+      "technologies": [
+        "JSON",
+        "Git",
+        "Markdown"
+      ],
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     }
   },
   "files": {
@@ -572,13 +609,18 @@
     },
     ".claude-plugin/marketplace.json": {
       "path": ".claude-plugin/marketplace.json",
-      "summary": "Root marketplace configuration registering the Claude Code Toolkit with 8 plugins including smart-compact, session-protocol, project-intel, and others.",
-      "purpose": "Serves as the central plugin registry that defines the toolkit name, owner, version, description, and lists all included plugins with their source locations for discovery and installation by Claude Code.",
+      "summary": "Defines the Claude Code Toolkit marketplace structure with owner information, metadata, and list of bundled plugins.",
+      "purpose": "Serves as the marketplace registry that specifies toolkit version, owner details, and references to all plugins (smart-compact, project-intel, fetch-full-content, session-protocol, changelog, documentation, claude-code-capabilities, cross-platform-notification) for distribution and installation.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "exports": [
+        "marketplace",
+        "plugins",
+        "metadata"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/project-intel/.claude-plugin/plugin.json": {
       "path": "plugins/project-intel/.claude-plugin/plugin.json",
@@ -592,15 +634,14 @@
     },
     "CHANGELOG.md": {
       "path": "CHANGELOG.md",
-      "summary": "Comprehensive changelog documenting all Claude Code Toolkit marketplace releases, plugins, and feature improvements from v1.0.0.0 through v1.16.0.0.",
-      "purpose": "Documents all marketplace releases, major features, bug fixes, and breaking changes across the toolkit and all plugins using Common Changelog and Keep a Changelog standards. Tracks evolution of smart-compact, project-intel, session-protocol, fetch-full-content, documentation, and cross-platform-notification plugins.",
+      "summary": "Documents all releases and changes to Claude Code Toolkit from v1.0.0.0 through v1.17.0.0 with detailed feature additions, changes, and fixes.",
+      "purpose": "Provides comprehensive version history following Common Changelog and Semantic Versioning standards. Tracks evolution of plugins including smart-compact algorithm improvements (backward iteration to forward-chaining), deduplication enhancements, and infrastructure changes across all marketplace plugins.",
       "role": "documentation",
       "technologies": [
         "Markdown",
-        "Semantic Versioning",
-        "Common Changelog"
+        "SemVer"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "CODE_OF_CONDUCT.md": {
       "path": "CODE_OF_CONDUCT.md",
@@ -693,31 +734,30 @@
     },
     "plugins/changelog/skills/managing-changelog/SKILL.md": {
       "path": "plugins/changelog/skills/managing-changelog/SKILL.md",
-      "summary": "Detailed skill guide implementing 5 core workflows (WF1-WF5) for creating, updating, validating, and managing CHANGELOG.md files.",
-      "purpose": "Comprehensive skill documentation covering changelog creation, release entry management, unreleased section updates, format validation, and prerelease promotion with format references, examples, integration patterns, anti-patterns, and GitHub Actions automation examples.",
+      "summary": "Documents five core workflows for creating and maintaining CHANGELOG.md files with emphasis on Common Changelog format, proper categorization, and change quality management.",
+      "purpose": "Provides step-by-step guidance for changelog operations including initial creation, adding release entries, updating unreleased sections, validating format compliance, and promoting prereleases. Includes format reference, examples, migration patterns, and anti-patterns to avoid.",
       "role": "documentation",
       "technologies": [
+        "Common Changelog",
+        "Keep a Changelog",
         "Markdown",
-        "YAML",
-        "GitHubActions",
-        "Git"
+        "Semantic Versioning",
+        "Best Practices"
       ],
       "exports": [
-        "WF1CreateChangelog",
-        "WF2AddReleaseEntry",
-        "WF3UpdateUnreleased",
-        "WF4ValidateFormat",
-        "WF5PromotePrerelease",
-        "FormatReference",
-        "Examples",
-        "Integration"
+        "WF1: Create CHANGELOG.md",
+        "WF2: Add Release Entry",
+        "WF3: Update Unreleased",
+        "WF4: Validate Format",
+        "WF5: Promote Prerelease"
       ],
       "imports": [
-        "Read",
-        "Write",
-        "Edit"
+        "Git",
+        "GitHub Actions",
+        "Common Changelog spec",
+        "Keep a Changelog spec"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/claude-code-capabilities/skills/managing-slash-commands/SKILL.md": {
       "path": "plugins/claude-code-capabilities/skills/managing-slash-commands/SKILL.md",
@@ -1367,30 +1407,54 @@
     },
     "plugins/documentation/skills/managing-documentation/SKILL.md": {
       "path": "plugins/documentation/skills/managing-documentation/SKILL.md",
-      "summary": "Comprehensive skill definition with four workflows for creating, updating, validating documentation, and applying agile/lean principles.",
-      "purpose": "Defines the complete managing-documentation skill with detailed workflows, quality checklists by document type, writing style principles, tool usage patterns, and common issues with fixes for documentation management.",
+      "summary": "Comprehensive skill documentation defining workflows for creating, updating, validating, and maintaining project documentation with global accessibility and inclusive language standards.",
+      "purpose": "Provides extensive guidance for documentation management across multiple document types (guides, API docs, READMEs, architecture docs). Covers purpose definition, structure planning, inclusive writing, validation checklists, agile principles, and quality assurance. Includes validation commands and anti-patterns.",
       "role": "documentation",
       "technologies": [
         "Markdown",
-        "Workflow",
-        "Documentation Standards",
+        "Agile Documentation",
         "Inclusive Language",
-        "Agile Methodology"
+        "Write the Docs",
+        "Google Style Guide"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "exports": [
+        "Workflow 1: Creating New Documentation",
+        "Workflow 2: Updating Existing Documentation",
+        "Workflow 3: Validating Documentation Quality",
+        "Workflow 4: Applying Agile/Lean Principles"
+      ],
+      "imports": [
+        "JSDoc",
+        "TSDoc",
+        "PlantUML",
+        "Mermaid",
+        "Sphinx",
+        "Doxygen"
+      ],
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/fetch-full-content/commands/fetch-full-content.md": {
       "path": "plugins/fetch-full-content/commands/fetch-full-content.md",
-      "summary": "Command specification for downloading URLs and converting HTML to clean markdown format.",
-      "purpose": "Documents the fetch-full-content command that downloads web pages, removes navigation/ads, and converts to markdown for content analysis without summarization.",
+      "summary": "Command documentation that describes argument parsing and execution of a Python script for downloading URLs and converting HTML to markdown.",
+      "purpose": "Specifies CLI command interface with allowed tools, argument format (URLs and output folder), execution steps, and output format. Used for fetching complete page content from trusted sources without prompt injection detection.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
+        "Bash",
         "Python",
-        "Web Scraping",
-        "HTML Conversion"
+        "Markdown",
+        "HTML",
+        "CLI"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "exports": [
+        "fetch-full-content command",
+        "--folder parameter",
+        "URL arguments"
+      ],
+      "imports": [
+        "python",
+        "fetch_full_content.py script"
+      ],
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/project-intel/agents/haiku-file-analysis.md": {
       "path": "plugins/project-intel/agents/haiku-file-analysis.md",
@@ -1404,13 +1468,28 @@
     },
     "plugins/project-intel/commands/query.md": {
       "path": "plugins/project-intel/commands/query.md",
-      "summary": "Command specification for semantic project knowledge querying with grouped and flat result formats.",
-      "purpose": "Documents /query command implementation including semantic scoring algorithm, scope filtering, result organization, and integration with CLI tools.",
+      "summary": "Command documentation for searching project knowledge by keywords with confidence-based scoring and semantic-first ranking of results.",
+      "purpose": "Specifies CLI interface for querying project file/directory summaries using semantic keyword search. Includes parameter definitions (keywords, --max, --scope, --format), usage examples, scoring algorithm, and error handling. Enables fast project exploration without expensive file reads.",
       "role": "documentation",
       "technologies": [
-        "Markdown"
+        "Node.js",
+        "Bash",
+        "JSON",
+        "CLI",
+        "Semantic Search"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "exports": [
+        "query command",
+        "--max parameter",
+        "--scope parameter",
+        "--knowledgeDir parameter",
+        "--format parameter"
+      ],
+      "imports": [
+        "ctx.js CLI script",
+        "summaries.json knowledge base"
+      ],
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/project-intel/scripts/package-lock.json": {
       "path": "plugins/project-intel/scripts/package-lock.json",
@@ -1507,30 +1586,27 @@
     },
     "plugins/session-protocol/skills/managing-session-continuity/SKILL.md": {
       "path": "plugins/session-protocol/skills/managing-session-continuity/SKILL.md",
-      "summary": "Comprehensive skill guide for session continuity management with token-optimized workflow descriptions, consolidation matrices, JSON schema, and error handling.",
-      "purpose": "Provides Claude with detailed instructions for executing session save/load workflows including task extraction, consolidation decision matrices, git validation, JSON generation, and privacy rule enforcement. Uses compressed format to reduce token overhead while maintaining technical precision.",
+      "summary": "Detailed skill documentation for saving and restoring session state via structured JSON including tasks, context blocks, git state, and consolidation logic for completed work.",
+      "purpose": "Defines two core workflows (WF1: Save Context, WF2: Load Context) with step-by-step procedures, JSON schema with complete field specifications, consolidation matrix for completed tasks, and validation logic. Enables persistent work context across Claude conversations with privacy protection.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
         "JSON",
         "Git",
-        "Python",
-        "Bash"
+        "Markdown",
+        "ISO8601",
+        "minified JSON"
       ],
       "exports": [
         "WF1: Save Context",
         "WF2: Load Context",
         "Consolidation Matrix",
-        "JSON Schema",
-        "Error Handling"
+        "JSON Schema"
       ],
       "imports": [
-        "TodoWrite context",
-        "Git commands",
-        "Path normalization",
-        "ISO8601 timestamps"
+        "Git operations",
+        "Task management"
       ],
-      "lastUpdated": "2026-02-05T00:29:08.385Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/claude-code-capabilities/CHANGELOG.md": {
       "path": "plugins/claude-code-capabilities/CHANGELOG.md",
@@ -3398,29 +3474,29 @@
     },
     "plugins/project-intel/commands/scan.md": {
       "path": "plugins/project-intel/commands/scan.md",
-      "summary": "Complete documentation of the /scan command workflow including parameters, usage examples, implementation steps, and technical specifications.",
-      "purpose": "Provides comprehensive guide for executing project scans with wave-based Haiku agent parallel processing, file batching strategies, error handling patterns, and JSON output structure validation. Documents the complete orchestration flow from scanning through merging of file analysis results.",
+      "summary": "Command documentation for orchestrating complete project scans and parallel Haiku analysis to generate searchable file and directory summaries.",
+      "purpose": "Specifies workflow for project analysis including scanning, batching files for parallel Haiku analysis, merging results into summaries.json, and error handling. Documents parameter usage, batch size, wave-based concurrent processing, and output formats. Core infrastructure for building project knowledge.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
-        "Bash",
         "Node.js",
+        "TypeScript",
+        "Bash",
         "JSON",
-        "Task Tool"
+        "Haiku"
       ],
       "exports": [
         "scan command",
-        "wave-based invocation",
-        "file batching",
-        "merge command"
+        "--location parameter",
+        "--knowledgeDir parameter",
+        "haiku-batch-N.json output",
+        "summaries.json output"
       ],
       "imports": [
-        "Task tool",
-        "Read tool",
-        "Write tool",
-        "Bash node"
+        "ctx.js CLI script",
+        "haiku-file-analysis agent",
+        "Task tool"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:14:17.963Z"
     },
     "plugins/project-intel/hooks/hooks.json": {
       "path": "plugins/project-intel/hooks/hooks.json",
@@ -3478,24 +3554,13 @@
     },
     "README.md": {
       "path": "README.md",
-      "summary": "Main marketplace documentation describing Claude Code Toolkit and all available plugins with features, installation, and usage guidelines.",
-      "purpose": "Central documentation hub introducing Claude Code Toolkit as a marketplace cutting token costs while extending Claude with intelligent project exploration, workflow automation, and development standards. Provides quick start, plugin directory with descriptions and install commands, highlights, and project governance information.",
+      "summary": "Main project documentation describing Claude Code Toolkit marketplace with eight available plugins and their features.",
+      "purpose": "Provides overview of toolkit purpose, quick start instructions, detailed plugin descriptions with highlights, contribution guidelines, code of conduct, and license information for users and contributors.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
-        "Claude Code"
+        "Markdown"
       ],
-      "exports": [
-        "session-protocol",
-        "project-intel",
-        "fetch-full-content",
-        "changelog",
-        "documentation",
-        "claude-code-capabilities",
-        "cross-platform-notification",
-        "smart-compact"
-      ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/project-intel/scripts/types.ts": {
       "path": "plugins/project-intel/scripts/types.ts",
@@ -3525,47 +3590,34 @@
     },
     "plugins/smart-compact/.claude-plugin/plugin.json": {
       "path": "plugins/smart-compact/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest for smart-compact plugin declaring metadata, version, and licensing information.",
-      "purpose": "Registers smart-compact as a Claude Code plugin for deduplicating transcript reads with version 1.4.1.0. Provides author attribution, repository references, and keyword metadata for marketplace discovery and plugin system integration.",
+      "summary": "Plugin manifest declaring smart-compact v2.2.1.0 metadata including name, description, author, and keywords.",
+      "purpose": "Defines plugin identity and searchability for Claude Code marketplace distribution, enabling users to discover and install the smart-compact deduplication plugin.",
       "role": "configuration",
       "technologies": [
-        "Claude Code",
         "JSON"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/smart-compact/CHANGELOG.md": {
       "path": "plugins/smart-compact/CHANGELOG.md",
-      "summary": "Comprehensive changelog documenting all releases of the smart-compact plugin from v1.0.0.0 to v1.4.1.0 with feature descriptions and implementation details.",
-      "purpose": "Provides transparent version history, tracking deduplication algorithm improvements, cache validation features, token estimation accuracy fixes, and configuration enhancements across 5 major releases with semantic versioning and changelog standards compliance.",
+      "summary": "Complete version history of smart-compact plugin documenting all releases from v1.0.0.0 to v2.2.1.0 with detailed change notes.",
+      "purpose": "Tracks feature additions, breaking changes, bug fixes, and architectural improvements across ten major versions including refactoring, algorithm enhancements, and configuration management updates.",
       "role": "documentation",
       "technologies": [
         "Markdown",
-        "semantic versioning",
-        "Keep a Changelog"
+        "Semantic Versioning"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/smart-compact/README.md": {
       "path": "plugins/smart-compact/README.md",
-      "summary": "Comprehensive documentation for smart-compact plugin explaining transcript deduplication mechanics, configuration, usage modes, and token optimization strategy.",
-      "purpose": "Guides users through installation, configuration, and operation of smart-compact which removes duplicate file reads from Claude Code transcripts to reduce token waste and hallucination risk. Explains backward-iterating chain-following deduplication algorithm, cache validator hook, notification thresholds, and technical implementation details with real-world cost-benefit examples.",
+      "summary": "Comprehensive user and developer documentation covering plugin features, installation, configuration, usage modes, and technical deep-dive.",
+      "purpose": "Explains what the plugin does, how to configure it via environment variables, describes three operational modes (automatic, validation, manual), and provides technical details about the deduplication algorithm.",
       "role": "documentation",
       "technologies": [
-        "Python",
-        "Claude Code",
         "Markdown"
       ],
-      "exports": [
-        "cleanup_conversation",
-        "cache_validator",
-        "duplicate_tokens_notification"
-      ],
-      "imports": [
-        "SessionEnd hook",
-        "Stop hook"
-      ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/smart-compact/hooks/hooks.json": {
       "path": "plugins/smart-compact/hooks/hooks.json",
@@ -3579,41 +3631,26 @@
     },
     "plugins/smart-compact/scripts/cleanup_conversation.py": {
       "path": "plugins/smart-compact/scripts/cleanup_conversation.py",
-      "summary": "Core deduplication engine that removes duplicate file reads from Claude Code transcripts using backward-iterating chain-following and line-level partial deduplication.",
-      "purpose": "Provides both hook-based automatic cleanup on session end and CLI-based manual deduplication with dry-run preview, detecting read-after-write and read-after-read duplicates while preserving file modification history and providing token estimates for context optimization.",
+      "summary": "Main deduplication orchestrator implementing forward-chaining algorithm to find and apply dedup actions to transcript messages.",
+      "purpose": "Coordinates extraction of all operations, runs dedup logic comparing reads chronologically, applies smart overlap detection for grep operations, and modifies transcript with dedup markers or partial content.",
       "role": "implementation",
       "technologies": [
         "Python",
         "JSON",
-        "SHA256",
-        "JSONL",
-        "dataclasses"
+        "Forward-chaining algorithm"
       ],
       "exports": [
-        "hash_content",
-        "extract_token_ratio_for_file",
-        "load_transcript",
-        "extract_writes",
-        "extract_reads",
-        "find_line_differences",
-        "apply_context_margin",
-        "create_partial_dedup_content",
-        "find_duplicates",
-        "apply_deduplication",
-        "generate_report",
-        "save_transcript",
-        "parse_hook_message",
+        "find_dedup_actions",
+        "apply_dedup",
         "main"
       ],
       "imports": [
         "json",
-        "hashlib",
         "sys",
         "pathlib.Path",
-        "typing.Optional",
-        "dataclasses"
+        "cleanup"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     },
     "plugins/smart-compact/scripts/block_idle_session.py": {
       "path": "plugins/smart-compact/scripts/block_idle_session.py",
@@ -3673,6 +3710,267 @@
         "datetime"
       ],
       "lastUpdated": "2026-02-17T22:46:48.875Z"
+    },
+    "plugins/smart-compact/scripts/cleanup/__init__.py": {
+      "path": "plugins/smart-compact/scripts/cleanup/__init__.py",
+      "summary": "Public API module for smart-compact cleanup package exporting models, markers, configuration functions, and core deduplication utilities.",
+      "purpose": "Provides clean import interface for transcript deduplication package by re-exporting essential components from modular submodules via __all__ list for external use and testing.",
+      "role": "implementation",
+      "technologies": [
+        "Python"
+      ],
+      "exports": [
+        "ContentType",
+        "FileOperation",
+        "BashOperation",
+        "GrepOperation",
+        "EditOperation",
+        "DedupAction",
+        "Logger",
+        "PARTIAL_DEDUP_MARKER",
+        "DUPLICATE_READ_MARKER",
+        "DUPLICATE_SCRIPT_MARKER",
+        "detect_content_type",
+        "find_line_differences",
+        "apply_context_margin",
+        "create_partial_dedup_multiline",
+        "create_partial_dedup_singleline",
+        "find_character_diff",
+        "extract_line_numbers_from_grep",
+        "edit_overlaps_with_lines",
+        "extract_filepath_from_bash_command",
+        "is_script_invocation",
+        "load_transcript",
+        "save_transcript",
+        "extract_operations",
+        "extract_bash_operations",
+        "extract_grep_operations",
+        "extract_edit_operations"
+      ],
+      "imports": [
+        "cleanup.const_models_and_config",
+        "cleanup.content",
+        "cleanup.detection",
+        "cleanup.extract"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/scripts/cleanup/const_models_and_config.py": {
+      "path": "plugins/smart-compact/scripts/cleanup/const_models_and_config.py",
+      "summary": "Data models, enums, configuration functions, and deduplication markers for the smart-compact transcript cleanup system.",
+      "purpose": "Defines core types (FileOperation, BashOperation, GrepOperation, EditOperation, DedupAction) and enums (ContentType), provides environment-variable-based configuration for dedup thresholds, and centralizes dedup marker strings used throughout the package.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "Dataclasses",
+        "Enum",
+        "Environment Variables"
+      ],
+      "exports": [
+        "ContentType",
+        "FileOperation",
+        "BashOperation",
+        "GrepOperation",
+        "EditOperation",
+        "DedupAction",
+        "Logger",
+        "PARTIAL_DEDUP_MARKER",
+        "DUPLICATE_READ_MARKER",
+        "DUPLICATE_SCRIPT_MARKER",
+        "get_min_dedup_bytes",
+        "get_multiline_context_lines",
+        "get_singleline_context_chars"
+      ],
+      "imports": [
+        "sys",
+        "os",
+        "dataclasses",
+        "enum",
+        "typing"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/scripts/cleanup/content.py": {
+      "path": "plugins/smart-compact/scripts/cleanup/content.py",
+      "summary": "Content type detection and line/character-level diffing utilities for intelligent partial deduplication of transcript content.",
+      "purpose": "Provides heuristics to choose appropriate diff strategy (line-based for multiline, character-based for single-line), identifies changed regions with configurable context margins, and generates partial dedup content with placeholder markers while respecting minimum byte thresholds.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "Diffing",
+        "Content Analysis"
+      ],
+      "exports": [
+        "detect_content_type",
+        "find_line_differences",
+        "apply_context_margin",
+        "create_partial_dedup_multiline",
+        "create_partial_dedup_singleline",
+        "find_character_diff"
+      ],
+      "imports": [
+        "typing",
+        "cleanup.const_models_and_config.ContentType",
+        "cleanup.const_models_and_config.PARTIAL_DEDUP_MARKER"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/scripts/cleanup/detection.py": {
+      "path": "plugins/smart-compact/scripts/cleanup/detection.py",
+      "summary": "Extracts operation details from bash commands and grep output, including filepath detection and script invocation identification.",
+      "purpose": "Provides specialized parsing functions to identify which operations are file-reads vs script invocations, extract line numbers from grep output, and detect file overlap for smart deduplication decisions.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "Regex"
+      ],
+      "exports": [
+        "extract_line_numbers_from_grep",
+        "edit_overlaps_with_lines",
+        "extract_filepath_from_bash_command",
+        "is_script_invocation"
+      ],
+      "imports": [
+        "re",
+        "typing"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/scripts/cleanup/extract.py": {
+      "path": "plugins/smart-compact/scripts/cleanup/extract.py",
+      "summary": "Extracts Read, Write, Bash, Grep, and Edit operations from transcript JSON messages, organizing them by filepath with content analysis.",
+      "purpose": "Parses transcript message structure to identify all file operations and their metadata (line ranges, affected lines, content), supporting both minified JSONL and pretty-printed JSON formats.",
+      "role": "implementation",
+      "technologies": [
+        "Python",
+        "JSON"
+      ],
+      "exports": [
+        "load_transcript",
+        "extract_operations",
+        "extract_bash_operations",
+        "extract_grep_operations",
+        "extract_edit_operations",
+        "save_transcript"
+      ],
+      "imports": [
+        "json",
+        "cleanup.const_models_and_config",
+        "cleanup.content",
+        "cleanup.detection"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/tests/generate_bash_grep_test.py": {
+      "path": "plugins/smart-compact/tests/generate_bash_grep_test.py",
+      "summary": "Generates comprehensive test transcript with Read, Write, Bash, Grep, and Edit operations to validate all dedup scenarios.",
+      "purpose": "Creates realistic workflow transcript covering file reads, bash commands, grep searches, and file edits with various overlap scenarios to test forward-chaining dedup algorithm.",
+      "role": "test",
+      "technologies": [
+        "Python",
+        "JSON",
+        "uuid",
+        "datetime"
+      ],
+      "exports": [
+        "create_message",
+        "create_write_operation",
+        "create_read_operation",
+        "create_bash_operation",
+        "create_grep_operation",
+        "create_edit_operation"
+      ],
+      "imports": [
+        "json",
+        "uuid",
+        "datetime"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/tests/generate_script_output_test.py": {
+      "path": "plugins/smart-compact/tests/generate_script_output_test.py",
+      "summary": "Generates test transcript with identical bash script outputs across multiple runners (python, npm, dotnet, node, ruby, java, go) to validate script deduplication.",
+      "purpose": "Creates realistic test scenarios with repeated script executions to validate that identical bash output is properly deduplicated while preserving different outputs.",
+      "role": "test",
+      "technologies": [
+        "Python",
+        "JSON",
+        "uuid",
+        "datetime"
+      ],
+      "exports": [
+        "create_message",
+        "create_bash_script_operation",
+        "create_read_operation"
+      ],
+      "imports": [
+        "json",
+        "uuid",
+        "datetime"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/tests/test-smart-overlap.py": {
+      "path": "plugins/smart-compact/tests/test-smart-overlap.py",
+      "summary": "Generates focused test transcript demonstrating smart overlap detection between grep and edit operations on specific line ranges.",
+      "purpose": "Tests two scenarios: grep-then-edit-non-overlapping (should dedup) and grep-then-edit-overlapping (should NOT dedup) to validate smart line-overlap detection logic.",
+      "role": "test",
+      "technologies": [
+        "Python",
+        "JSON",
+        "uuid"
+      ],
+      "exports": [
+        "main"
+      ],
+      "imports": [
+        "json",
+        "uuid",
+        "datetime",
+        "generate_bash_grep_test"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/tests/test_bash_patterns.py": {
+      "path": "plugins/smart-compact/tests/test_bash_patterns.py",
+      "summary": "Tests extraction of filepaths from bash file-reading commands including cat, head, tail, wc with various flag formats.",
+      "purpose": "Validates the bash pattern detection logic used in smart-compact deduplication to ensure correct filepath extraction from commands with optional flags and bash -c wrappers. Covers edge cases like pipes and redirects that should fail extraction.",
+      "role": "test",
+      "technologies": [
+        "Python",
+        "Regex",
+        "Bash"
+      ],
+      "exports": [
+        "extract_filepath_from_bash_command",
+        "test_pattern",
+        "main"
+      ],
+      "imports": [
+        "sys",
+        "re"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/smart-compact/tests/test_edge_cases.py": {
+      "path": "plugins/smart-compact/tests/test_edge_cases.py",
+      "summary": "Validation script that runs dedup tests on generated transcripts and verifies expected dedup behavior through keyword matching.",
+      "purpose": "Tests edge cases for bash/grep deduplication by executing the main cleanup script with different test transcripts and validating expected savings and dedup actions occur.",
+      "role": "test",
+      "technologies": [
+        "Python",
+        "subprocess"
+      ],
+      "exports": [
+        "run_dedup_test",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "subprocess",
+        "pathlib.Path"
+      ],
+      "lastUpdated": "2026-02-23T01:10:24.746Z"
     }
   }
 }
