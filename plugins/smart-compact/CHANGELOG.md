@@ -7,6 +7,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [2.2.1.0] - 2026-02-23
+
+### Changed
+
+- **Refactor:** Reorganize monolithic `cleanup_conversation.py` into modular Python package
+  - `const_models_and_config.py` - Data models, enums, configuration functions, and markers
+  - `content.py` - Content type detection and line/character-level diffing
+  - `detection.py` - Pattern detection for grep, bash, and edit operations
+  - `extract.py` - Transcript I/O and operation extraction functions
+  - `__init__.py` - Clean public API with `__all__` exports
+- Main script reduced from 1299 to 368 lines (-72% complexity)
+- Improved maintainability: single responsibility per module
+- Enhanced code organization: easier to test, extend, and understand
+- Maintains full backward compatibility with existing functionality
+- All tests pass: edge cases, smart overlap detection, pattern matching
+
 ## [2.2.0.0] - 2026-02-22
 
 ### Added
@@ -163,7 +179,8 @@ _First release of transcript deduplication plugin._
 - Detailed dry-run reports and minimal hook mode output
 - O(n) single-pass analysis with no false positives
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.1.0...HEAD
+[2.2.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.0.0...SmartCompact_v2.2.1.0
 [2.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.1.0...SmartCompact_v2.2.0.0
 [2.1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.0.0...SmartCompact_v2.1.1.0
 [2.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.0.0.0...SmartCompact_v2.1.0.0
