@@ -17,8 +17,7 @@
     "declarationMap": false,
     "sourceMap": false,
     "skipLibCheck": true,
-    "incremental": true,
-    "allowJs": true
+    "incremental": true
   },
   "include": [
     "."

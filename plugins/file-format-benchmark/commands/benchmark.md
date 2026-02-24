@@ -1,7 +1,7 @@
 ---
 description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), TOON, XML (compact/pretty), YAML). Generates test data variants (flat and nested), executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
 argument-hint: [--formats csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
-allowed-tools: Bash
+allowed-tools: Bash(npm run build), Bash(node *)
 ---
 
 # Benchmarking Test Orchestration
@@ -412,11 +412,35 @@ Full results saved to: ${BENCHMARK_OUTPUT_DIR}/analytics_results.json
 
 ## Comparison Tables
 
-You can also generate detailed comparison tables of the output file:
+Generate detailed comparison tables of benchmark results:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts && node tables/generate_all_tables.js --json-path ${BENCHMARK_OUTPUT_DIR}/analytics_results.json > ${BENCHMARK_OUTPUT_DIR}/tables.md
+cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts && npm run build && node dist/tables/generateTables.js --json-path ../${BENCHMARK_OUTPUT_DIR}/analytics_results.json --results-path ../${BENCHMARK_OUTPUT_DIR}/results > ../${BENCHMARK_OUTPUT_DIR}/tables.md
 ```
+
+**Tables Generated (16 total):**
+
+**Core Metrics (13 tables):**
+1. Comprehensive Benchmark Metrics
+2. Read Tokens comparison
+3. Total Tokens (Read + Reasoning)
+4. Accuracy (Raw vs Weighted)
+5. Efficiency Metrics
+6. Cost of Inaccuracy
+7. Tokens Per Character
+8. Rankings by Metric (3 sub-tables: most token efficient, highest accuracy, best efficiency)
+9. Mandatory vs Optional Comparison
+10. Cost Analysis (Tokens per Accuracy Point)
+11. Raw vs Weighted Accuracy Delta
+12. Information Value & Variant Impact
+13. Summary Statistics
+
+**Per-Topic Analysis (3 new tables):**
+1. **Per-Category Accuracy by Format** - Shows weighted accuracy % for each question category (field_retrieval, aggregation, filtering, structure_awareness, multiple_steps) broken down by format and variant
+2. **Category Delta: Mandatory vs Optional** - Displays accuracy deltas per category when comparing optional vs mandatory data across all formats
+3. **Category Difficulty Ranking** - Ranks question categories by average difficulty across formats, showing which format is easiest/hardest for each category
+
+Per-topic analysis helps identify which formats excel at specific question types, enabling data format optimization based on your analysis needs.
 
 ## Output Folder Structure
 
