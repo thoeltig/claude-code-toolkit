@@ -4,6 +4,10 @@
   "version": "0.9.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
-  }
+    "url": "https://github.com/thoeltig"
+  },
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/read-efficient",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "keywords": ["minify", "json", "tokens", "efficiency", "file-reading", "context-optimization"]
 }

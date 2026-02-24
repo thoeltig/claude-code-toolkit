@@ -47,23 +47,11 @@
     },
     {
       "name": "read-efficient",
-      "source": "./plugins/read-efficient",
-      "description": "Convert files to compact JSON for token efficient file reading.",
-      "version": "0.9.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/read-efficient"
     },
     {
       "name": "file-format-benchmark",
-      "source": "./plugins/file-format-benchmark",
-      "description": "Benchmarking framework to analyse tokenization per file format.",
-      "version": "0.2.0.0",
-      "author": {
-        "name": "Thore Höltig"
-      },
-      "strict": false
+      "source": "./plugins/file-format-benchmark"
     }
   ]
 }

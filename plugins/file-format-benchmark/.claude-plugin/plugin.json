@@ -1,9 +1,13 @@
 {
   "name": "file-format-benchmark",
   "description": "Benchmarking framework to analyse tokenization per file format.",
-  "version": "0.2.0.0",
+  "version": "1.0.0.0",
   "author": {
     "name": "Thore Höltig",
-    "url": "https://github.com/thoeltig/claude-code-toolkit"
-  }
+    "url": "https://github.com/thoeltig"
+  },
+  "homepage": "https://github.com/thoeltig/claude-code-toolkit/tree/main/plugins/file-format-benchmark",
+  "repository": "https://github.com/thoeltig/claude-code-toolkit",
+  "license": "MIT",
+  "keywords": ["benchmark", "tokens", "file-format", "tokenization", "efficiency", "testing"]
 }
