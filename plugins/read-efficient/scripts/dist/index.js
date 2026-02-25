@@ -4,11 +4,11 @@ exports.parseArguments = parseArguments;
 exports.processFile = processFile;
 exports.processFiles = processFiles;
 exports.main = main;
-const minifier_1 = require("./minifier");
 const fileHandler_1 = require("./utils/fileHandler");
 const cache_1 = require("./cache");
 const formatDetector_1 = require("./utils/formatDetector");
 const outputFormatter_1 = require("./utils/outputFormatter");
+const propertyMinifier_1 = require("./utils/propertyMinifier");
 const csv_1 = require("./formats/csv");
 const yaml_1 = require("./formats/yaml");
 const ini_1 = require("./formats/ini");
@@ -49,7 +49,7 @@ function parseArguments(args) {
 }
 async function processFile(filePath, options, currentOutputSize) {
     try {
-        let content = await (0, fileHandler_1.readFile)(filePath);
+        const content = await (0, fileHandler_1.readFile)(filePath);
         const format = (0, formatDetector_1.detectFormat)(filePath);
         // Format-safe minification: warn if minifying format-dependent formats without JSON conversion
         const structureDependentFormats = ['yaml', 'ini'];
@@ -57,73 +57,129 @@ async function processFile(filePath, options, currentOutputSize) {
         if (options.minify && !options.toJson && structureDependentFormats.includes(format)) {
             minificationNote = `${format.toUpperCase()} minified without --to-json (structure-aware conversion skipped)`;
         }
-        const minifiedContent = options.minify ? (0, minifier_1.minifyWhitespace)(content) : content;
+        // Indent-syntax: return raw content (no minification/conversion to preserve structure)
+        if (format === 'indent-syntax') {
+            const result = {
+                file: filePath,
+                originalSize: content.length,
+                newSize: content.length,
+                content: content,
+                cached: false,
+                minificationNote: 'Indentation-based syntax: output as-is to preserve structure'
+            };
+            if (options.cache) {
+                const cacheResult = await (0, cache_1.writeCache)(filePath, content, options.overwrite);
+                if (cacheResult.success) {
+                    result.cached = true;
+                    result.cachedPath = cacheResult.path;
+                }
+            }
+            return result;
+        }
         let processedContent;
         let cacheContent;
         try {
-            if (format === 'json') {
-                processedContent = JSON.parse(minifiedContent);
-                cacheContent = minifiedContent;
+            if (format === 'json' && options.minify) {
+                processedContent = JSON.parse(content);
+                processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                cacheContent = JSON.stringify(processedContent);
             }
-            else if (format === 'ndjson') {
-                // NDJSON is already JSON - only minify, don't use format handler
-                processedContent = minifiedContent;
-                cacheContent = minifiedContent;
+            else if (format === 'ndjson' && options.minify) {
+                // NDJSON with --to-json: process each line separately
+                const lines = content.trim().split('\n');
+                processedContent = lines.map(line => {
+                    const obj = JSON.parse(line);
+                    return (0, propertyMinifier_1.minifyJsonProperties)(obj);
+                });
+                cacheContent = processedContent.map((obj) => JSON.stringify(obj)).join('\n');
             }
             else if (format === 'csv' && options.toJson) {
-                const csvJson = (0, csv_1.formatCsv)(minifiedContent, { minify: true });
+                const csvJson = (0, csv_1.formatCsv)(content, { minify: false });
                 processedContent = JSON.parse(csvJson);
-                cacheContent = csvJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'yaml' && options.toJson) {
-                const yamlJson = (0, yaml_1.formatYaml)(minifiedContent, { minify: true });
+                const yamlJson = (0, yaml_1.formatYaml)(content, { minify: false });
                 processedContent = JSON.parse(yamlJson);
-                cacheContent = yamlJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'ini' && options.toJson) {
-                const iniJson = (0, ini_1.formatIni)(minifiedContent, { minify: true });
+                const iniJson = (0, ini_1.formatIni)(content, { minify: false });
                 processedContent = JSON.parse(iniJson);
-                cacheContent = iniJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'markdown' && options.toJson) {
-                let markdownJson = (0, markdown_1.formatMarkdown)(minifiedContent, { minify: true });
+                let markdownJson = (0, markdown_1.formatMarkdown)(content, { minify: false });
+                processedContent = JSON.parse(markdownJson);
                 // Remove anchor_line if requested
                 if (options.noAnchorLines) {
-                    const parsed = JSON.parse(markdownJson);
-                    removeAnchorLines(parsed);
-                    markdownJson = JSON.stringify(parsed);
+                    removeAnchorLines(processedContent);
                 }
-                processedContent = JSON.parse(markdownJson);
-                cacheContent = markdownJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'xml' && options.toJson) {
-                const xmlJson = (0, xml_1.formatXml)(minifiedContent, { minify: true });
+                const xmlJson = (0, xml_1.formatXml)(content, { minify: false });
                 processedContent = JSON.parse(xmlJson);
-                cacheContent = xmlJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'html' && options.toJson) {
-                const htmlJson = (0, html_1.formatHtml)(minifiedContent, { minify: true });
+                const htmlJson = (0, html_1.formatHtml)(content, { minify: false });
                 processedContent = JSON.parse(htmlJson);
-                cacheContent = htmlJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'log' && options.toJson) {
-                const logJson = (0, logs_1.formatLogs)(minifiedContent, { minify: true });
+                const logJson = (0, logs_1.formatLogs)(content, { minify: false });
                 processedContent = JSON.parse(logJson);
-                cacheContent = logJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else if (format === 'sql' && options.toJson) {
-                const sqlJson = (0, sql_1.formatSql)(minifiedContent, { minify: true });
+                const sqlJson = (0, sql_1.formatSql)(content, { minify: false });
                 processedContent = JSON.parse(sqlJson);
-                cacheContent = sqlJson;
+                if (options.minify) {
+                    processedContent = (0, propertyMinifier_1.minifyJsonProperties)(processedContent);
+                }
+                cacheContent = JSON.stringify(processedContent);
             }
             else {
-                processedContent = minifiedContent;
-                cacheContent = minifiedContent;
+                // Plaintext or unknown format
+                processedContent = content;
+                cacheContent = content;
             }
         }
         catch (parseErr) {
-            processedContent = minifiedContent;
-            cacheContent = minifiedContent;
+            // JSON parsing failed - fall back to plaintext
+            processedContent = content;
+            cacheContent = content;
+        }
+        // Minify plaintext/fallback content if it's still a string and minify is enabled
+        if (typeof processedContent === 'string' && options.minify) {
+            // Minify whitespace: reduce consecutive spaces and newlines
+            processedContent = processedContent
+                .replace(/[ \t]+/g, ' ')
+                .replace(/\n\n+/g, '\n')
+                .trim();
+            cacheContent = processedContent;
         }
         // Add file info node when --to-json is used for converted formats (not JSON/plaintext)
         let finalContent = processedContent;
