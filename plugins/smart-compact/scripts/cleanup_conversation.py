@@ -349,7 +349,7 @@ def main():
     else:
         # Normal format
         if actions:
-            print(f"Found {len(actions)} duplicate reads, {total_bytes} bytes ({estimated_tokens} tokens)")
+            print(f"Found {len(actions)} duplicate reads, {total_bytes} bytes (~{estimated_tokens} tokens)")
         else:
             print("No duplicates found")
 
