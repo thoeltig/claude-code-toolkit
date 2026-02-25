@@ -13,5 +13,5 @@ Execute the script to receive a more efficent version of the specified file(s). 
 - With '--max-output' argument the script detects potencial output size and decides if it should apply the cache logic or if it should output the content directly.
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/index.js $ARGUMENTS --overwrite --max-output=${BASH_MAX_OUTPUT_LENGTH:29000}
+node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/index.js $ARGUMENTS --overwrite --max-output=${BASH_MAX_OUTPUT_LENGTH:29900}
 ```
