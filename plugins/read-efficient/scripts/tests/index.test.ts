@@ -195,8 +195,9 @@ describe('CLI and Orchestration', () => {
             const result = await processFile(filePath, { minify: true, toJson: false, cache: false, overwrite: false, noOutput: false, noAnchorLines: false }, 0);
 
             // Should be minified directly, not formatted as JSON array
-            expect(typeof result.content).toBe('string');
-            expect(result.content).toContain('Alice');
+            const contentStr = JSON.stringify(result.content);
+            expect(typeof result.content).toBe('object');
+            expect(contentStr).toContain("[{\"id\":1,\"name\":\"Alice\"},{\"id\":2,\"name\":\"Bob\"}]");
         });
 
         test('should remove anchor_line fields when --no-anchor-lines is used', async () => {
