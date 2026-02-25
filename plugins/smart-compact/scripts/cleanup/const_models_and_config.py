@@ -1,3 +1,5 @@
+from pathlib import Path
+import subprocess
 import sys
 import os
 from dataclasses import dataclass
@@ -89,7 +91,62 @@ class Logger:
         """Print debug message if debug mode enabled."""
         if self.debug:
             print(f"[DEBUG] {msg}", file=sys.stderr)
+
+
+def get_duplicate_bytes_and_token_estimate(transcript_path: str) -> tuple[int, int | None]:
+    """Run cleanup_conversation.py with --dry-run-short and extract savings.
+
+    Returns tuple of (bytes_saved, estimated_tokens or None)
+    Returns (0, None) if no savings or command fails.
+    """
+    script_path = Path(__file__).parent / 'cleanup_conversation.py'
+
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script_path), transcript_path, '--dry-run-short'],
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+
+        if result.returncode != 0:
+            return 0, None
+
+        output = result.stdout.strip()
+        if not output.startswith('Savings: '):
+            return 0, None
+
+        # Parse: "Savings: 15422 bytes (~14457 tokens)" or "Savings: 15422 bytes"
+        savings_part = output.replace('Savings: ', '').strip()
+
+        # Extract bytes
+        bytes_match = savings_part.split(' ')[0]
+        try:
+            bytes_saved = int(bytes_match)
+        except ValueError:
+            return 0, None
+
+        # Extract tokens if present
+        estimated_tokens = None
+        if '(~' in savings_part and ' tokens' in savings_part:
+            try:
+                token_start = savings_part.index('(~') + 2
+                token_end = savings_part.index(' tokens', token_start)
+                estimated_tokens = int(savings_part[token_start:token_end])
+            except (ValueError, IndexError):
+                pass
             
+        if estimated_tokens is None:
+            # Calculate tokens using standard conversion (~4 bytes ≈ 1 token)
+            # Ignore the cleanup script's estimate as it's inflated by caching overhead
+            # This is an estimate; actual token count varies by content type
+            estimated_tokens = bytes_saved // 4
+
+        return bytes_saved, estimated_tokens
+
+    except (subprocess.TimeoutExpired, Exception):
+        return 0, None
+
 
 def get_min_dedup_bytes() -> int:
     """Get minimum bytes threshold for replacements from environment variable.
@@ -140,3 +197,101 @@ def get_singleline_context_chars() -> int:
         return chars
     except (ValueError, TypeError):
         return default_chars
+
+
+def get_cache_duration_minutes() -> int:
+    """Get cache duration from environment variable or use default.
+
+    Reads SMART_COMPACT_CACHE_DURATION_MINUTES environment variable.
+    Falls back to 5 minutes if not set or invalid.
+
+    Returns cache duration in minutes as integer.
+    """
+    default_duration = 5
+    env_value = os.getenv('SMART_COMPACT_CACHE_DURATION_MINUTES')
+
+    if env_value is None:
+        return default_duration
+
+    try:
+        duration = int(env_value)
+        if duration > 0:
+            return duration
+    except (ValueError, TypeError):
+        pass
+
+    return default_duration
+
+
+def get_context_window_tokens() -> int:
+    """Get context window size from environment variable or use default.
+
+    Reads SMART_COMPACT_CONTEXT_WINDOW_TOKENS environment variable.
+    Falls back to 200k (200,000 tokens) if not set or invalid.
+    Valid range: 200k to 1M tokens.
+
+    Returns context window size in tokens as integer.
+    """
+    default_size = 200_000
+    max_size = 1_000_000
+    env_value = os.getenv('SMART_COMPACT_CONTEXT_WINDOW_TOKENS')
+
+    if env_value is None:
+        return default_size
+
+    try:
+        size = int(env_value)
+        if default_size <= size <= max_size:
+            return size
+    except (ValueError, TypeError):
+        pass
+
+    return default_size
+
+
+def get_cache_validator_threshold() -> float:
+    """Get cache validator blocking threshold as percentage of context window.
+
+    Reads SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT environment variable.
+    Falls back to 0% (always block if stale) if not set or invalid.
+
+    Returns threshold as percentage (0-100).
+    """
+    default_threshold = 0.0
+    env_value = os.getenv('SMART_COMPACT_CACHE_VALIDATOR_THRESHOLD_PERCENT')
+
+    if env_value is None:
+        return default_threshold
+
+    try:
+        threshold = float(env_value)
+        if 0 <= threshold <= 100:
+            return threshold
+    except (ValueError, TypeError):
+        pass
+
+    return default_threshold
+
+
+def get_notification_threshold() -> float:
+    """Get notification threshold as percentage of context window.
+
+    Reads SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT environment variable.
+    Falls back to 10% if not set or invalid.
+
+    Returns threshold as percentage (0-100).
+    """
+    default_threshold = 15.0
+    env_value = os.getenv('SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT')
+
+    if env_value is None:
+        return default_threshold
+
+    try:
+        threshold = float(env_value)
+        if 0 <= threshold <= 100:
+            return threshold
+    except (ValueError, TypeError):
+        pass
+
+    return default_threshold

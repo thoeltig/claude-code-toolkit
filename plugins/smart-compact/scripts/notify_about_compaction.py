@@ -13,60 +13,11 @@ Configurable context window size via environment variable.
 import json
 import sys
 import subprocess
-import os
 from pathlib import Path
-from datetime import datetime, timezone
 
-
-def get_context_window_tokens() -> int:
-    """Get context window size in tokens from environment variable or use default.
-
-    Reads SMART_COMPACT_CONTEXT_WINDOW_TOKENS environment variable.
-    Falls back to 200k (200,000 tokens) if not set or invalid.
-    Valid range: 50k to 2M tokens.
-
-    Returns context window size in tokens as integer.
-    """
-    default_size = 200_000
-    min_size = 50_000
-    max_size = 2_000_000
-    env_value = os.getenv('SMART_COMPACT_CONTEXT_WINDOW_TOKENS')
-
-    if env_value is None:
-        return default_size
-
-    try:
-        size = int(env_value)
-        if min_size <= size <= max_size:
-            return size
-    except (ValueError, TypeError):
-        pass
-
-    return default_size
-
-
-def get_notification_threshold() -> float:
-    """Get notification threshold as percentage of context window.
-
-    Reads SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT environment variable.
-    Falls back to 15% if not set or invalid.
-
-    Returns threshold as percentage (0-100).
-    """
-    default_threshold = 15.0
-    env_value = os.getenv('SMART_COMPACT_NOTIFICATION_THRESHOLD_PERCENT')
-
-    if env_value is None:
-        return default_threshold
-
-    try:
-        threshold = float(env_value)
-        if 0 <= threshold <= 100:
-            return threshold
-    except (ValueError, TypeError):
-        pass
-
-    return default_threshold
+from cleanup import (
+    get_duplicate_bytes_and_token_estimate, get_notification_threshold, get_context_window_tokens
+)
 
 
 def format_bytes(bytes_val: int) -> str:
@@ -109,61 +60,6 @@ def parse_hook_message(hook_json: str) -> dict:
     if missing:
         raise KeyError(f"Missing required fields: {missing}")
     return hook_data
-
-
-def get_duplicate_info(transcript_path: str) -> tuple[int, int | None]:
-    """Run cleanup_conversation.py with --dry-run-short and extract savings.
-
-    Returns tuple of (bytes_saved, estimated_tokens or None)
-    Returns (0, None) if no savings or command fails.
-    """
-    script_path = Path(__file__).parent / 'cleanup_conversation.py'
-
-    try:
-        result = subprocess.run(
-            [sys.executable, str(script_path), transcript_path, '--dry-run-short'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-
-        if result.returncode != 0:
-            return 0, None
-
-        output = result.stdout.strip()
-        if not output.startswith('Savings: '):
-            return 0, None
-
-        # Parse: "Savings: 15422 bytes (~14457 tokens)" or "Savings: 15422 bytes"
-        savings_part = output.replace('Savings: ', '').strip()
-
-        # Extract bytes
-        bytes_match = savings_part.split(' ')[0]
-        try:
-            bytes_saved = int(bytes_match)
-        except ValueError:
-            return 0, None
-
-        # Extract tokens if present
-        estimated_tokens = None
-        if '(~' in savings_part and ' tokens' in savings_part:
-            try:
-                token_start = savings_part.index('(~') + 2
-                token_end = savings_part.index(' tokens', token_start)
-                estimated_tokens = int(savings_part[token_start:token_end])
-            except (ValueError, IndexError):
-                pass
-            
-        if estimated_tokens is None:
-            # Calculate tokens using standard conversion (~4 bytes ≈ 1 token)
-            # Ignore the cleanup script's estimate as it's inflated by caching overhead
-            # This is an estimate; actual token count varies by content type
-            estimated_tokens = bytes_saved // 4
-
-        return bytes_saved, estimated_tokens
-
-    except (subprocess.TimeoutExpired, Exception):
-        return 0, None
 
 
 def send_notification(message: str) -> bool:
@@ -220,7 +116,7 @@ def main():
             sys.exit(0)
 
         # Get duplicate info
-        bytes_saved, estimated_tokens = get_duplicate_info(transcript_path)
+        bytes_saved, estimated_tokens = get_duplicate_bytes_and_token_estimate(transcript_path)
 
         if bytes_saved == 0:
             sys.exit(0)
