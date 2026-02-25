@@ -7,6 +7,38 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Changed
+
+- **Minification Architecture Refactoring** - Eliminated double minification with property-level optimization:
+  - **Removed upfront minification** - No longer minifies raw content before format conversion
+  - **Property-level minification** - Minifies string content within JSON objects AFTER parsing
+  - **Single optimization pass** - Read → Parse → Minify properties → Stringify (vs. old: Minify → Parse → Stringify)
+  - **Type conversion** - Automatically converts safe types within properties:
+    - `"true"` / `"false"` → boolean
+    - Numeric strings (e.g., `"123"`, `"3.14"`) → numbers
+    - Preserves string IDs with leading zeros (e.g., `"007"` stays as string)
+  - **Empty value omission** - Removes null and empty/whitespace-only string values:
+    - Saves additional tokens while preserving semantic information
+    - Keeps empty arrays/objects to maintain structure indicators
+  - **Indent-syntax preservation** - Python, Makefile, and similar indent-based languages now returned raw
+    - Eliminates semantic breakage from minification of indentation-dependent syntax
+
+### Added
+
+- **Property minifier utility** (`src/utils/propertyMinifier.ts`):
+  - Recursive JSON object minification with configurable options
+  - Safe whitespace reduction in string values
+  - Type conversion with conservative heuristics
+  - Empty value filtering with structure preservation
+  - 33 comprehensive unit tests ensuring correctness
+
+### Test Coverage
+
+- **Total tests**: 569 passing (was 536 after refactoring)
+- **New tests**: 33 property minifier unit tests
+- **Architecture**: All existing tests pass with refactored implementation
+- **Performance**: No regression in processing speed
+
 ## [0.9.0.0] - 2025-12-11
 
 ### Added

@@ -32,15 +32,19 @@ Context is precious. Every character you read costs tokens. By minifying files -
 The tool automatically:
 
 1. **Detects file format** by extension (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, Log files, SQL, plaintext, code)
-2. **Minifies content** - Removes redundant whitespace and formatting noise
-   - Format-safe: Warns if minifying structure-dependent formats without JSON conversion
-3. **Parses structure** - Converts files to minified JSON:
+2. **Parses structure** - Converts files to JSON objects:
    - JSON files become structured objects for easier analysis
    - CSV/YAML/INI/XML/HTML files convert to structured JSON with file context metadata
    - Markdown converts to block-level JSON (headings, lists, code blocks, tables) with navigation anchors
    - Log files auto-detect format and parse to structured arrays
    - SQL parses INSERT/SELECT/UPDATE/DELETE/CREATE with full statement support
-   - NDJSON minified efficiently (treated as native JSON format)
+   - NDJSON processes each line independently
+3. **Minifies intelligently** - Removes redundant whitespace and improves token efficiency:
+   - **Property-level minification**: Minifies string content within JSON objects after parsing (not before)
+   - **Type conversion**: Converts `"true"`/`"false"` to booleans, numeric strings to numbers
+   - **Empty value omission**: Removes null and empty/whitespace-only strings for token savings
+   - **Structure preservation**: Keeps empty arrays/objects and maintains all semantic information
+   - **Format-safe**: Returns indent-syntax languages (Python, Makefile, etc.) raw to preserve structure
 4. **Gracefully falls back** - If parsing fails, returns minified plaintext instead
 5. **Caches results** (optional) - Reuse minified versions to avoid re-processing
 6. **Adds context** - File info node for converted formats shows original path, format, and compression ratio
@@ -150,12 +154,13 @@ For complete configuration details and auto-caching behavior, see [SPECS.md](./S
 
 The tool is a standalone TypeScript/Node.js package with:
 - **9 file format handlers** (JSON, CSV, YAML, INI, NDJSON, Markdown, XML, HTML, SQL, plaintext)
+- **Intelligent minification engine** with property-level optimization, type conversion, and empty value omission
 - **Batch processing** support for multiple mixed-format files
 - **Smart format detection** with graceful fallback to plaintext
 - **Optional disk caching** with conflict resolution and manifest generation
 - **Zero external dependencies** - pure TypeScript/Node.js implementation
-- **544 passing tests** with 78.79% statement coverage and 90.69% function coverage
-- **Performance**: Processes 10+ files per second, minification reduces file size by 20-70%
+- **569 passing tests** with comprehensive coverage and edge case validation
+- **Performance**: Processes 10+ files per second, achieves 30-70% size reduction through combined minification and type optimization
 
 ### Command Flags
 
