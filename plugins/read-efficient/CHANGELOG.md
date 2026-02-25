@@ -7,6 +7,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.0.0] - 2026-02-25
+
 ### Changed
 
 - **Minification Architecture Refactoring** - Eliminated double minification with property-level optimization:
@@ -31,13 +33,6 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   - Type conversion with conservative heuristics
   - Empty value filtering with structure preservation
   - 33 comprehensive unit tests ensuring correctness
-
-### Test Coverage
-
-- **Total tests**: 569 passing (was 536 after refactoring)
-- **New tests**: 33 property minifier unit tests
-- **Architecture**: All existing tests pass with refactored implementation
-- **Performance**: No regression in processing speed
 
 ## [0.9.0.0] - 2025-12-11
 
@@ -67,25 +62,6 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   - NDJSON now handled identically to JSON (minify directly)
   - Eliminates redundant format handler for line-delimited JSON
   - Tests consolidated into `index.test.ts` edge cases
-
-### Test Coverage
-
-- **Total tests**: 536 passing (was 544, NDJSON formatter tests consolidated)
-- **Code coverage**: 79.75% statements, 79.55% lines, 90.64% functions (↑ improved)
-- **New edge cases**: 11 comprehensive tests for new features in `index.test.ts`
-  - Format-safe minification warnings (YAML, INI)
-  - NDJSON minification handling
-  - Anchor line removal flag
-  - File info node for converted formats
-
-### Planned: Phase 7+ (Window Functions, CTEs, Advanced Subqueries)
-
-- **SQL Window Functions** - Advanced PARTITION BY and aggregate functions
-- **SQL CTEs** - Common Table Expressions (WITH clauses) full parsing
-- **Complex Subqueries** - Nested subquery resolution and analysis
-- **Reconstruction Validation** - Test SQL reconstruction accuracy improvements
-- **Performance Optimization** - Further optimize token usage for large documents
-- **Additional log formats** - Windows Event Log, CloudWatch, JSON log formats
 
 ## [0.8.0.0] - 2025-12-11
 
@@ -127,14 +103,6 @@ Comprehensive SQL statement parsing with test suite restructuring and quality va
   - Structured grouping of consecutive actions on same table
   - Consistent field population across all statement types
   - Better handling of complex nested expressions
-
-### Test Coverage
-
-- **SQL tests**: 70 passing (was 976 with lower coverage)
-- **All tests**: 544 passing
-- **Code coverage**: 78.79% statements, 78.58% lines, 90.69% functions
-- **SQL parser coverage**: 70.01% statements (high complexity from edge case parsing)
-- **Test quality**: Each test validates 15-20+ assertions vs previous 2-3 assertions per test
 
 ### Architecture Notes
 
@@ -261,15 +229,6 @@ HTML format handler with optimized semantic structures and consistent string rep
   - String-first representation: All HTML values as strings (HTML is text-based markup)
   - Graceful degradation for malformed HTML and complex nested structures
 
-### Test Coverage
-
-- **Total tests**: 378 passing (was 326, added 61 HTML tests)
-- **HTML test suites**: 2 suites (Phase 3.2a + Phase 3.2b)
-  - HTML Format Handler - Phase 3.2a: 40 tests
-  - HTML Format Handler - Phase 3.2b Semantic Structures: 21 tests
-- **Coverage**: Comprehensive testing of visual tag stripping, auto-closing, semantic structures, malformed HTML graceful degradation
-- **Real-world patterns**: Blog posts, documentation, data tables, complex nested structures
-
 ### Architecture Notes
 
 - Wrapper around XML parser (parseXml) for reuse without modification
@@ -293,14 +252,6 @@ XML format handler with full semantic preservation.
 - Auto-detection for .xml file extension
 - Format routing in index.ts with full `--to-json` support
 - 60 comprehensive test cases covering all XML scenarios
-
-### Test Coverage
-
-- **Total tests**: 326 passing (was 266, added 60 XML tests)
-- **Statement coverage**: 88.98%
-- **Branch coverage**: 80.74% (XML handler: 83.07%)
-- **Function coverage**: 96.84% (XML handler: 100%)
-- **Line coverage**: 89.58%
 
 ## [0.2.0.0] - 2025-12-08
 
@@ -329,13 +280,6 @@ Multi-format file reading with block-level structure support.
 - Improved error handling with graceful degradation for all format parsers
 - Architecture: Separated format handlers into individual modules for modularity and testability
 
-### Test Coverage
-
-- **Total tests**: 266 passing (was 148, added 118 new)
-- **Statement coverage**: 88.53%
-- **Function coverage**: 96.47%
-- **Line coverage**: 88.94%
-
 ## [0.1.0.0] - 2025-12-07
 
 _First release: Foundation for token-efficient file reading._
@@ -354,19 +298,15 @@ _First release: Foundation for token-efficient file reading._
 - File I/O operations with caching logic (fileHandler.ts)
 - Output formatting with structured response types (ProcessedFile, Manifest)
 
-### Test Coverage
-
-- **Total tests**: 148 passing
-- **Coverage**: 90%+ code coverage with graceful error handling
-
 ### Performance
 
 - Minification reduces file size by 20-70% depending on original formatting
 - Processes 10+ files per second
 - No artificial limits: handles arbitrarily large files
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.9.0.0...HEAD
-[0.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.8.0.0...ClaudeCodeTools_v0.9.0.0
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v1.0.0.0...HEAD
+[1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.9.0.0...ReadEfficient_v1.0.0.0
+[0.9.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.8.0.0...ClaudeCodeTools_v0.9.0.0
 [0.8.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.7.0.0...ClaudeCodeTools_v0.8.0.0
 [0.7.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.6.0.0...ClaudeCodeTools_v0.7.0.0
 [0.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ClaudeCodeTools_v0.5.0.0...ClaudeCodeTools_v0.6.0.0
