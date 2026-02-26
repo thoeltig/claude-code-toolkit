@@ -64,7 +64,7 @@ __all__ = [
     "DUPLICATE_READ_MARKER",
     "DUPLICATE_SCRIPT_MARKER",
     # Get estimate
-    "get_duplicate_bytes_and_token_estimate"
+    "get_duplicate_bytes_and_token_estimate",
     # Config
     "get_min_dedup_bytes",
     "get_multiline_context_lines",
