@@ -40,10 +40,6 @@
     {
       "name": "cross-platform-notification",
       "source": "./plugins/cross-platform-notification"
-    },  
-    {  
-      "name": "smart-compact",
-      "source": "./plugins/smart-compact"
     },
     {
       "name": "read-efficient",

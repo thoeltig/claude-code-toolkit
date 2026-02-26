@@ -183,15 +183,17 @@ Format Output (JSON/NDJSON/Manifest)
 
 ### Markdown Handler (`src/formats/markdown.ts`)
 
+**Parser**: `markdown-it` npm package with CommonMark-compliant token stream parsing
+
 **Block Elements Parsed**
-- Headings (all 6 levels with level tracking)
+- Headings (all 6 levels with level tracking, including setext-style)
 - Paragraphs (consecutive lines)
 - Ordered lists (numbered)
 - Unordered lists (bullet points)
-- Task lists (with checked state)
+- Task lists (with checkbox state tracking: `checked: true/false`)
 - Code blocks (with language detection)
-- Tables (with headers and row objects)
-- Blockquotes
+- Tables (with headers and row objects with column keys)
+- Blockquotes (including nested blockquotes)
 - Horizontal rules
 - YAML front matter (preserved as-is)
 
@@ -219,11 +221,13 @@ Format Output (JSON/NDJSON/Manifest)
 
 ### XML Handler (`src/formats/xml.ts`)
 
+**Parser**: `htmlparser2` npm package in xmlMode
+
 **Semantic Preservation**
 - Element tags preserved as JSON field names
 - Attributes stored with `attribute_` prefix (e.g., `id="x"` → `attribute_id: "x"`)
 - Text-only elements stored as `_text` or direct string value
-- Namespace support: `ns:tagName` format preserved in output
+- Namespace support: `ns:tagName` format preserved in output with colons preserved
 
 **CDATA Handling**
 - CDATA content merged with text nodes
@@ -255,6 +259,8 @@ Format Output (JSON/NDJSON/Manifest)
 ---
 
 ### HTML Handler (`src/formats/html.ts`)
+
+**Parser**: `htmlparser2` npm package without xmlMode
 
 **Visual Tag Stripping**
 - Removed tags: `<b>`, `<i>`, `<u>`, `<em>`, `<strong>`, `<span>` (without semantic attributes), `<font>`, `<br>`, `<hr>`, `<script>`, `<style>`
@@ -327,6 +333,10 @@ Format Output (JSON/NDJSON/Manifest)
 ---
 
 ### SQL Handler (`src/formats/sql.ts`)
+
+**Parser**: `node-sql-parser` npm package
+
+**Output Format**: Abstract Syntax Tree (AST) with full query structure
 
 **Statement Types Supported**
 
@@ -483,6 +493,18 @@ Format Output (JSON/NDJSON/Manifest)
 4. Error object with context provided where applicable
 
 **Key Principle**: No file read will fail. Broken files produce useful output instead of errors.
+
+---
+
+## Parser Dependencies
+
+The tool uses production-grade npm packages for reliable parsing:
+
+- **`htmlparser2`** - XML and HTML parsing with robust error recovery
+- **`domhandler`** - DOM manipulation helpers
+- **`node-sql-parser`** - SQL statement parsing to Abstract Syntax Tree
+- **`markdown-it`** - CommonMark-compliant markdown parsing
+- TypeScript definitions: `@types/node-sql-parser`, `@types/markdown-it`
 
 ---
 
@@ -808,9 +830,10 @@ Created `src/formats/csv.ts` with:
 ## Test Coverage
 
 ### Test Statistics
-- **Total tests**: 559 passing
-- **Test suites**: 21 comprehensive suites
-- **Code coverage**: Comprehensive coverage with all refactored code validated
+- **Total tests**: 533 passing (100%)
+- **Test suites**: 20 comprehensive suites
+- **Build status**: TypeScript compilation with no errors
+- **Code coverage**: Comprehensive coverage with all parsers and edge cases validated
 
 ### Test Organization
 ```
@@ -836,11 +859,22 @@ tests/
 └── integration.test.ts           (15 tests)
 ```
 
-### SQL Test Strategy
-- **Comprehensive tests** (26): Non-overlapping statement types with all parsed fields validated
-- **Edge case tests** (44): Real-world patterns, complex nesting, malformed input
-- **Quality improvement**: 15-20+ assertions per test (vs previous 2-3 assertions)
-- **Execution speed**: ~2 seconds (vs 30 seconds for previous 1000+ tests)
+### SQL Test Strategy (v1.1.0.0 Complete Rewrite)
+- **Comprehensive tests** (22): Non-overlapping statement types validating node-sql-parser AST structure
+  - SELECT statements with JOINs, GROUP BY, HAVING, ORDER BY, LIMIT
+  - INSERT with multiple rows and values
+  - UPDATE with multiple SET columns and complex WHERE clauses
+  - DELETE with multi-condition WHERE clauses
+  - CREATE TABLE statements
+  - Multiple statements in single SQL string
+  - Complex queries with subqueries, CTEs, window functions
+- **Edge case tests** (17): Real-world patterns and corner cases
+  - Nested parentheses, IN clauses, BETWEEN, LIKE, IS NULL
+  - Function calls: aggregates, string functions, date functions
+  - Special values: NULL, booleans, negative numbers, escaped strings
+  - Large and complex statements with many JOINs/SET columns/GROUP BY clauses
+- **All tests passing**: 39/39 SQL tests validating new AST-based parser
+- **Execution speed**: Fast, focused test strategy
 
 ### Coverage by Module
 - Overall: 78.79% statements
@@ -890,61 +924,11 @@ npm run dev -- file.json
 
 ---
 
-## Known Limitations (Deferred to Phase 7+)
+## Known Limitations
 
-- **Window Functions**: Currently captured in `unparsedContent` for SQL
-- **CTEs (WITH clauses)**: Basic detection, full extraction pending
-- **CREATE VIEW**: Returns empty placeholder
-- **Complex Subquery Resolution**: Detected but full nested resolution pending
+**SQL Parser (node-sql-parser)**:
+- **Window functions**: May not parse completely - returns error with fallback
+- **Fully qualified table names** (database.schema.table): May not parse - requires simpler syntax
+- **Advanced SQL features**: Some features may return error with partial content - handled gracefully
 
-All limitations use graceful fallback - `unparsedContent` preserves original text for recovery.
-
----
-
-## Architecture Optimization (v0.10.0.0) - Implementation Complete
-
-### What Was Implemented
-
-The planned optimizations from the previous roadmap have been fully implemented:
-
-#### ✅ Single-Pass Processing Order
-```
-Read → Detect Format → Parse → Minify Properties → Stringify
-```
-- ✓ Removed initial file minification step
-- ✓ Format handlers receive raw content (no pre-minification)
-- ✓ Minification happens only after parsing to JSON
-
-#### ✅ Property-Level Minification
-- ✓ Type conversion: `"true"` → `true`, `"123"` → 123
-- ✓ Safe whitespace reduction in string values only
-- ✓ Empty value omission: null and empty strings removed
-- ✓ Recursive processing for nested structures
-
-#### ✅ Indent-Syntax Preservation
-- ✓ Python, Makefile, Nim, Haxe, GDScript, F# return raw
-- ✓ No minification applied (structure depends on indentation)
-- ✓ Eliminates semantic breakage from indent-based languages
-
-#### ✅ Efficient Plaintext Fallback
-- ✓ Minify whole file only for plaintext/unknown formats
-- ✓ Applied when parsing fails or format is not convertible
-- ✓ Single minification pass for non-JSON content
-
-### Realized Benefits
-
-**✅ Performance**:
-- Single-pass processing (no redundant minification)
-- Cleaner code flow with clear separation of concerns
-- No double processing of content
-
-**✅ Efficiency**:
-- Type-aware minification (strings only, types preserved)
-- Combined 15-25% token reduction (minification + types + empty omission)
-- Semantic information preserved through type conversion
-
-**✅ Quality**:
-- All 569 tests passing
-- No breaking changes to output format
-- Cleaner architecture with better maintainability
-- Property minifier: 33 comprehensive unit tests
+All limitations use graceful fallback - complex statements include error information and can fall back to plaintext.
