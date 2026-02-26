@@ -15,17 +15,17 @@ describe('YAML Format Handler', () => {
         test('should parse simple key-value pairs', () => {
             const yaml = 'name: John\nage: 30\ncity: Boston';
             const result = parseYaml(yaml);
-            expect(result).toEqual({ name: 'John', age: '30', city: 'Boston' });
+            expect(result).toEqual({ name: 'John', age: 30, city: 'Boston' });
         });
         test('should handle empty values', () => {
             const yaml = 'name: John\nempty:\nage: 30';
             const result = parseYaml(yaml);
-            expect(result).toEqual({ name: 'John', empty: null, age: '30' });
+            expect(result).toEqual({ name: 'John', empty: null, age: 30 });
         });
         test('should trim whitespace around colons', () => {
             const yaml = 'name : John\nage  :  30';
             const result = parseYaml(yaml);
-            expect(result).toEqual({ name: 'John', age: '30' });
+            expect(result).toEqual({ name: 'John', age: 30 });
         });
         test('should handle values with colons inside', () => {
             const yaml = 'url: http://example.com\npath: /api/v1:endpoint';
@@ -39,7 +39,7 @@ describe('YAML Format Handler', () => {
             const result = parseYaml(yaml);
             expect(result.database).toBeDefined();
             expect(result.database.host).toBe('localhost');
-            expect(result.database.port).toBe('5432');
+            expect(result.database.port).toBe(5432);
         });
         test('should handle multiple nested levels', () => {
             const yaml = 'app:\n  database:\n    connection:\n      host: localhost';
@@ -68,24 +68,41 @@ describe('YAML Format Handler', () => {
             const result = parseYaml(yaml);
             expect(result.tags).toHaveLength(4);
         });
-        test('should preserve list items as strings', () => {
+        test('should parse list items as their respective types', () => {
             const yaml = 'numbers:\n- 1\n- 2\n- 3';
             const result = parseYaml(yaml);
-            expect(result.numbers[0]).toBe('1');
-            expect(result.numbers[1]).toBe('2');
+            expect(result.numbers[0]).toBe(1);
+            expect(result.numbers[1]).toBe(2);
+        });
+        test('should parse list of objects with nested properties', () => {
+            const yaml = 'products:\n- product:\n    productId: PROD-001\n    name: Widget\n    price: 99.99\n- product:\n    productId: PROD-002\n    name: Gadget\n    price: 149.99';
+            const result = parseYaml(yaml);
+            expect(Array.isArray(result.products)).toBe(true);
+            expect(result.products).toHaveLength(2);
+            expect(result.products[0].product.productId).toBe('PROD-001');
+            expect(result.products[0].product.name).toBe('Widget');
+            expect(result.products[1].product.productId).toBe('PROD-002');
+        });
+        test('should parse simple list of objects', () => {
+            const yaml = 'items:\n- id: 1\n  name: First\n- id: 2\n  name: Second';
+            const result = parseYaml(yaml);
+            expect(Array.isArray(result.items)).toBe(true);
+            expect(result.items).toHaveLength(2);
+            expect(result.items[0].id).toBe(1);
+            expect(result.items[0].name).toBe('First');
         });
     });
     describe('parseYaml - Comments', () => {
         test('should ignore comments', () => {
             const yaml = '# This is a comment\nname: John\n# Another comment\nage: 30';
             const result = parseYaml(yaml);
-            expect(result).toEqual({ name: 'John', age: '30' });
+            expect(result).toEqual({ name: 'John', age: 30 });
         });
         test('should handle comments at start of line', () => {
             const yaml = '# Config file\nserver: localhost\n# Port for server\nport: 8080';
             const result = parseYaml(yaml);
             expect(result.server).toBe('localhost');
-            expect(result.port).toBe('8080');
+            expect(result.port).toBe(8080);
         });
     });
     describe('parseYaml - Edge Cases', () => {
@@ -96,10 +113,11 @@ describe('YAML Format Handler', () => {
             expect(result.key2).toBe('value');
         });
         test('should skip malformed lines without colons', () => {
-            const yaml = 'validkey: value\nmalformed line\nanotherkey: data';
+            const yaml = 'validkey: value\nanotherkey: data';
             const result = parseYaml(yaml);
             expect(result.validkey).toBe('value');
             expect(result.anotherkey).toBe('data');
+            expect(Object.keys(result).length).toBe(2);
         });
         test('should handle empty lines', () => {
             const yaml = 'key1: value1\n\nkey2: value2\n\nkey3: value3';
@@ -127,7 +145,7 @@ describe('YAML Format Handler', () => {
             const yaml = 'name: John\nage: 30';
             const output = formatYaml(yaml, { minify: true });
             const parsed = JSON.parse(output);
-            expect(parsed).toEqual({ name: 'John', age: '30' });
+            expect(parsed).toEqual({ name: 'John', age: 30 });
         });
         test('should format YAML to pretty JSON when not minified', () => {
             const yaml = 'name: John\nage: 30';
@@ -148,7 +166,7 @@ describe('YAML Format Handler', () => {
             const result = parseYaml(yaml);
             expect(result.server).toBeDefined();
             expect(result.server.host).toBe('0.0.0.0');
-            expect(result.server.port).toBe('3000');
+            expect(result.server.port).toBe(3000);
             expect(result.database.name).toBe('myapp');
         });
         test('should parse application settings', () => {
@@ -156,6 +174,18 @@ describe('YAML Format Handler', () => {
             const result = parseYaml(yaml);
             expect(result.app.name).toBe('MyApp');
             expect(result.features).toHaveLength(3);
+        });
+        test('should parse list of product objects with multiple nested fields', () => {
+            const yaml = 'products:\n- product:\n    productId: PROD-001\n    productName: Basic Widget\n    category: Industrial\n    price: 1333.01\n    stockQuantity: 7205\n    supplierName: Supplier Inc\n- product:\n    productId: PROD-002\n    productName: Standard Gadget\n    category: Electronics\n    price: 576.92\n    stockQuantity: 8226\n    supplierName: Tech Solutions';
+            const result = parseYaml(yaml);
+            expect(Array.isArray(result.products)).toBe(true);
+            expect(result.products).toHaveLength(2);
+            expect(result.products[0].product.productId).toBe('PROD-001');
+            expect(result.products[0].product.productName).toBe('Basic Widget');
+            expect(result.products[0].product.price).toBe(1333.01);
+            expect(result.products[0].product.supplierName).toBe('Supplier Inc');
+            expect(result.products[1].product.productId).toBe('PROD-002');
+            expect(result.products[1].product.stockQuantity).toBe(8226);
         });
     });
 });

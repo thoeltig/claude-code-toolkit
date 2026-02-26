@@ -1,12 +1,8 @@
+import { parseDocument } from 'htmlparser2';
+import { Element, Text, CDATA, Comment } from 'domhandler';
+
 export function isValidXml(content: string): boolean {
     return content.trim().length > 0;
-}
-
-interface XmlElement {
-    name: string;
-    attributes: Record<string, string>;
-    children: (XmlElement | string)[];
-    text: string;
 }
 
 export function parseXml(xmlContent: string): any {
@@ -14,178 +10,71 @@ export function parseXml(xmlContent: string): any {
         const cleaned = xmlContent.trim();
         if (!cleaned) return { error: 'Empty XML content' };
 
-        const root = parseXmlElement(cleaned, 0).element;
+        const dom = parseDocument(cleaned, { xmlMode: true });
+        const root = dom.children.find(n => n.type === 'tag');
         if (!root) return { error: 'No valid XML root element found' };
 
-        return convertToJson(root);
+        return { [((root as Element).name)]: convertNode(root as Element) };
     } catch (err) {
         return { error: `Failed to parse XML: ${err}`, parseError: true };
     }
 }
 
-function parseXmlElement(content: string, startPos: number): { element: XmlElement | null; nextPos: number } {
-    let pos = startPos;
-
-    while (pos < content.length) {
-        if (content[pos] === '<') {
-            if (content.substring(pos, pos + 4) === '<!--') {
-                pos = content.indexOf('-->', pos) + 3;
-                if (pos < 3) return { element: null, nextPos: content.length };
-                continue;
-            }
-            if (content.substring(pos, pos + 2) === '<?') {
-                const piEnd = content.indexOf('?>', pos);
-                if (piEnd === -1) {
-                    const nextTag = content.indexOf('<', pos + 2);
-                    pos = nextTag === -1 ? content.length : nextTag;
-                } else {
-                    pos = piEnd + 2;
-                }
-                continue;
-            }
-            if (content.substring(pos, pos + 2) === '</') {
-                return { element: null, nextPos: pos };
-            }
-            if (content.substring(pos, pos + 9) === '<![CDATA[') {
-                return { element: null, nextPos: pos };
-            }
-
-            const tagEnd = content.indexOf('>', pos + 1);
-            if (tagEnd === -1) return { element: null, nextPos: content.length };
-
-            const tagContent = content.substring(pos + 1, tagEnd).trim();
-            const isSelfClosing = tagContent.endsWith('/');
-            const cleanTag = isSelfClosing ? tagContent.slice(0, -1).trim() : tagContent;
-
-            const spaceIndex = cleanTag.search(/\s/);
-            const tagName = spaceIndex === -1 ? cleanTag : cleanTag.substring(0, spaceIndex);
-
-            const attributes = spaceIndex === -1 ? {} : parseAttributes(cleanTag.substring(spaceIndex));
-
-            pos = tagEnd + 1;
-
-            if (isSelfClosing) {
-                return { element: { name: tagName, attributes, children: [], text: '' }, nextPos: pos };
-            }
-
-            const children: (XmlElement | string)[] = [];
-            let textContent = '';
-
-            while (pos < content.length) {
-                if (content[pos] === '<') {
-                    if (content.substring(pos, pos + 2) === '</') {
-                        const closeTagEnd = content.indexOf('>', pos);
-                        const closeTag = content.substring(pos + 2, closeTagEnd).trim();
-                        if (closeTag === tagName) {
-                            pos = closeTagEnd + 1;
-                            if (textContent.trim()) children.push(textContent.trim());
-                            return { element: { name: tagName, attributes, children, text: textContent }, nextPos: pos };
-                        }
-                        textContent += content[pos];
-                        pos++;
-                    } else if (content.substring(pos, pos + 4) === '<!--') {
-                        pos = content.indexOf('-->', pos) + 3;
-                        if (pos < 3) pos = content.length;
-                    } else if (content.substring(pos, pos + 9) === '<![CDATA[') {
-                        const cdataEnd = content.indexOf(']]>', pos + 9);
-                        const cdataText = content.substring(pos + 9, cdataEnd);
-                        if (textContent.trim()) children.push(textContent.trim());
-                        children.push(cdataText);
-                        textContent = '';
-                        pos = cdataEnd + 3;
-                    } else {
-                        if (textContent.trim()) {
-                            children.push(textContent.trim());
-                            textContent = '';
-                        }
-                        const childResult = parseXmlElement(content, pos);
-                        if (childResult.element) {
-                            children.push(childResult.element);
-                        }
-                        pos = childResult.nextPos;
-                    }
-                } else {
-                    textContent += content[pos];
-                    pos++;
-                }
-            }
-
-            if (textContent.trim()) children.push(textContent.trim());
-            return { element: { name: tagName, attributes, children, text: textContent }, nextPos: pos };
-        } else {
-            pos++;
-        }
-    }
-
-    return { element: null, nextPos: pos };
-}
-
-function parseAttributes(attrString: string): Record<string, string> {
-    const attrs: Record<string, string> = {};
-    const attrRegex = /([a-zA-Z_:][a-zA-Z0-9:_.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
-    let match;
-
-    while ((match = attrRegex.exec(attrString)) !== null) {
-        attrs[match[1]] = match[2] !== undefined ? match[2] : match[3];
-    }
-
-    return attrs;
-}
-
-function convertToJson(element: XmlElement): any {
+function convertNode(el: Element): any {
     const result: any = {};
 
-    if (element.children.length === 0) {
-        const flattened: any = {};
-        for (const [key, value] of Object.entries(element.attributes)) {
-            flattened[`attribute_${key}`] = value;
-        }
-        return { [element.name]: Object.keys(flattened).length > 0 ? flattened : {} };
+    // Process attributes → attribute_<name>
+    for (const [k, v] of Object.entries(el.attribs ?? {})) {
+        result[`attribute_${k}`] = v;
     }
 
-    const textNodes = element.children.filter(c => typeof c === 'string');
-    const elementNodes = element.children.filter(c => typeof c !== 'string') as XmlElement[];
+    // Collect text and child nodes
+    const textParts: string[] = [];
+    const childElements: Array<{ name: string; value: any }> = [];
 
-    for (const [key, value] of Object.entries(element.attributes)) {
-        result[`attribute_${key}`] = value;
+    for (const child of el.children ?? []) {
+        if (child instanceof Comment) {
+            // Skip comments
+            continue;
+        } else if (child instanceof Text) {
+            const t = child.data.trim();
+            if (t) textParts.push(t);
+        } else if (child instanceof CDATA) {
+            const cdataContent = (child as any).data || (child as any).children?.map((c: any) => c.data).join('');
+            if (cdataContent) textParts.push(cdataContent);
+        } else if (child.type === 'tag') {
+            const childEl = child as Element;
+            const childValue = convertNode(childEl);
+            childElements.push({ name: childEl.name, value: childValue });
+        }
     }
 
-    if (textNodes.length > 0 && elementNodes.length === 0) {
-        const text = textNodes.map(t => t).join(' ').trim();
-        if (Object.keys(result).length === 0) {
-            return { [element.name]: text };
+    // Add child elements to result
+    for (const { name, value } of childElements) {
+        if (result[name] === undefined) {
+            result[name] = value;
+        } else if (Array.isArray(result[name])) {
+            result[name].push(value);
+        } else {
+            result[name] = [result[name], value];
         }
-        result._text = text;
-    } else if (textNodes.length > 0 && elementNodes.length > 0) {
-        const text = textNodes.map(t => t).join(' ').trim();
-        if (text) result._text = text;
+    }
 
-        for (const child of elementNodes) {
-            const childJson = convertToJson(child);
-            const childName = Object.keys(childJson)[0];
-            if (!result[childName]) {
-                result[childName] = childJson[childName];
-            } else if (Array.isArray(result[childName])) {
-                result[childName].push(childJson[childName]);
-            } else {
-                result[childName] = [result[childName], childJson[childName]];
+    // Add text content if present
+    if (textParts.length > 0) {
+        const text = textParts.join(' ');
+        if (Object.keys(result).length === 0 || !childElements.length) {
+            // If no attributes/elements, return just the text
+            if (Object.keys(result).length === 0) {
+                return text;
             }
-        }
-    } else if (elementNodes.length > 0) {
-        for (const child of elementNodes) {
-            const childJson = convertToJson(child);
-            const childName = Object.keys(childJson)[0];
-            if (!result[childName]) {
-                result[childName] = childJson[childName];
-            } else if (Array.isArray(result[childName])) {
-                result[childName].push(childJson[childName]);
-            } else {
-                result[childName] = [result[childName], childJson[childName]];
-            }
+            result._text = text;
+        } else {
+            result._text = text;
         }
     }
 
-    return { [element.name]: Object.keys(result).length > 0 ? result : {} };
+    return Object.keys(result).length === 0 ? {} : result;
 }
 
 export function formatXml(rawContent: string, options: { minify: boolean }): string {

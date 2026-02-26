@@ -1,3 +1,6 @@
+import { parseDocument } from 'htmlparser2';
+import { Element, Text, CDATA, Comment } from 'domhandler';
+
 export function isValidHtml(content: string): boolean {
     return content.trim().length > 0;
 }
@@ -37,102 +40,6 @@ function stripVisualTags(html: string): string {
     processed = processed.replace(/<hr\s*\/?>/gi, '');
 
     return processed;
-}
-
-/**
- * Auto-closes unclosed HTML tags to ensure proper XML parsing
- * Handles tags that browsers auto-close: p, li, tr, td, th, dd, dt, option
- */
-function autoCloseTags(html: string): string {
-    const autoCloseTagSet = new Set(['p', 'li', 'tr', 'td', 'th', 'dd', 'dt', 'option', 'br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr']);
-
-    let result = '';
-    let pos = 0;
-    const stack: string[] = [];
-
-    while (pos < html.length) {
-        const tagStart = html.indexOf('<', pos);
-
-        if (tagStart === -1) {
-            result += html.substring(pos);
-            break;
-        }
-
-        // Append text before tag
-        result += html.substring(pos, tagStart);
-
-        const tagEnd = html.indexOf('>', tagStart);
-        if (tagEnd === -1) {
-            result += html.substring(tagStart);
-            break;
-        }
-
-        const fullTag = html.substring(tagStart, tagEnd + 1);
-        const tagContent = html.substring(tagStart + 1, tagEnd);
-
-        // Skip comments, CDATA, declarations
-        if (tagContent.startsWith('!--') || tagContent.startsWith('?') || tagContent.startsWith('![CDATA')) {
-            result += fullTag;
-            pos = tagEnd + 1;
-            continue;
-        }
-
-        // Handle closing tags
-        if (tagContent.startsWith('/')) {
-            const closingTagName = tagContent.substring(1).trim().split(/\s/)[0].toLowerCase();
-
-            // Pop stack, closing auto-close tags as needed
-            while (stack.length > 0 && stack[stack.length - 1] !== closingTagName) {
-                if (autoCloseTagSet.has(stack[stack.length - 1])) {
-                    result += `</${stack.pop()}>`;
-                } else {
-                    break;
-                }
-            }
-
-            if (stack.length > 0 && stack[stack.length - 1] === closingTagName) {
-                stack.pop();
-            }
-
-            result += fullTag;
-            pos = tagEnd + 1;
-            continue;
-        }
-
-        // Handle self-closing tags
-        if (tagContent.endsWith('/')) {
-            result += fullTag;
-            pos = tagEnd + 1;
-            continue;
-        }
-
-        // Extract tag name
-        const tagNameMatch = tagContent.match(/^([a-zA-Z][\w:.-]*)/);
-        if (!tagNameMatch) {
-            result += fullTag;
-            pos = tagEnd + 1;
-            continue;
-        }
-
-        const tagName = tagNameMatch[1].toLowerCase();
-
-        // If this is an auto-close tag and same as top of stack, close the previous one
-        if (autoCloseTagSet.has(tagName) && stack.length > 0 && stack[stack.length - 1] === tagName) {
-            result += `</${tagName}>`;
-            stack.pop();
-        }
-
-        result += fullTag;
-        stack.push(tagName);
-        pos = tagEnd + 1;
-    }
-
-    // Close any remaining open tags
-    while (stack.length > 0) {
-        result += `</${stack.pop()}>`;
-    }
-
-    return result;
 }
 
 /**
@@ -303,20 +210,83 @@ function applySemanticsEnhancements(parsed: any): any {
 }
 
 /**
- * Parse HTML by preprocessing (auto-close, strip visual tags) then delegating to XML parser
+ * Helper to convert htmlparser2 nodes to the same format as our XML parser
+ */
+function convertNode(el: Element): any {
+    const result: any = {};
+
+    // Process attributes → attribute_<name>
+    for (const [k, v] of Object.entries(el.attribs ?? {})) {
+        result[`attribute_${k.replace(':', '_')}`] = v;
+    }
+
+    // Collect text and child nodes
+    const textParts: string[] = [];
+    const childElements: Array<{ name: string; value: any }> = [];
+
+    for (const child of el.children ?? []) {
+        if (child instanceof Comment) {
+            // Skip comments
+            continue;
+        } else if (child instanceof Text) {
+            const t = child.data.trim();
+            if (t) textParts.push(t);
+        } else if (child instanceof CDATA) {
+            const cdataContent = (child as any).data || (child as any).children?.map((c: any) => c.data).join('');
+            if (cdataContent) textParts.push(cdataContent);
+        } else if (child.type === 'tag') {
+            const childEl = child as Element;
+            const childValue = convertNode(childEl);
+            childElements.push({ name: childEl.name, value: childValue });
+        }
+    }
+
+    // Add child elements to result
+    for (const { name, value } of childElements) {
+        if (result[name] === undefined) {
+            result[name] = value;
+        } else if (Array.isArray(result[name])) {
+            result[name].push(value);
+        } else {
+            result[name] = [result[name], value];
+        }
+    }
+
+    // Add text content if present
+    if (textParts.length > 0) {
+        const text = textParts.join(' ');
+        if (Object.keys(result).length === 0 || !childElements.length) {
+            // If no attributes/elements, return just the text
+            if (Object.keys(result).length === 0) {
+                return text;
+            }
+            result._text = text;
+        } else {
+            result._text = text;
+        }
+    }
+
+    return Object.keys(result).length === 0 ? {} : result;
+}
+
+/**
+ * Parse HTML by preprocessing (strip visual tags) then delegating to htmlparser2
  * Applies semantic structure enhancements (headings, lists, tables)
  */
 export function parseHtml(htmlContent: string): any {
     try {
-        // Step 1: Auto-close unclosed tags FIRST (before stripping)
-        let cleaned = autoCloseTags(htmlContent);
+        // Step 1: Strip visual tags
+        let cleaned = stripVisualTags(htmlContent);
 
-        // Step 2: Strip visual tags
-        cleaned = stripVisualTags(cleaned);
+        // Step 2: Parse with htmlparser2
+        const dom = parseDocument(cleaned, { xmlMode: false });
 
-        // Step 3: Use XML parser on cleaned content
-        const { parseXml } = require('./xml');
-        let parsed = parseXml(cleaned);
+        // Find the root element (first tag)
+        const root = dom.children.find(n => n.type === 'tag');
+        if (!root) return { error: 'No valid HTML root element found' };
+
+        // Step 3: Convert to our format
+        let parsed = { [((root as Element).name)]: convertNode(root as Element) };
 
         // Step 4: Apply semantic enhancements
         parsed = applySemanticsEnhancements(parsed);

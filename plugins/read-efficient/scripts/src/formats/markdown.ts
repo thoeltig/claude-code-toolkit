@@ -1,344 +1,360 @@
+import MarkdownIt from 'markdown-it';
+
 export function isValidMarkdown(content: string): boolean {
     return content.trim().length > 0;
 }
 
-export function parseMarkdown(content: string): any[] {
-    const lines = content.split('\n');
-    const blocks: any[] = [];
+const md = new MarkdownIt({ html: false, linkify: false });
 
-    for (let i = 0; i < lines.length;) {
-        const line = lines[i];
-        const trimmed = line.trim();
-        const prevI = i;
+/**
+ * Get attribute value from token
+ */
+function getTokenAttr(token: any, attrName: string): string | null {
+    if (!token.attrs) return null;
+    for (const [key, value] of token.attrs) {
+        if (key === attrName) return value;
+    }
+    return null;
+}
 
-        if (!trimmed) {
-            i++;
-            continue;
-        }
+/**
+ * Extract full inline content including markdown links and code (preserving structure)
+ */
+function extractInlineContentWithMarkdown(tokens: any[] | null): string {
+    if (!tokens) return '';
 
-        if (isFrontMatter(trimmed, i, lines)) {
-            const result = parseFrontMatter(lines, i);
-            blocks.push(result.block);
-            i = result.nextIndex;
-        } else if (isHeading(trimmed)) {
-            const result = parseHeading(trimmed, i);
-            blocks.push(result);
+    let result = '';
+    let i = 0;
+    while (i < tokens.length) {
+        const token = tokens[i];
+        if (token.type === 'text') {
+            result += token.content;
+        } else if (token.type === 'code_inline') {
+            result += `\`${token.content}\``;
+        } else if (token.type === 'link_open') {
+            const href = getTokenAttr(token, 'href');
+            result += '[';
+            // Collect content until link_close
             i++;
-        } else if (isCodeBlockStart(trimmed)) {
-            const result = parseCodeBlock(lines, i);
-            blocks.push(result.block);
-            i = result.nextIndex;
-        } else if (isHorizontalRule(trimmed)) {
-            blocks.push({ type: 'hr', anchor_line: i + 1 });
-            i++;
-        } else if (isListStart(trimmed)) {
-            const result = parseList(lines, i);
-            blocks.push(result.block);
-            i = result.nextIndex;
-        } else if (isBlockquoteStart(trimmed)) {
-            const result = parseBlockquote(lines, i);
-            blocks.push(result.block);
-            i = result.nextIndex;
-        } else if (isTableRow(trimmed)) {
-            const result = parseTable(lines, i);
-            if (result.block) {
-                blocks.push(result.block);
-                i = result.nextIndex;
-            } else {
-                const paragraphResult = parseParagraph(lines, i);
-                blocks.push(paragraphResult.block);
-                i = paragraphResult.nextIndex;
+            while (i < tokens.length && tokens[i].type !== 'link_close') {
+                if (tokens[i].type === 'text') {
+                    result += tokens[i].content;
+                } else if (tokens[i].children) {
+                    result += extractInlineContentWithMarkdown(tokens[i].children);
+                }
+                i++;
             }
-        } else {
-            const paragraphResult = parseParagraph(lines, i);
-            blocks.push(paragraphResult.block);
-            i = paragraphResult.nextIndex;
+            result += `](${href || ''})`;
+        } else if (token.type === 'image') {
+            const alt = getTokenAttr(token, 'alt') || '';
+            const src = getTokenAttr(token, 'src') || '';
+            result += `![${alt}](${src})`;
+        } else if (token.type === 'softbreak') {
+            result += ' ';
+        } else if (token.type === 'hardbreak') {
+            result += ' ';
+        } else if (token.type === 'em_open' || token.type === 'em_close' ||
+                   token.type === 'strong_open' || token.type === 'strong_close' ||
+                   token.type === 's_open' || token.type === 's_close' ||
+                   token.type === 'strikethrough_open' || token.type === 'strikethrough_close') {
+            // Skip formatting tags, just process content
+        } else if (token.children) {
+            result += extractInlineContentWithMarkdown(token.children);
         }
+        i++;
+    }
+    return result;
+}
 
-        if (i === prevI) {
+export function parseMarkdown(content: string): any[] {
+    const blocks: any[] = [];
+    let processedContent = content;
+    let frontmatterEndIndex = 0;
+
+    // Extract front matter (YAML ---...--- at start)
+    if (content.startsWith('---')) {
+        const secondDashIndex = content.indexOf('---', 3);
+        if (secondDashIndex !== -1) {
+            const frontmatterContent = content.substring(3, secondDashIndex).trim();
+            blocks.push({
+                type: 'frontmatter',
+                content: frontmatterContent,
+                anchor_line: 1
+            });
+            let contentStartIndex = secondDashIndex + 3;
+            // Skip the newline immediately after the closing ---
+            if (contentStartIndex < content.length && content[contentStartIndex] === '\n') {
+                contentStartIndex++;
+            }
+            processedContent = content.substring(contentStartIndex);
+            frontmatterEndIndex = content.substring(0, secondDashIndex + 3).split('\n').length;
+        }
+    }
+
+    // Parse markdown content
+    const tokens = md.parse(processedContent, {});
+
+    // Convert token stream to blocks
+    let i = 0;
+    while (i < tokens.length) {
+        const token = tokens[i];
+
+        if (token.type === 'heading_open') {
+            // heading_open followed by inline, then heading_close
+            const level = parseInt(token.tag.substring(1));
+            const inlineToken = tokens[i + 1];
+            const content = inlineToken?.children ? extractInlineContentWithMarkdown(inlineToken.children) : '';
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+
+            blocks.push({
+                type: 'heading',
+                level,
+                content,
+                anchor_line: anchorLine
+            });
+            i += 3; // skip heading_close
+        } else if (token.type === 'fence') {
+            // Code block
+            const language = token.info || '';
+            const codeContent = token.content;
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+
+            blocks.push({
+                type: 'code',
+                language,
+                content: codeContent.trimEnd(),
+                anchor_line: anchorLine
+            });
+            i++;
+        } else if (token.type === 'code_block') {
+            // Indented code block
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+            blocks.push({
+                type: 'code',
+                language: '',
+                content: token.content.trimEnd(),
+                anchor_line: anchorLine
+            });
+            i++;
+        } else if (token.type === 'bullet_list_open' || token.type === 'ordered_list_open') {
+            // List
+            const isOrdered = token.type === 'ordered_list_open';
+            const items: any[] = [];
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+            i++;
+
+            while (i < tokens.length && tokens[i].type !== 'bullet_list_close' && tokens[i].type !== 'ordered_list_close') {
+                if (tokens[i].type === 'list_item_open') {
+                    i++;
+                    // Collect paragraph content until list_item_close
+                    let itemContent = '';
+                    let itemChecked: boolean | undefined = undefined;
+
+                    while (i < tokens.length && tokens[i].type !== 'list_item_close') {
+                        if (tokens[i].type === 'paragraph_open') {
+                            i++;
+                            while (i < tokens.length && tokens[i].type !== 'paragraph_close') {
+                                if (tokens[i].type === 'inline') {
+                                    // Check if this is a task list item
+                                    const inlineContent = tokens[i].content;
+                                    const taskMatch = inlineContent.match(/^\[([ xX])\]\s+(.*)/);
+                                    if (taskMatch) {
+                                        itemChecked = taskMatch[1].toLowerCase() === 'x';
+                                        // For task lists, use the remainder after the checkbox marker
+                                        itemContent = taskMatch[2];
+                                        // If we have child tokens, extract from them (they should already have checkbox removed)
+                                        const childTokens = tokens[i].children || [];
+                                        if (childTokens.length > 0) {
+                                            const fullContent = extractInlineContentWithMarkdown(childTokens);
+                                            // Extract only the content after the checkbox marker
+                                            const contentMatch = fullContent.match(/^\[([ xX])\]\s+(.*)/);
+                                            itemContent = contentMatch ? contentMatch[2] : fullContent;
+                                        }
+                                    } else {
+                                        itemContent = tokens[i].children ? extractInlineContentWithMarkdown(tokens[i].children) : inlineContent;
+                                    }
+                                }
+                                i++;
+                            }
+                            i++; // skip paragraph_close
+                        } else if (tokens[i].type === 'bullet_list_open' || tokens[i].type === 'ordered_list_open') {
+                            // Skip nested lists (only parse top-level items)
+                            const nestedListType = tokens[i].type;
+                            i++;
+                            let depth = 1;
+                            while (depth > 0 && i < tokens.length) {
+                                if (tokens[i].type === nestedListType) depth++;
+                                if (tokens[i].type === (nestedListType === 'bullet_list_open' ? 'bullet_list_close' : 'ordered_list_close')) depth--;
+                                i++;
+                            }
+                        } else {
+                            i++;
+                        }
+                    }
+
+                    if (itemChecked !== undefined) {
+                        items.push({ checked: itemChecked, content: itemContent });
+                    } else if (itemContent) {
+                        items.push(itemContent);
+                    }
+
+                    i++; // skip list_item_close
+                } else {
+                    i++;
+                }
+            }
+            i++; // skip list_close
+
+            blocks.push({
+                type: 'list',
+                ordered: isOrdered,
+                items,
+                anchor_line: anchorLine
+            });
+        } else if (token.type === 'blockquote_open') {
+            // Blockquote
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+            i++;
+
+            let quoteContent = '';
+            while (i < tokens.length && tokens[i].type !== 'blockquote_close') {
+                if (tokens[i].type === 'paragraph_open') {
+                    i++;
+                    while (i < tokens.length && tokens[i].type !== 'paragraph_close') {
+                        if (tokens[i].type === 'inline') {
+                            quoteContent = tokens[i].children ? extractInlineContentWithMarkdown(tokens[i].children) : tokens[i].content;
+                        }
+                        i++;
+                    }
+                    i++; // skip paragraph_close
+                } else {
+                    i++;
+                }
+            }
+            i++; // skip blockquote_close
+
+            blocks.push({
+                type: 'blockquote',
+                content: quoteContent,
+                anchor_line: anchorLine
+            });
+        } else if (token.type === 'hr') {
+            // Horizontal rule
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+            blocks.push({
+                type: 'hr',
+                anchor_line: anchorLine
+            });
+            i++;
+        } else if (token.type === 'table_open') {
+            // Table
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+            const headers: string[] = [];
+            const rows: any[] = [];
+
+            i++; // skip table_open
+
+            while (i < tokens.length && tokens[i].type !== 'table_close') {
+                if (tokens[i].type === 'thead_open') {
+                    i++;
+                    while (i < tokens.length && tokens[i].type !== 'thead_close') {
+                        if (tokens[i].type === 'tr_open') {
+                            i++;
+                            while (i < tokens.length && tokens[i].type !== 'tr_close') {
+                                if (tokens[i].type === 'th_open') {
+                                    i++;
+                                    let cellContent = '';
+                                    while (i < tokens.length && tokens[i].type !== 'th_close') {
+                                        if (tokens[i].type === 'inline') {
+                                            cellContent = tokens[i].children ? extractInlineContentWithMarkdown(tokens[i].children) : tokens[i].content;
+                                        }
+                                        i++;
+                                    }
+                                    headers.push(cellContent);
+                                    i++; // skip th_close
+                                } else {
+                                    i++;
+                                }
+                            }
+                            i++; // skip tr_close
+                        } else {
+                            i++;
+                        }
+                    }
+                    i++; // skip thead_close
+                } else if (tokens[i].type === 'tbody_open') {
+                    i++;
+                    while (i < tokens.length && tokens[i].type !== 'tbody_close') {
+                        if (tokens[i].type === 'tr_open') {
+                            const rowArray: string[] = [];
+                            i++;
+                            while (i < tokens.length && tokens[i].type !== 'tr_close') {
+                                if (tokens[i].type === 'td_open') {
+                                    i++;
+                                    let cellContent = '';
+                                    while (i < tokens.length && tokens[i].type !== 'td_close') {
+                                        if (tokens[i].type === 'inline') {
+                                            cellContent = tokens[i].children ? extractInlineContentWithMarkdown(tokens[i].children) : tokens[i].content;
+                                        }
+                                        i++;
+                                    }
+                                    rowArray.push(cellContent);
+                                    i++; // skip td_close
+                                } else {
+                                    i++;
+                                }
+                            }
+                            if (rowArray.length > 0) {
+                                // Convert row array to object with column headers as keys
+                                const rowObj: any = {};
+                                for (let j = 0; j < headers.length && j < rowArray.length; j++) {
+                                    rowObj[headers[j]] = rowArray[j];
+                                }
+                                rows.push(rowObj);
+                            }
+                            i++; // skip tr_close
+                        } else {
+                            i++;
+                        }
+                    }
+                    i++; // skip tbody_close
+                } else {
+                    i++;
+                }
+            }
+            i++; // skip table_close
+
+            blocks.push({
+                type: 'table',
+                headers,
+                rows,
+                anchor_line: anchorLine
+            });
+        } else if (token.type === 'paragraph_open') {
+            // Paragraph
+            const anchorLine = (token.map ? token.map[0] + 1 : 1) + frontmatterEndIndex;
+            i++;
+
+            let paragraphContent = '';
+            while (i < tokens.length && tokens[i].type !== 'paragraph_close') {
+                if (tokens[i].type === 'inline') {
+                    paragraphContent = tokens[i].children ? extractInlineContentWithMarkdown(tokens[i].children) : tokens[i].content;
+                }
+                i++;
+            }
+            i++; // skip paragraph_close
+
+            blocks.push({
+                type: 'paragraph',
+                content: paragraphContent,
+                anchor_line: anchorLine
+            });
+        } else {
             i++;
         }
     }
 
     return blocks;
-}
-
-function isFrontMatter(line: string, index: number, lines: string[]): boolean {
-    if (index !== 0 || line !== '---') return false;
-    for (let i = index + 1; i < lines.length; i++) {
-        if (lines[i].trim() === '---') return true;
-    }
-    return false;
-}
-
-function parseFrontMatter(lines: string[], startIndex: number): { block: any; nextIndex: number } {
-    let i = startIndex + 1;
-    let content = '';
-    let iterationCount = 0;
-    const maxIterations = lines.length - startIndex + 10;
-
-    while (i < lines.length && lines[i].trim() !== '---') {
-        iterationCount++;
-        if (iterationCount > maxIterations) {
-            break;
-        }
-        content += lines[i] + '\n';
-        i++;
-    }
-    return { block: { type: 'frontmatter', content: content.trim(), anchor_line: startIndex + 1 }, nextIndex: i + 1 };
-}
-
-function isHeading(line: string): boolean {
-    return /^#{1,6}\s+/.test(line);
-}
-
-function parseHeading(line: string, startIndex: number): any {
-    const match = line.match(/^(#{1,6})\s+(.*)/);
-    if (!match) return { type: 'heading', level: 1, content: line, anchor_line: startIndex + 1 };
-    return {
-        type: 'heading',
-        level: match[1].length,
-        content: stripFormatting(match[2]),
-        anchor_line: startIndex + 1
-    };
-}
-
-function isCodeBlockStart(line: string): boolean {
-    return line.startsWith('```');
-}
-
-function parseCodeBlock(lines: string[], startIndex: number): { block: any; nextIndex: number } {
-    const firstLine = lines[startIndex].trim();
-    const language = firstLine.substring(3).trim();
-    let i = startIndex + 1;
-    let content = '';
-    let iterationCount = 0;
-    const maxIterations = lines.length - startIndex + 50;
-
-    while (i < lines.length) {
-        iterationCount++;
-        if (iterationCount > maxIterations) {
-            break;
-        }
-
-        const line = lines[i];
-        const trimmed = line.trim();
-
-        // Only a BARE ``` (exactly, no language specifier) closes the code block
-        // Lines like ```bash are content (examples within markdown blocks)
-        if (trimmed === '```') {
-            i++;
-            break;
-        }
-
-        // Everything else is content (including ```<language>, which might be nested examples)
-        content += lines[i] + '\n';
-        i++;
-    }
-
-    return {
-        block: { type: 'code', language: language, content: content.trimEnd(), anchor_line: startIndex + 1 },
-        nextIndex: i
-    };
-}
-
-function isHorizontalRule(line: string): boolean {
-    return /^(\-{3,}|\*{3,}|_{3,})$/.test(line);
-}
-
-function isListStart(line: string): boolean {
-    return /^[\s]*([-*+]\s+|\d+\.\s+)/.test(line);
-}
-
-function parseList(lines: string[], startIndex: number): { block: any; nextIndex: number } {
-    const firstLine = lines[startIndex];
-    const isOrdered = /^\d+\./.test(firstLine.trim());
-    const items: any[] = [];
-    let i = startIndex;
-    const baseIndent = getListIndentation(firstLine);
-    let iterationCount = 0;
-    const maxIterations = lines.length - startIndex + 10;
-
-    while (i < lines.length) {
-        iterationCount++;
-        if (iterationCount > maxIterations) {
-            break;
-        }
-
-        const line = lines[i];
-        const trimmed = line.trim();
-
-        if (!trimmed) {
-            i++;
-            continue;
-        }
-
-        if (!isListStart(line)) break;
-
-        const indent = getListIndentation(line);
-
-        if (indent > baseIndent) {
-            i++;
-            continue;
-        }
-
-        if (indent < baseIndent) break;
-
-        const itemResult = parseListItem(trimmed);
-        items.push(itemResult);
-        i++;
-    }
-
-    return {
-        block: { type: 'list', ordered: isOrdered, items, anchor_line: startIndex + 1 },
-        nextIndex: i
-    };
-}
-
-function parseListItem(line: string): any {
-    const taskMatch = line.match(/^[\s]*([-*+]|\d+\.)\s+\[([ xX])\]\s+(.*)/);
-    if (taskMatch) {
-        return {
-            checked: taskMatch[2].toLowerCase() === 'x',
-            content: stripFormatting(taskMatch[3])
-        };
-    }
-
-    const regularMatch = line.match(/^[\s]*([-*+]|\d+\.)\s+(.*)/);
-    if (regularMatch) {
-        return stripFormatting(regularMatch[2]);
-    }
-
-    return stripFormatting(line);
-}
-
-function getListIndentation(line: string): number {
-    let count = 0;
-    for (let i = 0; i < line.length; i++) {
-        if (line[i] === ' ') count++;
-        else if (line[i] === '\t') count += 2;
-        else break;
-    }
-    return count;
-}
-
-function isBlockquoteStart(line: string): boolean {
-    return line.trim().startsWith('>');
-}
-
-function parseBlockquote(lines: string[], startIndex: number): { block: any; nextIndex: number } {
-    let i = startIndex;
-    let content = '';
-    let iterationCount = 0;
-    const maxIterations = lines.length - startIndex + 10;
-
-    while (i < lines.length && lines[i].trim().startsWith('>')) {
-        iterationCount++;
-        if (iterationCount > maxIterations) {
-            break;
-        }
-        const line = lines[i].trim();
-        content += line.substring(1).trim() + '\n';
-        i++;
-    }
-
-    return {
-        block: { type: 'blockquote', content: content.trim(), anchor_line: startIndex + 1 },
-        nextIndex: i
-    };
-}
-
-function isTableRow(line: string): boolean {
-    return line.trim().includes('|');
-}
-
-function parseTable(lines: string[], startIndex: number): { block: any; nextIndex: number } {
-    if (startIndex + 1 >= lines.length) {
-        return { block: null, nextIndex: startIndex + 1 };
-    }
-
-    const headerLine = lines[startIndex].trim();
-    const separatorLine = lines[startIndex + 1].trim();
-
-    if (!isTableSeparator(separatorLine)) {
-        return { block: null, nextIndex: startIndex + 1 };
-    }
-
-    const headers = parseTableRow(headerLine);
-    const rows: any[] = [];
-    let i = startIndex + 2;
-    let iterationCount = 0;
-    const maxIterations = lines.length - startIndex + 10;
-
-    while (i < lines.length && isTableRow(lines[i])) {
-        iterationCount++;
-        if (iterationCount > maxIterations) {
-            break;
-        }
-
-        const rowData = parseTableRow(lines[i]);
-        const row: any = {};
-
-        for (let j = 0; j < headers.length; j++) {
-            const value = j < rowData.length ? rowData[j] : '';
-            row[headers[j]] = stripFormatting(value);
-        }
-
-        rows.push(row);
-        i++;
-    }
-
-    return {
-        block: { type: 'table', headers, rows, anchor_line: startIndex + 1 },
-        nextIndex: i
-    };
-}
-
-function isTableSeparator(line: string): boolean {
-    const cells = line.split('|').map(c => c.trim()).filter(c => c);
-    return cells.length > 0 && cells.every(cell => /^:?-+:?$/.test(cell));
-}
-
-function parseTableRow(line: string): string[] {
-    return line.split('|').map(cell => cell.trim()).filter(cell => cell);
-}
-
-function parseParagraph(lines: string[], startIndex: number): { block: any; nextIndex: number } {
-    let i = startIndex;
-    let content = '';
-    let iterationCount = 0;
-    const maxIterations = lines.length - startIndex + 10;
-
-    while (i < lines.length) {
-        iterationCount++;
-        if (iterationCount > maxIterations) {
-            break;
-        }
-
-        const line = lines[i].trim();
-
-        if (!line) break;
-
-        if (isHeading(line) || isCodeBlockStart(line) || isListStart(line) ||
-            isBlockquoteStart(line) || isTableRow(line) || isHorizontalRule(line)) {
-            break;
-        }
-
-        content += (content ? ' ' : '') + line;
-        i++;
-    }
-
-    return {
-        block: { type: 'paragraph', content: stripFormatting(content), anchor_line: startIndex + 1 },
-        nextIndex: i
-    };
-}
-
-function stripFormatting(text: string): string {
-    return text
-        .replace(/\*\*(.+?)\*\*/g, '$1')
-        .replace(/\*(.+?)\*/g, '$1')
-        .replace(/~~(.+?)~~/g, '$1');
 }
 
 export function formatMarkdown(rawContent: string, options: { minify: boolean }): string {
