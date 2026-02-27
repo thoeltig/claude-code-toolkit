@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.1.1.0] - 2026-02-26
+
+### Changed
+
+- Cleanup unused file 
+
 ## [1.1.0.0] - 2026-02-26
 
 ### Changed
