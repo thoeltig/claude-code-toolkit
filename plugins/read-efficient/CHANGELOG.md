@@ -145,7 +145,8 @@ _First release: Foundation for token-efficient file reading._
 - Add slash command `/read-efficient` integration
 - Add command-line flags: `--minify`, `--cache`, `--overwrite`, `--no-output`
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v1.1.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v1.1.1.0...HEAD
+[1.1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v1.1.0.0...ReadEfficient_v1.1.1.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v1.0.0.0...ReadEfficient_v1.1.0.0
 [1.0.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v0.9.0.0...ReadEfficient_v1.0.0.0
 [0.9.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ReadEfficient_v0.8.0.0...ReadEfficient_v0.9.0.0
