@@ -10,7 +10,7 @@ This framework validates which file formats deliver the most reliable informatio
 
 ## Initial Test Run & Methodology
 
-The initial benchmark run (Dec 19, 2025) with Claude 4.5 Haiku tested 7 formats across 120 questions with weighted accuracy prioritizing structural understanding and retrieval (60% combined weight vs filtering/aggregation at 40%). 4 flat array data sets of variants 40 and 80 records, random optional fields and all mandatory fields.
+The initial benchmark run (Dec 19, 2025) with Claude 4.5 Haiku tested 8 formats across 120 questions with weighted accuracy prioritizing structural understanding and retrieval (60% combined weight vs filtering/aggregation at 40%). 4 flat array data sets of variants 40 and 80 records, random optional fields and all mandatory fields.
 
 **Key Findings** (see [BenchmarkReport.md](./benchmark_format_all_variant_all_haiku_off/BENCHMARK_REPORT.md)):
 - **CSV**: Unbeatable for dense, mandatory data (70.98% weighted @ 9,008 tokens). Accuracy drops by ~15% with sparse data.
@@ -23,11 +23,12 @@ The initial benchmark run (Dec 19, 2025) with Claude 4.5 Haiku tested 7 formats 
 
 ## Next Test Setup (Current Configuration)
 
-**Active Formats** (7 total):
+**Active Formats** (8 total):
 - CSV (baseline efficiency)
 - JSON Compact (recommended baseline)
 - JSON Pretty (formatting overhead reference)
-- TOON (custom binary format)
+- TOON Safe (custom binary format)
+- TOON Unsafe (custom binary format)
 - XML Compact (minified, lowest XML token usage)
 - XML Pretty (indented, readability reference)
 - YAML (highest accuracy, premium cost)
@@ -107,7 +108,7 @@ Use the `/benchmark` slash command to orchestrate a complete benchmarking run:
 ```
 
 **Default behavior** (if no arguments provided):
-- Tests all 7 formats (CSV, JSON Compact, JSON Pretty, TOON, XML Pretty, XML Compact, YAML)
+- Tests all 8 formats (CSV, JSON Compact, JSON Pretty, TOON Safe, TOON Unsafe, XML Pretty, XML Compact, YAML)
 - Tests both mandatory and optional variants
 - Tests both flat and nested structures (flat only for CSV)
 - Uses Haiku model
@@ -198,7 +199,7 @@ The benchmark executes a format-sequential strategy to maintain cache locality a
 1. Launch 3x `benchmark-full-test` subagents in parallel
 2. Each reads:
    - Data file (benefits from warm cache)
-   - Questionnaire with 125 questions
+   - Questionnaire with 120 questions
    - Answer template
 3. Each writes results to `subagent_outputs/{format}/answers_for_{structure}_{variant}_60_records_{1,2,3}.json`
 4. System message captures:
@@ -230,7 +231,8 @@ All formats contain the same 60-record product dataset with 22 fields:
 - **JSON Compact**: Same as JSON Pretty but minified (no whitespace or new lines).
 - **XML Pretty**: A format for storing structured data with hierarchical tags that separate information from its presentation. Indented for human readability.
 - **XML Compact**: Same as XML Pretty but minified (no whitespace or indentation). Approximately 11-19% smaller than XML Pretty depending on structure and field variants.
-- **TOON**: A compact, human-readable encoding of the JSON data model for LLM prompts (see [Token-Oriented Object Notation](https://toonformat.dev/))
+- **TOON Safe**: A compact, human-readable encoding of the JSON data model for LLM prompts with safe key folding enabled. Collapses chains of single-key objects into dotted paths (e.g., `data.metadata.items`) when all segments are valid identifiers, guaranteeing lossless round-trip decoding (see [Token-Oriented Object Notation](https://toonformat.dev/)).
+- **TOON Unsafe**: Same encoding but with key folding disabled. Nested structures remain fully expanded without dot-separated collapsing. Produces larger output but valid regardless of key naming conventions.
 - **YAML**: A format for storing structured data with hierarchical indentation for human readability.
 
 ### Formatting Impact: Pretty vs Compact
@@ -241,6 +243,19 @@ To measure formatting overhead on token usage and accuracy, the benchmark tests 
 - **XML Pretty vs Compact**: Compacting reduces tokens by ~11-19% (varies by structure/variant). Tests if XML formatting follows similar patterns to JSON.
 
 This comparison helps answer: **Do LLMs need human-readable formatting, or can compact versions deliver equivalent understanding with less token overhead?**
+
+### Key Folding Impact: Safe vs Disabled
+
+To measure compression efficiency of TOON's optional key folding feature, the benchmark tests both safe key folding enabled and disabled:
+
+- **TOON Safe**: Enables safe key folding, which collapses chains of single-key objects into dotted paths (e.g., `data.metadata.items: value`). Segments must be valid identifiers (letters, digits, underscores only). Lossless—guarantees exact recovery of original structure via `expandPaths: 'safe'` during decoding.
+- **TOON Unsafe**: Disables key folding. Nested structures remain fully expanded across multiple indentation levels. No compression of single-key chains, but output is always valid regardless of key naming conventions.
+
+The efficiency gain of key folding depends on data structure:
+- **Mandatory/Uniform Data**: Folding impact is minimal; nested structures are typically shallow. Efficiency gains modest.
+- **Sparse/Deeply-Nested Data**: Safe folding provides significant token savings by replacing multiple levels of indentation with single dotted paths.
+
+This comparison helps answer: **Does collapsing single-key object chains via safe key folding provide meaningful token efficiency gains compared to fully expanded nested structures?**
 
 ### Record Count
 - **60 records**
