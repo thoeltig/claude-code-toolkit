@@ -7,7 +7,7 @@
 // DATA TYPES
 // ============================================================================
 
-export type Format = "csv" | "json_pretty" | "json_compact" | "toon" | "xml_pretty" | "xml_compact" | "yaml";
+export type Format = "csv" | "json_pretty" | "json_compact" | "toon_safe" | "toon_unsafe" | "xml_pretty" | "xml_compact" | "yaml";
 export type Directory = "data" | "answers_validation" | "questions" | "answers_template" | "subagent_outputs" | "results";
 export type QuestionCategory = "field_retrieval" | "aggregation" | "filtering" | "structure_awareness";
 

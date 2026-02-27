@@ -1,6 +1,6 @@
 ---
 description: Orchestrate comprehensive benchmarking tests for file format token efficiency (CSV, JSON (compact/pretty), TOON, XML (compact/pretty), YAML). Generates test data variants (flat and nested), executes sequential tests with configurable model (haiku/sonnet) and thinking mode, validates results, and calculates efficiency metrics. Triggers: benchmark, format efficiency, token measurement, performance testing
-argument-hint: [--formats csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
+argument-hint: [--formats csv,json_compact,json_pretty,toon_safe,toon_unsafe,xml_pretty,xml_compact,yaml] [--variant optional,mandatory] [--structure flat,nested] [--model haiku|sonnet] [--thinking on|off] [--output PATH]
 allowed-tools: Bash(npm run build), Bash(node *)
 ---
 
@@ -22,7 +22,7 @@ You are orchestrating a comprehensive benchmarking test suite for measuring file
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
-- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml)
+- `--formats`: Comma-separated list of formats to test (default: all - csv,json_compact,json_pretty,toon_safe,toon_unsafe,xml_pretty,xml_compact,yaml)
 - `--variant`: Data variant with optional or mandatory values (default: both - optional,mandatory)
 - `--structure`: Data structure (default: flat - flat,nested)
 - `--model`: haiku or sonnet (default: haiku)
@@ -78,7 +78,7 @@ else
   # Format: benchmark_{formats}_{structure}_{variant}_{model}_{thinking}
   # Use shorthand for "all" cases to keep folder names reasonable
 
-  if [ "$FORMATS" = "csv,json_compact,json_pretty,toon,xml_pretty,xml_compact,yaml" ]; then
+  if [ "$FORMATS" = "csv,json_compact,json_pretty,toon_safe,toon_unsafe,xml_pretty,xml_compact,yaml" ]; then
     FORMATS_PART="format_all"
   else
     FORMATS_PART="${FORMATS//,/_}"
@@ -121,7 +121,7 @@ cd ${CLAUDE_PLUGIN_ROOT}/plugins/file-format-benchmark/scripts && npm run build 
 This:
 1. Compiles TypeScript to JavaScript (orchestrator.ts, analytics.ts, etc.)
 2. Generates test data to `$BENCHMARK_OUTPUT_DIR`:
-   - Data files (CSV, JSON compact/pretty, TOON, XML, YAML)
+   - Data files (CSV, JSON compact/pretty, TOON safe/unsafe, XML compact/pretty, YAML)
    - 2 data structure variants: flat and nested (flat for CSV, both for others)
    - 2 data content variants: optional, mandatory
    - Record count: 60
@@ -145,7 +145,7 @@ Example test cases:
 
 **Total test cases**: selected_formats × data_structure_variants × selected_content_variants × 3 test runs
 
-If all 7 formats selected: 2 variants × 1 flat structure x 1 CSV format + 2 variants x 2 structures x 6 formats = 26 test cases
+If all 8 formats selected: 2 variants × 1 flat structure x 1 CSV format + 2 variants x 2 structures x 7 formats = 30 test cases
 
 ## Step 4: Execute Tests - Format-Sequential Approach
 
@@ -219,7 +219,7 @@ For each FORMAT in selected_formats (one format at a time):
   Save all agent_ids_for_format (read + full) to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json
   Move to next format
 
-Total execution: 7 formats (CSV: 8 tasks + 6 others: 16 tasks each) = 104 tasks total with all structures/variants
+Total execution: 8 formats (CSV: 8 tasks + 7 others: 16 tasks each) = 120 tasks total with all structures/variants
 GUARANTEE: Each combination tested exactly once, each agent task launched exactly once
 AGENT_IDS_FILE: All IDs saved to ${BENCHMARK_OUTPUT_DIR}/agent_ids.json for extraction
 ```
@@ -490,7 +490,8 @@ This modularity allows running benchmarks for different format subsets at differ
 - csv → .csv
 - json_compact → .json
 - json_pretty → .json
-- toon → .toon
+- toon_safe → .toon
+- toon_unsafe → .toon
 - xml_compact → .xml
 - xml_pretty → .xml
 - yaml → .yaml
@@ -543,7 +544,7 @@ This modularity allows running benchmarks for different format subsets at differ
    - Generates combined `metrics.json` file
    - Runs comprehensive analysis
 
-9. **Default All Formats**: If --formats not specified, test all 7 formats (csv, json_compact, json_pretty, toon, xml_pretty, xml_compact, yaml)
+9. **Default All Formats**: If --formats not specified, test all 8 formats (csv, json_compact, json_pretty, toon_safe, toon_unsafe, xml_pretty, xml_compact, yaml)
 
 10. **Default Haiku**: If --model not specified, use haiku
 
