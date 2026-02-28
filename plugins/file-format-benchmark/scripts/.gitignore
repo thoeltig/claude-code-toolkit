@@ -1,3 +1,7 @@
+#Generated Files
+benchmarking/
+dist/
+
 # Claude Code local configuration
 .claude/
 CLAUDE.md
@@ -45,17 +49,6 @@ logs/
 *secrets*
 *token*
 *api-key*
-
-# Node modules (if any plugin uses Node.js)
-node_modules/
-
-# Python (if any plugin uses Python)
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.venv/
-venv/
 
 # Test coverage
 coverage/
