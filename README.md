@@ -57,7 +57,7 @@ A complete benchmark run consists of 6 steps:
 
 ## Output Directory Structure
 
-When you run a benchmark, it generates a folder like `initital_benchmark_haiku_formats_all_variants_all_extended_thinking_off/` containing:
+When you run a benchmark, it generates a folder like `benchmark_haiku_formats_all_variants_all_extended_thinking_off/` containing:
 
 ```
 {BENCHMARK_OUTPUT_DIR}/
@@ -325,7 +325,7 @@ To modify test parameters:
 
 ## License
 
-See root [LICENSE](../../LICENSE) for details.
+See root [LICENSE](./LICENSE) for details.
 
 ## Support
 

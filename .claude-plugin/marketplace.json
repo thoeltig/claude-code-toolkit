@@ -1,0 +1,17 @@
+{
+  "name": "claude-code-toolkit",
+  "owner": {
+    "name": "Thore Höltig",
+    "url": "https://github.com/thoeltig"
+  },
+  "metadata": {
+    "description": "Benchmarking framework to analyse tokenization per file format.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "file-format-benchmark",
+      "source": "./plugins/file-format-benchmark"
+    }
+  ]
+}

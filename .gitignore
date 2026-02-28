@@ -1,13 +1,8 @@
 #Generated Files
-benchmarking/
 dist/
 
 # Claude Code local configuration
 .claude/
-CLAUDE.md
-
-# Session protocol files (user-specific)
-session-protocol.json
 
 # Temporary files
 Claude_Temp_Files/
