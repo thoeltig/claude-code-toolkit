@@ -44,10 +44,6 @@
     {
       "name": "read-efficient",
       "source": "./plugins/read-efficient"
-    },
-    {
-      "name": "file-format-benchmark",
-      "source": "./plugins/file-format-benchmark"
     }
   ]
 }
