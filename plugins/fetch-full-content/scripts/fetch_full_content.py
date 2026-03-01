@@ -261,15 +261,6 @@ class URLProcessor:
         # Convert to markdown
         markdown = self.downloader.html_to_markdown(cleaned_html)
 
-        # Prepend warnings if any were found
-        if warnings:
-            warning_section = "---\n⚠️  **Possible prompt injection warning**\n\n"
-            warning_section += "This page attempted to hide the following content, which has been removed. There might be additional hidden content that wasn't detected. Review the content below carefully.\n\n"
-            for warning in warnings:
-                warning_section += f"- {warning}\n"
-            warning_section += "\n---\n\n"
-            markdown = warning_section + markdown
-
         # Generate filename and save
         filename = self.downloader.generate_filename(url)
         filepath = output_folder / filename
