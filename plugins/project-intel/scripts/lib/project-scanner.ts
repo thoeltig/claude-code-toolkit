@@ -5,7 +5,7 @@ import { getOrCreateSummaries, writeSummaries } from './summary-merger';
 import { KNOWLEDGE_DIRECTORY, SUMMARIES_FILE, SummariesData } from '../types';
 
 export interface ScanResult {
-  filesToScan: string[];
+  filesToScan: string[][];
   projectStats: {
     knowledgeDir: string;
     totalFilesInKnowledge: number;
@@ -257,7 +257,7 @@ function deletedOldEntriesFromKnowledge(filePaths: string[], summaries: Summarie
   return fileKeys.length;
 }
 
-function getExtensionCounts(filePaths: string[]): Record<string, number>{  
+function getExtensionCounts(filePaths: string[]): Record<string, number>{
   return filePaths.reduce(
     (acc, file) => {
       const ext = path.extname(file).toLowerCase() || 'none';
@@ -268,9 +268,18 @@ function getExtensionCounts(filePaths: string[]): Record<string, number>{
   );
 }
 
-function createOutput(filePaths: string[], filesInSummary: number, knowledgeDir: string): ScanResult{  
+function batchFiles(filePaths: string[], batchSize: number = 8): string[][] {
+  // TODO: Optimize batching by directory to avoid duplicate directory summaries across agents
+  const batches: string[][] = [];
+  for (let i = 0; i < filePaths.length; i += batchSize) {
+    batches.push(filePaths.slice(i, i + batchSize));
+  }
+  return batches;
+}
+
+function createOutput(filePaths: string[], filesInSummary: number, knowledgeDir: string): ScanResult{
   return {
-    filesToScan: filePaths,
+    filesToScan: batchFiles(filePaths),
     projectStats: {
       knowledgeDir: knowledgeDir,
       totalFilesInKnowledge: filesInSummary,

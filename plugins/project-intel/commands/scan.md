@@ -22,7 +22,7 @@ Orchestrate a complete project scan followed by parallel Haiku file analysis to 
 
 **Process:**
 1. Scan provided folder path (metadata only) by script
-2. Read outputed `$KNOWLEDGE_DIR/scan.json` and batch files for parallel analysis
+2. Read outputed `$KNOWLEDGE_DIR/scan.json` with pre-batched file groups (8 files per batch)
 3. Invoke Haiku agents in parallel (each batch of files analyzed concurrently)
 4. Merge results into `$KNOWLEDGE_DIR/summaries.json`
 5. Report completion
@@ -46,22 +46,20 @@ Execute the scanner to analyze project structure and save to scan.json.
 node ${CLAUDE_PLUGIN_ROOT}/scripts/dist/ctx.js scan --location="$LOCATION" --knowledgeDir="$KNOWLEDGE_DIR"
 ```
 
-Parse the JSON response to extract the `filesToScan` values.
+Parse the JSON response to extract the `filesToScan` batch groups (already batched into groups of ~8 files).
 
-### Step 2: Create batches from filtered files
-Batch the file list (from Step 2) into groups of ~8 files per batch for parallel analysis.
-
-### Step 3: Invoke Haiku agents in waves
-Process batches in waves of max 10 concurrent agents:
+### Step 2: Invoke Haiku agents in waves
+Process pre-batched file groups in waves of max 10 concurrent agents:
 
 **Wave-based invocation:**
-1. Prepare first 10 batches (or all if fewer)
-2. Invoke project-intel:haiku-file-analysis agent for each batch using Task tool with `subagent_type='haiku'`
-3. Each agent receives batch with file paths and contents
-4. Each agent writes results to `$KNOWLEDGE_DIR/haiku-batch-<N>.json`
-5. Wait for wave to complete
-6. Launch next wave of agents
-7. Repeat until all batches processed
+1. Extract batch groups from `filesToScan` (already prepared by scanner)
+2. Prepare first 10 batches (or all if fewer)
+3. Invoke project-intel:haiku-file-analysis agent for each batch using Task tool with `subagent_type='haiku'`
+4. Each agent receives batch with file paths and contents
+5. Each agent writes results to `$KNOWLEDGE_DIR/haiku-batch-<N>.json`
+6. Wait for wave to complete
+7. Launch next wave of agents
+8. Repeat until all batches processed
 
 **Progress Display:**
 ```
@@ -77,14 +75,14 @@ Processing wave: batches 11-15 of 15
 
 **Per-batch invocation:**
 ```bash
-for batch in fileBatches; do
+for batch in filesToScan; do
 Task(
   description: "Batch ${N}: Analyze files and generate structured JSON summaries.",
   subagent_type: "project-intel:haiku-file-analysis",
   model: "haiku",
   tools: "Read, Write"
   prompt: "Read these files completely and summarize them. Write the output to `$KNOWLEDGE_DIR/haiku-batch-<N>.json` in a minified and valid JSON format.
-  
+
   List of files:
   ${batch}
 
@@ -93,7 +91,7 @@ Task(
 done
 ```
 
-### Step 4: Execute merge command
+### Step 3: Execute merge command
 Combine all batch results into project knowledge:
 
 ```bash
@@ -104,7 +102,7 @@ Parse the JSON response to extract:
 - Number of files analyzed
 - Location of summaries.json
 
-### Step 5: Report completion
+### Step 4: Report completion
 Display summary to user:
 ```
 ✓ Analysis complete
@@ -140,12 +138,15 @@ Next step: Use /query "keyword" to search file summaries
 **Scan.json Structure:**
 ```json
 {
-  "filePaths": [
-    "plugins\\project-intel\\README.md"
+  "filesToScan": [
+    ["plugins/project-intel/README.md", "plugins/project-intel/package.json"],
+    ["plugins/project-intel/scripts/scan.ts"]
   ],
   "projectStats": {
-    "totalFiles": 1,
-    "fileTypes": [".md"]
+    "knowledgeDir": ".knowledge",
+    "totalFilesInKnowledge": 5,
+    "numberOfFilesToScan": 3,
+    "extensionCountsOfFilesToScan": {".md": 1, ".json": 1, ".ts": 1}
   }
 }
 ```
