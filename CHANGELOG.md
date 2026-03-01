@@ -7,6 +7,44 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.18.0.0] - 2026-03-01
+
+_Marketplace release with new read-efficient plugin for token-efficient file reading, plus plugin updates._
+
+### Added
+
+- **read-efficient plugin** ([v1.1.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ReadEfficient_v1.1.1.0)): New plugin for machine-efficient file reading
+  - Token-efficient file reading for Claude Code with 30-70% token reduction
+  - Converts files to compact JSON and removes redundant whitespace
+  - Supports 10+ formats: JSON, CSV, YAML, XML, HTML, Markdown, SQL, logs, and plain text
+  - Format-specific parsing: Markdown anchor line extraction, SQL AST parsing, log file auto-detection
+  - Property-level minification with intelligent type conversion (`"true"` → boolean, `"123"` → number)
+  - Single-file and batch processing with optional disk caching
+  - 533+ comprehensive tests validating all parsers and edge cases
+  - Zero information loss with graceful fallback to plaintext on parse errors
+
+### Fixed
+
+- **smart-compact plugin** (evolved to [v2.2.3.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v2.2.3.0)): Critical bug fix
+  - Fix division error in `block_idle_session.py` hook with inverted logic and None safety check
+  - Prevents "unsupported operand type(s) for /: 'NoneType' and 'int'" error
+
+### Changed
+
+- **smart-compact plugin** (evolved from [v2.2.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v2.2.1.0) to [v2.2.3.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/SmartCompact_v2.2.3.0)): Code organization and bug fixes
+  - **v2.2.2.0**: Moved configuration and duplicate logic into `const_models_and_config.py` to eliminate duplication across hook files
+  - **v2.2.3.0**: Fixed critical division error in idle session blocker and added None safety checks
+
+- **fetch-full-content plugin** (evolved to [v1.2.1.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/FetchFullContent_v1.2.1.0)): Improved output formatting
+  - Warning output when hidden content is filtered remains in stdout but removed from markdown file to reduce duplicate tokens
+
+- **project-intel plugin** (evolved to [v1.6.0.0](https://github.com/thoeltig/claude-code-toolkit/releases/tag/ProjectIntel_v1.6.0.0)): Enhanced scan batching
+  - Scan output batching: Files are now pre-batched in scanner (8 files per batch) instead of requiring model to create batches
+  - Scan.json structure: `filesToScan` is now array of arrays (batches) instead of flat array
+  - Reduces model overhead and simplifies slash command implementation
+
+---
+
 ## [1.17.0.0] - 2026-02-23
 
 _Marketplace release with smart-compact major algorithm improvements and code restructuring._
@@ -446,7 +484,8 @@ _First marketplace release with changelog plugin._
   - Documentation aligned with Common Changelog, Keep a Changelog, and SemVer standards
 
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.17.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.18.0.0...HEAD
+[1.18.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.17.0.0...v1.18.0.0
 [1.17.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.16.0.0...v1.17.0.0
 [1.16.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.15.0.0...v1.16.0.0
 [1.15.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/v1.14.0.0...v1.15.0.0

@@ -14,10 +14,15 @@ body:
       label: Which plugin is affected?
       description: Select the plugin where you encountered the bug
       options:
-        - claude-code-capabilities
-        - changelog
+        - smart-compact
+        - read-efficient
+        - project-intel
+        - fetch-full-content
         - session-protocol
-        - claude-code-capabilities-optimized
+        - changelog
+        - documentation
+        - claude-code-capabilities
+        - cross-platform-notification
         - marketplace (general)
         - other
     validations:

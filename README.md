@@ -23,6 +23,7 @@ Then install any plugin:
 |--------|-------------|---------|
 | **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads and script outputs from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 2.2.3.0 |
 | **[project-intel](./plugins/project-intel/)** | Lightweight reconnaissance system that provides semantic direction before code exploration with persistent knowledge across sessions | 1.6.0.0 |
+| **[read-efficient](./plugins/read-efficient/)** | Machine-efficient file reading tool that converts files to compact JSON and removes redundant whitespace, saving 30-70% tokens across 10+ formats | 1.1.1.0 |
 | **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.2.1.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Save your active tasks between sessions and never loss context again | 1.2.0.0 |
 | **[changelog](./plugins/changelog/)** | Create, update, and maintain CHANGELOG.md files following Keep a Changelog and Common Changelog standards | 1.1.0.0 |
@@ -63,6 +64,19 @@ Lightweight reconnaissance system that provides semantic direction before expens
 - Best for mid to large projects (25+ files), stable codebases, team projects
 
 **Install:** `/plugin install project-intel@claude-code-toolkit`
+
+### Read Efficient
+Machine-efficient file reading that converts files to compact JSON and removes redundant whitespace. Perfect for batch reading multiple files while minimizing token usage.
+
+- **Token efficiency**: Save 30-70% tokens on file reads depending on format
+- **10+ format support**: JSON, CSV, YAML, XML, HTML, Markdown, SQL, logs, and plain text
+- **Format-specific parsing**: Markdown anchor lines, SQL AST, auto-detected log formats
+- **Smart minification**: Property-level optimization with type conversion
+- **Batch processing**: Handle mixed-format files in one command
+- **Graceful fallback**: Parse errors degrade to minified plaintext, never crashes
+- **Caching**: Optional disk caching for faster future reads
+
+**Install:** `/plugin install read-efficient@claude-code-toolkit`
 
 ### Fetch-Full-Content
 Download complete page content as markdown to filesystem for repeated analysis and 100% information retrieval. Built-in WebFetch tool uses AI summarization which will return 30-80% of the information depending on the content size.
