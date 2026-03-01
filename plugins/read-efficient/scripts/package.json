@@ -1,0 +1,49 @@
+{
+    "name": "convert-to-compact-json",
+    "version": "1.1.1.0",
+    "license": "MIT",
+    "author": "Thore Höltig",
+    "description": "Convert files to compact JSON for efficient token usage",
+    "keywords": [
+        "minify",
+        "compact",
+        "json",
+        "token",
+        "efficiency",
+        "context",
+        "llm"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thoeltig/claude-code-toolkit.git"
+    },
+    "bugs": {
+        "url": "https://github.com/thoeltig/claude-code-toolkit/issues"
+    },
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "domhandler": "^5.0.3",
+        "htmlparser2": "^10.1.0",
+        "js-yaml": "^4.1.0",
+        "markdown-it": "^14.1.1",
+        "node-sql-parser": "^5.4.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.0.0",
+        "@types/js-yaml": "^4.0.5",
+        "@types/markdown-it": "^14.1.2",
+        "@types/node": "^20.10.0",
+        "@types/node-sql-parser": "^1.0.0",
+        "jest": "^29.0.0",
+        "ts-jest": "^29.0.0",
+        "ts-node": "^10.0.0",
+        "typescript": "^5.3.0"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest",
+        "test:coverage": "jest --coverage",
+        "dev": "ts-node src/index.ts"
+    }
+}

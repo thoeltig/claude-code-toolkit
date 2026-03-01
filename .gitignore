@@ -17,6 +17,7 @@ download_docs.log
 # Build artifacts
 *.tar.gz
 build/
+node_modules/
 
 # OS-specific files
 .DS_Store

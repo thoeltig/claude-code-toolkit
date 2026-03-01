@@ -7,6 +7,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [2.2.3.0] - 2026-03-01
+
+### Fixed
+
+- **Bug fix:** Fix division error in `block_idle_session.py` hook
+  - Fixed inverted logic: changed `if not bytes_saved == 0:` to `if bytes_saved == 0:` to correctly exit when there are no savings
+  - Added safety check for `estimated_tokens` being None before division operation
+  - Prevents "unsupported operand type(s) for /: 'NoneType' and 'int'" error
+
+## [2.2.2.0] - 2026-02-25
+
+### Changed
+
+- **Refactor:** Moved configuration and duplicate logic into `const_models_and_config.py`
+  - `block_idle_session.py` and `notify_about_compaction.py` contained the same logic to get the duplicate bytes and estimated tokens
+  - Both files also contained multiple methods to get environment variables
+
 ## [2.2.1.0] - 2026-02-23
 
 ### Changed
@@ -179,7 +196,9 @@ _First release of transcript deduplication plugin._
 - Detailed dry-run reports and minimal hook mode output
 - O(n) single-pass analysis with no false positives
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.1.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.3.0...HEAD
+[2.2.3.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.2.0...SmartCompact_v2.2.3.0
+[2.2.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.1.0...SmartCompact_v2.2.2.0
 [2.2.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.2.0.0...SmartCompact_v2.2.1.0
 [2.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.1.0...SmartCompact_v2.2.0.0
 [2.1.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/SmartCompact_v2.1.0.0...SmartCompact_v2.1.1.0

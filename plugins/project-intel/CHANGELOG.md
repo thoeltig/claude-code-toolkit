@@ -7,6 +7,16 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.6.0.0] - 2026-03-01
+
+### Improved
+
+- **Scan output batching**: Files are now pre-batched in the scanner (8 files per batch) instead of requiring the model to create batches. Reduces model overhead and simplifies slash command implementation.
+
+### Changed
+
+- **Scan.json structure**: `filesToScan` is now an array of arrays (batches) instead of a flat array. Each batch contains ~8 files for concurrent processing.
+
 ## [1.5.2.0] - 2026-02-16
 
 ### Fixed
@@ -138,7 +148,8 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.2.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.6.0.0...HEAD
+[1.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.2.0...ProjectIntel_v1.6.0.0
 [1.5.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.1.0...ProjectIntel_v1.5.2.0
 [1.5.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.0.0...ProjectIntel_v1.5.1.0
 [1.5.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.4.0.0...ProjectIntel_v1.5.0.0

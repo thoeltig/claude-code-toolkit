@@ -258,9 +258,17 @@ function getExtensionCounts(filePaths) {
         return acc;
     }, {});
 }
+function batchFiles(filePaths, batchSize = 8) {
+    // TODO: Optimize batching by directory to avoid duplicate directory summaries across agents
+    const batches = [];
+    for (let i = 0; i < filePaths.length; i += batchSize) {
+        batches.push(filePaths.slice(i, i + batchSize));
+    }
+    return batches;
+}
 function createOutput(filePaths, filesInSummary, knowledgeDir) {
     return {
-        filesToScan: filePaths,
+        filesToScan: batchFiles(filePaths),
         projectStats: {
             knowledgeDir: knowledgeDir,
             totalFilesInKnowledge: filesInSummary,

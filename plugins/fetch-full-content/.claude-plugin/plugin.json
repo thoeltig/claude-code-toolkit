@@ -1,7 +1,7 @@
 {
   "name": "fetch-full-content",
   "description": "Download and cache full page content from URLs for complete information retrieval without summarization loss. Removes only simple hidden content but has NO prompt injection detection or guard. Should only be used on official and trusted sources like documentations.",
-  "version": "1.2.0.0",
+  "version": "1.2.1.0",
   "author": {
     "name": "Thore Höltig",
     "url": "https://github.com/thoeltig"

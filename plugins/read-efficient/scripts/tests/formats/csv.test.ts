@@ -1,0 +1,179 @@
+import { parseCsv, formatCsv, isValidCsv } from '../../src/formats/csv';
+describe('CSV Format Handler', () => {
+    describe('isValidCsv', () => {
+        test('should validate non-empty CSV content', () => {
+            expect(isValidCsv('a,b,c\n1,2,3')).toBe(true);
+        });
+        test('should reject empty content', () => {
+            expect(isValidCsv('')).toBe(false);
+        });
+        test('should reject whitespace-only content', () => {
+            expect(isValidCsv('   \n  \n  ')).toBe(false);
+        });
+    });
+    describe('parseCsv - Standard Comma Delimited', () => {
+        test('should parse CSV with headers and data', () => {
+            const csv = 'name,age,active\nJohn,30,true\nJane,28,false';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(2);
+            expect(result[0]).toEqual({ name: 'John', age: '30', active: 'true' });
+            expect(result[1]).toEqual({ name: 'Jane', age: '28', active: 'false' });
+        });
+        test('should handle missing fields in rows (omit from object)', () => {
+            const csv = 'name,age,city\nJohn,30\nJane,28,Boston';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ name: 'John', age: '30' });
+            expect(result[0]).not.toHaveProperty('city');
+            expect(result[1]).toEqual({ name: 'Jane', age: '28', city: 'Boston' });
+        });
+        test('should handle extra fields as unknown columns', () => {
+            const csv = 'name,age\nJohn,30,Engineer,Active\nJane,28';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ name: 'John', age: '30', u3: 'Engineer', u4: 'Active' });
+            expect(result[1]).toEqual({ name: 'Jane', age: '28' });
+        });
+        test('should handle quoted fields with commas', () => {
+            const csv = 'name,address,age\nJohn,"Smith, Jr.",30\nJane,Boston,28';
+            const result = parseCsv(csv);
+            expect(result[0].name).toBe('John');
+            expect(result[0].address).toBe('Smith, Jr.');
+            expect(result[0].age).toBe('30');
+        });
+        test('should handle escaped quotes in quoted fields', () => {
+            const csv = 'name,quote\nJohn,"He said ""hello"""\nJane,"Say ""hi"""';
+            const result = parseCsv(csv);
+            expect(result[0].quote).toBe('He said "hello"');
+            expect(result[1].quote).toBe('Say "hi"');
+        });
+        test('should handle empty fields', () => {
+            const csv = 'name,age,city\nJohn,,Boston\n,30,Seattle';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ name: 'John', city: 'Boston' });
+            expect(result[1]).toEqual({ age: '30', city: 'Seattle' });
+        });
+        test('should ignore empty lines', () => {
+            const csv = 'name,age\nJohn,30\n\nJane,28\n';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(2);
+        });
+        test('should handle single row with headers only', () => {
+            const csv = 'name,age,city';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(0);
+        });
+    });
+    describe('parseCsv - Different Delimiters', () => {
+        test('should detect and parse semicolon-delimited CSV', () => {
+            const csv = 'name;age;city\nJohn;30;Boston\nJane;28;Seattle';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(2);
+            expect(result[0]).toEqual({ name: 'John', age: '30', city: 'Boston' });
+        });
+        test('should detect and parse tab-delimited CSV', () => {
+            const csv = 'name\tage\tcity\nJohn\t30\tBoston\nJane\t28\tSeattle';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(2);
+            expect(result[0]).toEqual({ name: 'John', age: '30', city: 'Boston' });
+        });
+    });
+    describe('parseCsv - Headerless CSV', () => {
+        test('should use u-prefix for headerless CSV', () => {
+            const csv = '123,456,789\n100,200,300';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ u1: '123', u2: '456', u3: '789' });
+            expect(result[1]).toEqual({ u1: '100', u2: '200', u3: '300' });
+        });
+        test('should handle extra fields in headerless CSV', () => {
+            const csv = '2024-01,100,activated,extra\n2024-02,200,pending';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ u1: '2024-01', u2: '100', u3: 'activated', u4: 'extra' });
+            expect(result[1]).toEqual({ u1: '2024-02', u2: '200', u3: 'pending' });
+        });
+        test('should handle numeric data in headerless CSV', () => {
+            const csv = '1,2,3,4\n5,6,7,8';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ u1: '1', u2: '2', u3: '3', u4: '4' });
+            expect(result[1]).toEqual({ u1: '5', u2: '6', u3: '7', u4: '8' });
+        });
+        test('should detect proper headers (all descriptive text)', () => {
+            const csv = 'FirstName,LastName,Age\njohn,smith,30\njane,doe,28';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ FirstName: 'john', LastName: 'smith', Age: '30' });
+        });
+    });
+    describe('parseCsv - Edge Cases', () => {
+        test('should handle special characters in fields', () => {
+            const csv = 'name,email\nJohn,john@example.com\nJane,"jane+test@domain.co.uk"';
+            const result = parseCsv(csv);
+            expect(result[0].email).toBe('john@example.com');
+            expect(result[1].email).toBe('jane+test@domain.co.uk');
+        });
+        test('should handle numbers that look like delimiters', () => {
+            const csv = 'value,count\n1,2,3,4\n5,6';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ value: '1', count: '2', u3: '3', u4: '4' });
+        });
+        test('should trim whitespace from field values', () => {
+            const csv = 'name , age , city\n John , 30 , Boston';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ name: 'John', age: '30', city: 'Boston' });
+        });
+        test('should handle quoted empty fields', () => {
+            const csv = 'name,age,city\nJohn,"",Boston';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ name: 'John', city: 'Boston' });
+        });
+        test('should handle multiple unknown fields in sequence', () => {
+            const csv = 'a,b\n1,2,3,4,5,6';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ a: '1', b: '2', u3: '3', u4: '4', u5: '5', u6: '6' });
+        });
+    });
+    describe('formatCsv', () => {
+        test('should format CSV to minified JSON', () => {
+            const csv = 'name,age\nJohn,30\nJane,28';
+            const output = formatCsv(csv, { minify: true });
+            const parsed = JSON.parse(output);
+            expect(parsed).toHaveLength(2);
+            expect(parsed[0]).toEqual({ name: 'John', age: '30' });
+        });
+        test('should format CSV to pretty JSON when not minified', () => {
+            const csv = 'name,age\nJohn,30';
+            const output = formatCsv(csv, { minify: false });
+            expect(output).toContain('\n');
+            expect(output).toContain('  ');
+        });
+        test('should handle empty CSV', () => {
+            const output = formatCsv('', { minify: true });
+            expect(output).toBe('[]');
+        });
+        test('should handle CSV with only headers', () => {
+            const output = formatCsv('name,age', { minify: true });
+            expect(output).toBe('[]');
+        });
+    });
+    describe('Integration: Real-world CSV Examples', () => {
+        test('should parse product catalog CSV', () => {
+            const csv = 'sku,name,price,stock,category\nSKU001,Widget,"9.99",100,Hardware\nSKU002,"Super Widget","19.99",50\nSKU003,Mini Widget,4.99,,Toys';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(3);
+            expect(result[0]).toEqual({ sku: 'SKU001', name: 'Widget', price: '9.99', stock: '100', category: 'Hardware' });
+            expect(result[1]).toEqual({ sku: 'SKU002', name: 'Super Widget', price: '19.99', stock: '50' });
+            expect(result[2]).toEqual({ sku: 'SKU003', name: 'Mini Widget', price: '4.99', category: 'Toys' });
+        });
+        test('should parse user export CSV with mixed data', () => {
+            const csv = 'id,email,full_name,signup_date,verified\n1,john@example.com,"Smith, John",2024-01-15,true\n2,jane@example.com,Jane Doe,2024-01-20,\n3,bob@example.com,"Brown, Bob",2024-02-01,true';
+            const result = parseCsv(csv);
+            expect(result).toHaveLength(3);
+            expect(result[0]).toEqual({ id: '1', email: 'john@example.com', full_name: 'Smith, John', signup_date: '2024-01-15', verified: 'true' });
+            expect(result[1]).toEqual({ id: '2', email: 'jane@example.com', full_name: 'Jane Doe', signup_date: '2024-01-20' });
+        });
+        test('should parse financial data CSV', () => {
+            const csv = 'date,description,amount,category\n2024-01-15,"Office Supplies","150.50","Supplies"\n2024-01-16,"Coffee""s & Snacks","24.99","Food"\n2024-01-17,"Software License","299.00"';
+            const result = parseCsv(csv);
+            expect(result[0]).toEqual({ date: '2024-01-15', description: 'Office Supplies', amount: '150.50', category: 'Supplies' });
+            expect(result[1].description).toBe('Coffee"s & Snacks');
+        });
+    });
+});
+

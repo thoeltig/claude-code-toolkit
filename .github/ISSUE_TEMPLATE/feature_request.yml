@@ -29,10 +29,15 @@ body:
       label: Related Plugin (if applicable)
       description: Which plugin does this relate to?
       options:
-        - claude-code-capabilities
-        - changelog
+        - smart-compact
+        - read-efficient
+        - project-intel
+        - fetch-full-content
         - session-protocol
-        - claude-code-capabilities-optimized
+        - changelog
+        - documentation
+        - claude-code-capabilities
+        - cross-platform-notification
         - marketplace (general)
         - N/A
     validations:

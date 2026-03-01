@@ -1,0 +1,9 @@
+This is a sample text file with multiple lines.
+
+It has some extra whitespace and empty lines.
+
+Lines are separated by newlines.
+Multiple   spaces   between   words.
+
+This should be minified by removing extra whitespace and
+  collapsing empty lines while preserving the content structure.

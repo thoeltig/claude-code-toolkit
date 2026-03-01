@@ -5,6 +5,12 @@ All notable changes to the fetch-full-content plugin documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [1.2.1.0] - 2026-03-01
+
+### Changed
+
+- Warning output when hidden content is filtered is still in stdout but removed from markdown file to reduce duplicate tokens
+
 ## [1.2.0.0] - 2026-02-01
 
 ### Added
@@ -71,7 +77,8 @@ _First release._
 - Efficient handling of both static and JS-rendered pages
 - Cached files enable building agent skills from complete documentation
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.2.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.2.1.0...HEAD
+[1.2.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.2.0.0...FetchFullContent_v1.2.1.0
 [1.2.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.1.0.0...FetchFullContent_v1.2.0.0
 [1.1.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.1.0...FetchFullContent_v1.1.0.0
 [1.0.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/FetchFullContent_v1.0.0.0...FetchFullContent_v1.0.1.0
