@@ -21,7 +21,7 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads and script outputs from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 2.2.2.0 |
+| **[smart-compact](./plugins/smart-compact/)** | Remove duplicate file reads and script outputs from transcripts to reduce token waste, lower hallucination risk, and preserve context priority when resuming sessions | 2.2.3.0 |
 | **[project-intel](./plugins/project-intel/)** | Lightweight reconnaissance system that provides semantic direction before code exploration with persistent knowledge across sessions | 1.6.0.0 |
 | **[fetch-full-content](./plugins/fetch-full-content/)** | Download full page content from URLs to markdown for complete information retrieval without summarization (⚠️ trusted sources only) | 1.2.0.0 |
 | **[session-protocol](./plugins/session-protocol/)** | Save your active tasks between sessions and never loss context again | 1.2.0.0 |
