@@ -125,10 +125,13 @@ def main():
         # Stale - check for savings
         bytes_saved, estimated_tokens = get_duplicate_bytes_and_token_estimate(transcript_path)
 
-        if not bytes_saved == 0:
+        if bytes_saved == 0:
             sys.exit(0)
 
         # Check threshold: only block if savings exceed threshold
+        if estimated_tokens is None:
+            sys.exit(0)
+
         threshold = get_cache_validator_threshold()
         context_window = get_context_window_tokens()
         percentage = (estimated_tokens / context_window) * 100
