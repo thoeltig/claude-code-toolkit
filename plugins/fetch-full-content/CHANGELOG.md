@@ -5,6 +5,12 @@ All notable changes to the fetch-full-content plugin documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [1.2.1.0] - 2026-03-01
+
+### Changed
+
+- Warning output when hidden content is filtered is still in stdout but removed from markdown file to reduce duplicate tokens
+
 ## [1.2.0.0] - 2026-02-01
 
 ### Added
