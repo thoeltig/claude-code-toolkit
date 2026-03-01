@@ -1,5 +1,5 @@
 {
-  "generated": "2026-02-23T01:14:17.963Z",
+  "generated": "2026-03-01T01:35:18.353Z",
   "directories": {
     "plugins/project-intel/commands": {
       "path": "plugins/project-intel/commands",
@@ -50,12 +50,12 @@
     },
     ".claude-plugin": {
       "path": ".claude-plugin",
-      "summary": "Contains plugin marketplace configuration and metadata for the Claude Code Toolkit.",
-      "purpose": "Defines the marketplace structure, plugin registry, and toolkit versioning information for distribution and installation.",
+      "summary": "Contains marketplace configuration for the entire Claude Code Toolkit.",
+      "purpose": "Registers all available plugins and provides toolkit-level metadata for the Claude Code marketplace integration.",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/project-intel/.claude-plugin": {
       "path": "plugins/project-intel/.claude-plugin",
@@ -435,15 +435,14 @@
     },
     "plugins/smart-compact": {
       "path": "plugins/smart-compact",
-      "summary": "Automatically deduplicates duplicate file reads, script outputs, and grep results from Claude Code session transcripts using deterministic algorithms.",
-      "purpose": "Reduces token waste and hallucination risk by removing exact content duplicates while preserving conversation integrity. Operates in three modes: automatic on session end, pre-prompt validation, and manual CLI analysis.",
+      "summary": "Plugin for deduplicating file reads and script outputs to reduce transcript token waste and hallucination risk.",
+      "purpose": "Removes redundant content from Claude Code transcripts to optimize context usage, lower costs, and improve reliability when resuming sessions by detecting duplicate reads across a forward-chaining algorithm.",
       "technologies": [
         "Python",
-        "JSON",
-        "Regex",
-        "Forward-chaining deduplication"
+        "TypeScript",
+        "JSON"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/.claude-plugin": {
       "path": "plugins/smart-compact/.claude-plugin",
@@ -465,25 +464,23 @@
     },
     "plugins/smart-compact/scripts": {
       "path": "plugins/smart-compact/scripts",
-      "summary": "Contains Python scripts for transcript deduplication, cache validation, and duplicate detection notifications.",
-      "purpose": "Implements the core deduplication and monitoring logic that detects duplicate file reads in transcripts, validates cache staleness, and notifies users about context window usage. These scripts operate as hooks triggered by session events and user prompt submissions.",
+      "summary": "Contains Python scripts for conversation deduplication, idle session blocking, and notification about duplicate content in transcripts.",
+      "purpose": "Core functionality for the smart-compact plugin to detect and remove redundant file reads and duplicate content from Claude Code transcripts, reducing token usage and context window bloat. Includes hooks to notify users and block submissions when deduplication savings exceed configured thresholds.",
       "technologies": [
         "Python",
-        "subprocess",
-        "JSON"
+        "JSON",
+        "subprocess"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.874Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/scripts/cleanup": {
       "path": "plugins/smart-compact/scripts/cleanup",
-      "summary": "Core deduplication logic modules handling operation detection, extraction, and content analysis from transcript messages.",
-      "purpose": "Implements specialized extraction and detection functions for various file operations (reads, bash, grep, edits) and provides utilities for parsing transcript formats and analyzing content changes.",
+      "summary": "Package that aggregates and exports deduplication utilities for transcript cleanup and content analysis.",
+      "purpose": "Central module providing unified access to transcript deduplication logic, content operations, detection utilities, and I/O handling. Exports standardized models, markers, configuration functions, and content transformation tools used throughout the smart-compact plugin.",
       "technologies": [
-        "Python",
-        "Regex",
-        "Type hints"
+        "Python"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/tests": {
       "path": "plugins/smart-compact/tests",
@@ -505,6 +502,128 @@
         "Markdown"
       ],
       "lastUpdated": "2026-02-23T01:14:17.963Z"
+    },
+    "plugins/read-efficient": {
+      "path": "plugins/read-efficient",
+      "summary": "Token-efficient file conversion system supporting 10+ formats with minification and structured JSON output.",
+      "purpose": "Core plugin providing commands to read and convert various file formats into minified JSON, reducing token consumption for LLM context. Implements format detection, parsing, minification, and caching for CSV, YAML, XML, HTML, Markdown, SQL, and other formats.",
+      "technologies": [
+        "TypeScript",
+        "Node.js"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/.claude-plugin": {
+      "path": "plugins/read-efficient/.claude-plugin",
+      "summary": "Contains plugin metadata and configuration for Claude Code integration.",
+      "purpose": "Defines the plugin's public interface, version, description, and author information for the Claude Code marketplace.",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/commands": {
+      "path": "plugins/read-efficient/commands",
+      "summary": "Contains command documentation and usage instructions for the read-efficient plugin.",
+      "purpose": "User-facing documentation explaining the read-efficient command behavior, supported flags, and output format options for batch reading and minifying files.",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts": {
+      "path": "plugins/read-efficient/scripts",
+      "summary": "Contains TypeScript build configuration, package management, and test infrastructure for the read-efficient plugin.",
+      "purpose": "Manages the development environment, build process, and test execution for the plugin codebase, including dependencies for format parsers and type checking.",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "Node.js"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src": {
+      "path": "plugins/read-efficient/scripts/src",
+      "summary": "Main source directory containing the primary entry point and type definitions for the read-efficient file processing system.",
+      "purpose": "Core implementation of the read-efficient plugin which processes files in multiple formats, minifies content, and outputs results with optional caching and JSON conversion.",
+      "technologies": [
+        "TypeScript",
+        "Node.js"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/utils": {
+      "path": "plugins/read-efficient/scripts/src/utils",
+      "summary": "Contains utility modules for file handling, format detection, property minification, and output formatting.",
+      "purpose": "Provides core utility functions for the read-efficient workflow including file I/O, MIME type detection, JSON property minification, and result output formatting.",
+      "technologies": [
+        "TypeScript",
+        "Node.js fs/path"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/utils": {
+      "path": "plugins/read-efficient/scripts/tests/utils",
+      "summary": "Contains test utilities for validating the minification functionality across various data types and structures.",
+      "purpose": "Tests the property minifier utility to ensure whitespace reduction, type conversion, and empty value handling work correctly across nested objects, arrays, and real-world data formats like CSV and Markdown.",
+      "technologies": [
+        "TypeScript",
+        "Jest"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "CHANGELOG.md": {
+      "path": "CHANGELOG.md",
+      "summary": "Project changelog documenting all releases and feature changes.",
+      "purpose": "Records all notable changes across plugin versions with semantic versioning, documenting major features, improvements, and fixes for marketplace releases.",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats": {
+      "path": "plugins/read-efficient/scripts/src/formats",
+      "summary": "Format handlers for parsing and serializing multiple file formats including YAML, SQL, and XML with minification options.",
+      "purpose": "Provides modular format-specific parsing and formatting functions that convert between raw file content and structured JSON representations, enabling efficient content analysis and minification.",
+      "technologies": [
+        "TypeScript",
+        "js-yaml",
+        "sql-parser"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures",
+      "summary": "Contains sample data files in multiple formats used as test inputs for format parsing and minification testing.",
+      "purpose": "Provides realistic and edge-case test data in JSON, Python, text, and CSV formats to validate parsing logic, special character handling, and malformed input resilience.",
+      "technologies": [
+        "JSON",
+        "Python",
+        "CSV",
+        "Text"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats": {
+      "path": "plugins/read-efficient/scripts/tests/formats",
+      "summary": "Comprehensive test suites validating format parsing, edge cases, and real-world examples for YAML, SQL, and XML handlers.",
+      "purpose": "Ensures format handlers correctly parse complex structures, handle edge cases gracefully, and maintain data integrity through comprehensive integration tests across all supported formats.",
+      "technologies": [
+        "Jest",
+        "TypeScript"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests": {
+      "path": "plugins/read-efficient/scripts/tests",
+      "summary": "Contains comprehensive test suites for the read-efficient plugin covering format handlers, utilities, integration scenarios, and CLI orchestration.",
+      "purpose": "Validates functionality of file reading, format detection, output formatting, and format-specific parsing (JSON, YAML, XML, SQL, CSV) through unit and integration tests to ensure reliability across different file types and options.",
+      "technologies": [
+        "Jest",
+        "TypeScript",
+        "Node.js"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     }
   },
   "files": {
@@ -609,18 +728,13 @@
     },
     ".claude-plugin/marketplace.json": {
       "path": ".claude-plugin/marketplace.json",
-      "summary": "Defines the Claude Code Toolkit marketplace structure with owner information, metadata, and list of bundled plugins.",
-      "purpose": "Serves as the marketplace registry that specifies toolkit version, owner details, and references to all plugins (smart-compact, project-intel, fetch-full-content, session-protocol, changelog, documentation, claude-code-capabilities, cross-platform-notification) for distribution and installation.",
+      "summary": "Claude Code marketplace registry defining all plugins in the toolkit with their names, versions, and locations.",
+      "purpose": "Provides the central plugin registry for Claude Code to discover and load all available plugins including smart-compact, project-intel, fetch-full-content, session-protocol, changelog, documentation, and read-efficient components.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "exports": [
-        "marketplace",
-        "plugins",
-        "metadata"
-      ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/project-intel/.claude-plugin/plugin.json": {
       "path": "plugins/project-intel/.claude-plugin/plugin.json",
@@ -634,14 +748,13 @@
     },
     "CHANGELOG.md": {
       "path": "CHANGELOG.md",
-      "summary": "Documents all releases and changes to Claude Code Toolkit from v1.0.0.0 through v1.17.0.0 with detailed feature additions, changes, and fixes.",
-      "purpose": "Provides comprehensive version history following Common Changelog and Semantic Versioning standards. Tracks evolution of plugins including smart-compact algorithm improvements (backward iteration to forward-chaining), deduplication enhancements, and infrastructure changes across all marketplace plugins.",
+      "summary": "Comprehensive changelog documenting all Claude Code Toolkit marketplace releases from v1.0.0.0 to v1.17.0.0.",
+      "purpose": "Maintains semantic versioning history across multiple plugins including smart-compact, project-intel, documentation, session-protocol, and various improvements. Serves as official release notes and feature tracking.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
-        "SemVer"
+        "Markdown"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "CODE_OF_CONDUCT.md": {
       "path": "CODE_OF_CONDUCT.md",
@@ -3554,13 +3667,13 @@
     },
     "README.md": {
       "path": "README.md",
-      "summary": "Main project documentation describing Claude Code Toolkit marketplace with eight available plugins and their features.",
-      "purpose": "Provides overview of toolkit purpose, quick start instructions, detailed plugin descriptions with highlights, contribution guidelines, code of conduct, and license information for users and contributors.",
+      "summary": "Main project documentation describing Claude Code Toolkit marketplace with plugin listings, quick start guide, and plugin highlights.",
+      "purpose": "Provides overview of the toolkit ecosystem, installation instructions, feature descriptions of all available plugins, and links to detailed documentation for each plugin and contribution guidelines.",
       "role": "documentation",
       "technologies": [
         "Markdown"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/project-intel/scripts/types.ts": {
       "path": "plugins/project-intel/scripts/types.ts",
@@ -3590,24 +3703,23 @@
     },
     "plugins/smart-compact/.claude-plugin/plugin.json": {
       "path": "plugins/smart-compact/.claude-plugin/plugin.json",
-      "summary": "Plugin manifest declaring smart-compact v2.2.1.0 metadata including name, description, author, and keywords.",
-      "purpose": "Defines plugin identity and searchability for Claude Code marketplace distribution, enabling users to discover and install the smart-compact deduplication plugin.",
+      "summary": "Plugin metadata configuration file defining smart-compact plugin information including name, description, version, author, and keywords.",
+      "purpose": "Provides plugin registration and marketplace metadata for the smart-compact deduplication tool including versioning, licensing, and author information for distribution.",
       "role": "configuration",
       "technologies": [
         "JSON"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/CHANGELOG.md": {
       "path": "plugins/smart-compact/CHANGELOG.md",
-      "summary": "Complete version history of smart-compact plugin documenting all releases from v1.0.0.0 to v2.2.1.0 with detailed change notes.",
-      "purpose": "Tracks feature additions, breaking changes, bug fixes, and architectural improvements across ten major versions including refactoring, algorithm enhancements, and configuration management updates.",
+      "summary": "Detailed changelog documenting all releases of smart-compact plugin from v1.0.0.0 to v2.2.2.0 with changes categorized by Added, Changed, and Fixed sections.",
+      "purpose": "Maintains complete version history of smart-compact development including feature additions, refactoring milestones, bug fixes, and breaking changes across 10 major releases with semantic versioning.",
       "role": "documentation",
       "technologies": [
-        "Markdown",
-        "Semantic Versioning"
+        "Markdown"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/README.md": {
       "path": "plugins/smart-compact/README.md",
@@ -3631,13 +3743,13 @@
     },
     "plugins/smart-compact/scripts/cleanup_conversation.py": {
       "path": "plugins/smart-compact/scripts/cleanup_conversation.py",
-      "summary": "Main deduplication orchestrator implementing forward-chaining algorithm to find and apply dedup actions to transcript messages.",
-      "purpose": "Coordinates extraction of all operations, runs dedup logic comparing reads chronologically, applies smart overlap detection for grep operations, and modifies transcript with dedup markers or partial content.",
+      "summary": "Transcript deduplication script using forward-chaining diff algorithm to remove duplicate reads and keep only changed content with configurable context margins.",
+      "purpose": "Analyzes conversation transcripts to find redundant file reads (Read, BashCat, Grep operations) and replaces them with markers or partial content, tracking edits and maintaining file state across operations to ensure deduplication safety.",
       "role": "implementation",
       "technologies": [
         "Python",
-        "JSON",
-        "Forward-chaining algorithm"
+        "json",
+        "pathlib"
       ],
       "exports": [
         "find_dedup_actions",
@@ -3648,56 +3760,49 @@
         "json",
         "sys",
         "pathlib.Path",
-        "cleanup"
+        "cleanup module"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/scripts/block_idle_session.py": {
       "path": "plugins/smart-compact/scripts/block_idle_session.py",
-      "summary": "Validates transcript cache staleness and blocks user prompts if duplicates exceed a configurable threshold, enabling intelligent session resumption.",
-      "purpose": "Acts as UserPromptSubmit hook to detect when transcripts are stale (>5 minutes idle) and prevents prompt submission if deduplication would recover significant context, encouraging users to resume sessions instead of continuing in cache-invalidated conversations.",
+      "summary": "UserPromptSubmit hook that validates transcript cache staleness and detects deduplication savings, blocking submission if thresholds are exceeded.",
+      "purpose": "Prevents users from submitting prompts when conversation cache is stale and contains recoverable duplicate reads. Reads transcript file backwards efficiently to check last Claude message timestamp and calculates token savings that would be recovered by exiting and resuming.",
       "role": "implementation",
       "technologies": [
         "Python",
-        "subprocess",
-        "JSON",
-        "datetime"
+        "datetime",
+        "json"
       ],
       "exports": [
-        "get_cache_duration_minutes",
-        "get_context_window_tokens",
-        "get_cache_validator_threshold",
+        "parse_hook_message",
+        "get_last_claude_message_time",
         "is_stale",
-        "get_savings",
         "main"
       ],
       "imports": [
         "json",
         "sys",
-        "subprocess",
-        "os",
         "pathlib.Path",
-        "datetime"
+        "datetime",
+        "cleanup module"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/scripts/notify_about_compaction.py": {
       "path": "plugins/smart-compact/scripts/notify_about_compaction.py",
-      "summary": "Analyzes transcript duplicates and sends cross-platform system notifications showing context usage and deduplication savings.",
-      "purpose": "Runs as Stop hook to notify users when duplicate content is detected in their conversation, formatting byte/token savings as human-readable metrics and displaying percentage of context window consumed by duplicates.",
+      "summary": "Notification hook that informs users about duplicate tokens in conversation with formatted savings information.",
+      "purpose": "Sends cross-platform notifications displaying deduplication savings as bytes and tokens, calculated as a percentage of the configured context window size, enabling users to understand transcript bloat before cleaning.",
       "role": "implementation",
       "technologies": [
         "Python",
-        "subprocess",
-        "JSON",
-        "pathlib"
+        "json",
+        "subprocess"
       ],
       "exports": [
-        "get_context_window_tokens",
-        "get_notification_threshold",
         "format_bytes",
         "format_tokens",
-        "get_duplicate_info",
+        "parse_hook_message",
         "send_notification",
         "main"
       ],
@@ -3705,16 +3810,15 @@
         "json",
         "sys",
         "subprocess",
-        "os",
         "pathlib.Path",
-        "datetime"
+        "cleanup module"
       ],
-      "lastUpdated": "2026-02-17T22:46:48.875Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/scripts/cleanup/__init__.py": {
       "path": "plugins/smart-compact/scripts/cleanup/__init__.py",
-      "summary": "Public API module for smart-compact cleanup package exporting models, markers, configuration functions, and core deduplication utilities.",
-      "purpose": "Provides clean import interface for transcript deduplication package by re-exporting essential components from modular submodules via __all__ list for external use and testing.",
+      "summary": "Module initialization exposing deduplication utilities, content operations, detection helpers, and transcript I/O functions.",
+      "purpose": "Python package interface that aggregates and re-exports functionality from multiple cleanup submodules (const_models_and_config, content, detection, extract). Provides clean public API for transcript deduplication operations used in the smart-compact plugin.",
       "role": "implementation",
       "technologies": [
         "Python"
@@ -3732,20 +3836,8 @@
         "DUPLICATE_SCRIPT_MARKER",
         "detect_content_type",
         "find_line_differences",
-        "apply_context_margin",
-        "create_partial_dedup_multiline",
-        "create_partial_dedup_singleline",
-        "find_character_diff",
-        "extract_line_numbers_from_grep",
-        "edit_overlaps_with_lines",
-        "extract_filepath_from_bash_command",
-        "is_script_invocation",
         "load_transcript",
-        "save_transcript",
-        "extract_operations",
-        "extract_bash_operations",
-        "extract_grep_operations",
-        "extract_edit_operations"
+        "save_transcript"
       ],
       "imports": [
         "cleanup.const_models_and_config",
@@ -3753,18 +3845,18 @@
         "cleanup.detection",
         "cleanup.extract"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/scripts/cleanup/const_models_and_config.py": {
       "path": "plugins/smart-compact/scripts/cleanup/const_models_and_config.py",
-      "summary": "Data models, enums, configuration functions, and deduplication markers for the smart-compact transcript cleanup system.",
-      "purpose": "Defines core types (FileOperation, BashOperation, GrepOperation, EditOperation, DedupAction) and enums (ContentType), provides environment-variable-based configuration for dedup thresholds, and centralizes dedup marker strings used throughout the package.",
+      "summary": "Configuration and utility module providing dataclasses, enums, and environment variable handlers for the deduplication system.",
+      "purpose": "Centralizes constants, data structures, and configuration parsing for the smart-compact system including content type detection, operation tracking, deduplication thresholds, and context window sizing.",
       "role": "implementation",
       "technologies": [
         "Python",
-        "Dataclasses",
+        "dataclass",
         "Enum",
-        "Environment Variables"
+        "os"
       ],
       "exports": [
         "ContentType",
@@ -3774,21 +3866,21 @@
         "EditOperation",
         "DedupAction",
         "Logger",
-        "PARTIAL_DEDUP_MARKER",
-        "DUPLICATE_READ_MARKER",
-        "DUPLICATE_SCRIPT_MARKER",
-        "get_min_dedup_bytes",
-        "get_multiline_context_lines",
-        "get_singleline_context_chars"
+        "get_duplicate_bytes_and_token_estimate",
+        "get_cache_duration_minutes",
+        "get_context_window_tokens",
+        "get_cache_validator_threshold",
+        "get_notification_threshold"
       ],
       "imports": [
+        "pathlib.Path",
+        "subprocess",
         "sys",
         "os",
-        "dataclasses",
-        "enum",
-        "typing"
+        "dataclass",
+        "Enum"
       ],
-      "lastUpdated": "2026-02-23T01:10:24.746Z"
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     },
     "plugins/smart-compact/scripts/cleanup/content.py": {
       "path": "plugins/smart-compact/scripts/cleanup/content.py",
@@ -3971,6 +4063,897 @@
         "pathlib.Path"
       ],
       "lastUpdated": "2026-02-23T01:10:24.746Z"
+    },
+    "plugins/read-efficient/.claude-plugin/plugin.json": {
+      "path": "plugins/read-efficient/.claude-plugin/plugin.json",
+      "summary": "Plugin manifest defining read-efficient's public metadata including name, description, version, author, and repository information.",
+      "purpose": "Provides essential plugin metadata for the Claude Code marketplace, describing the plugin's purpose of converting files to compact JSON for token-efficient reading and linking to its GitHub repository.",
+      "role": "configuration",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/CHANGELOG.md": {
+      "path": "plugins/read-efficient/CHANGELOG.md",
+      "summary": "Complete version history of the read-efficient plugin documenting changes from v0.1.0.0 through v1.1.1.0 with detailed release notes.",
+      "purpose": "Tracks all feature additions, breaking changes, bug fixes, and improvements including major parser replacements (htmlparser2, node-sql-parser, markdown-it), property minification introduction, and format handler enhancements across 10 releases.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/README.md": {
+      "path": "plugins/read-efficient/README.md",
+      "summary": "User-facing documentation describing the read-efficient plugin's features, usage, and supported formats.",
+      "purpose": "Comprehensive guide for end users explaining how to use the read-efficient slash command, its token-saving benefits, supported file formats, command options, and quick start examples. Establishes the plugin's value proposition and usage patterns.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/SPECS.md": {
+      "path": "plugins/read-efficient/SPECS.md",
+      "summary": "Technical specification detailing architecture, processing pipeline, format handlers, and implementation details.",
+      "purpose": "In-depth technical documentation for developers covering the processing pipeline, core modules, format handler specifications, error handling strategies, test coverage, and extensibility patterns. Serves as reference for implementation details and future development.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown",
+        "TypeScript",
+        "htmlparser2",
+        "markdown-it",
+        "node-sql-parser"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/commands/read-efficient.md": {
+      "path": "plugins/read-efficient/commands/read-efficient.md",
+      "summary": "Command documentation describing the read-efficient tool usage, supported flags, and output modes for efficient file reading and minification.",
+      "purpose": "User guide documenting how to invoke the read-efficient command with various flags like --no-minify, --cache, --overwrite to control file processing behavior and output format for batch file analysis.",
+      "role": "documentation",
+      "technologies": [
+        "Markdown"
+      ],
+      "exports": [
+        "description",
+        "argument-hint",
+        "allowed-tools"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/jest.config.js": {
+      "path": "plugins/read-efficient/scripts/jest.config.js",
+      "summary": "Jest test runner configuration with TypeScript support and coverage thresholds.",
+      "purpose": "Configures Jest testing framework with ts-jest preset, test path patterns, module extensions, and 85% coverage thresholds for branches/functions/lines/statements.",
+      "role": "configuration",
+      "technologies": [
+        "JavaScript",
+        "Jest"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/package.json": {
+      "path": "plugins/read-efficient/scripts/package.json",
+      "summary": "NPM package manifest for the read-efficient plugin listing dependencies, build scripts, and project metadata.",
+      "purpose": "Manages project dependencies (js-yaml, htmlparser2, markdown-it, node-sql-parser, domhandler), development tools (TypeScript, Jest, ts-node), and build/test scripts for the plugin development workflow.",
+      "role": "configuration",
+      "technologies": [
+        "JSON",
+        "Node.js"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/package-lock.json": {
+      "path": "plugins/read-efficient/scripts/package-lock.json",
+      "summary": "Dependency lock file pinning exact versions of npm packages for reproducible builds.",
+      "purpose": "Lock file ensuring consistent installation of project dependencies across environments. Specifies exact versions of core dependencies (htmlparser2, markdown-it, node-sql-parser) and dev dependencies (Jest, TypeScript, ts-jest).",
+      "role": "configuration",
+      "technologies": [
+        "npm",
+        "Node.js"
+      ],
+      "imports": [
+        "htmlparser2",
+        "markdown-it",
+        "node-sql-parser",
+        "js-yaml",
+        "domhandler",
+        "jest",
+        "typescript"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/index.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/index.test.ts",
+      "summary": "Tests CLI argument parsing, output formatting logic, and new features like minification notes, fileInfo metadata, and anchor line handling.",
+      "purpose": "Validates the main orchestration functions including parseArguments for CLI flags, formatOutput for different output modes (single/multiple files, cache, manifest), and edge cases for format conversion.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript",
+        "Node.js"
+      ],
+      "imports": [
+        "parseArguments",
+        "processFile",
+        "formatOutput"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/index.ts": {
+      "path": "plugins/read-efficient/scripts/src/index.ts",
+      "summary": "Main entry point orchestrating file processing with support for multiple formats, minification, caching, and output formatting options.",
+      "purpose": "Coordinates the complete workflow for processing files: parsing command arguments, detecting file formats, applying format-specific conversions and minification, managing cache operations, and formatting output based on user options.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "Node.js async/await",
+        "JSON processing"
+      ],
+      "exports": [
+        "parseArguments",
+        "processFile",
+        "removeAnchorLines",
+        "processFiles",
+        "main"
+      ],
+      "imports": [
+        "fileHandler",
+        "formatDetector",
+        "outputFormatter",
+        "propertyMinifier",
+        "format parsers"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/utils/formatDetector.ts": {
+      "path": "plugins/read-efficient/scripts/src/utils/formatDetector.ts",
+      "summary": "Detects file format from extension and filename, classifying them into processing categories.",
+      "purpose": "Maps file extensions and names to format types including indentation-syntax languages that cannot be minified, structured formats like JSON/CSV/YAML, and plaintext, enabling appropriate processing strategies.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "Path utilities"
+      ],
+      "exports": [
+        "FileFormat type",
+        "detectFormat"
+      ],
+      "imports": [
+        "path.extname",
+        "path.basename"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/utils/propertyMinifier.ts": {
+      "path": "plugins/read-efficient/scripts/src/utils/propertyMinifier.ts",
+      "summary": "Recursively minifies JSON object properties by compressing whitespace, converting string types, and omitting empty values.",
+      "purpose": "Reduces JSON size by collapsing whitespace in string values, safely converting string representations of booleans and numbers to actual types, filtering null/empty values, and recursively processing nested structures.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "JSON transformation",
+        "Regex"
+      ],
+      "exports": [
+        "MinifyOptions interface",
+        "minifyString",
+        "convertType",
+        "isEmpty",
+        "minifyObject",
+        "minifyJsonProperties"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/utils/propertyMinifier.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/utils/propertyMinifier.test.ts",
+      "summary": "Comprehensive Jest test suite for the property minifier utility with 30+ test cases covering whitespace reduction, type conversion, empty value handling, and nested structures.",
+      "purpose": "Validates the minifyJsonProperties function behavior across string normalization, boolean/numeric type conversion, null/empty filtering, and complex nested objects and arrays to ensure reliable minification before sending data to Claude.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "minifyJsonProperties"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tsconfig.json": {
+      "path": "plugins/read-efficient/scripts/tsconfig.json",
+      "summary": "TypeScript compiler configuration for the read-efficient plugin scripts with ES2023 target and strict type checking.",
+      "purpose": "Defines compilation settings for building TypeScript source files into CommonJS JavaScript with strict null checks, unused variable detection, and incremental compilation enabled.",
+      "role": "configuration",
+      "technologies": [
+        "TypeScript"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/types.ts": {
+      "path": "plugins/read-efficient/scripts/src/types.ts",
+      "summary": "Defines TypeScript interfaces for configuration options, file processing results, and cache operations.",
+      "purpose": "Provides type definitions for the read-efficient system including processing options, file result metadata, and error context structures used throughout the application.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "Interfaces"
+      ],
+      "exports": [
+        "ReadMinifiedOptions",
+        "FileInfo",
+        "ProcessedFile",
+        "MinifyOptions",
+        "CacheResult",
+        "ErrorContext"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/utils/outputFormatter.ts": {
+      "path": "plugins/read-efficient/scripts/src/utils/outputFormatter.ts",
+      "summary": "Formats processed file results into JSON output with different structures for single/multiple files and caching modes.",
+      "purpose": "Generates appropriately structured output for different scenarios: single file raw output, multiple files with cache information, manifest output with caching status, and warnings for structure-dependent formats.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "JSON formatting"
+      ],
+      "exports": [
+        "formatOutput",
+        "formatSingleFileOutput",
+        "formatRawSingleFileOutput",
+        "formatSingleFileWithCache",
+        "formatMultipleFilesOutput",
+        "formatRawMultipleFileOutput",
+        "formatMultipleFileWithCache",
+        "formatManifestOutput"
+      ],
+      "imports": [
+        "types"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/cache.ts": {
+      "path": "plugins/read-efficient/scripts/src/cache.ts",
+      "summary": "Manages cache file generation, existence checking, and manifest creation for processed files.",
+      "purpose": "Handles cache path resolution with optional overwrite and collision detection, generating manifests that track processed files and their cached locations.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "File I/O",
+        "Path utilities"
+      ],
+      "exports": [
+        "getCachePath",
+        "checkCacheExists",
+        "resolveCachePath",
+        "writeCache",
+        "generateManifest"
+      ],
+      "imports": [
+        "path",
+        "fileHandler",
+        "types"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/csv.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/csv.ts",
+      "summary": "Parses CSV content with automatic delimiter detection and header recognition, converting to JSON objects.",
+      "purpose": "Transforms CSV data into structured JSON by detecting delimiters (comma, semicolon, tab), identifying headers, and mapping values to rows with fallback handling for unknown columns.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "CSV parsing",
+        "Delimiter detection"
+      ],
+      "exports": [
+        "isValidCsv",
+        "parseCsv",
+        "formatCsv"
+      ],
+      "imports": [
+        "none"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/ini.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/ini.ts",
+      "summary": "Parses INI configuration files with section grouping and key-value extraction into JSON objects.",
+      "purpose": "Converts INI format with sections and key-value pairs into nested JSON structures, handling comments and optional section support.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "INI parsing"
+      ],
+      "exports": [
+        "isValidIni",
+        "parseIni",
+        "formatIni"
+      ],
+      "imports": [
+        "none"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/json.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/json.ts",
+      "summary": "Validates and formats JSON content with minification support and error handling.",
+      "purpose": "Provides JSON parsing, validation, and bidirectional formatting with options for minification or pretty-printing.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "JSON"
+      ],
+      "exports": [
+        "isValidJson",
+        "parseJson",
+        "minifyJson",
+        "formatJson"
+      ],
+      "imports": [
+        "none"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/logs.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/logs.ts",
+      "summary": "Parses system logs in multiple formats including RFC5424, RFC3164, and Apache/Nginx access logs.",
+      "purpose": "Detects and parses three log standards (RFC5424 syslog with structured data, RFC3164 BSD syslog, Apache/Nginx access logs) converting to structured JSON objects.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "Log parsing",
+        "RFC5424",
+        "RFC3164"
+      ],
+      "exports": [
+        "formatLogs",
+        "detectLogType",
+        "parseApacheNginxLine",
+        "parseRfc3164Line",
+        "parseRfc5424Line",
+        "parseStructuredData"
+      ],
+      "imports": [
+        "none"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/utils/fileHandler.ts": {
+      "path": "plugins/read-efficient/scripts/src/utils/fileHandler.ts",
+      "summary": "Handles asynchronous file I/O operations with fallback encoding support and directory creation.",
+      "purpose": "Provides low-level file system operations including reading files with UTF-8 and latin1 fallback, writing files with automatic directory creation, and file existence checks.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "Node.js fs",
+        "File I/O"
+      ],
+      "exports": [
+        "readFile",
+        "writeFile",
+        "fileExists"
+      ],
+      "imports": [
+        "fs.promises",
+        "fs.existsSync",
+        "path.dirname"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/cache.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/cache.test.ts",
+      "summary": "Test suite for cache management functions including path generation, existence checking, and manifest generation.",
+      "purpose": "Validates cache operations such as generating cache paths with .compact suffix, checking file existence, resolving non-conflicting cache paths, writing cache files with overwrite handling, and building processing manifests. Ensures cache system reliably stores and tracks minified file copies.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript",
+        "Node.js"
+      ],
+      "exports": [
+        "cache management tests",
+        "getCachePath tests",
+        "checkCacheExists tests",
+        "resolveCachePath tests",
+        "writeCache tests",
+        "generateManifest tests"
+      ],
+      "imports": [
+        "getCachePath",
+        "checkCacheExists",
+        "resolveCachePath",
+        "writeCache",
+        "generateManifest",
+        "fs",
+        "path"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures/code.py": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures/code.py",
+      "summary": "Simple Python fixture demonstrating a basic hello-world function with documentation.",
+      "purpose": "Serves as test fixture for validating Python file parsing and handling of function definitions, docstrings, and script execution patterns.",
+      "role": "test",
+      "technologies": [
+        "Python"
+      ],
+      "exports": [
+        "hello_world"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures/large.json": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures/large.json",
+      "summary": "JSON fixture containing item arrays with detailed descriptions and metadata for testing large structured data parsing.",
+      "purpose": "Provides a sizable JSON test case with nested objects, arrays, and metadata to validate minification efficiency on larger realistic datasets while testing tag arrays and timestamp handling.",
+      "role": "test",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures/malformed.json": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures/malformed.json",
+      "summary": "Intentionally invalid JSON file with unclosed braces and missing commas to test error handling.",
+      "purpose": "Validates that the parser gracefully handles and reports malformed JSON input without crashing, ensuring robust error detection and recovery mechanisms.",
+      "role": "test",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures/sample.json": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures/sample.json",
+      "summary": "Well-formed JSON fixture containing user data, item collections, and metadata for standard parsing tests.",
+      "purpose": "Serves as a valid baseline test case with nested user objects, item arrays, and version metadata to validate correct parsing and minification of properly structured JSON.",
+      "role": "test",
+      "technologies": [
+        "JSON"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures/sample.txt": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures/sample.txt",
+      "summary": "Plain text fixture with multiple lines, whitespace variations, and empty lines for text minification testing.",
+      "purpose": "Tests text file parsing and minification by exercising whitespace handling, line collapsing, and preservation of content structure to ensure readable text remains intact after compression.",
+      "role": "test",
+      "technologies": [
+        "Text"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/fixtures/special-chars.json": {
+      "path": "plugins/read-efficient/scripts/tests/fixtures/special-chars.json",
+      "summary": "JSON fixture demonstrating unicode characters, escaped paths, quotes, and newline sequences for special character validation.",
+      "purpose": "Validates proper handling of international unicode (Chinese, emoji), escaped backslashes, quoted strings, and embedded newlines to ensure special character parsing and minification preserves data integrity.",
+      "role": "test",
+      "technologies": [
+        "JSON",
+        "Unicode"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/csv.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/csv.test.ts",
+      "summary": "Comprehensive test suite for CSV parsing, format detection, and conversion with delimiter detection and edge case handling.",
+      "purpose": "Validates CSV format handler functionality including validation, delimiter auto-detection (comma, semicolon, tab), quoted field parsing, header detection, headerless mode with u-prefix naming, and conversion to minified or pretty JSON output.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript",
+        "CSV"
+      ],
+      "exports": [
+        "CSV format tests",
+        "isValidCsv tests",
+        "parseCsv tests",
+        "formatCsv tests",
+        "integration tests"
+      ],
+      "imports": [
+        "parseCsv",
+        "formatCsv",
+        "isValidCsv"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/html.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/html.test.ts",
+      "summary": "Tests for HTML parser validating tag stripping, semantic structure optimization, list/table parsing, and minified JSON output.",
+      "purpose": "Ensures HTML content is correctly parsed into structured JSON format with visual tags stripped for token efficiency while preserving semantic structures like lists and tables. Tests cover real-world HTML patterns and malformed content graceful degradation.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "HTML Parsing"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "parseHtml",
+        "formatHtml",
+        "isValidHtml"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/ini.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/ini.test.ts",
+      "summary": "Tests for INI file parser validating section parsing, key-value extraction, comments handling, and JSON formatting.",
+      "purpose": "Verifies INI format handling including section headers, comments, edge cases like empty values and special characters, and conversion to minified/pretty JSON output for both simple and complex INI files.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "INI Parsing"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "parseIni",
+        "formatIni",
+        "isValidIni"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/json.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/json.test.ts",
+      "summary": "Tests for JSON validation, minification, and formatting with support for unicode, escaped characters, and nested structures.",
+      "purpose": "Validates JSON parsing accuracy, minification efficiency, and format conversion preserving data types and special characters while ensuring valid JSON output for round-trip parsing.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "JSON Processing"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "isValidJson",
+        "minifyJson",
+        "formatJson"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/logs.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/logs.test.ts",
+      "summary": "Tests for log format parsing supporting Apache/Nginx combined, RFC 3164 syslog, and RFC 5424 syslog formats with auto-detection.",
+      "purpose": "Ensures accurate parsing of multiple log formats with field extraction, priority calculation, structured data handling, and graceful degradation for malformed entries. Tests verify correct identification and parsing of industry-standard log formats.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "Log Parsing",
+        "Syslog"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "formatLogs"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/markdown.anchor-lines.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/markdown.anchor-lines.test.ts",
+      "summary": "Tests for markdown parser anchor line tracking enabling precise line-by-line navigation and reference for all block types.",
+      "purpose": "Validates that parsed markdown blocks include accurate anchor_line numbers for user-friendly, 1-indexed line references enabling precise navigation and editing operations. Tests cover single blocks, sequential blocks, complex documents, and all markdown element types.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "Markdown Parsing"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "parseMarkdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/markdown.edge-cases.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/markdown.edge-cases.test.ts",
+      "summary": "Tests for markdown parser robustness handling malformed content, unclosed markers, nested structures, and performance safeguards.",
+      "purpose": "Ensures markdown parser gracefully handles edge cases including missing closing markers, malformed lists/tables, deeply nested content, very large files, and alternating/repeated markers without hanging or throwing errors.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "Markdown Parsing",
+        "Error Handling"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "parseMarkdown",
+        "formatMarkdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/markdown.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/markdown.test.ts",
+      "summary": "Tests for markdown parser covering heading levels, paragraphs, code blocks, lists, tables, blockquotes, front matter, and inline elements.",
+      "purpose": "Validates core markdown parsing functionality including structure preservation, formatting stripping (bold, italic, strikethrough), link preservation, task list support, and conversion to minified JSON output for real-world markdown documents.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest",
+        "Markdown Parsing",
+        "YAML"
+      ],
+      "exports": [
+        "describe",
+        "test",
+        "expect"
+      ],
+      "imports": [
+        "parseMarkdown",
+        "formatMarkdown",
+        "isValidMarkdown"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/integration.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/integration.test.ts",
+      "summary": "End-to-end integration tests for file processing workflows including single/multiple file handling, caching, format detection, and output formatting.",
+      "purpose": "Validates complete file processing pipelines from read through minification and caching with various option combinations to ensure reliability across real-world usage scenarios.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript",
+        "Node.js"
+      ],
+      "imports": [
+        "processFile",
+        "processFiles",
+        "formatOutput"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/utils/fileHandler.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/utils/fileHandler.test.ts",
+      "summary": "Tests file I/O operations including reading, writing, and existence checking with UTF-8 encoding and directory creation.",
+      "purpose": "Validates the readFile, writeFile, and fileExists utility functions handle file operations correctly including nested directory creation and Unicode content.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript",
+        "Node.js"
+      ],
+      "imports": [
+        "readFile",
+        "writeFile",
+        "fileExists"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/utils/formatDetector.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/utils/formatDetector.test.ts",
+      "summary": "Tests file format detection based on file extensions for JSON, CSV, YAML, Markdown, plaintext and unknown formats.",
+      "purpose": "Validates the detectFormat function correctly identifies file types from extensions and defaults to plaintext for unknown formats, with case-insensitive matching.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript"
+      ],
+      "imports": [
+        "detectFormat"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/utils/outputFormatter.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/utils/outputFormatter.test.ts",
+      "summary": "Tests output formatting for different modes including single file raw/wrapped JSON, multiple files as NDJSON, manifest generation, and error handling.",
+      "purpose": "Validates formatOutput function handles various combinations of minify, toJson, cache, and noOutput flags to produce correct output structure for each use case.",
+      "role": "test",
+      "technologies": [
+        "Jest",
+        "TypeScript"
+      ],
+      "imports": [
+        "formatOutput"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/html.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/html.ts",
+      "summary": "HTML parser that strips visual tags, preserves semantic structure, and converts to optimized JSON format.",
+      "purpose": "Format handler for HTML files that removes non-semantic visual markup (script, style, formatting tags) while preserving semantic content and structure. Applies enhancements for headings, lists, and tables, converting to compact JSON with minification support.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "htmlparser2",
+        "domhandler"
+      ],
+      "exports": [
+        "isValidHtml",
+        "stripVisualTags",
+        "enhanceHeadings",
+        "enhanceLists",
+        "enhanceTables",
+        "parseHtml",
+        "formatHtml"
+      ],
+      "imports": [
+        "htmlparser2",
+        "domhandler"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/markdown.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/markdown.ts",
+      "summary": "Markdown parser using markdown-it that extracts block elements with line anchors and preserves inline markdown syntax.",
+      "purpose": "Format handler converting Markdown to structured JSON with block elements (headings, lists, code, tables) tagged with line references. Preserves inline formatting (links, code) while stripping visual markdown, supporting front matter and task lists.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "markdown-it"
+      ],
+      "exports": [
+        "isValidMarkdown",
+        "getTokenAttr",
+        "extractInlineContentWithMarkdown",
+        "parseMarkdown",
+        "formatMarkdown"
+      ],
+      "imports": [
+        "markdown-it"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/sql.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/sql.ts",
+      "summary": "SQL statement parser converting queries to Abstract Syntax Tree representation using node-sql-parser.",
+      "purpose": "Format handler parsing SQL statements (SELECT, INSERT, UPDATE, DELETE, CREATE) into structured AST format. Handles multiple statements with fallback parsing for complex queries, extracting tables, columns, joins, and conditions while gracefully degrading on parse errors.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "node-sql-parser"
+      ],
+      "exports": [
+        "isValidSql",
+        "formatSql"
+      ],
+      "imports": [
+        "node-sql-parser"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/xml.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/xml.ts",
+      "summary": "XML parser using htmlparser2 that preserves element hierarchy, attributes, and namespaces in JSON format.",
+      "purpose": "Format handler converting XML to JSON while maintaining semantic structure. Converts element tags to JSON keys, attributes to attribute_<name> fields, text content to _text field, and handles CDATA sections. Supports namespaced tags and gracefully handles malformed XML.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "htmlparser2",
+        "domhandler"
+      ],
+      "exports": [
+        "isValidXml",
+        "parseXml",
+        "convertNode",
+        "formatXml"
+      ],
+      "imports": [
+        "htmlparser2",
+        "domhandler"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/src/formats/yaml.ts": {
+      "path": "plugins/read-efficient/scripts/src/formats/yaml.ts",
+      "summary": "TypeScript module providing YAML parsing and formatting functions with validation and error handling.",
+      "purpose": "Enables efficient parsing of YAML content into structured data objects and formatting back to minified or pretty JSON representation, supporting both valid YAML validation and graceful error recovery.",
+      "role": "implementation",
+      "technologies": [
+        "TypeScript",
+        "js-yaml",
+        "JSON"
+      ],
+      "exports": [
+        "isValidYaml",
+        "parseYaml",
+        "formatYaml"
+      ],
+      "imports": [
+        "js-yaml"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/sql.comprehensive.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/sql.comprehensive.test.ts",
+      "summary": "Jest test suite covering comprehensive SQL statement parsing including SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, and complex queries.",
+      "purpose": "Validates SQL format handler against wide range of production SQL patterns including JOINs, subqueries, aggregates, and CTEs to ensure reliable SQL-to-JSON conversion.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest"
+      ],
+      "imports": [
+        "formatSql"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/sql.edge-cases-spotty.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/sql.edge-cases-spotty.test.ts",
+      "summary": "Jest test suite validating SQL parser edge cases including nested conditions, function calls, special values, whitespace handling, and stress tests with complex queries.",
+      "purpose": "Tests robustness of SQL parser against unusual input patterns, malformed syntax, large datasets, and boundary conditions to ensure graceful degradation and reliable handling of spotty real-world SQL.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest"
+      ],
+      "imports": [
+        "formatSql"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/xml.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/xml.test.ts",
+      "summary": "Comprehensive Jest test suite covering XML parsing including elements, attributes, namespaces, CDATA, edge cases, malformed XML, and real-world examples like Maven POM, RSS feeds, and SVG.",
+      "purpose": "Validates XML format handler against diverse XML structures and malformed inputs to ensure correct attribute parsing, namespace preservation, error recovery, and integration with JSON conversion.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest"
+      ],
+      "imports": [
+        "parseXml",
+        "formatXml",
+        "isValidXml"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tests/formats/yaml.test.ts": {
+      "path": "plugins/read-efficient/scripts/tests/formats/yaml.test.ts",
+      "summary": "Jest test suite validating YAML parsing including key-value pairs, nested structures, lists, comments, edge cases, and real-world configuration examples.",
+      "purpose": "Ensures YAML format handler correctly parses simple and complex YAML structures including nested objects, lists of objects, special values, and whitespace handling with conversion to JSON.",
+      "role": "test",
+      "technologies": [
+        "TypeScript",
+        "Jest"
+      ],
+      "imports": [
+        "parseYaml",
+        "formatYaml",
+        "isValidYaml"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
+    },
+    "plugins/read-efficient/scripts/tsconfig.tsbuildinfo": {
+      "path": "plugins/read-efficient/scripts/tsconfig.tsbuildinfo",
+      "summary": "TypeScript incremental build cache containing compilation metadata for all project files and dependencies.",
+      "purpose": "Stores build state information to enable incremental compilation, tracking file references, type information, and compiler options for faster rebuilds of the plugin.",
+      "role": "build",
+      "technologies": [
+        "TypeScript"
+      ],
+      "lastUpdated": "2026-03-01T01:35:18.353Z"
     }
   }
 }
