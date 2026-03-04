@@ -311,5 +311,6 @@ async function scanProject(location, knowledgeDir) {
     if (files.deleted.length !== 0) {
         filesInSummary = deletedOldEntriesFromKnowledge(files.deleted, summaries, knowledgeDir);
     }
-    return createOutput([...files.new, ...files.modified], filesInSummary, knowledgeDir);
+    const uniqueFiles = [...new Set([...files.new, ...files.modified])];
+    return createOutput(uniqueFiles, filesInSummary, knowledgeDir);
 }

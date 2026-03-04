@@ -330,5 +330,6 @@ export async function scanProject(location: string, knowledgeDir: string): Promi
     filesInSummary = deletedOldEntriesFromKnowledge(files.deleted, summaries, knowledgeDir);
   }
 
-  return createOutput([...files.new, ...files.modified], filesInSummary, knowledgeDir);
+  const uniqueFiles = [...new Set<string>([...files.new, ...files.modified])];
+  return createOutput(uniqueFiles, filesInSummary, knowledgeDir);
 }
