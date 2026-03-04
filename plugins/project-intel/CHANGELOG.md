@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.6.1.0] - 2026-03-04
+
+### Fix
+
+- **Duplicate entries in scan output**: The same files were listed in multiple batches which results in unecessary subagents and file summarization processes. Now only unique entries are processed.
+
 ## [1.6.0.0] - 2026-03-01
 
 ### Improved
@@ -148,7 +154,8 @@ _First release: Lightweight reconnaissance system for directed code exploration.
 - Project structure guidance: When to use project-intel, when to skip it, breakeven analysis
 - Applicability scope: Best fit for mid to larger projects (25+ files), team projects, multi-session work
 
-[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.6.0.0...HEAD
+[unreleased]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.6.1.0...HEAD
+[1.6.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.6.0.0...ProjectIntel_v1.6.1.0
 [1.6.0.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.2.0...ProjectIntel_v1.6.0.0
 [1.5.2.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.1.0...ProjectIntel_v1.5.2.0
 [1.5.1.0]: https://github.com/thoeltig/claude-code-toolkit/compare/ProjectIntel_v1.5.0.0...ProjectIntel_v1.5.1.0
